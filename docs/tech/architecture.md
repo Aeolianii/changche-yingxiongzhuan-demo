@@ -57,7 +57,7 @@
 
 | Dependency | Purpose | Version/policy |
 |---|---|---|
-| Godot | 2D 运行与编辑 | 4.7 stable |
+| Godot | 2D 运行与编辑 | .NET 4.7.1 stable |
 | Godot .NET SDK | 编译场景二 C# 脚本 | 4.7.1 / .NET 9 |
 
 ## Known debt and risks

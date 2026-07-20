@@ -105,6 +105,9 @@ if (Test-Path -LiteralPath $sceneOneScript -PathType Leaf) {
     Assert-Contains $sceneOneContent 'SCENE_TRANSITION_DELAY\s*:=\s*2\.5' 'Scene1 must use the documented 2.5 second transition delay.'
     Assert-Contains $sceneOneContent 'change_scene_to_file\(NEXT_SCENE_PATH\)' 'Scene1 must switch through SceneTree.change_scene_to_file().'
     Assert-Contains $sceneOneContent 'transition_started' 'Scene1 must guard against duplicate transitions.'
+    Assert-Contains $sceneOneContent 'if change_result == OK:' 'Scene1 must inspect the scene change result.'
+    Assert-Contains $sceneOneContent 'continue_button\.disabled = false' 'Scene1 must restore the continue button after a failed scene change.'
+    Assert-Contains $sceneOneContent 'transition_fade\.modulate = Color\([^\r\n]+\)[\s\S]*_show_dialogue\("[^"]+"\)[\s\S]*_set_continue_text\("[^"]+"\)' 'Scene1 must explain a failed Scene2 load and allow retry.'
 }
 
 $sceneOneFile = Join-Path $projectRoot 'scenes\palace\palace_demo.tscn'

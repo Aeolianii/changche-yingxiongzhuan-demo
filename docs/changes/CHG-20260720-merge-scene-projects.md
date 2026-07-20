@@ -1,6 +1,6 @@
 # CHG-20260720 合并场景一与场景二
 
-- Status: in-progress
+- Status: done
 - Owner: Codex
 - Date: 2026-07-20
 
@@ -61,3 +61,9 @@
 - 2026-07-20 RED：静态合并测试在实现前报告 10 个缺失项目/场景/切换契约错误。
 - 2026-07-20 GREEN（阶段一）：静态合并测试通过；`dotnet build` 为 0 warning / 0 error。
 - 2026-07-20 Godot 首次导入：发现两个源项目的复制素材保留相同 `.import` UID，并伴随生成型 `.translation` 依赖错误；待重新导入修复后复验。
+- 2026-07-20 Godot 重新导入：exit 0，0 warnings，0 errors；所有历史重复 UID 已重新生成并更新场景引用。
+- 2026-07-20 Scene1 启动：exit 0，0 issues。
+- 2026-07-20 Scene2 启动：exit 0，0 issues；C# 根脚本成功实例化。
+- 2026-07-20 自动切换测试：2.5 秒计时切换与点击跳过切换均进入 Scene2，exit 0，0 issues。
+- 2026-07-20 最终 C# 构建：0 warnings，0 errors。
+- 2026-07-20 提交前审查：修复过期 UID 检测，移除可能再次破坏 UID 的一次性清理脚本，确认 `.godot/`、`bin/`、`obj/` 未进入 Git。

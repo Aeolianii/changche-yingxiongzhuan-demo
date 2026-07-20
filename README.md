@@ -42,4 +42,10 @@ C# 构建：
 dotnet build .\NanjiangFleet.csproj
 ```
 
+自动切换运行测试：
+
+```powershell
+& 'D:\Programs\Godot-4.7.1-dotnet\Godot_v4.7.1-stable_mono_win64\Godot_v4.7.1-stable_mono_win64_console.exe' --headless --path . --script res://tests/test_scene_transition.gd
+```
+
 设计、架构、变更记录和手动验收项见 `docs/index.md`。

@@ -14,6 +14,7 @@
 - 以场景二的 Godot .NET 4.7.1 配置为基础。
 - 合并场景一的 `assets/`、`scripts/`、`scenes/` 与文档。
 - 合并输入映射，项目从场景一启动。
+- 清理合并副本中从两个项目继承的可再生 `.import` 与 `.translation` 产物，由 Godot 重新导入并分配唯一 UID。
 - 场景一完成旁白显示后等待 2.5 秒，淡出并切换场景二；允许点击跳过等待。
 - 添加静态资源引用、项目配置和切换契约测试。
 
@@ -29,6 +30,7 @@
 
 - `project.godot` 使用 C# 特性并以场景一为 `run/main_scene`。
 - 场景一与场景二的所有外部资源路径在合并项目中存在。
+- Godot 首次导入后没有重复 UID、资源依赖缺失或 Unicode 解析错误。
 - C# 项目可以通过 `dotnet build`。
 - 场景一完整流程可达，完成后只触发一次场景切换。
 - 计时切换与点击跳过均可进入 `res://scenes/Scene2.tscn`。
@@ -56,4 +58,6 @@
 
 ## Verification evidence
 
-Pending implementation and fresh verification.
+- 2026-07-20 RED：静态合并测试在实现前报告 10 个缺失项目/场景/切换契约错误。
+- 2026-07-20 GREEN（阶段一）：静态合并测试通过；`dotnet build` 为 0 warning / 0 error。
+- 2026-07-20 Godot 首次导入：发现两个源项目的复制素材保留相同 `.import` UID，并伴随生成型 `.translation` 依赖错误；待重新导入修复后复验。

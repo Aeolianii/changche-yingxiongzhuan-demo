@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://dxwj2y08144al"]
+
+[ext_resource type="Script" uid="uid://csowtiwgy55rs" path="res://scripts/npc.gd" id="1_ceaqc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_84hc2"]
+size = Vector2(18, 10)
+
+[node name="NPC" type="CharacterBody2D" unique_id=584899406]
+script = ExtResource("1_ceaqc")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=779931347]
+texture_filter = 1
+position = Vector2(0, -25)
+
+[node name="FootCollision" type="CollisionShape2D" parent="." unique_id=1099683859]
+position = Vector2(0, -5)
+shape = SubResource("RectangleShape2D_84hc2")

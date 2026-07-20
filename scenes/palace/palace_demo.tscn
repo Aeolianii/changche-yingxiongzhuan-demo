@@ -1,0 +1,203 @@
+[gd_scene format=3 uid="uid://cx0fgrij7pfe8"]
+
+[ext_resource type="Script" uid="uid://cf3vcnbe110ay" path="res://scripts/palace_demo.gd" id="1_gbxuh"]
+[ext_resource type="Texture2D" uid="uid://c658ysgxyclcj" path="res://assets/backgrounds/palace_cutaway_v2.png" id="2_x75u6"]
+[ext_resource type="PackedScene" uid="uid://cwdko3gfnx6h3" path="res://scenes/characters/player.tscn" id="3_uqvjv"]
+[ext_resource type="PackedScene" uid="uid://dxwj2y08144al" path="res://scenes/characters/npc.tscn" id="4_x75u6"]
+[ext_resource type="Texture2D" uid="uid://iiseahmcsey0" path="res://assets/ui/dialogue_background.png" id="5_ntdlv"]
+[ext_resource type="Texture2D" uid="uid://casbaiubyku7e" path="res://assets/ui/button_medium_green.png" id="6_re2s4"]
+[ext_resource type="Texture2D" uid="uid://dgtwn3k7s2ykh" path="res://assets/ui/button_medium_green_active.png" id="7_xi4kr"]
+
+[node name="PalaceDemo" type="Node2D" unique_id=838520599]
+process_mode = 3
+script = ExtResource("1_gbxuh")
+
+[node name="SceneTransitionTimer" type="Timer" parent="."]
+wait_time = 2.5
+one_shot = true
+
+[node name="Background" type="Sprite2D" parent="." unique_id=384855797]
+z_index = -10
+texture_filter = 1
+position = Vector2(768, 512)
+texture = ExtResource("2_x75u6")
+
+[node name="WorldCollisions" type="StaticBody2D" parent="." unique_id=63971765]
+
+[node name="TopPalace" type="CollisionPolygon2D" parent="WorldCollisions" unique_id=1078388586]
+polygon = PackedVector2Array(0, 0, 1536, 0, 1536, 190, 0, 190)
+
+[node name="LeftWall" type="CollisionPolygon2D" parent="WorldCollisions" unique_id=1539610212]
+polygon = PackedVector2Array(0, 140, 176, 140, 176, 1024, 0, 1024)
+
+[node name="RightWall" type="CollisionPolygon2D" parent="WorldCollisions" unique_id=1518668234]
+polygon = PackedVector2Array(1360, 140, 1536, 140, 1536, 1024, 1360, 1024)
+
+[node name="BottomGate" type="CollisionPolygon2D" parent="WorldCollisions" unique_id=37449873]
+polygon = PackedVector2Array(0, 900, 1536, 900, 1536, 1024, 0, 1024)
+
+[node name="HallWallLeft" type="CollisionPolygon2D" parent="WorldCollisions" unique_id=724718284]
+polygon = PackedVector2Array(0, 440, 640, 440, 640, 615, 0, 615)
+
+[node name="HallWallRight" type="CollisionPolygon2D" parent="WorldCollisions" unique_id=131479413]
+polygon = PackedVector2Array(900, 440, 1536, 440, 1536, 615, 900, 615)
+
+[node name="ThroneArea" type="CollisionPolygon2D" parent="WorldCollisions" unique_id=747165951]
+polygon = PackedVector2Array(600, 145, 936, 145, 936, 235, 600, 235)
+
+[node name="UpperHallLeftSafe" type="CollisionPolygon2D" parent="WorldCollisions" unique_id=101445764]
+polygon = PackedVector2Array(0, 140, 280, 140, 280, 440, 0, 440)
+
+[node name="UpperHallRightSafe" type="CollisionPolygon2D" parent="WorldCollisions" unique_id=1518521148]
+polygon = PackedVector2Array(1256, 140, 1536, 140, 1536, 440, 1256, 440)
+
+[node name="YSortedCharacters" type="Node2D" parent="." unique_id=1335484561]
+y_sort_enabled = true
+
+[node name="Player" parent="YSortedCharacters" unique_id=2095704430 instance=ExtResource("3_uqvjv")]
+position = Vector2(768, 850)
+
+[node name="Emperor" parent="YSortedCharacters" unique_id=584899406 instance=ExtResource("4_x75u6")]
+position = Vector2(768, 270)
+character_key = "magistrate"
+
+[node name="Attendant" parent="YSortedCharacters" unique_id=609752261 instance=ExtResource("4_x75u6")]
+position = Vector2(670, 380)
+character_key = "soldier"
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=652699530]
+
+[node name="Overlay" type="Control" parent="UI" unique_id=1376926562]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="DialoguePanel" type="TextureRect" parent="UI/Overlay" unique_id=356744853]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -325.0
+offset_top = -275.0
+offset_right = 325.0
+offset_bottom = -5.0
+mouse_filter = 2
+texture = ExtResource("5_ntdlv")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DialogueText" type="Label" parent="UI/Overlay/DialoguePanel" unique_id=1872545094]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 58.0
+offset_top = 42.0
+offset_right = -58.0
+offset_bottom = -70.0
+theme_override_colors/font_color = Color(0.23137255, 0.14901961, 0.11372549, 1)
+theme_override_font_sizes/font_size = 22
+text = "县令：少侠，宫门已闭。若要追查海上的异象，先去问问守门的军士。
+
+按 E 或空格继续"
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ContinueButton" type="TextureButton" parent="UI/Overlay/DialoguePanel" unique_id=2086916933]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -70.0
+offset_right = -25.0
+offset_bottom = -18.0
+texture_normal = ExtResource("6_re2s4")
+texture_pressed = ExtResource("7_xi4kr")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Text" type="Label" parent="UI/Overlay/DialoguePanel/ContinueButton" unique_id=1739440046]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 20
+text = "继续"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InteractionButton" type="TextureButton" parent="UI/Overlay" unique_id=1867506327]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -110.0
+offset_top = -96.0
+offset_right = 110.0
+offset_bottom = -22.0
+texture_normal = ExtResource("6_re2s4")
+texture_pressed = ExtResource("7_xi4kr")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Text" type="Label" parent="UI/Overlay/InteractionButton" unique_id=49365987]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 22
+text = "对话"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TaskPanel" type="ColorRect" parent="UI/Overlay" unique_id=563274465]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -340.0
+offset_top = 22.0
+offset_right = -20.0
+offset_bottom = 92.0
+mouse_filter = 2
+color = Color(0.14117648, 0.105882354, 0.105882354, 0.9019608)
+
+[node name="Accent" type="ColorRect" parent="UI/Overlay/TaskPanel" unique_id=373641019]
+layout_mode = 0
+anchor_bottom = 1.0
+offset_right = 6.0
+mouse_filter = 2
+color = Color(0.84313726, 0.6627451, 0.29411766, 1)
+
+[node name="TaskText" type="Label" parent="UI/Overlay/TaskPanel" unique_id=1526845683]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = -8.0
+theme_override_colors/font_color = Color(1, 0.9137255, 0.70980394, 1)
+theme_override_font_sizes/font_size = 21
+text = "当前任务：等待急报"
+vertical_alignment = 1
+
+[node name="TransitionFade" type="ColorRect" parent="UI/Overlay"]
+modulate = Color(1, 1, 1, 0)
+z_index = 100
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)

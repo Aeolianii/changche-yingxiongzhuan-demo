@@ -1,0 +1,198 @@
+extends Node2D
+
+enum StoryState {
+	OPENING_REPORTS,
+	ATTENDANT_WALKS_OUT,
+	WAIT_TALK,
+	SUMMON_DIALOGUE,
+	GO_TO_EMPEROR,
+	AUDIENCE_DIALOGUE,
+	IMPERIAL_EDICT,
+	COMPLETE,
+}
+
+const OPENING_REPORTS := [
+	"【旁白】\n岭南加急奏疏。",
+	"【旁白】\n蕃国贡使血状。",
+	"【旁白】\n海防失事文书。\n三份急报，一并送入御前。",
+]
+
+const AUDIENCE_LINES := [
+	"【皇帝】\n朕数次调北军南下，北人不习水战、不识星象潮汐、不辨岛礁暗滩，数次巡洋皆未安南海。望卿为朕重整岭南海防、剿灭海盗、收复海岛、重开万国贡路。",
+	"【水师主帅】\n臣领旨！定当筑水师、固海防、清海寇、复海岛、安万民、通贡路！海疆不平，臣绝不北归！",
+]
+
+const ATTENDANT_OUTSIDE_TARGET := Vector2(710.0, 832.0)
+const ATTENDANT_INSIDE_TARGET := Vector2(690.0, 350.0)
+const SCRIPTED_SPEED := 155.0
+const INTERACTION_DISTANCE := 105.0
+const NEXT_SCENE_PATH := "res://scenes/Scene2.tscn"
+const SCENE_TRANSITION_DELAY := 2.5
+const SCENE_FADE_DURATION := 0.45
+
+@onready var player: CharacterActor = $YSortedCharacters/Player
+@onready var emperor: CharacterActor = $YSortedCharacters/Emperor
+@onready var attendant: CharacterActor = $YSortedCharacters/Attendant
+@onready var dialogue_panel: Control = $UI/Overlay/DialoguePanel
+@onready var dialogue_text: Label = $UI/Overlay/DialoguePanel/DialogueText
+@onready var continue_button: BaseButton = $UI/Overlay/DialoguePanel/ContinueButton
+@onready var interaction_button: BaseButton = $UI/Overlay/InteractionButton
+@onready var interaction_text: Label = $UI/Overlay/InteractionButton/Text
+@onready var task_text: Label = $UI/Overlay/TaskPanel/TaskText
+@onready var transition_timer: Timer = $SceneTransitionTimer
+@onready var transition_fade: ColorRect = $UI/Overlay/TransitionFade
+
+var story_state := StoryState.OPENING_REPORTS
+var opening_index := 0
+var audience_index := 0
+var transition_started := false
+
+
+func _ready() -> void:
+	continue_button.pressed.connect(_on_continue_pressed)
+	interaction_button.pressed.connect(_on_interaction_pressed)
+	transition_timer.timeout.connect(_start_scene_transition)
+	transition_timer.wait_time = SCENE_TRANSITION_DELAY
+	interaction_button.hide()
+	player.controls_enabled = true
+	_set_task("阅看岭南急报")
+	_show_dialogue(OPENING_REPORTS[opening_index])
+
+
+func _process(delta: float) -> void:
+	match story_state:
+		StoryState.ATTENDANT_WALKS_OUT:
+			if _move_actor(attendant, ATTENDANT_OUTSIDE_TARGET, delta):
+				story_state = StoryState.WAIT_TALK
+		StoryState.WAIT_TALK:
+			_update_interaction_prompt(attendant, "对话")
+		StoryState.GO_TO_EMPEROR:
+			_move_actor(attendant, ATTENDANT_INSIDE_TARGET, delta)
+			_update_interaction_prompt(emperor, "觐见")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed("interact"):
+		return
+	if event is InputEventKey and event.echo:
+		return
+
+	get_viewport().set_input_as_handled()
+	if dialogue_panel.visible:
+		_on_continue_pressed()
+	elif interaction_button.visible:
+		_on_interaction_pressed()
+
+
+func _move_actor(actor: CharacterActor, target: Vector2, delta: float) -> bool:
+	var distance := actor.global_position.distance_to(target)
+	if distance <= 3.0:
+		actor.global_position = target
+		actor.set_move_direction(Vector2.ZERO)
+		return true
+	var direction := actor.global_position.direction_to(target)
+	actor.global_position = actor.global_position.move_toward(target, SCRIPTED_SPEED * delta)
+	actor.set_move_direction(direction)
+	return false
+
+
+func _update_interaction_prompt(target: Node2D, prompt: String) -> void:
+	if player.global_position.distance_to(target.global_position) <= INTERACTION_DISTANCE:
+		_show_interaction(prompt)
+	else:
+		interaction_button.hide()
+
+
+func _on_continue_pressed() -> void:
+	match story_state:
+		StoryState.OPENING_REPORTS:
+			opening_index += 1
+			if opening_index < OPENING_REPORTS.size():
+				_show_dialogue(OPENING_REPORTS[opening_index])
+			else:
+				_hide_dialogue()
+				story_state = StoryState.ATTENDANT_WALKS_OUT
+				_set_task("听取内侍传召")
+		StoryState.SUMMON_DIALOGUE:
+			_hide_dialogue()
+			story_state = StoryState.GO_TO_EMPEROR
+			_set_task("奉诏入殿")
+		StoryState.AUDIENCE_DIALOGUE:
+			audience_index += 1
+			if audience_index < AUDIENCE_LINES.size():
+				_show_dialogue(AUDIENCE_LINES[audience_index])
+			else:
+				story_state = StoryState.IMPERIAL_EDICT
+				_show_dialogue("【圣旨·原型占位】\n命水师主帅总领岭南海防，筹建水师、剿除海寇、收复海岛、重开万国贡路。")
+		StoryState.IMPERIAL_EDICT:
+			story_state = StoryState.COMPLETE
+			_set_task("领旨南下")
+			_show_dialogue("【旁白】\n水师主帅领旨南下。场景一完成。")
+			_set_continue_text("立即启程")
+			transition_timer.start()
+		StoryState.COMPLETE:
+			_start_scene_transition()
+
+
+func _on_interaction_pressed() -> void:
+	interaction_button.hide()
+	match story_state:
+		StoryState.WAIT_TALK:
+			story_state = StoryState.SUMMON_DIALOGUE
+			_show_dialogue("【太监·士兵素材占位】\n伏波大将军，陛下有旨，宣您即刻入殿觐见。")
+		StoryState.GO_TO_EMPEROR:
+			story_state = StoryState.AUDIENCE_DIALOGUE
+			audience_index = 0
+			_set_task("聆听圣谕")
+			_show_dialogue(AUDIENCE_LINES[audience_index])
+
+
+func _show_dialogue(text: String) -> void:
+	dialogue_text.text = text
+	_set_continue_text("继续")
+	dialogue_panel.show()
+
+
+func _hide_dialogue() -> void:
+	dialogue_panel.hide()
+
+
+func _show_interaction(text: String) -> void:
+	interaction_text.text = text
+	interaction_button.show()
+
+
+func _set_continue_text(text: String) -> void:
+	var label := continue_button.get_node_or_null("Text") as Label
+	if label != null:
+		label.text = text
+
+
+func _set_task(text: String) -> void:
+	task_text.text = "当前任务：" + text
+
+
+func _start_scene_transition() -> void:
+	if transition_started:
+		return
+	transition_started = true
+	transition_timer.stop()
+	player.controls_enabled = false
+	continue_button.disabled = true
+	interaction_button.hide()
+	var fade_tween := create_tween()
+	fade_tween.tween_property(transition_fade, "modulate:a", 1.0, SCENE_FADE_DURATION)
+	fade_tween.tween_callback(_change_to_scene_two)
+
+
+func _change_to_scene_two() -> void:
+	var change_result := get_tree().change_scene_to_file(NEXT_SCENE_PATH)
+	if change_result == OK:
+		return
+
+	transition_started = false
+	player.controls_enabled = true
+	continue_button.disabled = false
+	transition_fade.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_show_dialogue("【提示】\n南疆场景加载失败，请重试启程。")
+	_set_continue_text("重试启程")

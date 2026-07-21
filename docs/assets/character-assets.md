@@ -27,3 +27,10 @@
 - `protagonist`：水师主帅。
 - `magistrate`：皇帝占位，按用户要求暂代。
 - `soldier`：太监占位；正式太监素材到位后只替换角色资源，不改剧情流程。
+
+## 场景一对话立绘
+
+- `assets/characters/protagonist/picture.png`：600×600 水师主帅半身立绘。
+- `assets/characters/soldier/picture.png`：600×600 士兵半身立绘，场景一暂用于内侍对白。
+- 皇帝暂不使用人物图片，以暗红金边“帝”字卡作为对话占位符。
+- 立绘使用透明背景、保持宽高比缩放；不得拉伸到改变人物比例。

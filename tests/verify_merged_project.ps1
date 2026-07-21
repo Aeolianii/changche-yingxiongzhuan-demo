@@ -24,7 +24,7 @@ function Assert-Contains {
         [string]$Pattern,
         [string]$Message
     )
-    if ($Content -notmatch $Pattern) {
+    if (-not [regex]::IsMatch($Content, $Pattern)) {
         Add-Failure $Message
     }
 }
@@ -81,7 +81,9 @@ $requiredFiles = @(
     'scenes\palace\palace_demo.tscn',
     'scenes\Scene2.tscn',
     'scripts\palace_demo.gd',
-    'scripts\Scene2.cs'
+    'scripts\Scene2.cs',
+    'assets\characters\soldier\picture.png',
+    'assets\characters\protagonist\picture.png'
 )
 
 foreach ($requiredFile in $requiredFiles) {
@@ -108,6 +110,13 @@ if (Test-Path -LiteralPath $sceneOneScript -PathType Leaf) {
     Assert-Contains $sceneOneContent 'if change_result == OK:' 'Scene1 must inspect the scene change result.'
     Assert-Contains $sceneOneContent 'continue_button\.disabled = false' 'Scene1 must restore the continue button after a failed scene change.'
     Assert-Contains $sceneOneContent 'transition_fade\.modulate = Color\([^\r\n]+\)[\s\S]*_show_dialogue\("[^"]+"\)[\s\S]*_set_continue_text\("[^"]+"\)' 'Scene1 must explain a failed Scene2 load and allow retry.'
+    Assert-Contains $sceneOneContent 'SOLDIER_PORTRAIT\s*:=\s*preload\("res://assets/characters/soldier/picture\.png"\)' 'Scene1 must preload the soldier dialogue portrait.'
+    Assert-Contains $sceneOneContent 'GENERAL_PORTRAIT\s*:=\s*preload\("res://assets/characters/protagonist/picture\.png"\)' 'Scene1 must preload the general dialogue portrait.'
+    Assert-Contains $sceneOneContent 'func _show_character_dialogue\(' 'Scene1 must distinguish character dialogue from narration.'
+    Assert-Contains $sceneOneContent '_show_character_dialogue\("\u4F0F\u6CE2\u5927\u5C06\u519B[^\r\n]+"\s*,\s*"\u5185\u4F8D"\s*,\s*SOLDIER_PORTRAIT\s*,\s*false' 'The attendant summon must use the soldier portrait on the right.'
+    Assert-Contains $sceneOneContent '_show_character_dialogue\([^\r\n]+"\u7687\u5E1D"\s*,\s*null\s*,\s*false\s*,\s*"\u5E1D"' 'The emperor dialogue must use the right-side placeholder.'
+    Assert-Contains $sceneOneContent '_show_character_dialogue\([^\r\n]+"\u6C34\u5E08\u4E3B\u5E05"\s*,\s*GENERAL_PORTRAIT\s*,\s*true' 'The general reply must use the general portrait on the left.'
+    Assert-Contains $sceneOneContent 'func _show_dialogue\([^\)]*\)[\s\S]*?_hide_portrait\(\)[\s\S]*?dialogue_panel\.show\(\)' 'Narration must hide any previous character portrait.'
 }
 
 $sceneOneFile = Join-Path $projectRoot 'scenes\palace\palace_demo.tscn'
@@ -115,6 +124,10 @@ if (Test-Path -LiteralPath $sceneOneFile -PathType Leaf) {
     $sceneOneScene = [System.IO.File]::ReadAllText($sceneOneFile)
     Assert-Contains $sceneOneScene '\[node name="SceneTransitionTimer" type="Timer" parent="\."' 'Scene1 must contain a one-shot transition timer.'
     Assert-Contains $sceneOneScene '\[node name="TransitionFade" type="ColorRect" parent="UI/Overlay"' 'Scene1 must contain a full-screen transition fade.'
+    Assert-Contains $sceneOneScene '\[node name="PortraitDisplay" type="Control" parent="UI/Overlay"' 'Scene1 must contain a reusable portrait display.'
+    Assert-Contains $sceneOneScene '\[node name="PortraitImage" type="TextureRect" parent="UI/Overlay/PortraitDisplay"' 'Scene1 must contain a portrait texture node.'
+    Assert-Contains $sceneOneScene '\[node name="PlaceholderFrame" type="ColorRect" parent="UI/Overlay/PortraitDisplay"' 'Scene1 must contain an emperor placeholder card.'
+    Assert-Contains $sceneOneScene '\[node name="NameText" type="Label" parent="UI/Overlay/PortraitDisplay/NamePlate"' 'Scene1 must contain a portrait name plate.'
 }
 
 Test-SceneResourceReferences 'scenes\palace\palace_demo.tscn'

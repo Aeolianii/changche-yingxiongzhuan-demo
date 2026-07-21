@@ -1,6 +1,6 @@
 # CHG-20260721 Scene1 对话人物立绘
 
-- Status: approved
+- Status: done
 - Type: feature
 - Owner: Codex
 - Created: 2026-07-21
@@ -28,13 +28,13 @@
 
 ## Acceptance checks
 
-- [ ] 两张 600×600 `picture.png` 均能被 Godot 导入并由场景一加载。
-- [ ] 内侍传召时右侧显示士兵立绘，名牌显示“内侍”。
-- [ ] 皇帝宣旨时右侧显示“帝”字占位卡，名牌显示“皇帝”。
-- [ ] 水师主帅回复时左侧显示将军立绘，名牌显示“水师主帅”。
-- [ ] 开场旁白、圣旨、完成旁白和错误提示均隐藏立绘及名牌。
-- [ ] 关闭对话后立绘不会残留。
-- [ ] 原有空格推进、鼠标点击和场景一至场景二切换测试继续通过。
+- [x] 两张 600×600 `picture.png` 均能被 Godot 导入并由场景一加载。
+- [x] 内侍传召时右侧显示士兵立绘，名牌显示“内侍”。
+- [x] 皇帝宣旨时右侧显示“帝”字占位卡，名牌显示“皇帝”。
+- [x] 水师主帅回复时左侧显示将军立绘，名牌显示“水师主帅”。
+- [x] 开场旁白、圣旨、完成旁白和错误提示均隐藏立绘及名牌。
+- [x] 关闭对话后立绘不会残留。
+- [x] 原有空格推进、鼠标点击和场景一至场景二切换测试继续通过。
 
 ## Documentation impact
 
@@ -48,10 +48,11 @@
 
 ## Verification evidence
 
-- Automated: not run
-- Manual/in-engine: not run
+- Automated RED: `tests/verify_merged_project.ps1` 在实现前按预期报告 11 项缺失立绘契约；`tests/test_scene_portraits.gd` 报告立绘节点不完整并以 exit 1 结束。
+- Automated GREEN: Godot .NET 4.7.1 素材导入 exit 0；静态合并测试通过；立绘运行态测试通过；场景切换运行态测试通过；Scene1 120 帧启动冒烟测试 exit 0；`dotnet build` 为 0 warning / 0 error。
+- Manual/in-engine: 使用 1344×896 OpenGL Compatibility 实际渲染内侍、皇帝和水师主帅画面；两张正式长对白均完整换行，立绘、名牌、正文和继续按钮没有互相遮挡。
 
 ## Final reconciliation
 
-- Files changed: pending
-- Documented limitations/follow-ups: 正式皇帝立绘仍待补充。
+- Files changed: 两张 `assets/characters/*/picture.png`、`scenes/palace/palace_demo.tscn`、`scripts/palace_demo.gd`、静态与运行态测试，以及本变更涉及的设计、素材、架构和 QA 文档。
+- Documented limitations/follow-ups: 正式皇帝立绘仍待补充；场景世界中的皇帝和内侍小人继续沿用既有占位素材。

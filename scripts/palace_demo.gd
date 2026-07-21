@@ -18,10 +18,12 @@ const OPENING_REPORTS := [
 ]
 
 const AUDIENCE_LINES := [
-	"【皇帝】\n朕数次调北军南下，北人不习水战、不识星象潮汐、不辨岛礁暗滩，数次巡洋皆未安南海。望卿为朕重整岭南海防、剿灭海盗、收复海岛、重开万国贡路。",
-	"【水师主帅】\n臣领旨！定当筑水师、固海防、清海寇、复海岛、安万民、通贡路！海疆不平，臣绝不北归！",
+	"朕数次调北军南下，北人不习水战、不识星象潮汐、不辨岛礁暗滩，数次巡洋皆未安南海。望卿为朕重整岭南海防、剿灭海盗、收复海岛、重开万国贡路。",
+	"臣领旨！定当筑水师、固海防、清海寇、复海岛、安万民、通贡路！海疆不平，臣绝不北归！",
 ]
 
+const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
+const GENERAL_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
 const ATTENDANT_OUTSIDE_TARGET := Vector2(710.0, 832.0)
 const ATTENDANT_INSIDE_TARGET := Vector2(690.0, 350.0)
 const SCRIPTED_SPEED := 155.0
@@ -36,6 +38,11 @@ const SCENE_FADE_DURATION := 0.45
 @onready var dialogue_panel: Control = $UI/Overlay/DialoguePanel
 @onready var dialogue_text: Label = $UI/Overlay/DialoguePanel/DialogueText
 @onready var continue_button: BaseButton = $UI/Overlay/DialoguePanel/ContinueButton
+@onready var portrait_display: Control = $UI/Overlay/PortraitDisplay
+@onready var portrait_image: TextureRect = $UI/Overlay/PortraitDisplay/PortraitImage
+@onready var portrait_placeholder: ColorRect = $UI/Overlay/PortraitDisplay/PlaceholderFrame
+@onready var portrait_placeholder_text: Label = $UI/Overlay/PortraitDisplay/PlaceholderFrame/PlaceholderInner/PlaceholderText
+@onready var portrait_name_text: Label = $UI/Overlay/PortraitDisplay/NamePlate/NameText
 @onready var interaction_button: BaseButton = $UI/Overlay/InteractionButton
 @onready var interaction_text: Label = $UI/Overlay/InteractionButton/Text
 @onready var task_text: Label = $UI/Overlay/TaskPanel/TaskText
@@ -120,7 +127,7 @@ func _on_continue_pressed() -> void:
 		StoryState.AUDIENCE_DIALOGUE:
 			audience_index += 1
 			if audience_index < AUDIENCE_LINES.size():
-				_show_dialogue(AUDIENCE_LINES[audience_index])
+				_show_audience_dialogue()
 			else:
 				story_state = StoryState.IMPERIAL_EDICT
 				_show_dialogue("【圣旨·原型占位】\n命水师主帅总领岭南海防，筹建水师、剿除海寇、收复海岛、重开万国贡路。")
@@ -139,22 +146,72 @@ func _on_interaction_pressed() -> void:
 	match story_state:
 		StoryState.WAIT_TALK:
 			story_state = StoryState.SUMMON_DIALOGUE
-			_show_dialogue("【太监·士兵素材占位】\n伏波大将军，陛下有旨，宣您即刻入殿觐见。")
+			_show_character_dialogue("伏波大将军，陛下有旨，宣您即刻入殿觐见。", "内侍", SOLDIER_PORTRAIT, false)
 		StoryState.GO_TO_EMPEROR:
 			story_state = StoryState.AUDIENCE_DIALOGUE
 			audience_index = 0
 			_set_task("聆听圣谕")
-			_show_dialogue(AUDIENCE_LINES[audience_index])
+			_show_audience_dialogue()
+
+
+func _show_audience_dialogue() -> void:
+	if audience_index == 0:
+		_show_character_dialogue(AUDIENCE_LINES[audience_index], "皇帝", null, false, "帝")
+	else:
+		_show_character_dialogue(AUDIENCE_LINES[audience_index], "水师主帅", GENERAL_PORTRAIT, true)
 
 
 func _show_dialogue(text: String) -> void:
 	dialogue_text.text = text
 	_set_continue_text("继续")
+	_hide_portrait()
 	dialogue_panel.show()
+
+
+func _show_character_dialogue(text: String, speaker: String, portrait_texture: Texture2D, portrait_on_left: bool, placeholder_text: String = "") -> void:
+	dialogue_text.text = text
+	_set_continue_text("继续")
+	_show_portrait(speaker, portrait_texture, portrait_on_left, placeholder_text)
+	dialogue_panel.show()
+
+
+func _show_portrait(speaker: String, portrait_texture: Texture2D, portrait_on_left: bool, placeholder_text: String) -> void:
+	_set_portrait_side(portrait_on_left)
+	portrait_name_text.text = speaker
+
+	if portrait_texture != null:
+		portrait_image.texture = portrait_texture
+		portrait_image.show()
+		portrait_placeholder.hide()
+	else:
+		portrait_image.texture = null
+		portrait_image.hide()
+		portrait_placeholder_text.text = placeholder_text
+		portrait_placeholder.show()
+
+	portrait_display.show()
+
+
+func _set_portrait_side(portrait_on_left: bool) -> void:
+	portrait_display.anchor_left = 0.0 if portrait_on_left else 1.0
+	portrait_display.anchor_right = portrait_display.anchor_left
+	if portrait_on_left:
+		portrait_display.offset_left = 18.0
+		portrait_display.offset_right = 458.0
+	else:
+		portrait_display.offset_left = -458.0
+		portrait_display.offset_right = -18.0
+
+
+func _hide_portrait() -> void:
+	portrait_display.hide()
+	portrait_image.hide()
+	portrait_placeholder.hide()
 
 
 func _hide_dialogue() -> void:
 	dialogue_panel.hide()
+	_hide_portrait()
 
 
 func _show_interaction(text: String) -> void:

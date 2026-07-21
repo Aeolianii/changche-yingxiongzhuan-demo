@@ -74,7 +74,100 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
+[node name="PortraitDisplay" type="Control" parent="UI/Overlay"]
+visible = false
+z_index = 1
+layout_mode = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = -500.0
+offset_right = 458.0
+offset_bottom = -8.0
+mouse_filter = 2
+
+[node name="PortraitImage" type="TextureRect" parent="UI/Overlay/PortraitDisplay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 8.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PlaceholderFrame" type="ColorRect" parent="UI/Overlay/PortraitDisplay"]
+layout_mode = 1
+anchor_left = 0.16
+anchor_top = 0.12
+anchor_right = 0.84
+anchor_bottom = 0.88
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.84313726, 0.6627451, 0.29411766, 1)
+
+[node name="PlaceholderInner" type="ColorRect" parent="UI/Overlay/PortraitDisplay/PlaceholderFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.24313726, 0.06666667, 0.05490196, 0.96)
+
+[node name="PlaceholderText" type="Label" parent="UI/Overlay/PortraitDisplay/PlaceholderFrame/PlaceholderInner"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.8901961, 0.627451, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.7)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 104
+text = "帝"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NamePlate" type="ColorRect" parent="UI/Overlay/PortraitDisplay"]
+layout_mode = 1
+anchor_left = 0.18
+anchor_top = 1.0
+anchor_right = 0.82
+anchor_bottom = 1.0
+offset_top = -62.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.14117648, 0.105882354, 0.105882354, 0.94)
+
+[node name="NameText" type="Label" parent="UI/Overlay/PortraitDisplay/NamePlate"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.9137255, 0.70980394, 1)
+theme_override_font_sizes/font_size = 24
+text = "水师主帅"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="DialoguePanel" type="TextureRect" parent="UI/Overlay" unique_id=356744853]
+z_index = 2
 layout_mode = 0
 anchor_left = 0.5
 anchor_top = 1.0

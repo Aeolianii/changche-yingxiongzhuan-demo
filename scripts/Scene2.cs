@@ -7,6 +7,7 @@ public partial class Scene2 : Node2D
 {
     private const float PlayerSpeed = 210f;
     private const string AssetRoot = "res://assest";
+    private const string DialogueBackgroundPath = "res://assest/Paper UI/PNGs/Backgrounds/BackgroundBar.png";
 
     private CharacterBody2D _player = default!;
     private AnimatedSprite2D _playerSprite = default!;
@@ -651,17 +652,15 @@ public partial class Scene2 : Node2D
 
     private void ApplyDialoguePanelStyles()
     {
-        var paperStyle = new StyleBoxFlat
+        var paperStyle = new StyleBoxTexture
         {
-            BgColor = new Color(0.9f, 0.85f, 0.67f, 0.96f),
-            BorderColor = new Color(0.42f, 0.27f, 0.14f, 0.92f),
-            BorderWidthLeft = 5,
-            BorderWidthRight = 5,
-            BorderWidthTop = 5,
-            BorderWidthBottom = 5,
-            ShadowColor = new Color(0, 0, 0, 0.32f),
-            ShadowSize = 8,
-            ShadowOffset = new Vector2(0, -2)
+            Texture = GD.Load<Texture2D>(DialogueBackgroundPath),
+            ContentMarginLeft = 5,
+            ContentMarginRight = 5,
+            ContentMarginTop = 5,
+            ContentMarginBottom = 5,
+            AxisStretchHorizontal = StyleBoxTexture.AxisStretchMode.Stretch,
+            AxisStretchVertical = StyleBoxTexture.AxisStretchMode.Stretch
         };
         _paperPanel.AddThemeStyleboxOverride("panel", paperStyle);
 

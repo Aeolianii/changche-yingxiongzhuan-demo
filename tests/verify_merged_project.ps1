@@ -83,7 +83,8 @@ $requiredFiles = @(
     'scripts\palace_demo.gd',
     'scripts\Scene2.cs',
     'assets\characters\soldier\picture.png',
-    'assets\characters\protagonist\picture.png'
+    'assets\characters\protagonist\picture.png',
+    'assest\Paper UI\PNGs\Backgrounds\BackgroundBar.png'
 )
 
 foreach ($requiredFile in $requiredFiles) {
@@ -117,6 +118,16 @@ if (Test-Path -LiteralPath $sceneOneScript -PathType Leaf) {
     Assert-Contains $sceneOneContent '_show_character_dialogue\([^\r\n]+"\u7687\u5E1D"\s*,\s*null\s*,\s*false\s*,\s*"\u5E1D"' 'The emperor dialogue must use the right-side placeholder.'
     Assert-Contains $sceneOneContent '_show_character_dialogue\([^\r\n]+"\u6C34\u5E08\u4E3B\u5E05"\s*,\s*GENERAL_PORTRAIT\s*,\s*true' 'The general reply must use the general portrait on the left.'
     Assert-Contains $sceneOneContent 'func _show_dialogue\([^\)]*\)[\s\S]*?_hide_portrait\(\)[\s\S]*?dialogue_panel\.show\(\)' 'Narration must hide any previous character portrait.'
+}
+
+$sceneTwoScript = Join-Path $projectRoot 'scripts\Scene2.cs'
+if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
+    $sceneTwoContent = [System.IO.File]::ReadAllText($sceneTwoScript)
+    Assert-Contains $sceneTwoContent 'res://assest/Paper UI/PNGs/Backgrounds/BackgroundBar\.png' 'Scene2 must use BackgroundBar.png as its dialogue background.'
+    Assert-Contains $sceneTwoContent 'new StyleBoxTexture' 'Scene2 must render its dialogue background through a texture style.'
+    if ([regex]::IsMatch($sceneTwoContent, 'BgColor\s*=\s*new Color\(0\.9f,\s*0\.85f,\s*0\.67f')) {
+        Add-Failure 'Scene2 must not retain the old beige dialogue background style.'
+    }
 }
 
 $sceneOneFile = Join-Path $projectRoot 'scenes\palace\palace_demo.tscn'

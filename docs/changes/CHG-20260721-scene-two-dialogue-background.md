@@ -1,6 +1,6 @@
 # CHG-20260721 Scene2 对话底板替换
 
-- Status: approved
+- Status: done
 - Type: content
 - Owner: Codex
 - Created: 2026-07-21
@@ -25,12 +25,12 @@
 
 ## Acceptance checks
 
-- [ ] 场景二对话底板实际使用 `BackgroundBar.png`，不再绘制原米黄色 `StyleBoxFlat`。
-- [ ] 底板仍占据 `x=0..1344`、`y=706..896`，正文和选项布局不变。
-- [ ] 左右立绘的位置、大小和切换逻辑不变。
-- [ ] 黑色长条、人物名牌和选项按钮样式不变。
-- [ ] 县令 NPC 对话与场景二主线对话均正常显示。
-- [ ] 场景一至场景二自动切换继续通过。
+- [x] 场景二对话底板实际使用 `BackgroundBar.png`，不再绘制原米黄色 `StyleBoxFlat`。
+- [x] 底板仍占据 `x=0..1344`、`y=706..896`，正文和选项布局不变。
+- [x] 左右立绘的位置、大小和切换逻辑不变。
+- [x] 黑色长条、人物名牌和选项按钮样式不变。
+- [x] 县令 NPC 对话与场景二主线对话均正常显示。
+- [x] 场景一至场景二自动切换继续通过。
 
 ## Documentation impact
 
@@ -44,10 +44,11 @@
 
 ## Verification evidence
 
-- Automated: not run
-- Manual/in-engine: not run
+- Automated RED: 静态测试在实现前报告目标图片路径、`StyleBoxTexture` 和旧米黄色样式共 3 项失败；Scene2 运行态测试确认对话容器仍为 `StyleBoxFlat` 并以 exit 1 结束。
+- Automated GREEN: Godot .NET 4.7.1 导入 exit 0；静态合并测试、Scene2 对话底板运行态测试、Scene1 立绘测试和跨场景切换测试全部通过；Scene2 120 帧启动冒烟测试 exit 0；`dotnet build` 为 0 warning / 0 error。
+- Manual/in-engine: 使用 1344×896 OpenGL Compatibility 实际渲染 Scene2 对话画面，确认 `BackgroundBar.png` 的透明边缘、纸张缺口和描边正常，立绘、黑色名牌、正文和继续按钮保持既有位置。
 
 ## Final reconciliation
 
-- Files changed: pending
+- Files changed: `scripts/Scene2.cs`、`tests/verify_merged_project.ps1`、`tests/test_scene_two_dialogue_background.gd` 及本变更涉及的设计、架构和 QA 文档。
 - Documented limitations/follow-ups: 整图横向拉伸是本次已接受的视觉取舍。

@@ -46,6 +46,15 @@ func _verify_background(paper_panel: PanelContainer) -> void:
 		_expect(texture_style.texture != null, "Scene2 dialogue background texture is missing.")
 		if texture_style.texture != null:
 			_expect(texture_style.texture.resource_path == BACKGROUND_PATH, "Scene2 dialogue panel uses the wrong background texture.")
+			_expect(texture_style.texture.get_size().is_equal_approx(Vector2(512.0, 144.0)), "Scene2 dialogue background must use the cropped 512x144 texture.")
+			var image := texture_style.texture.get_image()
+			_expect(image != null and not image.is_empty(), "Scene2 dialogue background image data is unavailable.")
+			if image != null and not image.is_empty():
+				for corner in [Vector2i(0, 0), Vector2i(511, 0), Vector2i(0, 143), Vector2i(511, 143)]:
+					_expect(image.get_pixelv(corner).a < 0.05, "Dialogue background outside the dark border must be transparent.")
+				_expect(image.get_pixel(256, 72).a > 0.95, "Dialogue paper interior must remain opaque.")
+				_expect(image.get_pixel(200, 4).a > 0.95, "Dialogue dark border must remain opaque.")
+		_expect(texture_style.region_rect == Rect2(), "Cropped dialogue background must stretch as a whole without a second crop.")
 		_expect(is_equal_approx(texture_style.content_margin_left, 5.0), "Dialogue left content margin changed.")
 		_expect(is_equal_approx(texture_style.content_margin_right, 5.0), "Dialogue right content margin changed.")
 		_expect(is_equal_approx(texture_style.content_margin_top, 5.0), "Dialogue top content margin changed.")

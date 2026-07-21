@@ -30,7 +30,7 @@
 | 皇帝占位立绘 | 进入皇帝对白 | 查看对话框右侧 | 显示暗红金边“帝”字占位卡，名牌为“皇帝” | passed / portrait runtime + render capture |
 | 主帅立绘 | 推进至主帅回复 | 查看对话框左侧 | 显示将军 `picture.png`，名牌为“水师主帅” | passed / portrait runtime + render capture |
 | 无角色文本 | 查看旁白、圣旨和错误提示 | 推进或触发文本 | 立绘及名牌隐藏，不残留上一位说话者 | passed / portrait runtime test |
-| Scene2 对话底板 | 与县令或士兵开始对话 | 查看底部对话区域 | `BackgroundBar.png` 覆盖完整底部；黑框外透出游戏背景、框内纸张不透明，且其他 UI 布局不变 | pending / alpha revision |
+| Scene2 对话底板 | 与县令或士兵开始对话 | 查看底部对话区域 | `BackgroundBar.png` 覆盖完整底部；黑框外透出游戏背景、框内纸张不透明，且其他 UI 布局不变 | passed / alpha render 1 |
 
 ## 手动觐见与任务指引验收
 
@@ -76,6 +76,7 @@
 | 2026-07-20 / combined run 1 | Codex | 两个项目合并后，资源重新分配唯一 UID；Scene1、Scene2 和两条切换路径均无运行错误 | Godot .NET 4.7.1 headless 导入/启动日志、自动切换测试 | 交付用户试玩 |
 | 2026-07-21 / portrait run 1 | Codex | Scene1 内侍、皇帝与主帅立绘按对白和左右站位切换，正式长对白没有溢出 | 1344×896 三角色渲染截图、立绘运行态测试、完整串联回归 | 等待正式皇帝立绘 |
 | 2026-07-21 / Scene2 UI run 1 | Codex | Scene2 米黄色程序底板已替换为 `BackgroundBar.png`，其他对话 UI 布局未变化 | 1344×896 渲染截图、节点布局断言、完整串联回归 | 交付用户试玩 |
+| 2026-07-21 / Scene2 UI alpha render 1 | Codex | 黑框外侧白底已透明化，甲板和水面能从上缘、左侧尖角及右上凹口透出，框内纸张保持不透明 | 1344×896 OpenGL 截图、PNG Alpha 取样、Scene2 运行态测试与完整串联回归 | 交付用户试玩 |
 
 ## Known issues
 

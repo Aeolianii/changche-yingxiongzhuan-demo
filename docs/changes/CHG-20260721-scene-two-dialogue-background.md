@@ -1,6 +1,6 @@
 # CHG-20260721 Scene2 对话底板替换
 
-- Status: done
+- Status: approved
 - Type: content
 - Owner: Codex
 - Created: 2026-07-21
@@ -12,7 +12,7 @@
 ## Scope
 
 - 场景二全宽对话底板使用 `res://assest/Paper UI/PNGs/Backgrounds/BackgroundBar.png`。
-- 图片直接铺满现有 `1344×190` 对话底板区域，接受由 592×224 原图产生的横向拉伸。
+- 裁取图片中不透明纸张的有效区域 `Rect2(43, 32, 506, 138)`，排除原图四周透明留白，再铺满现有 `1344×190` 对话底板区域。
 - 保留现有 `FullWidthPaperDialogueBox` 尺寸、层级和所有子节点。
 - 保留四周黑色长条、人物名牌、立绘、占位立绘、正文、继续按钮和选项 UI 的位置与尺寸。
 
@@ -20,12 +20,13 @@
 
 - 不调整立绘位置、裁切方式或尺寸。
 - 不修改对话正文、选项内容、按钮样式和交互逻辑。
-- 不采用九宫格、切片拼接或重新绘制背景素材。
+- 不采用九宫格、切片拼接或重新绘制背景素材；只使用纹理区域裁剪。
 - 不修改场景一对话框。
 
 ## Acceptance checks
 
 - [x] 场景二对话底板实际使用 `BackgroundBar.png`，不再绘制原米黄色 `StyleBoxFlat`。
+- [ ] 可见纸张边框覆盖完整的 `x=0..1344`、`y=706..896` 底部区域，不再因透明留白缩在中间。
 - [x] 底板仍占据 `x=0..1344`、`y=706..896`，正文和选项布局不变。
 - [x] 左右立绘的位置、大小和切换逻辑不变。
 - [x] 黑色长条、人物名牌和选项按钮样式不变。
@@ -40,15 +41,16 @@
 ## Implementation notes
 
 - Likely files/modules: `scripts/Scene2.cs`, `tests/test_scene_two_dialogue_background.gd`, `tests/verify_merged_project.ps1`
-- Constraints and risks: 原图与目标区域宽高比不同，方案 A 明确允许整体拉伸；必须保留现有容器内容边距，避免正文产生数像素位移。
+- Constraints and risks: 原图与目标区域宽高比不同，方案 A 明确允许裁去透明留白后整体拉伸；必须保留现有容器内容边距，避免正文产生数像素位移。
 
 ## Verification evidence
 
 - Automated RED: 静态测试在实现前报告目标图片路径、`StyleBoxTexture` 和旧米黄色样式共 3 项失败；Scene2 运行态测试确认对话容器仍为 `StyleBoxFlat` 并以 exit 1 结束。
 - Automated GREEN: Godot .NET 4.7.1 导入 exit 0；静态合并测试、Scene2 对话底板运行态测试、Scene1 立绘测试和跨场景切换测试全部通过；Scene2 120 帧启动冒烟测试 exit 0；`dotnet build` 为 0 warning / 0 error。
 - Manual/in-engine: 使用 1344×896 OpenGL Compatibility 实际渲染 Scene2 对话画面，确认 `BackgroundBar.png` 的透明边缘、纸张缺口和描边正常，立绘、黑色名牌、正文和继续按钮保持既有位置。
+- Revision pending: 用户截图显示原图透明留白也被拉伸，导致可见纸张没有覆盖整个底部；有效区域边界已测量为 `Rect2(43, 32, 506, 138)`，修正尚待验证。
 
 ## Final reconciliation
 
-- Files changed: `scripts/Scene2.cs`、`tests/verify_merged_project.ps1`、`tests/test_scene_two_dialogue_background.gd` 及本变更涉及的设计、架构和 QA 文档。
-- Documented limitations/follow-ups: 整图横向拉伸是本次已接受的视觉取舍。
+- Files changed: pending revision reconciliation
+- Documented limitations/follow-ups: 裁去透明留白后的横向拉伸是本次已接受的视觉取舍。

@@ -30,7 +30,7 @@
 | 皇帝占位立绘 | 进入皇帝对白 | 查看对话框右侧 | 显示暗红金边“帝”字占位卡，名牌为“皇帝” | passed / portrait runtime + render capture |
 | 主帅立绘 | 推进至主帅回复 | 查看对话框左侧 | 显示将军 `picture.png`，名牌为“水师主帅” | passed / portrait runtime + render capture |
 | 无角色文本 | 查看旁白、圣旨和错误提示 | 推进或触发文本 | 立绘及名牌隐藏，不残留上一位说话者 | passed / portrait runtime test |
-| Scene2 对话底板 | 与县令或士兵开始对话 | 查看底部对话区域 | 使用 `BackgroundBar.png`，且立绘、黑色长条、名牌、正文和选项布局不变 | passed / runtime layout test + render capture |
+| Scene2 对话底板 | 与县令或士兵开始对话 | 查看底部对话区域 | 可见 `BackgroundBar.png` 覆盖完整底部，且立绘、黑色长条、名牌、正文和选项布局不变 | pending / full-coverage revision |
 
 ## 手动觐见与任务指引验收
 

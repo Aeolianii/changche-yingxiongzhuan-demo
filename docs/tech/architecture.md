@@ -13,6 +13,8 @@
 
 `Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操练覆盖层。
 
+Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容器，但其 `panel` 样式直接使用 Paper UI 的 `BackgroundBar.png` 纹理；纹理样式保留原有内容边距，因此只改变底板绘制，不改变容器树和交互节点。
+
 角色为 `CharacterBody2D`，脚底小矩形碰撞，`AnimatedSprite2D` 使用独立帧构建 `SpriteFrames`。主角负责输入和相机目标，NPC 复用同一角色动画接口。
 
 ## Data flow
@@ -50,6 +52,7 @@
 - 不从生成图片自动识别碰撞，不使用程序生成地形边界。
 - 装饰物不碰撞；只有建筑、墙体、栏杆、水体和世界边缘阻挡玩家。
 - 宫殿室内外在同一坐标平面；门洞通过手工碰撞缺口表达，不增加高度变量。
+- Scene2 对话底板固定为 1344×190；更换底板不得改变立绘、名牌、正文和选项节点的现有布局。
 
 ## Persistence
 

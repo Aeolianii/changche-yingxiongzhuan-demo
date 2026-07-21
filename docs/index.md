@@ -10,6 +10,7 @@
 
 - [Vision](product/vision.md)
 - [MVP](product/mvp.md)
+- [Project plan](product/project-plan.md)
 - [Core loop](design/core-loop.md)
 - [Palace scene](design/palace-scene.md)
 - [Scene flow](design/scene-flow.md)

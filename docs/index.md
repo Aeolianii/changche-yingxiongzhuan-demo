@@ -15,6 +15,7 @@
 - [Palace scene](design/palace-scene.md)
 - [Scene flow](design/scene-flow.md)
 - [Art direction](design/art-direction.md)
+- [Art asset requirements (Word)](assets/厂东英雄传-美术素材需求书.docx)
 - [Character assets](assets/character-assets.md)
 - [Generated backgrounds](assets/generated-backgrounds.md)
 - [Architecture](tech/architecture.md)

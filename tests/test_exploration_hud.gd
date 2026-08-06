@@ -61,7 +61,10 @@ func _verify_component_contract() -> void:
 
 	hud.call("set_exploration_visible", true)
 	_expect(hud.visible, "Exploration HUD did not become visible through its public interface.")
+	var player_status := hud.get_node("PlayerStatus") as Control
+	_expect(player_status.size == Vector2(495, 192), "Player status must be enlarged by 50 percent.")
 	_expect(hud.get_node_or_null("PlayerStatus/PortraitFrame/ProtagonistPortrait") != null, "Player portrait is missing.")
+	_expect(hud.get_node_or_null("PlayerStatus/StatusSeal") == null, "Player status must not display the lower-right status seal.")
 	var status_frame := hud.get_node("PlayerStatus/GeneratedStatusFrame") as TextureRect
 	_expect(status_frame.texture != null and status_frame.texture.resource_path.ends_with("player_status_frame.png"), "Player status must use the generated ink-wash frame.")
 	_expect(hud.get_node_or_null("QuestTracker/MainQuest/CharacterPlaceholder") != null, "Main quest character placeholder is missing.")
@@ -74,7 +77,7 @@ func _verify_component_contract() -> void:
 	for entry_path in ["QuestTracker/MainQuest", "QuestTracker/SideQuest"]:
 		var entry := hud.get_node(entry_path) as Panel
 		var entry_style := entry.get_theme_stylebox("panel") as StyleBoxFlat
-		_expect(entry_style != null and is_zero_approx(entry_style.bg_color.a), "%s must use a transparent card background." % entry_path)
+		_expect(entry_style != null and is_equal_approx(entry_style.bg_color.a, 1.0), "%s must use an opaque gray card background." % entry_path)
 
 	for button_name in ["MenuButton", "InventoryButton", "ShipButton", "CharacterButton"]:
 		var button := hud.find_child(button_name, true, false) as Button
@@ -90,6 +93,8 @@ func _verify_component_contract() -> void:
 	for slot in action_row.get_children():
 		var function_texture := slot.get_node("GeneratedFunctionTexture") as TextureRect
 		_expect(function_texture.texture != null and function_texture.texture.resource_path.ends_with("function_button.png"), "%s must use the generated ink-wash button frame." % slot.name)
+		var function_symbol := slot.get_node("Symbol") as Label
+		_expect(function_symbol.position.y >= 22.0, "%s symbol must be lowered into the button center." % slot.name)
 
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	if menu_button != null:
@@ -115,6 +120,9 @@ func _verify_component_contract() -> void:
 		_expect(continue_button.get_theme_font_size("font_size") == 21, "System menu button font size must remain 21.")
 		_expect(continue_button.get_theme_stylebox("hover") is StyleBoxEmpty, "System menu buttons must not add a hover highlight.")
 		_expect(continue_button.get_theme_color("font_hover_color") == continue_button.get_theme_color("font_color"), "System menu button text color must not change on hover.")
+		for entry_slot in system_menu.get_node("SystemPanel/MenuEntries").get_children():
+			var entry_symbol := entry_slot.get_node("EntrySymbol") as Label
+			_expect(entry_symbol.position.x <= 24.0, "%s badge symbol must move left into the generated diamond center." % entry_slot.name)
 		_expect(hud.find_child("TutorialButton", true, false) == null, "System menu must not include a tutorial button.")
 		var exit_button := hud.find_child("ExitGameButton", true, false) as Button
 		_expect(exit_button != null and not exit_button.pressed.get_connections().is_empty(), "ExitGameButton must have a quit action connected.")

@@ -58,7 +58,7 @@ func _build_status_panel() -> void:
 	var status := Control.new()
 	status.name = "PlayerStatus"
 	status.position = Vector2(22, 18)
-	status.size = Vector2(330, 128)
+	status.size = Vector2(495, 192)
 	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(status)
 
@@ -74,8 +74,8 @@ func _build_status_panel() -> void:
 
 	var portrait_frame := Panel.new()
 	portrait_frame.name = "PortraitFrame"
-	portrait_frame.position = Vector2(10, 10)
-	portrait_frame.size = Vector2(94, 94)
+	portrait_frame.position = Vector2(15, 15)
+	portrait_frame.size = Vector2(141, 141)
 	portrait_frame.clip_contents = true
 	portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	portrait_frame.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
@@ -85,7 +85,7 @@ func _build_status_panel() -> void:
 	portrait.name = "ProtagonistPortrait"
 	portrait.texture = PROTAGONIST_PORTRAIT
 	portrait.polygon = PackedVector2Array([
-		Vector2(47, 1), Vector2(93, 47), Vector2(47, 93), Vector2(1, 47)
+		Vector2(70.5, 1.5), Vector2(139.5, 70.5), Vector2(70.5, 139.5), Vector2(1.5, 70.5)
 	])
 	var portrait_size := PROTAGONIST_PORTRAIT.get_size()
 	portrait.uv = PackedVector2Array([
@@ -99,42 +99,29 @@ func _build_status_panel() -> void:
 
 	var name_panel := Panel.new()
 	name_panel.name = "NamePlate"
-	name_panel.position = Vector2(92, 20)
-	name_panel.size = Vector2(224, 72)
+	name_panel.position = Vector2(138, 30)
+	name_panel.size = Vector2(336, 108)
 	name_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	status.add_child(name_panel)
 
 	var name_label := _make_label("水师主帅", 23, TEXT_LIGHT)
 	name_label.name = "PlayerName"
-	name_label.position = Vector2(24, 8)
-	name_label.size = Vector2(185, 32)
+	name_label.position = Vector2(36, 12)
+	name_label.size = Vector2(278, 40)
 	name_panel.add_child(name_label)
 
 	var subtitle := _make_label("伏波将军 · 南疆水师", 15, TEXT_MUTED)
 	subtitle.name = "PlayerTitle"
-	subtitle.position = Vector2(25, 39)
-	subtitle.size = Vector2(185, 24)
+	subtitle.position = Vector2(37, 58)
+	subtitle.size = Vector2(278, 36)
 	name_panel.add_child(subtitle)
-
-	var seal := Label.new()
-	seal.name = "StatusSeal"
-	seal.position = Vector2(292, 76)
-	seal.size = Vector2(34, 34)
-	seal.text = "帅"
-	seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	seal.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	seal.add_theme_font_size_override("font_size", 17)
-	seal.add_theme_color_override("font_color", Color(0.98, 0.91, 0.75, 1.0))
-	seal.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	seal.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	status.add_child(seal)
 
 
 func _build_task_tracker() -> void:
 	var tracker := Panel.new()
 	tracker.name = "QuestTracker"
-	tracker.position = Vector2(24, 174)
+	tracker.position = Vector2(24, 224)
 	tracker.size = Vector2(286, 270)
 	tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tracker.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
@@ -175,12 +162,12 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 	entry.position = at
 	entry.size = Vector2(258, 88)
 	entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var transparent_style := StyleBoxFlat.new()
-	transparent_style.bg_color = Color(0, 0, 0, 0)
-	transparent_style.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.38)
-	transparent_style.set_border_width_all(1)
-	transparent_style.set_corner_radius_all(3)
-	entry.add_theme_stylebox_override("panel", transparent_style)
+	var entry_style := StyleBoxFlat.new()
+	entry_style.bg_color = Color(0.16, 0.17, 0.17, 1.0)
+	entry_style.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.55)
+	entry_style.set_border_width_all(1)
+	entry_style.set_corner_radius_all(3)
+	entry.add_theme_stylebox_override("panel", entry_style)
 	parent.add_child(entry)
 
 	var accent := ColorRect.new()
@@ -270,7 +257,7 @@ func _build_function_button(parent: HBoxContainer, action_name: String, symbol: 
 
 	var icon := _make_label(symbol, 28, TEXT_LIGHT)
 	icon.name = "Symbol"
-	icon.position = Vector2(24, 14)
+	icon.position = Vector2(24, 22)
 	icon.size = Vector2(58, 48)
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -434,7 +421,7 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol
 
 	var icon := _make_label(symbol, 20, TEXT_LIGHT)
 	icon.name = "EntrySymbol"
-	icon.position = Vector2(34, 15)
+	icon.position = Vector2(24, 15)
 	icon.size = Vector2(46, 46)
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

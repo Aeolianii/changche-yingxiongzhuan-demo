@@ -107,14 +107,14 @@ func _build_status_panel() -> void:
 
 	var name_label := _make_label("水师元帅", 23, Color(0.12, 0.13, 0.105, 1.0))
 	name_label.name = "PlayerName"
-	name_label.position = Vector2(36, 0)
+	name_label.position = Vector2(36, 8)
 	name_label.size = Vector2(278, 34)
 	name_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
 	name_panel.add_child(name_label)
 
 	var subtitle := _make_label("伏波将军 · 南疆水师", 15, Color(0.28, 0.29, 0.25, 1.0))
 	subtitle.name = "PlayerTitle"
-	subtitle.position = Vector2(37, 34)
+	subtitle.position = Vector2(37, 40)
 	subtitle.size = Vector2(278, 28)
 	subtitle.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
 	name_panel.add_child(subtitle)
@@ -131,8 +131,8 @@ func _build_task_tracker() -> void:
 
 	var tracker_background := Panel.new()
 	tracker_background.name = "TrackerBackground"
-	tracker_background.position = Vector2(14, 42)
-	tracker_background.size = Vector2(258, 218)
+	tracker_background.position = Vector2(14, 28)
+	tracker_background.size = Vector2(258, 236)
 	tracker_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var tracker_background_style := StyleBoxFlat.new()
 	tracker_background_style.bg_color = Color(0.16, 0.17, 0.17, 1.0)
@@ -178,9 +178,10 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 	entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var entry_style := StyleBoxFlat.new()
 	entry_style.bg_color = Color(0, 0, 0, 0)
-	entry_style.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.55)
-	entry_style.set_border_width_all(1)
-	entry_style.set_corner_radius_all(3)
+	entry_style.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.42)
+	entry_style.set_border_width_all(0)
+	if is_main:
+		entry_style.set_border_width(SIDE_BOTTOM, 1)
 	entry.add_theme_stylebox_override("panel", entry_style)
 	parent.add_child(entry)
 
@@ -343,8 +344,8 @@ func _build_system_menu() -> void:
 
 	var generated_frame := TextureRect.new()
 	generated_frame.name = "GeneratedFrame"
-	generated_frame.position = Vector2(-60, -40)
-	generated_frame.size = Vector2(570, 720)
+	generated_frame.position = Vector2(-80, -60)
+	generated_frame.size = Vector2(610, 780)
 	generated_frame.texture = SYSTEM_MENU_FRAME
 	generated_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	generated_frame.stretch_mode = TextureRect.STRETCH_SCALE
@@ -354,7 +355,7 @@ func _build_system_menu() -> void:
 
 	var title := _make_label("系  统", 25, Color(0.12, 0.13, 0.105, 1.0))
 	title.name = "MenuTitle"
-	title.position = Vector2(102, -38)
+	title.position = Vector2(102, -52)
 	title.size = Vector2(246, 56)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -362,7 +363,7 @@ func _build_system_menu() -> void:
 
 	var close_slot := Control.new()
 	close_slot.name = "CloseButtonOrnament"
-	close_slot.position = Vector2(389, -24)
+	close_slot.position = Vector2(409, -28)
 	close_slot.size = Vector2(82, 82)
 	close_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(close_slot)

@@ -69,7 +69,9 @@ func _verify_component_contract() -> void:
 	_expect(hud.get_node_or_null("PlayerStatus/StatusSeal") == null, "Player status must not display the lower-right status seal.")
 	var name_plate := hud.get_node("PlayerStatus/NamePlate") as Control
 	_expect(name_plate.position.y >= 60.0, "Player title block must sit inside the generated paper frame.")
-	_expect((name_plate.get_node("PlayerName") as Label).text == "水师元帅", "Player heading must use 水师元帅.")
+	var player_heading := name_plate.get_node("PlayerName") as Label
+	_expect(player_heading.text == "水师元帅", "Player heading must use 水师元帅.")
+	_expect(player_heading.position.y >= 8.0, "Player heading must move down inside the paper frame.")
 	_expect((name_plate.get_node("PlayerTitle") as Label).text == "伏波将军 · 南疆水师", "Player subtitle is incorrect.")
 	var status_frame := hud.get_node("PlayerStatus/GeneratedStatusFrame") as TextureRect
 	_expect(status_frame.texture != null and status_frame.texture.resource_path.ends_with("player_status_frame.png"), "Player status must use the generated ink-wash frame.")
@@ -81,6 +83,7 @@ func _verify_component_contract() -> void:
 	var tracker_background := quest_tracker.get_node("TrackerBackground") as Panel
 	var tracker_background_style := tracker_background.get_theme_stylebox("panel") as StyleBoxFlat
 	_expect(tracker_background_style != null and is_equal_approx(tracker_background_style.bg_color.a, 1.0), "Quest tracker center must use one opaque gray background.")
+	_expect(tracker_background.position.y <= 28.0, "Quest tracker background must continue behind the title plaque without a world-background gap.")
 	var quest_title := quest_tracker.get_node("TitleRibbon/QuestTitle") as Label
 	_expect(quest_title.get_parent().position.y <= -2.0 and quest_title.vertical_alignment == VERTICAL_ALIGNMENT_CENTER, "Quest title must move up into the generated plaque center.")
 	var quest_frame := hud.get_node("QuestTracker/GeneratedQuestFrame") as TextureRect
@@ -89,6 +92,11 @@ func _verify_component_contract() -> void:
 		var entry := hud.get_node(entry_path) as Panel
 		var entry_style := entry.get_theme_stylebox("panel") as StyleBoxFlat
 		_expect(entry_style != null and is_zero_approx(entry_style.bg_color.a), "%s must remain transparent over the shared tracker background." % entry_path)
+		_expect(entry_style.get_border_width(SIDE_LEFT) == 0 and entry_style.get_border_width(SIDE_TOP) == 0 and entry_style.get_border_width(SIDE_RIGHT) == 0, "%s must not draw a full rectangular outline." % entry_path)
+	var main_entry_style := (hud.get_node("QuestTracker/MainQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat
+	var side_entry_style := (hud.get_node("QuestTracker/SideQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat
+	_expect(main_entry_style.get_border_width(SIDE_BOTTOM) == 1, "Main quest must keep one lightweight divider.")
+	_expect(side_entry_style.get_border_width(SIDE_BOTTOM) == 0, "Side quest must not add a redundant bottom card border.")
 
 	for button_name in ["MenuButton", "InventoryButton", "ShipButton", "CharacterButton"]:
 		var button := hud.find_child(button_name, true, false) as Button
@@ -117,6 +125,7 @@ func _verify_component_contract() -> void:
 		_expect(blur.material is ShaderMaterial, "System menu must blur the captured background with a shader material.")
 		var generated_frame := system_menu.get_node("SystemPanel/GeneratedFrame") as TextureRect
 		_expect(generated_frame.texture != null and generated_frame.texture.resource_path.ends_with("system_menu_frame.png"), "System menu must use the generated frame texture.")
+		_expect(generated_frame.size.x >= 610.0 and generated_frame.size.y >= 780.0, "System menu frame must be enlarged around the spaced entries.")
 		var generated_close := system_menu.get_node("SystemPanel/CloseButtonOrnament/GeneratedCloseTexture") as TextureRect
 		_expect(generated_close.texture != null and generated_close.texture.resource_path.ends_with("close_button.png"), "System menu must use the generated close-button texture.")
 		var menu_title := system_menu.get_node("SystemPanel/MenuTitle") as Label
@@ -129,6 +138,11 @@ func _verify_component_contract() -> void:
 		var menu_entries := system_menu.get_node("SystemPanel/MenuEntries") as VBoxContainer
 		_expect(menu_entries.get_theme_constant("separation") >= 29, "System menu entries need enough spacing to prevent diamond overlap.")
 		_expect(menu_entries.position.y <= 60.0, "System menu entries must remain inside the generated frame after spacing increases.")
+		var last_slot := menu_entries.get_child(menu_entries.get_child_count() - 1) as Control
+		var last_texture := last_slot.get_node("GeneratedButtonTexture") as TextureRect
+		var last_texture_bottom := menu_entries.position.y + last_slot.position.y + last_texture.position.y + last_texture.size.y
+		var frame_bottom := generated_frame.position.y + generated_frame.size.y
+		_expect(last_texture_bottom <= frame_bottom - 20.0, "Bottom system-menu button must keep visible clearance above the enlarged frame border.")
 		var continue_button := hud.find_child("ContinueGameButton", true, false) as Button
 		_expect(continue_button.size.y >= 68.0, "System menu click targets must match the second expanded button height.")
 		_expect(continue_button.get_theme_font_size("font_size") == 21, "System menu button font size must remain 21.")

@@ -1,13 +1,15 @@
 extends Control
 
 const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
+const EXPLORATION_STATUS_FRAME := preload("res://assets/ui/exploration_hud/player_status_frame.png")
+const EXPLORATION_QUEST_FRAME := preload("res://assets/ui/exploration_hud/quest_tracker_frame.png")
+const EXPLORATION_FUNCTION_BUTTON := preload("res://assets/ui/exploration_hud/function_button.png")
 const MENU_BLUR_SHADER := preload("res://shaders/menu_blur.gdshader")
 const SYSTEM_MENU_FRAME := preload("res://assets/ui/system_menu/system_menu_frame.png")
 const SYSTEM_MENU_BUTTON := preload("res://assets/ui/system_menu/menu_button.png")
 const SYSTEM_MENU_CLOSE := preload("res://assets/ui/system_menu/close_button.png")
 
 const INK := Color(0.055, 0.073, 0.075, 0.96)
-const INK_SOFT := Color(0.075, 0.105, 0.108, 0.9)
 const PAPER := Color(0.83, 0.77, 0.61, 0.96)
 const PAPER_DARK := Color(0.55, 0.48, 0.34, 0.96)
 const GOLD := Color(0.73, 0.59, 0.32, 1.0)
@@ -60,21 +62,15 @@ func _build_status_panel() -> void:
 	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(status)
 
-	var shadow := Polygon2D.new()
-	shadow.polygon = PackedVector2Array([
-		Vector2(57, 3), Vector2(116, 62), Vector2(57, 121), Vector2(-2, 62)
-	])
-	shadow.position = Vector2(4, 5)
-	shadow.color = Color(0.0, 0.0, 0.0, 0.55)
-	status.add_child(shadow)
-
-	var diamond := Polygon2D.new()
-	diamond.name = "PortraitDiamond"
-	diamond.polygon = PackedVector2Array([
-		Vector2(57, 0), Vector2(114, 57), Vector2(57, 114), Vector2(0, 57)
-	])
-	diamond.color = GOLD
-	status.add_child(diamond)
+	var generated_frame := TextureRect.new()
+	generated_frame.name = "GeneratedStatusFrame"
+	generated_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	generated_frame.texture = EXPLORATION_STATUS_FRAME
+	generated_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	generated_frame.stretch_mode = TextureRect.STRETCH_SCALE
+	generated_frame.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	generated_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	status.add_child(generated_frame)
 
 	var portrait_frame := Panel.new()
 	portrait_frame.name = "PortraitFrame"
@@ -82,18 +78,23 @@ func _build_status_panel() -> void:
 	portrait_frame.size = Vector2(94, 94)
 	portrait_frame.clip_contents = true
 	portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait_frame.add_theme_stylebox_override("panel", _panel_style(INK, GOLD_BRIGHT, 2, 5))
+	portrait_frame.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	status.add_child(portrait_frame)
 
-	var portrait := TextureRect.new()
+	var portrait := Polygon2D.new()
 	portrait.name = "ProtagonistPortrait"
-	portrait.position = Vector2(4, 4)
-	portrait.size = Vector2(86, 86)
 	portrait.texture = PROTAGONIST_PORTRAIT
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	portrait.polygon = PackedVector2Array([
+		Vector2(47, 1), Vector2(93, 47), Vector2(47, 93), Vector2(1, 47)
+	])
+	var portrait_size := PROTAGONIST_PORTRAIT.get_size()
+	portrait.uv = PackedVector2Array([
+		Vector2(portrait_size.x * 0.5, 0),
+		Vector2(portrait_size.x, portrait_size.y * 0.5),
+		Vector2(portrait_size.x * 0.5, portrait_size.y),
+		Vector2(0, portrait_size.y * 0.5),
+	])
 	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	portrait_frame.add_child(portrait)
 
 	var name_panel := Panel.new()
@@ -101,7 +102,7 @@ func _build_status_panel() -> void:
 	name_panel.position = Vector2(92, 20)
 	name_panel.size = Vector2(224, 72)
 	name_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_panel.add_theme_stylebox_override("panel", _panel_style(INK, GOLD, 2, 6))
+	name_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	status.add_child(name_panel)
 
 	var name_label := _make_label("水师主帅", 23, TEXT_LIGHT)
@@ -124,8 +125,8 @@ func _build_status_panel() -> void:
 	seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	seal.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	seal.add_theme_font_size_override("font_size", 17)
-	seal.add_theme_color_override("font_color", GOLD_BRIGHT)
-	seal.add_theme_stylebox_override("normal", _panel_style(Color(0.25, 0.06, 0.045, 0.96), GOLD, 1, 2))
+	seal.add_theme_color_override("font_color", Color(0.98, 0.91, 0.75, 1.0))
+	seal.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	seal.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	status.add_child(seal)
 
@@ -136,21 +137,32 @@ func _build_task_tracker() -> void:
 	tracker.position = Vector2(24, 174)
 	tracker.size = Vector2(286, 270)
 	tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tracker.add_theme_stylebox_override("panel", _panel_style(Color(0.045, 0.065, 0.065, 0.42), Color(0.51, 0.43, 0.27, 0.72), 2, 5))
+	tracker.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(tracker)
+
+	var generated_frame := TextureRect.new()
+	generated_frame.name = "GeneratedQuestFrame"
+	generated_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	generated_frame.texture = EXPLORATION_QUEST_FRAME
+	generated_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	generated_frame.stretch_mode = TextureRect.STRETCH_SCALE
+	generated_frame.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	generated_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tracker.add_child(generated_frame)
 
 	var title_ribbon := Panel.new()
 	title_ribbon.name = "TitleRibbon"
-	title_ribbon.position = Vector2(-5, 10)
-	title_ribbon.size = Vector2(296, 44)
+	title_ribbon.position = Vector2(0, 6)
+	title_ribbon.size = Vector2(286, 44)
 	title_ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	title_ribbon.add_theme_stylebox_override("panel", _panel_style(INK, GOLD, 2, 3))
+	title_ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	tracker.add_child(title_ribbon)
 
-	var title := _make_label("◆  任 务", 21, TEXT_LIGHT)
+	var title := _make_label("任 务", 21, TEXT_LIGHT)
 	title.name = "QuestTitle"
-	title.position = Vector2(16, 2)
-	title.size = Vector2(244, 38)
+	title.position = Vector2(0, 1)
+	title.size = Vector2(286, 38)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_ribbon.add_child(title)
 
 	_build_quest_entry(tracker, "MainQuest", Vector2(14, 64), "主线", "帅", Color(0.38, 0.12, 0.08, 1.0), true)
@@ -245,23 +257,16 @@ func _build_function_button(parent: HBoxContainer, action_name: String, symbol: 
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(slot)
 
-	var shadow := Polygon2D.new()
-	shadow.position = Vector2(4, 5)
-	shadow.polygon = _diamond_points(Vector2(53, 42), 42)
-	shadow.color = Color(0, 0, 0, 0.58)
-	slot.add_child(shadow)
-
-	var outer := Polygon2D.new()
-	outer.name = "OuterDiamond"
-	outer.polygon = _diamond_points(Vector2(53, 42), 42)
-	outer.color = GOLD
-	slot.add_child(outer)
-
-	var inner := Polygon2D.new()
-	inner.name = "InnerDiamond"
-	inner.polygon = _diamond_points(Vector2(53, 42), 36)
-	inner.color = INK_SOFT
-	slot.add_child(inner)
+	var generated_texture := TextureRect.new()
+	generated_texture.name = "GeneratedFunctionTexture"
+	generated_texture.position = Vector2(6, -2)
+	generated_texture.size = Vector2(94, 94)
+	generated_texture.texture = EXPLORATION_FUNCTION_BUTTON
+	generated_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	generated_texture.stretch_mode = TextureRect.STRETCH_SCALE
+	generated_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	generated_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(generated_texture)
 
 	var icon := _make_label(symbol, 28, TEXT_LIGHT)
 	icon.name = "Symbol"
@@ -287,7 +292,7 @@ func _build_function_button(parent: HBoxContainer, action_name: String, symbol: 
 	button.tooltip_text = action_name
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	button.add_theme_stylebox_override("hover", _panel_style(Color(0.84, 0.67, 0.31, 0.14), Color(0, 0, 0, 0), 0, 7))
+	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	button.add_theme_stylebox_override("pressed", _panel_style(Color(0.84, 0.67, 0.31, 0.27), Color(0, 0, 0, 0), 0, 7))
 	if action_name == "菜单":
 		button.pressed.connect(_open_system_menu)
@@ -557,12 +562,3 @@ func _panel_style(background: Color, border: Color, border_width: int, radius: i
 	style.shadow_size = 5
 	style.shadow_offset = Vector2(2, 3)
 	return style
-
-
-func _diamond_points(center: Vector2, radius: float) -> PackedVector2Array:
-	return PackedVector2Array([
-		center + Vector2(0, -radius),
-		center + Vector2(radius, 0),
-		center + Vector2(0, radius),
-		center + Vector2(-radius, 0),
-	])

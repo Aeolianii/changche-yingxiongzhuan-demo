@@ -34,6 +34,8 @@ func _verify_generated_assets() -> void:
 		"res://assets/ui/system_menu/system_menu_frame.png",
 		"res://assets/ui/system_menu/menu_button.png",
 		"res://assets/ui/system_menu/close_button.png",
+		"res://assets/ui/exploration_hud/player_status_frame.png",
+		"res://assets/ui/exploration_hud/function_button.png",
 	]:
 		var texture := load(asset_path) as Texture2D
 		var image := texture.get_image() if texture != null else null
@@ -42,6 +44,13 @@ func _verify_generated_assets() -> void:
 			continue
 		_expect(image.get_pixel(0, 0).a < 0.05, "%s must have a transparent corner." % asset_path)
 		_expect(image.get_pixel(image.get_width() / 2, image.get_height() / 2).a > 0.95, "%s must keep an opaque component center." % asset_path)
+
+	var quest_texture := load("res://assets/ui/exploration_hud/quest_tracker_frame.png") as Texture2D
+	var quest_image := quest_texture.get_image() if quest_texture != null else null
+	_expect(quest_image != null and not quest_image.is_empty(), "Generated quest frame could not be loaded.")
+	if quest_image != null and not quest_image.is_empty():
+		_expect(quest_image.get_pixel(0, 0).a < 0.05, "Generated quest frame must have a transparent corner.")
+		_expect(quest_image.get_pixel(quest_image.get_width() / 2, quest_image.get_height() / 2).a < 0.05, "Generated quest frame must keep its center transparent.")
 
 
 func _verify_component_contract() -> void:
@@ -53,12 +62,15 @@ func _verify_component_contract() -> void:
 	hud.call("set_exploration_visible", true)
 	_expect(hud.visible, "Exploration HUD did not become visible through its public interface.")
 	_expect(hud.get_node_or_null("PlayerStatus/PortraitFrame/ProtagonistPortrait") != null, "Player portrait is missing.")
+	var status_frame := hud.get_node("PlayerStatus/GeneratedStatusFrame") as TextureRect
+	_expect(status_frame.texture != null and status_frame.texture.resource_path.ends_with("player_status_frame.png"), "Player status must use the generated ink-wash frame.")
 	_expect(hud.get_node_or_null("QuestTracker/MainQuest/CharacterPlaceholder") != null, "Main quest character placeholder is missing.")
 	_expect(hud.get_node_or_null("QuestTracker/SideQuest/CharacterPlaceholder") != null, "Side quest character placeholder is missing.")
 	var quest_tracker := hud.get_node("QuestTracker") as Control
 	_expect(quest_tracker.size.x <= 286.0 and quest_tracker.size.y <= 270.0, "Quest tracker must keep its compact footprint.")
-	var tracker_style := quest_tracker.get_theme_stylebox("panel") as StyleBoxFlat
-	_expect(tracker_style != null and tracker_style.bg_color.a <= 0.5, "Quest tracker body must remain lightly transparent.")
+	_expect(quest_tracker.get_theme_stylebox("panel") is StyleBoxEmpty, "Quest tracker body must remain fully transparent.")
+	var quest_frame := hud.get_node("QuestTracker/GeneratedQuestFrame") as TextureRect
+	_expect(quest_frame.texture != null and quest_frame.texture.resource_path.ends_with("quest_tracker_frame.png"), "Quest tracker must use the generated ink-wash frame.")
 	for entry_path in ["QuestTracker/MainQuest", "QuestTracker/SideQuest"]:
 		var entry := hud.get_node(entry_path) as Panel
 		var entry_style := entry.get_theme_stylebox("panel") as StyleBoxFlat
@@ -75,6 +87,9 @@ func _verify_component_contract() -> void:
 		and action_row.get_child(3).name == "MenuButtonSlot",
 		"Function buttons must end with MenuButton on the far right."
 	)
+	for slot in action_row.get_children():
+		var function_texture := slot.get_node("GeneratedFunctionTexture") as TextureRect
+		_expect(function_texture.texture != null and function_texture.texture.resource_path.ends_with("function_button.png"), "%s must use the generated ink-wash button frame." % slot.name)
 
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	if menu_button != null:

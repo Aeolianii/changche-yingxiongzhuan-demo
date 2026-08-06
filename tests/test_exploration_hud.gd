@@ -75,8 +75,8 @@ func _verify_component_contract() -> void:
 	_expect((name_plate.get_node("PlayerTitle") as Label).text == "伏波将军 · 南疆水师", "Player subtitle is incorrect.")
 	var status_frame := hud.get_node("PlayerStatus/GeneratedStatusFrame") as TextureRect
 	_expect(status_frame.texture != null and status_frame.texture.resource_path.ends_with("player_status_frame.png"), "Player status must use the generated ink-wash frame.")
-	_expect(hud.get_node_or_null("QuestTracker/MainQuest/CharacterPlaceholder") != null, "Main quest character placeholder is missing.")
-	_expect(hud.get_node_or_null("QuestTracker/SideQuest/CharacterPlaceholder") != null, "Side quest character placeholder is missing.")
+	_expect(hud.get_node_or_null("QuestTracker/MainQuest/CharacterPlaceholder") == null, "Main quest must not display a character badge.")
+	_expect(hud.get_node_or_null("QuestTracker/SideQuest/CharacterPlaceholder") == null, "Side quest must not display a character badge.")
 	var quest_tracker := hud.get_node("QuestTracker") as Control
 	_expect(quest_tracker.size.x <= 286.0 and quest_tracker.size.y <= 270.0, "Quest tracker must keep its compact footprint.")
 	_expect(quest_tracker.get_theme_stylebox("panel") is StyleBoxEmpty, "Quest tracker body must remain fully transparent.")
@@ -90,6 +90,9 @@ func _verify_component_contract() -> void:
 		var entry_style := entry.get_theme_stylebox("panel") as StyleBoxFlat
 		_expect(entry_style != null and is_zero_approx(entry_style.bg_color.a), "%s must remain transparent over the shared tracker background." % entry_path)
 		_expect(entry_style.get_border_width(SIDE_LEFT) == 0 and entry_style.get_border_width(SIDE_TOP) == 0 and entry_style.get_border_width(SIDE_RIGHT) == 0, "%s must not draw a full rectangular outline." % entry_path)
+		_expect((entry.get_node("QuestType") as Label).position.x <= 18.0, "%s category must use the space released by the removed badge." % entry_path)
+		_expect((entry.get_node("TaskName") as Label).position.x <= 19.0, "%s task name must align with the category text." % entry_path)
+		_expect((entry.get_node("Objective") as Label).position.x <= 19.0, "%s objective must align with the task name." % entry_path)
 	var main_entry_style := (hud.get_node("QuestTracker/MainQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat
 	var side_entry_style := (hud.get_node("QuestTracker/SideQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat
 	_expect(main_entry_style.get_border_width(SIDE_BOTTOM) == 1, "Main quest must keep one lightweight divider.")

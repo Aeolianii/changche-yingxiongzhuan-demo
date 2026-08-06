@@ -38,7 +38,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 | `scenes/characters/` | Player 和 NPC 可复用场景 |
 | `scenes/palace/` | 皇宫可玩场景和手工碰撞 |
 | `scripts/` | 移动、动画、交互与 UI 行为 |
-| `assest/` | 场景二现有素材；保留历史拼写以避免大范围资源路径变更 |
+| `assets/` | 统一管理背景、角色、UI 与场景素材 |
 | `shaders/` | 场景二水面等视觉效果着色器 |
 | `tests/` | 合并项目静态验收与资源引用检查 |
 

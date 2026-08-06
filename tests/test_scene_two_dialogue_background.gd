@@ -1,7 +1,7 @@
 extends SceneTree
 
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
-const BACKGROUND_PATH := "res://assest/Paper UI/PNGs/Backgrounds/BackgroundBar.png"
+const BACKGROUND_PATH := "res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar.png"
 
 var failures: Array[String] = []
 

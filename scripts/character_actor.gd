@@ -42,7 +42,7 @@ func _build_sprite_frames() -> SpriteFrames:
 			frames.add_animation(animation_name)
 			frames.set_animation_loop(animation_name, true)
 			frames.set_animation_speed(animation_name, 4.0 if state == "idle" else 8.0)
-			var folder := "res://assets/characters/%s/%s/%s" % [character_key, state, direction]
+			var folder := "res://assets/characters/%s/standard/%s/%s" % [character_key, state, direction]
 			var files := _sorted_png_files(folder)
 			for file_name in files:
 				var texture := load("%s/%s" % [folder, file_name]) as Texture2D

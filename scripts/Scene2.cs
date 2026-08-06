@@ -6,8 +6,8 @@ using Godot;
 public partial class Scene2 : Node2D
 {
     private const float PlayerSpeed = 210f;
-    private const string AssetRoot = "res://assest";
-    private const string DialogueBackgroundPath = "res://assest/Paper UI/PNGs/Backgrounds/BackgroundBar.png";
+    private const string AssetRoot = "res://assets/characters";
+    private const string DialogueBackgroundPath = "res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar.png";
 
     private CharacterBody2D _player = default!;
     private AnimatedSprite2D _playerSprite = default!;
@@ -240,16 +240,16 @@ public partial class Scene2 : Node2D
             new Vector2(1154, 430)
         });
 
-        var leftGuard = AddStandingActor("MagistrateLeftGuard", $"{AssetRoot}/new_soldier", new Vector2(560, 600), "right", 1.15f, new Color(1, 1, 1, 0.98f));
-        RegisterInteractable(leftGuard, "左侧护卫", "兵", FindImageInAssetDirectory($"{AssetRoot}/new_soldier", "picture.png"), false, "封侯非我意，但愿海波平。");
+        var leftGuard = AddStandingActor("MagistrateLeftGuard", $"{AssetRoot}/soldier", new Vector2(560, 600), "right", 1.15f, new Color(1, 1, 1, 0.98f));
+        RegisterInteractable(leftGuard, "左侧护卫", "兵", FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png"), false, "封侯非我意，但愿海波平。");
 
-        var rightGuard = AddStandingActor("MagistrateRightGuard", $"{AssetRoot}/new_soldier", new Vector2(784, 600), "left", 1.15f, new Color(1, 1, 1, 0.98f));
-        RegisterInteractable(rightGuard, "右侧护卫", "兵", FindImageInAssetDirectory($"{AssetRoot}/new_soldier", "picture.png"), false, "遥知夷岛微茫外，未敢忘危负岁华。");
+        var rightGuard = AddStandingActor("MagistrateRightGuard", $"{AssetRoot}/soldier", new Vector2(784, 600), "left", 1.15f, new Color(1, 1, 1, 0.98f));
+        RegisterInteractable(rightGuard, "右侧护卫", "兵", FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png"), false, "遥知夷岛微茫外，未敢忘危负岁华。");
     }
 
     private Node2D AddPatrolGuard(string name, string initialDirection, Vector2[] patrolPoints)
     {
-        Node2D actor = AddStandingActor(name, $"{AssetRoot}/new_soldier", patrolPoints[0], initialDirection, 1.15f, new Color(1, 1, 1, 0.98f));
+        Node2D actor = AddStandingActor(name, $"{AssetRoot}/soldier", patrolPoints[0], initialDirection, 1.15f, new Color(1, 1, 1, 0.98f));
         var sprite = actor.GetNode<AnimatedSprite2D>("Sprite");
         sprite.Play($"walk_{initialDirection}");
 
@@ -371,21 +371,21 @@ public partial class Scene2 : Node2D
         for (int i = 0; i < positions.Length; i++)
         {
             string facing = positions[i].X < 672 ? "right" : "left";
-            AddStandingActor($"Soldier{i + 1}", $"{AssetRoot}/new_soldier", positions[i], facing, 1.15f, new Color(1, 1, 1, 0.98f));
+            AddStandingActor($"Soldier{i + 1}", $"{AssetRoot}/soldier", positions[i], facing, 1.15f, new Color(1, 1, 1, 0.98f));
         }
     }
 
     private void AddMagistrate()
     {
-        string magistrateDir = FindAssetDirectory("new_county magistrate");
+        string magistrateDir = FindAssetDirectory("magistrate");
         var magistrate = AddStandingActor("GuangzhouCountyMagistrate", magistrateDir, new Vector2(672, 585), "down", 1.25f, Colors.White);
         RegisterInteractable(magistrate, "广州县令", "县", FindImageInAssetDirectory(magistrateDir, "picture.png"), true, "先天下之忧而忧，后天下之乐而乐。");
     }
 
     private void AddCommander()
     {
-        var commander = AddStandingActor("FleetCommander", $"{AssetRoot}/new_soldier", new Vector2(672, 425), "down", 1.35f, new Color(0.9f, 1f, 1f));
-        RegisterInteractable(commander, "中军士兵", "兵", FindImageInAssetDirectory($"{AssetRoot}/new_soldier", "picture.png"), false, "将军找我何事？");
+        var commander = AddStandingActor("FleetCommander", $"{AssetRoot}/soldier", new Vector2(672, 425), "down", 1.35f, new Color(0.9f, 1f, 1f));
+        RegisterInteractable(commander, "中军士兵", "兵", FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png"), false, "将军找我何事？");
     }
 
     private Node2D AddStandingActor(string name, string assetDir, Vector2 position, string direction, float scale, Color modulate)
@@ -952,7 +952,7 @@ public partial class Scene2 : Node2D
         bool isMagistrate = _storyDialogues[_dialogueIndex].Speaker == "广州县令";
         _portraitLabel.Text = isMagistrate ? "县" : "帅";
         string portraitPath = isMagistrate
-            ? FindImageInAssetDirectory(FindAssetDirectory("new_county magistrate"), "picture.png")
+            ? FindImageInAssetDirectory(FindAssetDirectory("magistrate"), "picture.png")
             : FindImageInAssetDirectory($"{AssetRoot}/protagonist", "picture.png");
         SetPortrait(portraitPath, isMagistrate ? "县" : "帅", !isMagistrate);
         _nextDialogueButton.Text = _dialogueIndex == _storyDialogues.Length - 1 ? "结束" : "继续";

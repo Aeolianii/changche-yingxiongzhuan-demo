@@ -84,11 +84,25 @@ $requiredFiles = @(
     'scripts\Scene2.cs',
     'assets\characters\soldier\picture.png',
     'assets\characters\protagonist\picture.png',
-    'assest\Paper UI\PNGs\Backgrounds\BackgroundBar.png'
+    'assets\characters\magistrate\standard\idle\down\1.png',
+    'assets\characters\protagonist\standard\walk\down\1.png',
+    'assets\characters\soldier\standard\walk\down\1.png',
+    'assets\ui\paper\PNGs\Backgrounds\BackgroundBar.png',
+    'assets\backgrounds\naval_base.png'
 )
 
 foreach ($requiredFile in $requiredFiles) {
     [void](Assert-FileExists $requiredFile)
+}
+
+if (Test-Path -LiteralPath (Join-Path $projectRoot 'assest')) {
+    Add-Failure 'The misspelled assest directory must be fully merged into assets.'
+}
+
+$staleImportFiles = Get-ChildItem -LiteralPath (Join-Path $projectRoot 'assets') -Recurse -File -Filter '*.import' |
+    Where-Object { [System.IO.File]::ReadAllText($_.FullName).Contains('res://assest') }
+if ($staleImportFiles) {
+    Add-Failure 'Asset import metadata must not reference res://assest.'
 }
 
 $projectFile = Join-Path $projectRoot 'project.godot'
@@ -123,11 +137,19 @@ if (Test-Path -LiteralPath $sceneOneScript -PathType Leaf) {
 $sceneTwoScript = Join-Path $projectRoot 'scripts\Scene2.cs'
 if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
     $sceneTwoContent = [System.IO.File]::ReadAllText($sceneTwoScript)
-    Assert-Contains $sceneTwoContent 'res://assest/Paper UI/PNGs/Backgrounds/BackgroundBar\.png' 'Scene2 must use BackgroundBar.png as its dialogue background.'
+    Assert-Contains $sceneTwoContent 'AssetRoot\s*=\s*"res://assets/characters"' 'Scene2 must load characters from the unified assets directory.'
+    Assert-Contains $sceneTwoContent '\$"\{AssetRoot\}/soldier"' 'Scene2 must load the complete soldier asset set.'
+    Assert-Contains $sceneTwoContent 'res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar\.png' 'Scene2 must use BackgroundBar.png as its dialogue background.'
     Assert-Contains $sceneTwoContent 'new StyleBoxTexture' 'Scene2 must render its dialogue background through a texture style.'
     if ([regex]::IsMatch($sceneTwoContent, 'BgColor\s*=\s*new Color\(0\.9f,\s*0\.85f,\s*0\.67f')) {
         Add-Failure 'Scene2 must not retain the old beige dialogue background style.'
     }
+}
+
+$characterActorScript = Join-Path $projectRoot 'scripts\character_actor.gd'
+if (Test-Path -LiteralPath $characterActorScript -PathType Leaf) {
+    $characterActorContent = [System.IO.File]::ReadAllText($characterActorScript)
+    Assert-Contains $characterActorContent 'res://assets/characters/%s/standard/%s/%s' 'Scene1 characters must load idle and walk frames from each complete standard asset set.'
 }
 
 $sceneOneFile = Join-Path $projectRoot 'scenes\palace\palace_demo.tscn'

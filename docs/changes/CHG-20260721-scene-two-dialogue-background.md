@@ -11,7 +11,7 @@
 
 ## Scope
 
-- 场景二全宽对话底板使用 `res://assest/Paper UI/PNGs/Backgrounds/BackgroundBar.png`。
+- 场景二全宽对话底板使用 `res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar.png`。
 - 使用用户重新裁剪后的 512×144 `BackgroundBar.png`，直接整图铺满现有 `1344×190` 对话底板区域，不设置二次裁剪区域。
 - 只将黑色描边外侧、与画布四角相连的白色底变为透明；黑色描边和描边内的米白纸张保持完全不透明。
 - 保留现有 `FullWidthPaperDialogueBox` 尺寸、层级和所有子节点。
@@ -56,5 +56,5 @@
 
 ## Final reconciliation
 
-- Files changed: `assest/Paper UI/PNGs/Backgrounds/BackgroundBar.png`、`tests/test_scene_two_dialogue_background.gd`、`docs/qa/playtest.md`、本变更记录。
+- Files changed: `assets/ui/paper/PNGs/Backgrounds/BackgroundBar.png`、`tests/test_scene_two_dialogue_background.gd`、`docs/qa/playtest.md`、本变更记录。
 - Documented limitations/follow-ups: 新裁剪图片的横向拉伸是本次已接受的视觉取舍。

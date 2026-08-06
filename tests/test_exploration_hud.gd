@@ -50,7 +50,7 @@ func _verify_generated_assets() -> void:
 	_expect(quest_image != null and not quest_image.is_empty(), "Generated quest frame could not be loaded.")
 	if quest_image != null and not quest_image.is_empty():
 		_expect(quest_image.get_pixel(0, 0).a < 0.05, "Generated quest frame must have a transparent corner.")
-		_expect(quest_image.get_pixel(quest_image.get_width() / 2, quest_image.get_height() / 2).a < 0.05, "Generated quest frame must keep its center transparent.")
+		_expect(quest_image.get_pixel(quest_image.get_width() / 2, quest_image.get_height() / 2).a > 0.95, "Generated quest frame must include an opaque ink-wash center.")
 
 
 func _verify_component_contract() -> void:
@@ -80,10 +80,7 @@ func _verify_component_contract() -> void:
 	var quest_tracker := hud.get_node("QuestTracker") as Control
 	_expect(quest_tracker.size.x <= 286.0 and quest_tracker.size.y <= 270.0, "Quest tracker must keep its compact footprint.")
 	_expect(quest_tracker.get_theme_stylebox("panel") is StyleBoxEmpty, "Quest tracker body must remain fully transparent.")
-	var tracker_background := quest_tracker.get_node("TrackerBackground") as Panel
-	var tracker_background_style := tracker_background.get_theme_stylebox("panel") as StyleBoxFlat
-	_expect(tracker_background_style != null and is_equal_approx(tracker_background_style.bg_color.a, 1.0), "Quest tracker center must use one opaque gray background.")
-	_expect(tracker_background.position.y <= 28.0, "Quest tracker background must continue behind the title plaque without a world-background gap.")
+	_expect(quest_tracker.get_node_or_null("TrackerBackground") == null, "Quest tracker must not layer a programmatic gray rectangle over the generated panel.")
 	var quest_title := quest_tracker.get_node("TitleRibbon/QuestTitle") as Label
 	_expect(quest_title.get_parent().position.y <= -2.0 and quest_title.vertical_alignment == VERTICAL_ALIGNMENT_CENTER, "Quest title must move up into the generated plaque center.")
 	var quest_frame := hud.get_node("QuestTracker/GeneratedQuestFrame") as TextureRect

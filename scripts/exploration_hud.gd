@@ -129,17 +129,6 @@ func _build_task_tracker() -> void:
 	tracker.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(tracker)
 
-	var tracker_background := Panel.new()
-	tracker_background.name = "TrackerBackground"
-	tracker_background.position = Vector2(14, 28)
-	tracker_background.size = Vector2(258, 236)
-	tracker_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var tracker_background_style := StyleBoxFlat.new()
-	tracker_background_style.bg_color = Color(0.16, 0.17, 0.17, 1.0)
-	tracker_background_style.set_corner_radius_all(3)
-	tracker_background.add_theme_stylebox_override("panel", tracker_background_style)
-	tracker.add_child(tracker_background)
-
 	var generated_frame := TextureRect.new()
 	generated_frame.name = "GeneratedQuestFrame"
 	generated_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

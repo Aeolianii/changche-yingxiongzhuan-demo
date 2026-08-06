@@ -58,6 +58,7 @@ var transition_started := false
 func _ready() -> void:
 	continue_button.pressed.connect(_on_continue_pressed)
 	interaction_button.pressed.connect(_on_interaction_pressed)
+	exploration_hud.connect("menu_visibility_changed", _on_menu_visibility_changed)
 	transition_timer.timeout.connect(_start_scene_transition)
 	transition_timer.wait_time = SCENE_TRANSITION_DELAY
 	interaction_button.hide()
@@ -80,6 +81,8 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if exploration_hud.call("is_menu_open"):
+		return
 	if not event.is_action_pressed("interact"):
 		return
 	if event is InputEventKey and event.echo:
@@ -232,12 +235,27 @@ func _set_task(text: String) -> void:
 
 func _refresh_exploration_hud() -> void:
 	var is_free_exploration: bool = (
-		player.controls_enabled
-		and not dialogue_panel.visible
+		not dialogue_panel.visible
 		and not transition_started
-		and (story_state == StoryState.WAIT_TALK or story_state == StoryState.GO_TO_EMPEROR)
+		and _is_free_story_state()
 	)
 	exploration_hud.call("set_exploration_visible", is_free_exploration)
+
+
+func _is_free_story_state() -> bool:
+	return story_state == StoryState.WAIT_TALK or story_state == StoryState.GO_TO_EMPEROR
+
+
+func _on_menu_visibility_changed(is_open: bool) -> void:
+	player.controls_enabled = (
+		not is_open
+		and not transition_started
+		and not dialogue_panel.visible
+		and _is_free_story_state()
+	)
+	if is_open:
+		interaction_button.hide()
+	_refresh_exploration_hud()
 
 
 func _start_scene_transition() -> void:

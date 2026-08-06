@@ -85,7 +85,7 @@ public partial class Scene2 : Node2D
         UpdateAmbientBackground((float)delta);
         RefreshExplorationHud();
 
-        if (_dialoguePanel.Visible || _drillOverlay.Visible)
+        if (_dialoguePanel.Visible || _drillOverlay.Visible || IsMenuOpen())
         {
             _player.Velocity = Vector2.Zero;
             _playerSprite.Play($"idle_{_lastDirection}");
@@ -103,7 +103,7 @@ public partial class Scene2 : Node2D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event.IsActionPressed("interact") && _currentTarget != null && !_dialoguePanel.Visible && !_drillOverlay.Visible)
+        if (@event.IsActionPressed("interact") && _currentTarget != null && !_dialoguePanel.Visible && !_drillOverlay.Visible && !IsMenuOpen())
             OpenNpcDialogue(_currentTarget);
     }
 
@@ -987,5 +987,10 @@ public partial class Scene2 : Node2D
 
         bool isFreeExploration = !_dialoguePanel.Visible && !_drillOverlay.Visible;
         _explorationHud.Call("set_exploration_visible", isFreeExploration);
+    }
+
+    private bool IsMenuOpen()
+    {
+        return _explorationHud != null && _explorationHud.Call("is_menu_open").AsBool();
     }
 }

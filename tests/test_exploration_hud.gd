@@ -4,6 +4,7 @@ const HUD_SCENE := preload("res://scenes/ui/exploration_hud.tscn")
 const PALACE_SCENE := preload("res://scenes/palace/palace_demo.tscn")
 const SCENE_TWO := preload("res://scenes/Scene2.tscn")
 const SCREENSHOT_PATH := "res://.godot/exploration_hud_preview.png"
+const MENU_SCREENSHOT_PATH := "res://.godot/system_menu_preview.png"
 
 var failures: Array[String] = []
 
@@ -62,10 +63,33 @@ func _verify_component_contract() -> void:
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	if menu_button != null:
 		menu_button.pressed.emit()
+		var system_menu := hud.get_node("SystemMenu") as Control
+		_expect(system_menu.visible, "MenuButton must open the system menu.")
+		_expect(system_menu.get_node_or_null("BackgroundCopy") is BackBufferCopy, "System menu background copy is missing.")
+		var blur := system_menu.get_node("BlurredBackground") as ColorRect
+		_expect(blur.material is ShaderMaterial, "System menu must blur the captured background with a shader material.")
+		for entry_name in ["ContinueGameButton", "SaveGameButton", "LoadGameButton", "SettingsButton", "ReturnTitleButton", "ExitGameButton"]:
+			_expect(hud.find_child(entry_name, true, false) is Button, "%s is missing from the system menu." % entry_name)
+		_expect(hud.find_child("TutorialButton", true, false) == null, "System menu must not include a tutorial button.")
+		var exit_button := hud.find_child("ExitGameButton", true, false) as Button
+		_expect(exit_button != null and not exit_button.pressed.get_connections().is_empty(), "ExitGameButton must have a quit action connected.")
+
 		var toast := hud.get_node("ComingSoonToast") as Control
 		var message := hud.get_node("ComingSoonToast/Message") as Label
-		_expect(toast.visible, "Clicking a function button must show the coming-soon message.")
-		_expect("功能即将开放" in message.text, "Coming-soon message uses the wrong text.")
+		for unfinished_entry in [
+			["ContinueGameButton", "继续游戏"],
+			["SaveGameButton", "保存进度"],
+			["LoadGameButton", "读取进度"],
+			["SettingsButton", "游戏设置"],
+			["ReturnTitleButton", "返回标题"],
+		]:
+			var unfinished_button := hud.find_child(unfinished_entry[0], true, false) as Button
+			unfinished_button.pressed.emit()
+			_expect(toast.visible, "Clicking %s must show a placeholder message." % unfinished_entry[0])
+			_expect(unfinished_entry[1] in message.text and "该功能即将实现" in message.text, "%s uses the wrong placeholder message." % unfinished_entry[0])
+		var close_button := hud.find_child("CloseMenuButton", true, false) as Button
+		close_button.pressed.emit()
+		_expect(not system_menu.visible, "CloseMenuButton must close the system menu.")
 
 	hud.call("set_exploration_visible", false)
 	_expect(not hud.visible, "Exploration HUD did not hide through its public interface.")
@@ -79,6 +103,7 @@ func _verify_palace_visibility() -> void:
 	await process_frame
 	var hud := palace.get_node("UI/ExplorationHUD") as Control
 	var dialogue := palace.get_node("UI/Overlay/DialoguePanel") as Control
+	var player := palace.get_node("YSortedCharacters/Player")
 	_expect(not hud.visible, "Palace opening dialogue must hide the exploration HUD.")
 
 	palace.set("story_state", 2)
@@ -87,6 +112,19 @@ func _verify_palace_visibility() -> void:
 	_expect(hud.visible, "Palace WAIT_TALK free-movement state must show the exploration HUD.")
 	hud.call("set_main_task", "听取内侍传召")
 	await process_frame
+	var menu_button := hud.find_child("MenuButton", true, false) as Button
+	menu_button.pressed.emit()
+	await process_frame
+	await process_frame
+	_expect(hud.call("is_menu_open"), "Palace menu did not open from the shared HUD.")
+	_expect(not player.controls_enabled, "Palace player controls must pause while the system menu is open.")
+	if DisplayServer.get_name() != "headless":
+		var screenshot_error := root.get_texture().get_image().save_png(MENU_SCREENSHOT_PATH)
+		_expect(screenshot_error == OK, "System menu preview screenshot could not be saved.")
+	var close_button := hud.find_child("CloseMenuButton", true, false) as Button
+	close_button.pressed.emit()
+	await process_frame
+	_expect(player.controls_enabled, "Palace player controls must resume after closing the system menu.")
 	if DisplayServer.get_name() != "headless":
 		var screenshot_error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
 		_expect(screenshot_error == OK, "Exploration HUD preview screenshot could not be saved.")
@@ -110,6 +148,7 @@ func _verify_scene_two_visibility() -> void:
 	var hud := scene_two.get_node("UI/ExplorationHUD") as Control
 	var dialogue := scene_two.get_node("UI/DialoguePanel") as Control
 	var drill := scene_two.get_node_or_null("UI/DrillOverlay") as Control
+	var player := scene_two.get_node("World/Actors/Player") as CharacterBody2D
 	_expect(hud.visible, "Scene2 free-movement state must show the exploration HUD.")
 
 	dialogue.show()
@@ -129,6 +168,16 @@ func _verify_scene_two_visibility() -> void:
 		_expect(hud.visible, "Scene2 HUD must return after the drill overlay closes.")
 	else:
 		failures.append("Scene2 drill overlay was not created.")
+
+	var menu_button := hud.find_child("MenuButton", true, false) as Button
+	menu_button.pressed.emit()
+	player.velocity = Vector2(120, 0)
+	await physics_frame
+	await physics_frame
+	_expect(player.velocity == Vector2.ZERO, "Scene2 player must stop while the system menu is open.")
+	var close_button := hud.find_child("CloseMenuButton", true, false) as Button
+	close_button.pressed.emit()
+	_expect(not hud.call("is_menu_open"), "Scene2 system menu must close through the shared close button.")
 
 	scene_two.queue_free()
 	await process_frame

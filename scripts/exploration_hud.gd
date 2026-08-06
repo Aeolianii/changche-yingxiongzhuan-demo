@@ -1,6 +1,7 @@
 extends Control
 
 const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
+const MENU_BLUR_SHADER := preload("res://shaders/menu_blur.gdshader")
 
 const INK := Color(0.055, 0.073, 0.075, 0.96)
 const INK_SOFT := Color(0.075, 0.105, 0.108, 0.9)
@@ -16,6 +17,9 @@ var _main_task_label: Label
 var _toast_panel: Panel
 var _toast_label: Label
 var _toast_timer: Timer
+var _menu_overlay: Control
+
+signal menu_visibility_changed(is_open: bool)
 
 
 func _ready() -> void:
@@ -23,11 +27,14 @@ func _ready() -> void:
 	_build_status_panel()
 	_build_task_tracker()
 	_build_function_buttons()
+	_build_system_menu()
 	_build_toast()
 	set_exploration_visible(false)
 
 
 func set_exploration_visible(value: bool) -> void:
+	if not value and is_menu_open():
+		_close_system_menu()
 	visible = value
 	if not value and is_instance_valid(_toast_panel):
 		_toast_panel.hide()
@@ -36,6 +43,10 @@ func set_exploration_visible(value: bool) -> void:
 func set_main_task(task_title: String) -> void:
 	if is_instance_valid(_main_task_label):
 		_main_task_label.text = task_title
+
+
+func is_menu_open() -> bool:
+	return is_instance_valid(_menu_overlay) and _menu_overlay.visible
 
 
 func _build_status_panel() -> void:
@@ -275,7 +286,165 @@ func _build_function_button(parent: HBoxContainer, action_name: String, symbol: 
 	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	button.add_theme_stylebox_override("hover", _panel_style(Color(0.84, 0.67, 0.31, 0.14), Color(0, 0, 0, 0), 0, 7))
 	button.add_theme_stylebox_override("pressed", _panel_style(Color(0.84, 0.67, 0.31, 0.27), Color(0, 0, 0, 0), 0, 7))
-	button.pressed.connect(_show_locked_message.bind(action_name))
+	if action_name == "菜单":
+		button.pressed.connect(_open_system_menu)
+	else:
+		button.pressed.connect(_show_locked_message.bind(action_name))
+	slot.add_child(button)
+
+
+func _build_system_menu() -> void:
+	_menu_overlay = Control.new()
+	_menu_overlay.name = "SystemMenu"
+	_menu_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_menu_overlay.z_index = 100
+	_menu_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_menu_overlay)
+
+	var back_buffer := BackBufferCopy.new()
+	back_buffer.name = "BackgroundCopy"
+	back_buffer.copy_mode = BackBufferCopy.COPY_MODE_VIEWPORT
+	_menu_overlay.add_child(back_buffer)
+
+	var blur := ColorRect.new()
+	blur.name = "BlurredBackground"
+	blur.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	blur.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var blur_material := ShaderMaterial.new()
+	blur_material.shader = MENU_BLUR_SHADER
+	blur.material = blur_material
+	_menu_overlay.add_child(blur)
+
+	var dim := ColorRect.new()
+	dim.name = "Dimmer"
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.color = Color(0.025, 0.035, 0.03, 0.28)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_menu_overlay.add_child(dim)
+
+	var frame := Panel.new()
+	frame.name = "SystemPanel"
+	frame.set_anchors_preset(Control.PRESET_CENTER)
+	frame.offset_left = -225.0
+	frame.offset_top = -320.0
+	frame.offset_right = 225.0
+	frame.offset_bottom = 320.0
+	frame.mouse_filter = Control.MOUSE_FILTER_STOP
+	frame.add_theme_stylebox_override("panel", _panel_style(Color(0.07, 0.078, 0.068, 0.97), GOLD, 3, 5))
+	_menu_overlay.add_child(frame)
+
+	var inner := Panel.new()
+	inner.name = "InnerFrame"
+	inner.position = Vector2(10, 10)
+	inner.size = Vector2(430, 620)
+	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.add_theme_stylebox_override("panel", _panel_style(Color(0.16, 0.16, 0.125, 0.93), Color(0.42, 0.36, 0.24, 0.8), 1, 3))
+	frame.add_child(inner)
+
+	var title_ribbon := Panel.new()
+	title_ribbon.name = "MenuTitleRibbon"
+	title_ribbon.position = Vector2(38, -18)
+	title_ribbon.size = Vector2(374, 58)
+	title_ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_ribbon.add_theme_stylebox_override("panel", _panel_style(INK, GOLD, 2, 4))
+	frame.add_child(title_ribbon)
+
+	var title := _make_label("系  统", 25, TEXT_LIGHT)
+	title.name = "MenuTitle"
+	title.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 6)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_ribbon.add_child(title)
+
+	var close_button := Button.new()
+	close_button.name = "CloseMenuButton"
+	close_button.position = Vector2(406, -24)
+	close_button.size = Vector2(52, 52)
+	close_button.text = "×"
+	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_button.add_theme_font_size_override("font_size", 31)
+	close_button.add_theme_color_override("font_color", TEXT_LIGHT)
+	close_button.add_theme_stylebox_override("normal", _panel_style(INK, GOLD, 2, 26))
+	close_button.add_theme_stylebox_override("hover", _panel_style(Color(0.24, 0.07, 0.05, 1.0), GOLD_BRIGHT, 2, 26))
+	close_button.add_theme_stylebox_override("pressed", _panel_style(Color(0.36, 0.08, 0.055, 1.0), GOLD_BRIGHT, 2, 26))
+	close_button.pressed.connect(_close_system_menu)
+	frame.add_child(close_button)
+
+	var menu_list := VBoxContainer.new()
+	menu_list.name = "MenuEntries"
+	menu_list.position = Vector2(68, 77)
+	menu_list.size = Vector2(314, 505)
+	menu_list.add_theme_constant_override("separation", 15)
+	menu_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_child(menu_list)
+
+	var entries := [
+		["继续游戏", "续", "ContinueGameButton"],
+		["保存进度", "存", "SaveGameButton"],
+		["读取进度", "读", "LoadGameButton"],
+		["游戏设置", "设", "SettingsButton"],
+		["返回标题", "题", "ReturnTitleButton"],
+		["退出游戏", "退", "ExitGameButton"],
+	]
+	for entry in entries:
+		_build_system_menu_entry(menu_list, entry[0], entry[1], entry[2])
+
+	_menu_overlay.hide()
+
+
+func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol: String, node_name: String) -> void:
+	var slot := Control.new()
+	slot.name = "%sSlot" % node_name
+	slot.custom_minimum_size = Vector2(314, 68)
+	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(slot)
+
+	var bar := Panel.new()
+	bar.name = "ButtonBar"
+	bar.position = Vector2(28, 8)
+	bar.size = Vector2(280, 52)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_theme_stylebox_override("panel", _panel_style(Color(0.72, 0.70, 0.62, 0.96), Color(0.08, 0.09, 0.085, 1.0), 3, 4))
+	slot.add_child(bar)
+
+	var outer := Polygon2D.new()
+	outer.name = "IconDiamond"
+	outer.polygon = _diamond_points(Vector2(35, 34), 29)
+	outer.color = GOLD
+	slot.add_child(outer)
+
+	var inner := Polygon2D.new()
+	inner.polygon = _diamond_points(Vector2(35, 34), 24)
+	inner.color = INK
+	slot.add_child(inner)
+
+	var icon := _make_label(symbol, 20, TEXT_LIGHT)
+	icon.name = "EntrySymbol"
+	icon.position = Vector2(12, 11)
+	icon.size = Vector2(46, 46)
+	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	slot.add_child(icon)
+
+	var button := Button.new()
+	button.name = node_name
+	button.position = Vector2(30, 8)
+	button.size = Vector2(278, 52)
+	button.text = action_name
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_font_size_override("font_size", 21)
+	button.add_theme_color_override("font_color", Color(0.13, 0.13, 0.105, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(0.08, 0.07, 0.045, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(0.08, 0.07, 0.045, 1.0))
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", _panel_style(Color(0.95, 0.85, 0.59, 0.34), Color(0, 0, 0, 0), 0, 3))
+	button.add_theme_stylebox_override("pressed", _panel_style(Color(0.83, 0.64, 0.31, 0.42), Color(0, 0, 0, 0), 0, 3))
+	if action_name == "退出游戏":
+		button.pressed.connect(_exit_game)
+	else:
+		button.pressed.connect(_show_menu_placeholder.bind(action_name))
 	slot.add_child(button)
 
 
@@ -288,6 +457,7 @@ func _build_toast() -> void:
 	_toast_panel.offset_right = -24.0
 	_toast_panel.offset_bottom = 204.0
 	_toast_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_toast_panel.z_index = 200
 	_toast_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.045, 0.065, 0.065, 0.97), GOLD, 2, 5))
 	add_child(_toast_panel)
 
@@ -308,9 +478,52 @@ func _build_toast() -> void:
 
 
 func _show_locked_message(action_name: String) -> void:
+	_position_toast(false)
 	_toast_label.text = "%s · 功能即将开放" % action_name
 	_toast_panel.show()
 	_toast_timer.start()
+
+
+func _show_menu_placeholder(action_name: String) -> void:
+	_position_toast(true)
+	_toast_label.text = "%s · 该功能即将实现" % action_name
+	_toast_panel.show()
+	_toast_timer.start()
+
+
+func _position_toast(menu_mode: bool) -> void:
+	if menu_mode:
+		_toast_panel.set_anchors_preset(Control.PRESET_CENTER)
+		_toast_panel.offset_left = -210.0
+		_toast_panel.offset_top = 260.0
+		_toast_panel.offset_right = 210.0
+		_toast_panel.offset_bottom = 322.0
+	else:
+		_toast_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		_toast_panel.offset_left = -365.0
+		_toast_panel.offset_top = 142.0
+		_toast_panel.offset_right = -24.0
+		_toast_panel.offset_bottom = 204.0
+
+
+func _open_system_menu() -> void:
+	if not visible or is_menu_open():
+		return
+	_toast_panel.hide()
+	_menu_overlay.show()
+	menu_visibility_changed.emit(true)
+
+
+func _close_system_menu() -> void:
+	if not is_menu_open():
+		return
+	_toast_panel.hide()
+	_menu_overlay.hide()
+	menu_visibility_changed.emit(false)
+
+
+func _exit_game() -> void:
+	get_tree().quit()
 
 
 func _make_label(text_value: String, font_size: int, font_color: Color) -> Label:

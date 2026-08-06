@@ -13,7 +13,7 @@
 
 `Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操练覆盖层。
 
-`ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。两个主场景各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态；组件本身只处理四个占位功能按钮与短时提示，不读取或修改剧情状态。
+`ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。两个主场景各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、系统菜单、短时提示和退出请求；菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
 
 Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容器，其 `panel` 样式直接拉伸用户重新裁剪的 512×144 `BackgroundBar.png`；黑色描边外侧像素使用 Alpha 透明显示游戏背景，纹理样式保留原有内容边距，因此只改变底板绘制，不改变容器树和交互节点。
 
@@ -55,7 +55,8 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 - 装饰物不碰撞；只有建筑、墙体、栏杆、水体和世界边缘阻挡玩家。
 - 宫殿室内外在同一坐标平面；门洞通过手工碰撞缺口表达，不增加高度变量。
 - Scene2 对话底板固定为 1344×190；更换底板不得改变立绘、名牌、正文和选项节点的现有布局。
-- 探索 HUD 的唯一对外可见性接口为 `set_exploration_visible(bool)`；场景脚本负责判定自由移动、对白、过场和覆盖层状态，HUD 不反向控制玩家输入。
+- 探索 HUD 使用 `set_exploration_visible(bool)` 接收场景可见性，并通过 `menu_visibility_changed(bool)` 通知场景菜单暂停状态；场景一切换 `player.controls_enabled`，场景二在物理与交互分发前查询 `is_menu_open()`，HUD 不直接持有场景角色引用。
+- `set_exploration_visible(false)` 必须同步关闭菜单；关闭事件由场景结合剧情、对白和过场状态决定是否恢复输入，避免错误解锁。
 - 探索 HUD 使用全屏锚点和角落容器适配窗口；底部中央交互区和底部对话区必须保持无遮挡。
 
 ## Persistence

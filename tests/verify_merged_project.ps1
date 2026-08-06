@@ -84,6 +84,8 @@ $requiredFiles = @(
     'scripts\palace_demo.gd',
     'scripts\Scene2.cs',
     'scripts\exploration_hud.gd',
+    'shaders\menu_blur.gdshader',
+    'tests\test_system_menu_exit.gd',
     'assets\characters\soldier\picture.png',
     'assets\characters\protagonist\picture.png',
     'assets\characters\magistrate\standard\idle\down\1.png',
@@ -136,6 +138,7 @@ if (Test-Path -LiteralPath $sceneOneScript -PathType Leaf) {
     Assert-Contains $sceneOneContent 'func _show_dialogue\([^\)]*\)[\s\S]*?_hide_portrait\(\)[\s\S]*?dialogue_panel\.show\(\)' 'Narration must hide any previous character portrait.'
     Assert-Contains $sceneOneContent 'StoryState\.WAIT_TALK[\s\S]*StoryState\.GO_TO_EMPEROR' 'Scene1 must restrict the exploration HUD to free-movement story states.'
     Assert-Contains $sceneOneContent 'set_exploration_visible' 'Scene1 must synchronize exploration HUD visibility.'
+    Assert-Contains $sceneOneContent 'menu_visibility_changed' 'Scene1 must pause and resume player controls from the shared menu signal.'
 }
 
 $sceneTwoScript = Join-Path $projectRoot 'scripts\Scene2.cs'
@@ -146,9 +149,32 @@ if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
     Assert-Contains $sceneTwoContent 'res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar\.png' 'Scene2 must use BackgroundBar.png as its dialogue background.'
     Assert-Contains $sceneTwoContent 'new StyleBoxTexture' 'Scene2 must render its dialogue background through a texture style.'
     Assert-Contains $sceneTwoContent 'set_exploration_visible' 'Scene2 must synchronize exploration HUD visibility.'
+    Assert-Contains $sceneTwoContent 'IsMenuOpen\(\)' 'Scene2 must block movement and interaction while the shared menu is open.'
     if ([regex]::IsMatch($sceneTwoContent, 'BgColor\s*=\s*new Color\(0\.9f,\s*0\.85f,\s*0\.67f')) {
         Add-Failure 'Scene2 must not retain the old beige dialogue background style.'
     }
+}
+
+$hudScript = Join-Path $projectRoot 'scripts\exploration_hud.gd'
+if (Test-Path -LiteralPath $hudScript -PathType Leaf) {
+    $hudContent = [System.IO.File]::ReadAllText($hudScript)
+    $menuEntries = @(
+        @('\u7EE7\u7EED\u6E38\u620F', 'continue game'),
+        @('\u4FDD\u5B58\u8FDB\u5EA6', 'save game'),
+        @('\u8BFB\u53D6\u8FDB\u5EA6', 'load game'),
+        @('\u6E38\u620F\u8BBE\u7F6E', 'settings'),
+        @('\u8FD4\u56DE\u6807\u9898', 'return to title'),
+        @('\u9000\u51FA\u6E38\u620F', 'exit game')
+    )
+    foreach ($entry in $menuEntries) {
+        Assert-Contains $hudContent $entry[0] "System menu is missing the $($entry[1]) entry."
+    }
+    if ([regex]::IsMatch($hudContent, '\u65B0\u624B\u6559\u7A0B')) {
+        Add-Failure 'System menu must not include the tutorial entry.'
+    }
+    Assert-Contains $hudContent 'MENU_BLUR_SHADER' 'System menu must use the shared blur shader.'
+    Assert-Contains $hudContent 'get_tree\(\)\.quit\(\)' 'ExitGameButton must quit the running game.'
+    Assert-Contains $hudContent '\u8BE5\u529F\u80FD\u5373\u5C06\u5B9E\u73B0' 'Unfinished system menu entries must show the documented placeholder message.'
 }
 
 $characterActorScript = Join-Path $projectRoot 'scripts\character_actor.gd'

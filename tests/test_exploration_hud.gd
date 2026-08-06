@@ -63,8 +63,14 @@ func _verify_component_contract() -> void:
 	_expect(hud.visible, "Exploration HUD did not become visible through its public interface.")
 	var player_status := hud.get_node("PlayerStatus") as Control
 	_expect(player_status.size == Vector2(495, 192), "Player status must be enlarged by 50 percent.")
-	_expect(hud.get_node_or_null("PlayerStatus/PortraitFrame/ProtagonistPortrait") != null, "Player portrait is missing.")
+	var portrait_frame := hud.get_node("PlayerStatus/PortraitFrame") as Control
+	_expect(portrait_frame.get_node_or_null("ProtagonistPortrait") != null, "Player portrait is missing.")
+	_expect(portrait_frame.position.x >= 25.0, "Player portrait must move right into the generated diamond center.")
 	_expect(hud.get_node_or_null("PlayerStatus/StatusSeal") == null, "Player status must not display the lower-right status seal.")
+	var name_plate := hud.get_node("PlayerStatus/NamePlate") as Control
+	_expect(name_plate.position.y >= 60.0, "Player title block must sit inside the generated paper frame.")
+	_expect((name_plate.get_node("PlayerName") as Label).text == "水师元帅", "Player heading must use 水师元帅.")
+	_expect((name_plate.get_node("PlayerTitle") as Label).text == "伏波将军 · 南疆水师", "Player subtitle is incorrect.")
 	var status_frame := hud.get_node("PlayerStatus/GeneratedStatusFrame") as TextureRect
 	_expect(status_frame.texture != null and status_frame.texture.resource_path.ends_with("player_status_frame.png"), "Player status must use the generated ink-wash frame.")
 	_expect(hud.get_node_or_null("QuestTracker/MainQuest/CharacterPlaceholder") != null, "Main quest character placeholder is missing.")
@@ -72,12 +78,17 @@ func _verify_component_contract() -> void:
 	var quest_tracker := hud.get_node("QuestTracker") as Control
 	_expect(quest_tracker.size.x <= 286.0 and quest_tracker.size.y <= 270.0, "Quest tracker must keep its compact footprint.")
 	_expect(quest_tracker.get_theme_stylebox("panel") is StyleBoxEmpty, "Quest tracker body must remain fully transparent.")
+	var tracker_background := quest_tracker.get_node("TrackerBackground") as Panel
+	var tracker_background_style := tracker_background.get_theme_stylebox("panel") as StyleBoxFlat
+	_expect(tracker_background_style != null and is_equal_approx(tracker_background_style.bg_color.a, 1.0), "Quest tracker center must use one opaque gray background.")
+	var quest_title := quest_tracker.get_node("TitleRibbon/QuestTitle") as Label
+	_expect(quest_title.get_parent().position.y <= -2.0 and quest_title.vertical_alignment == VERTICAL_ALIGNMENT_CENTER, "Quest title must move up into the generated plaque center.")
 	var quest_frame := hud.get_node("QuestTracker/GeneratedQuestFrame") as TextureRect
 	_expect(quest_frame.texture != null and quest_frame.texture.resource_path.ends_with("quest_tracker_frame.png"), "Quest tracker must use the generated ink-wash frame.")
 	for entry_path in ["QuestTracker/MainQuest", "QuestTracker/SideQuest"]:
 		var entry := hud.get_node(entry_path) as Panel
 		var entry_style := entry.get_theme_stylebox("panel") as StyleBoxFlat
-		_expect(entry_style != null and is_equal_approx(entry_style.bg_color.a, 1.0), "%s must use an opaque gray card background." % entry_path)
+		_expect(entry_style != null and is_zero_approx(entry_style.bg_color.a), "%s must remain transparent over the shared tracker background." % entry_path)
 
 	for button_name in ["MenuButton", "InventoryButton", "ShipButton", "CharacterButton"]:
 		var button := hud.find_child(button_name, true, false) as Button
@@ -115,12 +126,15 @@ func _verify_component_contract() -> void:
 		var generated_button := system_menu.find_child("GeneratedButtonTexture", true, false) as TextureRect
 		_expect(generated_button != null and generated_button.texture.resource_path.ends_with("menu_button.png"), "System menu entries must use the generated button texture.")
 		_expect(generated_button.size.y >= 110.0, "Generated menu button texture must use the second expanded vertical size.")
+		var menu_entries := system_menu.get_node("SystemPanel/MenuEntries") as VBoxContainer
+		_expect(menu_entries.get_theme_constant("separation") >= 29, "System menu entries need enough spacing to prevent diamond overlap.")
+		_expect(menu_entries.position.y <= 60.0, "System menu entries must remain inside the generated frame after spacing increases.")
 		var continue_button := hud.find_child("ContinueGameButton", true, false) as Button
 		_expect(continue_button.size.y >= 68.0, "System menu click targets must match the second expanded button height.")
 		_expect(continue_button.get_theme_font_size("font_size") == 21, "System menu button font size must remain 21.")
 		_expect(continue_button.get_theme_stylebox("hover") is StyleBoxEmpty, "System menu buttons must not add a hover highlight.")
 		_expect(continue_button.get_theme_color("font_hover_color") == continue_button.get_theme_color("font_color"), "System menu button text color must not change on hover.")
-		for entry_slot in system_menu.get_node("SystemPanel/MenuEntries").get_children():
+		for entry_slot in menu_entries.get_children():
 			var entry_symbol := entry_slot.get_node("EntrySymbol") as Label
 			_expect(entry_symbol.position.x <= 24.0, "%s badge symbol must move left into the generated diamond center." % entry_slot.name)
 		_expect(hud.find_child("TutorialButton", true, false) == null, "System menu must not include a tutorial button.")

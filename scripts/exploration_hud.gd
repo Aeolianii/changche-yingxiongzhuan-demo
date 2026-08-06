@@ -74,7 +74,7 @@ func _build_status_panel() -> void:
 
 	var portrait_frame := Panel.new()
 	portrait_frame.name = "PortraitFrame"
-	portrait_frame.position = Vector2(15, 15)
+	portrait_frame.position = Vector2(25, 23)
 	portrait_frame.size = Vector2(141, 141)
 	portrait_frame.clip_contents = true
 	portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -99,22 +99,24 @@ func _build_status_panel() -> void:
 
 	var name_panel := Panel.new()
 	name_panel.name = "NamePlate"
-	name_panel.position = Vector2(138, 30)
+	name_panel.position = Vector2(138, 64)
 	name_panel.size = Vector2(336, 108)
 	name_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	status.add_child(name_panel)
 
-	var name_label := _make_label("水师主帅", 23, TEXT_LIGHT)
+	var name_label := _make_label("水师元帅", 23, Color(0.12, 0.13, 0.105, 1.0))
 	name_label.name = "PlayerName"
-	name_label.position = Vector2(36, 12)
-	name_label.size = Vector2(278, 40)
+	name_label.position = Vector2(36, 0)
+	name_label.size = Vector2(278, 34)
+	name_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
 	name_panel.add_child(name_label)
 
-	var subtitle := _make_label("伏波将军 · 南疆水师", 15, TEXT_MUTED)
+	var subtitle := _make_label("伏波将军 · 南疆水师", 15, Color(0.28, 0.29, 0.25, 1.0))
 	subtitle.name = "PlayerTitle"
-	subtitle.position = Vector2(37, 58)
-	subtitle.size = Vector2(278, 36)
+	subtitle.position = Vector2(37, 34)
+	subtitle.size = Vector2(278, 28)
+	subtitle.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
 	name_panel.add_child(subtitle)
 
 
@@ -126,6 +128,17 @@ func _build_task_tracker() -> void:
 	tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tracker.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(tracker)
+
+	var tracker_background := Panel.new()
+	tracker_background.name = "TrackerBackground"
+	tracker_background.position = Vector2(14, 42)
+	tracker_background.size = Vector2(258, 218)
+	tracker_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tracker_background_style := StyleBoxFlat.new()
+	tracker_background_style.bg_color = Color(0.16, 0.17, 0.17, 1.0)
+	tracker_background_style.set_corner_radius_all(3)
+	tracker_background.add_theme_stylebox_override("panel", tracker_background_style)
+	tracker.add_child(tracker_background)
 
 	var generated_frame := TextureRect.new()
 	generated_frame.name = "GeneratedQuestFrame"
@@ -139,7 +152,7 @@ func _build_task_tracker() -> void:
 
 	var title_ribbon := Panel.new()
 	title_ribbon.name = "TitleRibbon"
-	title_ribbon.position = Vector2(0, 6)
+	title_ribbon.position = Vector2(0, -2)
 	title_ribbon.size = Vector2(286, 44)
 	title_ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_ribbon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
@@ -147,9 +160,10 @@ func _build_task_tracker() -> void:
 
 	var title := _make_label("任 务", 21, TEXT_LIGHT)
 	title.name = "QuestTitle"
-	title.position = Vector2(0, 1)
+	title.position = Vector2.ZERO
 	title.size = Vector2(286, 38)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_ribbon.add_child(title)
 
 	_build_quest_entry(tracker, "MainQuest", Vector2(14, 64), "主线", "帅", Color(0.38, 0.12, 0.08, 1.0), true)
@@ -163,7 +177,7 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 	entry.size = Vector2(258, 88)
 	entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var entry_style := StyleBoxFlat.new()
-	entry_style.bg_color = Color(0.16, 0.17, 0.17, 1.0)
+	entry_style.bg_color = Color(0, 0, 0, 0)
 	entry_style.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.55)
 	entry_style.set_border_width_all(1)
 	entry_style.set_corner_radius_all(3)
@@ -381,9 +395,9 @@ func _build_system_menu() -> void:
 
 	var menu_list := VBoxContainer.new()
 	menu_list.name = "MenuEntries"
-	menu_list.position = Vector2(68, 82)
+	menu_list.position = Vector2(68, 58)
 	menu_list.size = Vector2(314, 505)
-	menu_list.add_theme_constant_override("separation", 7)
+	menu_list.add_theme_constant_override("separation", 29)
 	menu_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(menu_list)
 

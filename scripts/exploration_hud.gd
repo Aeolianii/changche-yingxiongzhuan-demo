@@ -120,79 +120,84 @@ func _build_task_tracker() -> void:
 	var tracker := Panel.new()
 	tracker.name = "QuestTracker"
 	tracker.position = Vector2(24, 174)
-	tracker.size = Vector2(326, 342)
+	tracker.size = Vector2(286, 270)
 	tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tracker.add_theme_stylebox_override("panel", _panel_style(Color(0.045, 0.065, 0.065, 0.9), Color(0.51, 0.43, 0.27, 0.86), 2, 5))
+	tracker.add_theme_stylebox_override("panel", _panel_style(Color(0.045, 0.065, 0.065, 0.42), Color(0.51, 0.43, 0.27, 0.72), 2, 5))
 	add_child(tracker)
 
 	var title_ribbon := Panel.new()
 	title_ribbon.name = "TitleRibbon"
-	title_ribbon.position = Vector2(-7, 12)
-	title_ribbon.size = Vector2(340, 48)
+	title_ribbon.position = Vector2(-5, 10)
+	title_ribbon.size = Vector2(296, 44)
 	title_ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_ribbon.add_theme_stylebox_override("panel", _panel_style(INK, GOLD, 2, 3))
 	tracker.add_child(title_ribbon)
 
-	var title := _make_label("◆  任 务", 24, TEXT_LIGHT)
+	var title := _make_label("◆  任 务", 21, TEXT_LIGHT)
 	title.name = "QuestTitle"
-	title.position = Vector2(18, 3)
-	title.size = Vector2(270, 40)
+	title.position = Vector2(16, 2)
+	title.size = Vector2(244, 38)
 	title_ribbon.add_child(title)
 
-	_build_quest_entry(tracker, "MainQuest", Vector2(15, 76), "主线", "帅", Color(0.38, 0.12, 0.08, 1.0), true)
-	_build_quest_entry(tracker, "SideQuest", Vector2(15, 203), "支线", "商", JADE, false)
+	_build_quest_entry(tracker, "MainQuest", Vector2(14, 64), "主线", "帅", Color(0.38, 0.12, 0.08, 1.0), true)
+	_build_quest_entry(tracker, "SideQuest", Vector2(14, 164), "支线", "商", JADE, false)
 
 
 func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section: String, badge_text: String, badge_color: Color, is_main: bool) -> void:
 	var entry := Panel.new()
 	entry.name = node_name
 	entry.position = at
-	entry.size = Vector2(296, 112)
+	entry.size = Vector2(258, 88)
 	entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	entry.add_theme_stylebox_override("panel", _panel_style(Color(0.09, 0.105, 0.095, 0.93), Color(GOLD.r, GOLD.g, GOLD.b, 0.68), 1, 4))
+	var transparent_style := StyleBoxFlat.new()
+	transparent_style.bg_color = Color(0, 0, 0, 0)
+	transparent_style.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.38)
+	transparent_style.set_border_width_all(1)
+	transparent_style.set_corner_radius_all(3)
+	entry.add_theme_stylebox_override("panel", transparent_style)
 	parent.add_child(entry)
 
 	var accent := ColorRect.new()
 	accent.name = "Accent"
 	accent.position = Vector2(0, 0)
-	accent.size = Vector2(5, 112)
+	accent.size = Vector2(4, 88)
 	accent.color = GOLD if is_main else JADE
 	accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	entry.add_child(accent)
 
 	var badge := Panel.new()
 	badge.name = "CharacterPlaceholder"
-	badge.position = Vector2(16, 22)
-	badge.size = Vector2(62, 62)
+	badge.position = Vector2(12, 19)
+	badge.size = Vector2(50, 50)
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_theme_stylebox_override("panel", _panel_style(badge_color, GOLD, 2, 31))
+	badge.add_theme_stylebox_override("panel", _panel_style(badge_color, GOLD, 2, 25))
 	entry.add_child(badge)
 
-	var badge_label := _make_label(badge_text, 25, TEXT_LIGHT)
+	var badge_label := _make_label(badge_text, 21, TEXT_LIGHT)
 	badge_label.position = Vector2.ZERO
 	badge_label.size = badge.size
 	badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	badge.add_child(badge_label)
 
-	var tag := _make_label("【%s】" % section, 17, GOLD_BRIGHT if is_main else Color(0.55, 0.82, 0.75, 1.0))
+	var tag := _make_label("【%s】" % section, 15, GOLD_BRIGHT if is_main else Color(0.55, 0.82, 0.75, 1.0))
 	tag.name = "QuestType"
-	tag.position = Vector2(90, 10)
-	tag.size = Vector2(180, 25)
+	tag.position = Vector2(72, 5)
+	tag.size = Vector2(170, 22)
 	entry.add_child(tag)
 
-	var task := _make_label("奉诏入殿" if is_main else "访查军港", 20, TEXT_LIGHT)
+	var task := _make_label("奉诏入殿" if is_main else "访查军港", 18, TEXT_LIGHT)
 	task.name = "TaskName"
-	task.position = Vector2(91, 37)
-	task.size = Vector2(190, 28)
+	task.position = Vector2(73, 28)
+	task.size = Vector2(172, 25)
 	entry.add_child(task)
 	if is_main:
 		_main_task_label = task
 
-	var objective := _make_label("前往标记地点推进剧情" if is_main else "与船匠交谈（效果占位）", 15, TEXT_MUTED)
+	var objective := _make_label("前往标记地点推进剧情" if is_main else "与船匠交谈（效果占位）", 13, TEXT_MUTED)
 	objective.name = "Objective"
-	objective.position = Vector2(91, 68)
-	objective.size = Vector2(192, 34)
+	objective.position = Vector2(73, 54)
+	objective.size = Vector2(174, 28)
 	objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	entry.add_child(objective)
 

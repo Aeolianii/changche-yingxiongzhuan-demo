@@ -38,6 +38,14 @@ func _verify_component_contract() -> void:
 	_expect(hud.get_node_or_null("PlayerStatus/PortraitFrame/ProtagonistPortrait") != null, "Player portrait is missing.")
 	_expect(hud.get_node_or_null("QuestTracker/MainQuest/CharacterPlaceholder") != null, "Main quest character placeholder is missing.")
 	_expect(hud.get_node_or_null("QuestTracker/SideQuest/CharacterPlaceholder") != null, "Side quest character placeholder is missing.")
+	var quest_tracker := hud.get_node("QuestTracker") as Control
+	_expect(quest_tracker.size.x <= 286.0 and quest_tracker.size.y <= 270.0, "Quest tracker must keep its compact footprint.")
+	var tracker_style := quest_tracker.get_theme_stylebox("panel") as StyleBoxFlat
+	_expect(tracker_style != null and tracker_style.bg_color.a <= 0.5, "Quest tracker body must remain lightly transparent.")
+	for entry_path in ["QuestTracker/MainQuest", "QuestTracker/SideQuest"]:
+		var entry := hud.get_node(entry_path) as Panel
+		var entry_style := entry.get_theme_stylebox("panel") as StyleBoxFlat
+		_expect(entry_style != null and is_zero_approx(entry_style.bg_color.a), "%s must use a transparent card background." % entry_path)
 
 	for button_name in ["MenuButton", "InventoryButton", "ShipButton", "CharacterButton"]:
 		var button := hud.find_child(button_name, true, false) as Button

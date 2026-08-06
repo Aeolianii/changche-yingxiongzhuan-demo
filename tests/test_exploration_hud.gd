@@ -42,6 +42,14 @@ func _verify_component_contract() -> void:
 	for button_name in ["MenuButton", "InventoryButton", "ShipButton", "CharacterButton"]:
 		var button := hud.find_child(button_name, true, false) as Button
 		_expect(button != null, "%s is missing." % button_name)
+	var action_row := hud.get_node("FunctionButtons")
+	_expect(
+		action_row.get_child(0).name == "CharacterButtonSlot"
+		and action_row.get_child(1).name == "InventoryButtonSlot"
+		and action_row.get_child(2).name == "ShipButtonSlot"
+		and action_row.get_child(3).name == "MenuButtonSlot",
+		"Function buttons must end with MenuButton on the far right."
+	)
 
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	if menu_button != null:

@@ -210,10 +210,10 @@ func _build_function_buttons() -> void:
 	add_child(actions)
 
 	var specs := [
-		["菜单", "≡", "MenuButton"],
+		["人物", "将", "CharacterButton"],
 		["物品栏", "囊", "InventoryButton"],
 		["船只", "舟", "ShipButton"],
-		["人物", "将", "CharacterButton"],
+		["菜单", "≡", "MenuButton"],
 	]
 	for spec in specs:
 		_build_function_button(actions, spec[0], spec[1], spec[2])

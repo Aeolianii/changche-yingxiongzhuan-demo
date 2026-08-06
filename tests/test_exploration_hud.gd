@@ -53,6 +53,7 @@ func _verify_generated_assets() -> void:
 		_expect(quest_image.get_pixel(quest_image.get_width() / 2, quest_image.get_height() / 2).a > 0.95, "Generated quest frame must include an opaque ink-wash center.")
 
 	for icon_path in [
+		"res://assets/ui/icons/hud_quest.png",
 		"res://assets/ui/icons/hud_character.png",
 		"res://assets/ui/icons/hud_inventory.png",
 		"res://assets/ui/icons/hud_ship.png",
@@ -118,18 +119,21 @@ func _verify_component_contract() -> void:
 	_expect(main_entry_style.get_border_width(SIDE_BOTTOM) == 1, "Main quest must keep one lightweight divider.")
 	_expect(side_entry_style.get_border_width(SIDE_BOTTOM) == 0, "Side quest must not add a redundant bottom card border.")
 
-	for button_name in ["MenuButton", "InventoryButton", "ShipButton", "CharacterButton"]:
+	for button_name in ["QuestButton", "MenuButton", "InventoryButton", "ShipButton", "CharacterButton"]:
 		var button := hud.find_child(button_name, true, false) as Button
 		_expect(button != null, "%s is missing." % button_name)
 	var action_row := hud.get_node("FunctionButtons")
 	_expect(
-		action_row.get_child(0).name == "CharacterButtonSlot"
-		and action_row.get_child(1).name == "InventoryButtonSlot"
-		and action_row.get_child(2).name == "ShipButtonSlot"
-		and action_row.get_child(3).name == "MenuButtonSlot",
-		"Function buttons must end with MenuButton on the far right."
+		action_row.get_child_count() == 5
+		and action_row.get_child(0).name == "QuestButtonSlot"
+		and action_row.get_child(1).name == "CharacterButtonSlot"
+		and action_row.get_child(2).name == "InventoryButtonSlot"
+		and action_row.get_child(3).name == "ShipButtonSlot"
+		and action_row.get_child(4).name == "MenuButtonSlot",
+		"Function buttons must start with QuestButton and end with MenuButton."
 	)
-	var expected_hud_icons := ["hud_character.png", "hud_inventory.png", "hud_ship.png", "hud_menu.png"]
+	_expect(action_row.size.x >= 562.0, "Function button row must expand to fit five entries.")
+	var expected_hud_icons := ["hud_quest.png", "hud_character.png", "hud_inventory.png", "hud_ship.png", "hud_menu.png"]
 	for slot_index in range(action_row.get_child_count()):
 		var slot := action_row.get_child(slot_index)
 		var function_texture := slot.get_node("GeneratedFunctionTexture") as TextureRect
@@ -138,6 +142,12 @@ func _verify_component_contract() -> void:
 		_expect(function_icon.texture != null and function_icon.texture.resource_path.ends_with(expected_hud_icons[slot_index]), "%s must use its generated ink-wash function icon." % slot.name)
 		_expect(function_icon.size == Vector2(56, 56), "%s icon must fill the generated diamond without losing its center." % slot.name)
 		_expect(slot.get_node_or_null("Symbol") == null, "%s must not retain its text symbol." % slot.name)
+
+	var quest_button := hud.find_child("QuestButton", true, false) as Button
+	quest_button.pressed.emit()
+	var quest_toast := hud.get_node("ComingSoonToast") as Control
+	var quest_toast_message := hud.get_node("ComingSoonToast/Message") as Label
+	_expect(quest_toast.visible and "任务" in quest_toast_message.text and "功能即将开放" in quest_toast_message.text, "QuestButton must show the coming-soon message.")
 
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	if menu_button != null:

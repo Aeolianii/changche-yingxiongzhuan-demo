@@ -91,6 +91,7 @@ $requiredFiles = @(
     'assets\ui\exploration_hud\player_status_frame.png',
     'assets\ui\exploration_hud\quest_tracker_frame.png',
     'assets\ui\exploration_hud\function_button.png',
+    'assets\ui\icons\hud_quest.png',
     'assets\ui\icons\hud_character.png',
     'assets\ui\icons\hud_inventory.png',
     'assets\ui\icons\hud_ship.png',

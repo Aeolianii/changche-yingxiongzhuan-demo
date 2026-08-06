@@ -92,9 +92,9 @@ func _verify_component_contract() -> void:
 			_expect(hud.find_child(entry_name, true, false) is Button, "%s is missing from the system menu." % entry_name)
 		var generated_button := system_menu.find_child("GeneratedButtonTexture", true, false) as TextureRect
 		_expect(generated_button != null and generated_button.texture.resource_path.ends_with("menu_button.png"), "System menu entries must use the generated button texture.")
-		_expect(generated_button.size.y >= 94.0, "Generated menu button texture must use the expanded vertical size.")
+		_expect(generated_button.size.y >= 110.0, "Generated menu button texture must use the second expanded vertical size.")
 		var continue_button := hud.find_child("ContinueGameButton", true, false) as Button
-		_expect(continue_button.size.y >= 60.0, "System menu click targets must match the expanded button height.")
+		_expect(continue_button.size.y >= 68.0, "System menu click targets must match the second expanded button height.")
 		_expect(continue_button.get_theme_font_size("font_size") == 21, "System menu button font size must remain 21.")
 		_expect(continue_button.get_theme_stylebox("hover") is StyleBoxEmpty, "System menu buttons must not add a hover highlight.")
 		_expect(continue_button.get_theme_color("font_hover_color") == continue_button.get_theme_color("font_color"), "System menu button text color must not change on hover.")

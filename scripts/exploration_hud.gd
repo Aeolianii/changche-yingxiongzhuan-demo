@@ -391,7 +391,7 @@ func _build_system_menu() -> void:
 	menu_list.name = "MenuEntries"
 	menu_list.position = Vector2(68, 82)
 	menu_list.size = Vector2(314, 505)
-	menu_list.add_theme_constant_override("separation", 11)
+	menu_list.add_theme_constant_override("separation", 7)
 	menu_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(menu_list)
 
@@ -412,14 +412,14 @@ func _build_system_menu() -> void:
 func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol: String, node_name: String) -> void:
 	var slot := Control.new()
 	slot.name = "%sSlot" % node_name
-	slot.custom_minimum_size = Vector2(314, 72)
+	slot.custom_minimum_size = Vector2(314, 76)
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(slot)
 
 	var generated_button := TextureRect.new()
 	generated_button.name = "GeneratedButtonTexture"
-	generated_button.position = Vector2(-10, -11)
-	generated_button.size = Vector2(340, 94)
+	generated_button.position = Vector2(-10, -17)
+	generated_button.size = Vector2(340, 110)
 	generated_button.texture = SYSTEM_MENU_BUTTON
 	generated_button.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	generated_button.stretch_mode = TextureRect.STRETCH_SCALE
@@ -429,7 +429,7 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol
 
 	var icon := _make_label(symbol, 20, TEXT_LIGHT)
 	icon.name = "EntrySymbol"
-	icon.position = Vector2(34, 13)
+	icon.position = Vector2(34, 15)
 	icon.size = Vector2(46, 46)
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -437,8 +437,8 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol
 
 	var button := Button.new()
 	button.name = node_name
-	button.position = Vector2(30, 6)
-	button.size = Vector2(278, 60)
+	button.position = Vector2(30, 4)
+	button.size = Vector2(278, 68)
 	button.text = action_name
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND

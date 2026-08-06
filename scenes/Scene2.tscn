@@ -7,7 +7,7 @@
 radius = 9.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
-radius = 12.0
+radius = 8.062258
 
 [node name="Scene2" type="Node2D" unique_id=1810119532]
 script = ExtResource("1_scene2")
@@ -58,6 +58,7 @@ polygon = PackedVector2Array(904, 2, 930, -5, 927, 14, 904, 19, 902, 11)
 
 [node name="LeftWarmHaze" type="Polygon2D" parent="World/DistantBackdrop/Sky" unique_id=638642803]
 z_index = 2
+position = Vector2(0, 1)
 color = Color(0.91, 0.86, 0.7, 0.38)
 polygon = PackedVector2Array(0, 118, 291, 119, 290, 178, 0, 178)
 
@@ -70,8 +71,9 @@ polygon = PackedVector2Array(1055, 117, 1344, 118, 1344, 178, 1054, 178)
 
 [node name="LeftNearIsland" type="Polygon2D" parent="World/DistantBackdrop/Islands" unique_id=851158273]
 z_index = 4
+position = Vector2(-2, -27)
 color = Color(0.34, 0.56, 0.42, 0.28)
-polygon = PackedVector2Array(0, 178, 58, 152, 116, 166, 190, 150, 292, 179)
+polygon = PackedVector2Array(0, 178, 58, 152, 116, 166, 190, 150, 199, 152, 292, 179)
 
 [node name="RightNearIsland" type="Polygon2D" parent="World/DistantBackdrop/Islands" unique_id=436348420]
 z_index = 4
@@ -270,10 +272,10 @@ polygon = PackedVector2Array(1048, 575, 1344, 575, 1344, 896, 870, 897, 870, 862
 [node name="ShipAndWaterBlockers" type="StaticBody2D" parent="World/Collision" unique_id=1653151702]
 
 [node name="LeftWaterBlocker" type="CollisionPolygon2D" parent="World/Collision/ShipAndWaterBlockers" unique_id=2011897882]
-polygon = PackedVector2Array(-52, 514, 305, 519, 501, 632, 500, 946, -50, 946)
+polygon = PackedVector2Array(-52, 514, 305, 519, 433, 598, 481, 606, 493, 600, 506, 605, 504.87836, 671.7378, 504, 724, 500, 946, -50, 946)
 
 [node name="RightWaterBlocker" type="CollisionPolygon2D" parent="World/Collision/ShipAndWaterBlockers" unique_id=451854704]
-polygon = PackedVector2Array(1049, 515, 1400, 512, 1394, 946, 844, 946, 838, 633)
+polygon = PackedVector2Array(1049, 515, 1136.9764, 514.24805, 1400, 512, 1394, 946, 844, 946, 834, 631, 838, 602, 856, 601, 869, 612, 940, 585)
 
 [node name="MainMastBlocker" type="CollisionPolygon2D" parent="World/Collision/ShipAndWaterBlockers" unique_id=421930783]
 polygon = PackedVector2Array(646, 0, 704, 0, 704, 444, 646, 444)
@@ -312,10 +314,10 @@ polygon = PackedVector2Array(836, 680, 868, 648, 868, 828, 833, 822)
 polygon = PackedVector2Array(476, 808, 868, 808, 868, 850, 476, 850)
 
 [node name="LeftPatrolDeckGateBlocker" type="CollisionPolygon2D" parent="World/Collision/ShipAndWaterBlockers" unique_id=2012323235]
-polygon = PackedVector2Array(440, 239, 450, 588, 383, 590, 303, 516, 305, 247)
+polygon = PackedVector2Array(440, 239, 449, 588, 380, 587, 303, 516, 305, 247)
 
 [node name="RightPatrolDeckGateBlocker" type="CollisionPolygon2D" parent="World/Collision/ShipAndWaterBlockers" unique_id=1018634408]
-polygon = PackedVector2Array(903, 222, 1048, 222, 1051, 513, 930, 587, 900, 589)
+polygon = PackedVector2Array(903, 222, 1048, 222, 1051, 513, 930, 587, 900, 589, 894, 499, 903, 463, 895, 445)
 
 [node name="Actors" type="Node2D" parent="World" unique_id=1748181893]
 

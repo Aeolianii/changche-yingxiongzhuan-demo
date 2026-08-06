@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="厂东英雄传：序章至南疆"
+config/name="厂车英雄传：序章至南疆"
 run/main_scene="res://scenes/palace/palace_demo.tscn"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 

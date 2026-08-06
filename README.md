@@ -1,4 +1,4 @@
-# 厂东英雄传：序章至南疆
+# 厂车英雄传 Demo：序章至南疆
 
 这是由两个 Godot 4.7 原型合并而成的连续可玩项目：
 
@@ -14,11 +14,12 @@
 
 必须使用 Godot 的 .NET 版本打开；普通版本不能编译 `scripts/Scene2.cs`。
 
-## 运行
+## 下载与运行
 
-1. 用 Godot .NET 4.7.1 打开根目录的 `project.godot`。
-2. 等待资源导入和 C# 构建完成。
-3. 按 F5，从 `res://scenes/palace/palace_demo.tscn` 开始。
+1. 克隆仓库，或在 GitHub 点击 **Code → Download ZIP** 并完整解压。
+2. 用 Godot .NET 4.7.1 导入根目录的 `project.godot`。
+3. 等待首次资源导入和 C# 构建完成。
+4. 按 F5，从 `res://scenes/palace/palace_demo.tscn` 开始。
 
 场景一完成旁白出现后，会在 2.5 秒后自动进入场景二。点击“立即启程”可以跳过等待。
 
@@ -45,7 +46,7 @@ dotnet build .\NanjiangFleet.csproj
 自动切换运行测试：
 
 ```powershell
-& 'D:\Programs\Godot-4.7.1-dotnet\Godot_v4.7.1-stable_mono_win64\Godot_v4.7.1-stable_mono_win64_console.exe' --headless --path . --script res://tests/test_scene_transition.gd
+godot --headless --path . --script res://tests/test_scene_transition.gd
 ```
 
 设计、架构、变更记录和手动验收项见 `docs/index.md`。

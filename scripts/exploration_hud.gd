@@ -351,9 +351,9 @@ func _build_system_menu() -> void:
 	generated_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(generated_frame)
 
-	var title := _make_label("系  统", 25, TEXT_LIGHT)
+	var title := _make_label("系  统", 25, Color(0.12, 0.13, 0.105, 1.0))
 	title.name = "MenuTitle"
-	title.position = Vector2(102, -2)
+	title.position = Vector2(102, -38)
 	title.size = Vector2(246, 56)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -387,7 +387,7 @@ func _build_system_menu() -> void:
 	close_button.add_theme_font_size_override("font_size", 30)
 	close_button.add_theme_color_override("font_color", TEXT_LIGHT)
 	close_button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	close_button.add_theme_stylebox_override("hover", _panel_style(Color(0.84, 0.67, 0.31, 0.12), Color(0, 0, 0, 0), 0, 38))
+	close_button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	close_button.add_theme_stylebox_override("pressed", _panel_style(Color(0.84, 0.67, 0.31, 0.24), Color(0, 0, 0, 0), 0, 38))
 	close_button.pressed.connect(_close_system_menu)
 	close_slot.add_child(close_button)

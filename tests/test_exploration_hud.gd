@@ -103,6 +103,8 @@ func _verify_component_contract() -> void:
 		_expect(generated_frame.texture != null and generated_frame.texture.resource_path.ends_with("system_menu_frame.png"), "System menu must use the generated frame texture.")
 		var generated_close := system_menu.get_node("SystemPanel/CloseButtonOrnament/GeneratedCloseTexture") as TextureRect
 		_expect(generated_close.texture != null and generated_close.texture.resource_path.ends_with("close_button.png"), "System menu must use the generated close-button texture.")
+		var menu_title := system_menu.get_node("SystemPanel/MenuTitle") as Label
+		_expect(menu_title.position.y <= -30.0, "System menu title must sit inside the generated top plaque.")
 		for entry_name in ["ContinueGameButton", "SaveGameButton", "LoadGameButton", "SettingsButton", "ReturnTitleButton", "ExitGameButton"]:
 			_expect(hud.find_child(entry_name, true, false) is Button, "%s is missing from the system menu." % entry_name)
 		var generated_button := system_menu.find_child("GeneratedButtonTexture", true, false) as TextureRect
@@ -131,6 +133,7 @@ func _verify_component_contract() -> void:
 			_expect(toast.visible, "Clicking %s must show a placeholder message." % unfinished_entry[0])
 			_expect(unfinished_entry[1] in message.text and "该功能即将实现" in message.text, "%s uses the wrong placeholder message." % unfinished_entry[0])
 		var close_button := hud.find_child("CloseMenuButton", true, false) as Button
+		_expect(close_button.get_theme_stylebox("hover") is StyleBoxEmpty, "System menu close button must not add a hover highlight.")
 		close_button.pressed.emit()
 		_expect(not system_menu.visible, "CloseMenuButton must close the system menu.")
 

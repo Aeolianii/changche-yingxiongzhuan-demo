@@ -391,7 +391,7 @@ func _build_system_menu() -> void:
 	menu_list.name = "MenuEntries"
 	menu_list.position = Vector2(68, 82)
 	menu_list.size = Vector2(314, 505)
-	menu_list.add_theme_constant_override("separation", 15)
+	menu_list.add_theme_constant_override("separation", 11)
 	menu_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(menu_list)
 
@@ -412,14 +412,14 @@ func _build_system_menu() -> void:
 func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol: String, node_name: String) -> void:
 	var slot := Control.new()
 	slot.name = "%sSlot" % node_name
-	slot.custom_minimum_size = Vector2(314, 68)
+	slot.custom_minimum_size = Vector2(314, 72)
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(slot)
 
 	var generated_button := TextureRect.new()
 	generated_button.name = "GeneratedButtonTexture"
-	generated_button.position = Vector2(-10, -7)
-	generated_button.size = Vector2(340, 82)
+	generated_button.position = Vector2(-10, -11)
+	generated_button.size = Vector2(340, 94)
 	generated_button.texture = SYSTEM_MENU_BUTTON
 	generated_button.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	generated_button.stretch_mode = TextureRect.STRETCH_SCALE
@@ -429,7 +429,7 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol
 
 	var icon := _make_label(symbol, 20, TEXT_LIGHT)
 	icon.name = "EntrySymbol"
-	icon.position = Vector2(34, 11)
+	icon.position = Vector2(34, 13)
 	icon.size = Vector2(46, 46)
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -437,17 +437,18 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol
 
 	var button := Button.new()
 	button.name = node_name
-	button.position = Vector2(30, 8)
-	button.size = Vector2(278, 52)
+	button.position = Vector2(30, 6)
+	button.size = Vector2(278, 60)
 	button.text = action_name
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_size_override("font_size", 21)
-	button.add_theme_color_override("font_color", Color(0.13, 0.13, 0.105, 1.0))
-	button.add_theme_color_override("font_hover_color", Color(0.08, 0.07, 0.045, 1.0))
+	var button_text_color := Color(0.13, 0.13, 0.105, 1.0)
+	button.add_theme_color_override("font_color", button_text_color)
+	button.add_theme_color_override("font_hover_color", button_text_color)
 	button.add_theme_color_override("font_pressed_color", Color(0.08, 0.07, 0.045, 1.0))
 	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	button.add_theme_stylebox_override("hover", _panel_style(Color(0.95, 0.85, 0.59, 0.34), Color(0, 0, 0, 0), 0, 3))
+	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	button.add_theme_stylebox_override("pressed", _panel_style(Color(0.83, 0.64, 0.31, 0.42), Color(0, 0, 0, 0), 0, 3))
 	if action_name == "退出游戏":
 		button.pressed.connect(_exit_game)

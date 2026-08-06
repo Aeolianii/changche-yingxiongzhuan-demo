@@ -52,6 +52,26 @@ func _verify_generated_assets() -> void:
 		_expect(quest_image.get_pixel(0, 0).a < 0.05, "Generated quest frame must have a transparent corner.")
 		_expect(quest_image.get_pixel(quest_image.get_width() / 2, quest_image.get_height() / 2).a > 0.95, "Generated quest frame must include an opaque ink-wash center.")
 
+	for icon_path in [
+		"res://assets/ui/icons/hud_character.png",
+		"res://assets/ui/icons/hud_inventory.png",
+		"res://assets/ui/icons/hud_ship.png",
+		"res://assets/ui/icons/hud_menu.png",
+		"res://assets/ui/icons/menu_continue.png",
+		"res://assets/ui/icons/menu_save.png",
+		"res://assets/ui/icons/menu_load.png",
+		"res://assets/ui/icons/menu_settings.png",
+		"res://assets/ui/icons/menu_return_title.png",
+		"res://assets/ui/icons/menu_exit.png",
+	]:
+		var icon_texture := load(icon_path) as Texture2D
+		var icon_image := icon_texture.get_image() if icon_texture != null else null
+		_expect(icon_image != null and not icon_image.is_empty(), "%s could not be loaded." % icon_path)
+		if icon_image == null or icon_image.is_empty():
+			continue
+		_expect(icon_image.get_pixel(0, 0).a < 0.05, "%s must have a transparent corner." % icon_path)
+		_expect(icon_image.get_used_rect().has_area(), "%s must contain visible icon pixels." % icon_path)
+
 
 func _verify_component_contract() -> void:
 	var hud := HUD_SCENE.instantiate() as Control
@@ -109,11 +129,15 @@ func _verify_component_contract() -> void:
 		and action_row.get_child(3).name == "MenuButtonSlot",
 		"Function buttons must end with MenuButton on the far right."
 	)
-	for slot in action_row.get_children():
+	var expected_hud_icons := ["hud_character.png", "hud_inventory.png", "hud_ship.png", "hud_menu.png"]
+	for slot_index in range(action_row.get_child_count()):
+		var slot := action_row.get_child(slot_index)
 		var function_texture := slot.get_node("GeneratedFunctionTexture") as TextureRect
 		_expect(function_texture.texture != null and function_texture.texture.resource_path.ends_with("function_button.png"), "%s must use the generated ink-wash button frame." % slot.name)
-		var function_symbol := slot.get_node("Symbol") as Label
-		_expect(function_symbol.position.y >= 22.0, "%s symbol must be lowered into the button center." % slot.name)
+		var function_icon := slot.get_node("FunctionIcon") as TextureRect
+		_expect(function_icon.texture != null and function_icon.texture.resource_path.ends_with(expected_hud_icons[slot_index]), "%s must use its generated ink-wash function icon." % slot.name)
+		_expect(function_icon.size == Vector2(56, 56), "%s icon must fill the generated diamond without losing its center." % slot.name)
+		_expect(slot.get_node_or_null("Symbol") == null, "%s must not retain its text symbol." % slot.name)
 
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	if menu_button != null:
@@ -148,9 +172,13 @@ func _verify_component_contract() -> void:
 		_expect(continue_button.get_theme_font_size("font_size") == 21, "System menu button font size must remain 21.")
 		_expect(continue_button.get_theme_stylebox("hover") is StyleBoxEmpty, "System menu buttons must not add a hover highlight.")
 		_expect(continue_button.get_theme_color("font_hover_color") == continue_button.get_theme_color("font_color"), "System menu button text color must not change on hover.")
-		for entry_slot in menu_entries.get_children():
-			var entry_symbol := entry_slot.get_node("EntrySymbol") as Label
-			_expect(entry_symbol.position.x <= 24.0, "%s badge symbol must move left into the generated diamond center." % entry_slot.name)
+		var expected_menu_icons := ["menu_continue.png", "menu_save.png", "menu_load.png", "menu_settings.png", "menu_return_title.png", "menu_exit.png"]
+		for entry_index in range(menu_entries.get_child_count()):
+			var entry_slot := menu_entries.get_child(entry_index)
+			var entry_icon := entry_slot.get_node("EntryIcon") as TextureRect
+			_expect(entry_icon.texture != null and entry_icon.texture.resource_path.ends_with(expected_menu_icons[entry_index]), "%s must use its generated ink-wash menu icon." % entry_slot.name)
+			_expect(entry_icon.position.x <= 20.0 and entry_icon.size == Vector2(54, 54), "%s icon must fill the generated diamond while remaining centered." % entry_slot.name)
+			_expect(entry_slot.get_node_or_null("EntrySymbol") == null, "%s must not retain its text badge." % entry_slot.name)
 		_expect(hud.find_child("TutorialButton", true, false) == null, "System menu must not include a tutorial button.")
 		var exit_button := hud.find_child("ExitGameButton", true, false) as Button
 		_expect(exit_button != null and not exit_button.pressed.get_connections().is_empty(), "ExitGameButton must have a quit action connected.")

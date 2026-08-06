@@ -4,6 +4,16 @@ const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/pictu
 const EXPLORATION_STATUS_FRAME := preload("res://assets/ui/exploration_hud/player_status_frame.png")
 const EXPLORATION_QUEST_FRAME := preload("res://assets/ui/exploration_hud/quest_tracker_frame.png")
 const EXPLORATION_FUNCTION_BUTTON := preload("res://assets/ui/exploration_hud/function_button.png")
+const HUD_ICON_CHARACTER := preload("res://assets/ui/icons/hud_character.png")
+const HUD_ICON_INVENTORY := preload("res://assets/ui/icons/hud_inventory.png")
+const HUD_ICON_SHIP := preload("res://assets/ui/icons/hud_ship.png")
+const HUD_ICON_MENU := preload("res://assets/ui/icons/hud_menu.png")
+const MENU_ICON_CONTINUE := preload("res://assets/ui/icons/menu_continue.png")
+const MENU_ICON_SAVE := preload("res://assets/ui/icons/menu_save.png")
+const MENU_ICON_LOAD := preload("res://assets/ui/icons/menu_load.png")
+const MENU_ICON_SETTINGS := preload("res://assets/ui/icons/menu_settings.png")
+const MENU_ICON_RETURN_TITLE := preload("res://assets/ui/icons/menu_return_title.png")
+const MENU_ICON_EXIT := preload("res://assets/ui/icons/menu_exit.png")
 const MENU_BLUR_SHADER := preload("res://shaders/menu_blur.gdshader")
 const SYSTEM_MENU_FRAME := preload("res://assets/ui/system_menu/system_menu_frame.png")
 const SYSTEM_MENU_BUTTON := preload("res://assets/ui/system_menu/menu_button.png")
@@ -217,16 +227,16 @@ func _build_function_buttons() -> void:
 	add_child(actions)
 
 	var specs := [
-		["人物", "将", "CharacterButton"],
-		["物品栏", "囊", "InventoryButton"],
-		["船只", "舟", "ShipButton"],
-		["菜单", "≡", "MenuButton"],
+		["人物", HUD_ICON_CHARACTER, "CharacterButton"],
+		["物品栏", HUD_ICON_INVENTORY, "InventoryButton"],
+		["船只", HUD_ICON_SHIP, "ShipButton"],
+		["菜单", HUD_ICON_MENU, "MenuButton"],
 	]
 	for spec in specs:
 		_build_function_button(actions, spec[0], spec[1], spec[2])
 
 
-func _build_function_button(parent: HBoxContainer, action_name: String, symbol: String, node_name: String) -> void:
+func _build_function_button(parent: HBoxContainer, action_name: String, icon_texture: Texture2D, node_name: String) -> void:
 	var slot := Control.new()
 	slot.name = "%sSlot" % node_name
 	slot.custom_minimum_size = Vector2(106, 108)
@@ -244,12 +254,15 @@ func _build_function_button(parent: HBoxContainer, action_name: String, symbol: 
 	generated_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(generated_texture)
 
-	var icon := _make_label(symbol, 28, TEXT_LIGHT)
-	icon.name = "Symbol"
-	icon.position = Vector2(24, 22)
-	icon.size = Vector2(58, 48)
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var icon := TextureRect.new()
+	icon.name = "FunctionIcon"
+	icon.position = Vector2(25, 18)
+	icon.size = Vector2(56, 56)
+	icon.texture = icon_texture
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(icon)
 
 	var name_label := _make_label(action_name, 17, TEXT_LIGHT)
@@ -377,12 +390,12 @@ func _build_system_menu() -> void:
 	frame.add_child(menu_list)
 
 	var entries := [
-		["继续游戏", "续", "ContinueGameButton"],
-		["保存进度", "存", "SaveGameButton"],
-		["读取进度", "读", "LoadGameButton"],
-		["游戏设置", "设", "SettingsButton"],
-		["返回标题", "题", "ReturnTitleButton"],
-		["退出游戏", "退", "ExitGameButton"],
+		["继续游戏", MENU_ICON_CONTINUE, "ContinueGameButton"],
+		["保存进度", MENU_ICON_SAVE, "SaveGameButton"],
+		["读取进度", MENU_ICON_LOAD, "LoadGameButton"],
+		["游戏设置", MENU_ICON_SETTINGS, "SettingsButton"],
+		["返回标题", MENU_ICON_RETURN_TITLE, "ReturnTitleButton"],
+		["退出游戏", MENU_ICON_EXIT, "ExitGameButton"],
 	]
 	for entry in entries:
 		_build_system_menu_entry(menu_list, entry[0], entry[1], entry[2])
@@ -390,7 +403,7 @@ func _build_system_menu() -> void:
 	_menu_overlay.hide()
 
 
-func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol: String, node_name: String) -> void:
+func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_texture: Texture2D, node_name: String) -> void:
 	var slot := Control.new()
 	slot.name = "%sSlot" % node_name
 	slot.custom_minimum_size = Vector2(314, 76)
@@ -408,12 +421,15 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol
 	generated_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(generated_button)
 
-	var icon := _make_label(symbol, 20, TEXT_LIGHT)
-	icon.name = "EntrySymbol"
-	icon.position = Vector2(24, 15)
-	icon.size = Vector2(46, 46)
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var icon := TextureRect.new()
+	icon.name = "EntryIcon"
+	icon.position = Vector2(20, 11)
+	icon.size = Vector2(54, 54)
+	icon.texture = icon_texture
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(icon)
 
 	var button := Button.new()

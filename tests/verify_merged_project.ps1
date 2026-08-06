@@ -85,6 +85,9 @@ $requiredFiles = @(
     'scripts\Scene2.cs',
     'scripts\exploration_hud.gd',
     'shaders\menu_blur.gdshader',
+    'assets\ui\system_menu\system_menu_frame.png',
+    'assets\ui\system_menu\menu_button.png',
+    'assets\ui\system_menu\close_button.png',
     'tests\test_system_menu_exit.gd',
     'assets\characters\soldier\picture.png',
     'assets\characters\protagonist\picture.png',
@@ -173,6 +176,9 @@ if (Test-Path -LiteralPath $hudScript -PathType Leaf) {
         Add-Failure 'System menu must not include the tutorial entry.'
     }
     Assert-Contains $hudContent 'MENU_BLUR_SHADER' 'System menu must use the shared blur shader.'
+    Assert-Contains $hudContent 'assets/ui/system_menu/system_menu_frame\.png' 'System menu must load the generated frame texture.'
+    Assert-Contains $hudContent 'assets/ui/system_menu/menu_button\.png' 'System menu must load the generated button texture.'
+    Assert-Contains $hudContent 'assets/ui/system_menu/close_button\.png' 'System menu must load the generated close-button texture.'
     Assert-Contains $hudContent 'get_tree\(\)\.quit\(\)' 'ExitGameButton must quit the running game.'
     Assert-Contains $hudContent '\u8BE5\u529F\u80FD\u5373\u5C06\u5B9E\u73B0' 'Unfinished system menu entries must show the documented placeholder message.'
 }

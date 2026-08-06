@@ -2,6 +2,9 @@ extends Control
 
 const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
 const MENU_BLUR_SHADER := preload("res://shaders/menu_blur.gdshader")
+const SYSTEM_MENU_FRAME := preload("res://assets/ui/system_menu/system_menu_frame.png")
+const SYSTEM_MENU_BUTTON := preload("res://assets/ui/system_menu/menu_button.png")
+const SYSTEM_MENU_CLOSE := preload("res://assets/ui/system_menu/close_button.png")
 
 const INK := Color(0.055, 0.073, 0.075, 0.96)
 const INK_SOFT := Color(0.075, 0.105, 0.108, 0.9)
@@ -322,7 +325,7 @@ func _build_system_menu() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu_overlay.add_child(dim)
 
-	var frame := Panel.new()
+	var frame := Control.new()
 	frame.name = "SystemPanel"
 	frame.set_anchors_preset(Control.PRESET_CENTER)
 	frame.offset_left = -225.0
@@ -330,50 +333,63 @@ func _build_system_menu() -> void:
 	frame.offset_right = 225.0
 	frame.offset_bottom = 320.0
 	frame.mouse_filter = Control.MOUSE_FILTER_STOP
-	frame.add_theme_stylebox_override("panel", _panel_style(Color(0.07, 0.078, 0.068, 0.97), GOLD, 3, 5))
 	_menu_overlay.add_child(frame)
 
-	var inner := Panel.new()
-	inner.name = "InnerFrame"
-	inner.position = Vector2(10, 10)
-	inner.size = Vector2(430, 620)
-	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	inner.add_theme_stylebox_override("panel", _panel_style(Color(0.16, 0.16, 0.125, 0.93), Color(0.42, 0.36, 0.24, 0.8), 1, 3))
-	frame.add_child(inner)
-
-	var title_ribbon := Panel.new()
-	title_ribbon.name = "MenuTitleRibbon"
-	title_ribbon.position = Vector2(38, -18)
-	title_ribbon.size = Vector2(374, 58)
-	title_ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	title_ribbon.add_theme_stylebox_override("panel", _panel_style(INK, GOLD, 2, 4))
-	frame.add_child(title_ribbon)
+	var generated_frame := TextureRect.new()
+	generated_frame.name = "GeneratedFrame"
+	generated_frame.position = Vector2(-60, -40)
+	generated_frame.size = Vector2(570, 720)
+	generated_frame.texture = SYSTEM_MENU_FRAME
+	generated_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	generated_frame.stretch_mode = TextureRect.STRETCH_SCALE
+	generated_frame.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	generated_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_child(generated_frame)
 
 	var title := _make_label("系  统", 25, TEXT_LIGHT)
 	title.name = "MenuTitle"
-	title.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 6)
+	title.position = Vector2(102, -2)
+	title.size = Vector2(246, 56)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title_ribbon.add_child(title)
+	frame.add_child(title)
+
+	var close_slot := Control.new()
+	close_slot.name = "CloseButtonOrnament"
+	close_slot.position = Vector2(389, -24)
+	close_slot.size = Vector2(82, 82)
+	close_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_child(close_slot)
+
+	var close_texture := TextureRect.new()
+	close_texture.name = "GeneratedCloseTexture"
+	close_texture.position = Vector2(-8, -8)
+	close_texture.size = Vector2(98, 98)
+	close_texture.texture = SYSTEM_MENU_CLOSE
+	close_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	close_texture.stretch_mode = TextureRect.STRETCH_SCALE
+	close_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	close_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	close_slot.add_child(close_texture)
 
 	var close_button := Button.new()
 	close_button.name = "CloseMenuButton"
-	close_button.position = Vector2(406, -24)
-	close_button.size = Vector2(52, 52)
+	close_button.position = Vector2.ZERO
+	close_button.size = Vector2(82, 82)
 	close_button.text = "×"
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	close_button.add_theme_font_size_override("font_size", 31)
+	close_button.add_theme_font_size_override("font_size", 30)
 	close_button.add_theme_color_override("font_color", TEXT_LIGHT)
-	close_button.add_theme_stylebox_override("normal", _panel_style(INK, GOLD, 2, 26))
-	close_button.add_theme_stylebox_override("hover", _panel_style(Color(0.24, 0.07, 0.05, 1.0), GOLD_BRIGHT, 2, 26))
-	close_button.add_theme_stylebox_override("pressed", _panel_style(Color(0.36, 0.08, 0.055, 1.0), GOLD_BRIGHT, 2, 26))
+	close_button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	close_button.add_theme_stylebox_override("hover", _panel_style(Color(0.84, 0.67, 0.31, 0.12), Color(0, 0, 0, 0), 0, 38))
+	close_button.add_theme_stylebox_override("pressed", _panel_style(Color(0.84, 0.67, 0.31, 0.24), Color(0, 0, 0, 0), 0, 38))
 	close_button.pressed.connect(_close_system_menu)
-	frame.add_child(close_button)
+	close_slot.add_child(close_button)
 
 	var menu_list := VBoxContainer.new()
 	menu_list.name = "MenuEntries"
-	menu_list.position = Vector2(68, 77)
+	menu_list.position = Vector2(68, 82)
 	menu_list.size = Vector2(314, 505)
 	menu_list.add_theme_constant_override("separation", 15)
 	menu_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -400,28 +416,20 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, symbol
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(slot)
 
-	var bar := Panel.new()
-	bar.name = "ButtonBar"
-	bar.position = Vector2(28, 8)
-	bar.size = Vector2(280, 52)
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bar.add_theme_stylebox_override("panel", _panel_style(Color(0.72, 0.70, 0.62, 0.96), Color(0.08, 0.09, 0.085, 1.0), 3, 4))
-	slot.add_child(bar)
-
-	var outer := Polygon2D.new()
-	outer.name = "IconDiamond"
-	outer.polygon = _diamond_points(Vector2(35, 34), 29)
-	outer.color = GOLD
-	slot.add_child(outer)
-
-	var inner := Polygon2D.new()
-	inner.polygon = _diamond_points(Vector2(35, 34), 24)
-	inner.color = INK
-	slot.add_child(inner)
+	var generated_button := TextureRect.new()
+	generated_button.name = "GeneratedButtonTexture"
+	generated_button.position = Vector2(-10, -7)
+	generated_button.size = Vector2(340, 82)
+	generated_button.texture = SYSTEM_MENU_BUTTON
+	generated_button.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	generated_button.stretch_mode = TextureRect.STRETCH_SCALE
+	generated_button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	generated_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(generated_button)
 
 	var icon := _make_label(symbol, 20, TEXT_LIGHT)
 	icon.name = "EntrySymbol"
-	icon.position = Vector2(12, 11)
+	icon.position = Vector2(34, 11)
 	icon.size = Vector2(46, 46)
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

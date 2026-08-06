@@ -14,6 +14,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	_verify_generated_assets()
 	await _verify_component_contract()
 	await _verify_palace_visibility()
 	await _verify_scene_two_visibility()
@@ -26,6 +27,21 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	quit(1)
+
+
+func _verify_generated_assets() -> void:
+	for asset_path in [
+		"res://assets/ui/system_menu/system_menu_frame.png",
+		"res://assets/ui/system_menu/menu_button.png",
+		"res://assets/ui/system_menu/close_button.png",
+	]:
+		var texture := load(asset_path) as Texture2D
+		var image := texture.get_image() if texture != null else null
+		_expect(image != null and not image.is_empty(), "%s could not be loaded." % asset_path)
+		if image == null or image.is_empty():
+			continue
+		_expect(image.get_pixel(0, 0).a < 0.05, "%s must have a transparent corner." % asset_path)
+		_expect(image.get_pixel(image.get_width() / 2, image.get_height() / 2).a > 0.95, "%s must keep an opaque component center." % asset_path)
 
 
 func _verify_component_contract() -> void:
@@ -68,8 +84,14 @@ func _verify_component_contract() -> void:
 		_expect(system_menu.get_node_or_null("BackgroundCopy") is BackBufferCopy, "System menu background copy is missing.")
 		var blur := system_menu.get_node("BlurredBackground") as ColorRect
 		_expect(blur.material is ShaderMaterial, "System menu must blur the captured background with a shader material.")
+		var generated_frame := system_menu.get_node("SystemPanel/GeneratedFrame") as TextureRect
+		_expect(generated_frame.texture != null and generated_frame.texture.resource_path.ends_with("system_menu_frame.png"), "System menu must use the generated frame texture.")
+		var generated_close := system_menu.get_node("SystemPanel/CloseButtonOrnament/GeneratedCloseTexture") as TextureRect
+		_expect(generated_close.texture != null and generated_close.texture.resource_path.ends_with("close_button.png"), "System menu must use the generated close-button texture.")
 		for entry_name in ["ContinueGameButton", "SaveGameButton", "LoadGameButton", "SettingsButton", "ReturnTitleButton", "ExitGameButton"]:
 			_expect(hud.find_child(entry_name, true, false) is Button, "%s is missing from the system menu." % entry_name)
+		var generated_button := system_menu.find_child("GeneratedButtonTexture", true, false) as TextureRect
+		_expect(generated_button != null and generated_button.texture.resource_path.ends_with("menu_button.png"), "System menu entries must use the generated button texture.")
 		_expect(hud.find_child("TutorialButton", true, false) == null, "System menu must not include a tutorial button.")
 		var exit_button := hud.find_child("ExitGameButton", true, false) as Button
 		_expect(exit_button != null and not exit_button.pressed.get_connections().is_empty(), "ExitGameButton must have a quit action connected.")

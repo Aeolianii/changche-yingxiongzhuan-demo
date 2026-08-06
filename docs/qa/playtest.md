@@ -31,6 +31,9 @@
 | 主帅立绘 | 推进至主帅回复 | 查看对话框左侧 | 显示将军 `picture.png`，名牌为“水师主帅” | passed / portrait runtime + render capture |
 | 无角色文本 | 查看旁白、圣旨和错误提示 | 推进或触发文本 | 立绘及名牌隐藏，不残留上一位说话者 | passed / portrait runtime test |
 | Scene2 对话底板 | 与县令或士兵开始对话 | 查看底部对话区域 | `BackgroundBar.png` 覆盖完整底部；黑框外透出游戏背景、框内纸张不透明，且其他 UI 布局不变 | passed / alpha render 1 |
+| 探索 HUD 信息 | 进入任一场景自由移动阶段 | 查看屏幕角落 | 左上显示主帅头像；左侧同时显示主线与支线；右上显示四个具名功能按钮 | passed / exploration HUD runtime + render 1 |
+| 探索 HUD 显隐 | 依次进入自由移动、对白、自动过场、操练或淡出 | 观察 HUD | 仅自由移动时显示，所有对白与过场阶段隐藏，结束后按状态恢复 | passed / exploration HUD runtime 1 |
+| 未开放功能提示 | 自由移动阶段 | 分别点击菜单、物品栏、船只、人物 | 每个按钮都出现“功能即将开放”提示，提示自动消失且不阻断移动 | passed / exploration HUD runtime 1 |
 
 ## 手动觐见与任务指引验收
 
@@ -77,6 +80,7 @@
 | 2026-07-21 / portrait run 1 | Codex | Scene1 内侍、皇帝与主帅立绘按对白和左右站位切换，正式长对白没有溢出 | 1344×896 三角色渲染截图、立绘运行态测试、完整串联回归 | 等待正式皇帝立绘 |
 | 2026-07-21 / Scene2 UI run 1 | Codex | Scene2 米黄色程序底板已替换为 `BackgroundBar.png`，其他对话 UI 布局未变化 | 1344×896 渲染截图、节点布局断言、完整串联回归 | 交付用户试玩 |
 | 2026-07-21 / Scene2 UI alpha render 1 | Codex | 黑框外侧白底已透明化，甲板和水面能从上缘、左侧尖角及右上凹口透出，框内纸张保持不透明 | 1344×896 OpenGL 截图、PNG Alpha 取样、Scene2 运行态测试与完整串联回归 | 交付用户试玩 |
+| 2026-08-06 / exploration HUD render 1 | Codex | 两个场景共用的东方武侠风探索 HUD 已接入；主角头像、主支线任务和四个功能入口信息清楚，对话与过场显隐正确 | 1344×896 OpenGL 截图、HUD 运行态测试、C# 构建与既有剧情回归 | 交付用户试玩 |
 
 ## Known issues
 

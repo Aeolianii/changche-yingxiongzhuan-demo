@@ -45,7 +45,7 @@ const SCENE_FADE_DURATION := 0.45
 @onready var portrait_name_text: Label = $UI/Overlay/PortraitDisplay/NamePlate/NameText
 @onready var interaction_button: BaseButton = $UI/Overlay/InteractionButton
 @onready var interaction_text: Label = $UI/Overlay/InteractionButton/Text
-@onready var task_text: Label = $UI/Overlay/TaskPanel/TaskText
+@onready var exploration_hud: Control = $UI/ExplorationHUD
 @onready var transition_timer: Timer = $SceneTransitionTimer
 @onready var transition_fade: ColorRect = $UI/Overlay/TransitionFade
 
@@ -76,6 +76,7 @@ func _process(delta: float) -> void:
 		StoryState.GO_TO_EMPEROR:
 			_move_actor(attendant, ATTENDANT_INSIDE_TARGET, delta)
 			_update_interaction_prompt(emperor, "觐见")
+	_refresh_exploration_hud()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -226,7 +227,17 @@ func _set_continue_text(text: String) -> void:
 
 
 func _set_task(text: String) -> void:
-	task_text.text = "当前任务：" + text
+	exploration_hud.call("set_main_task", text)
+
+
+func _refresh_exploration_hud() -> void:
+	var is_free_exploration: bool = (
+		player.controls_enabled
+		and not dialogue_panel.visible
+		and not transition_started
+		and (story_state == StoryState.WAIT_TALK or story_state == StoryState.GO_TO_EMPEROR)
+	)
+	exploration_hud.call("set_exploration_visible", is_free_exploration)
 
 
 func _start_scene_transition() -> void:
@@ -235,6 +246,7 @@ func _start_scene_transition() -> void:
 	transition_started = true
 	transition_timer.stop()
 	player.controls_enabled = false
+	_refresh_exploration_hud()
 	continue_button.disabled = true
 	interaction_button.hide()
 	var fade_tween := create_tween()

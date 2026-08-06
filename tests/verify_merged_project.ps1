@@ -80,8 +80,10 @@ $requiredFiles = @(
     'NanjiangFleet.csproj',
     'scenes\palace\palace_demo.tscn',
     'scenes\Scene2.tscn',
+    'scenes\ui\exploration_hud.tscn',
     'scripts\palace_demo.gd',
     'scripts\Scene2.cs',
+    'scripts\exploration_hud.gd',
     'assets\characters\soldier\picture.png',
     'assets\characters\protagonist\picture.png',
     'assets\characters\magistrate\standard\idle\down\1.png',
@@ -132,6 +134,8 @@ if (Test-Path -LiteralPath $sceneOneScript -PathType Leaf) {
     Assert-Contains $sceneOneContent '_show_character_dialogue\([^\r\n]+"\u7687\u5E1D"\s*,\s*null\s*,\s*false\s*,\s*"\u5E1D"' 'The emperor dialogue must use the right-side placeholder.'
     Assert-Contains $sceneOneContent '_show_character_dialogue\([^\r\n]+"\u6C34\u5E08\u4E3B\u5E05"\s*,\s*GENERAL_PORTRAIT\s*,\s*true' 'The general reply must use the general portrait on the left.'
     Assert-Contains $sceneOneContent 'func _show_dialogue\([^\)]*\)[\s\S]*?_hide_portrait\(\)[\s\S]*?dialogue_panel\.show\(\)' 'Narration must hide any previous character portrait.'
+    Assert-Contains $sceneOneContent 'StoryState\.WAIT_TALK[\s\S]*StoryState\.GO_TO_EMPEROR' 'Scene1 must restrict the exploration HUD to free-movement story states.'
+    Assert-Contains $sceneOneContent 'set_exploration_visible' 'Scene1 must synchronize exploration HUD visibility.'
 }
 
 $sceneTwoScript = Join-Path $projectRoot 'scripts\Scene2.cs'
@@ -141,6 +145,7 @@ if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
     Assert-Contains $sceneTwoContent '\$"\{AssetRoot\}/soldier"' 'Scene2 must load the complete soldier asset set.'
     Assert-Contains $sceneTwoContent 'res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar\.png' 'Scene2 must use BackgroundBar.png as its dialogue background.'
     Assert-Contains $sceneTwoContent 'new StyleBoxTexture' 'Scene2 must render its dialogue background through a texture style.'
+    Assert-Contains $sceneTwoContent 'set_exploration_visible' 'Scene2 must synchronize exploration HUD visibility.'
     if ([regex]::IsMatch($sceneTwoContent, 'BgColor\s*=\s*new Color\(0\.9f,\s*0\.85f,\s*0\.67f')) {
         Add-Failure 'Scene2 must not retain the old beige dialogue background style.'
     }
@@ -161,12 +166,14 @@ if (Test-Path -LiteralPath $sceneOneFile -PathType Leaf) {
     Assert-Contains $sceneOneScene '\[node name="PortraitImage" type="TextureRect" parent="UI/Overlay/PortraitDisplay"' 'Scene1 must contain a portrait texture node.'
     Assert-Contains $sceneOneScene '\[node name="PlaceholderFrame" type="ColorRect" parent="UI/Overlay/PortraitDisplay"' 'Scene1 must contain an emperor placeholder card.'
     Assert-Contains $sceneOneScene '\[node name="NameText" type="Label" parent="UI/Overlay/PortraitDisplay/NamePlate"' 'Scene1 must contain a portrait name plate.'
+    Assert-Contains $sceneOneScene 'instance=ExtResource\("8_hud"\)' 'Scene1 must instance the shared exploration HUD.'
 }
 
 Test-SceneResourceReferences 'scenes\palace\palace_demo.tscn'
 Test-SceneResourceReferences 'scenes\characters\player.tscn'
 Test-SceneResourceReferences 'scenes\characters\npc.tscn'
 Test-SceneResourceReferences 'scenes\Scene2.tscn'
+Test-SceneResourceReferences 'scenes\ui\exploration_hud.tscn'
 
 if ($failures.Count -gt 0) {
     Write-Host "Merged project verification failed with $($failures.Count) issue(s):" -ForegroundColor Red

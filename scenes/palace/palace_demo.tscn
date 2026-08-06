@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://iiseahmcsey0" path="res://assets/ui/dialogue_background.png" id="5_ntdlv"]
 [ext_resource type="Texture2D" uid="uid://casbaiubyku7e" path="res://assets/ui/button_medium_green.png" id="6_re2s4"]
 [ext_resource type="Texture2D" uid="uid://dgtwn3k7s2ykh" path="res://assets/ui/button_medium_green_active.png" id="7_xi4kr"]
+[ext_resource type="PackedScene" path="res://scenes/ui/exploration_hud.tscn" id="8_hud"]
 
 [node name="PalaceDemo" type="Node2D" unique_id=838520599]
 process_mode = 3
@@ -252,37 +253,6 @@ text = "对话"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TaskPanel" type="ColorRect" parent="UI/Overlay" unique_id=563274465]
-layout_mode = 0
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -340.0
-offset_top = 22.0
-offset_right = -20.0
-offset_bottom = 92.0
-mouse_filter = 2
-color = Color(0.14117648, 0.105882354, 0.105882354, 0.9019608)
-
-[node name="Accent" type="ColorRect" parent="UI/Overlay/TaskPanel" unique_id=373641019]
-layout_mode = 0
-anchor_bottom = 1.0
-offset_right = 6.0
-mouse_filter = 2
-color = Color(0.84313726, 0.6627451, 0.29411766, 1)
-
-[node name="TaskText" type="Label" parent="UI/Overlay/TaskPanel" unique_id=1526845683]
-layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 18.0
-offset_top = 8.0
-offset_right = -12.0
-offset_bottom = -8.0
-theme_override_colors/font_color = Color(1, 0.9137255, 0.70980394, 1)
-theme_override_font_sizes/font_size = 21
-text = "当前任务：等待急报"
-vertical_alignment = 1
-
 [node name="TransitionFade" type="ColorRect" parent="UI/Overlay"]
 modulate = Color(1, 1, 1, 0)
 z_index = 100
@@ -294,3 +264,5 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 1)
+
+[node name="ExplorationHUD" parent="UI" instance=ExtResource("8_hud")]

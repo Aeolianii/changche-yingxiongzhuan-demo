@@ -13,6 +13,7 @@ public partial class Scene2 : Node2D
     private AnimatedSprite2D _playerSprite = default!;
     private Area2D _magistrateInteractArea = default!;
     private Control _interactionPanel = default!;
+    private Control _explorationHud = default!;
     private Control _dialoguePanel = default!;
     private ColorRect _portraitBox = default!;
     private Label _portraitLabel = default!;
@@ -82,6 +83,7 @@ public partial class Scene2 : Node2D
     public override void _PhysicsProcess(double delta)
     {
         UpdateAmbientBackground((float)delta);
+        RefreshExplorationHud();
 
         if (_dialoguePanel.Visible || _drillOverlay.Visible)
         {
@@ -621,6 +623,9 @@ public partial class Scene2 : Node2D
     {
         var canvas = GetNode<CanvasLayer>("UI");
 
+        _explorationHud = GetNode<Control>("UI/ExplorationHUD");
+        _explorationHud.Call("set_main_task", "巡视水师驻地");
+
         _interactionPanel = CreateInteractionPanel();
         canvas.AddChild(_interactionPanel);
 
@@ -628,6 +633,7 @@ public partial class Scene2 : Node2D
 
         _drillOverlay = CreateDrillOverlay();
         canvas.AddChild(_drillOverlay);
+        RefreshExplorationHud();
     }
 
     private void InitializeDialoguePanel()
@@ -759,7 +765,7 @@ public partial class Scene2 : Node2D
             Position = new Vector2(572, 760),
             Size = new Vector2(200, 52)
         };
-        close.Pressed += () => _drillOverlay.Hide();
+        close.Pressed += CloseDrillOverlay;
         root.AddChild(close);
 
         return root;
@@ -803,6 +809,7 @@ public partial class Scene2 : Node2D
         _activeNpc = npc;
         _interactionPanel.Hide();
         _dialoguePanel.Show();
+        RefreshExplorationHud();
         _optionBox.Show();
         _nextDialogueButton.Hide();
 
@@ -913,6 +920,7 @@ public partial class Scene2 : Node2D
         _dialoguePanel.Hide();
         _activeNpc = null;
         ClearOptionButtons();
+        RefreshExplorationHud();
     }
 
     private void StartDrillFromDialogue()
@@ -929,6 +937,7 @@ public partial class Scene2 : Node2D
         _dialogueIndex = 0;
         ShowDialogueLine();
         _dialoguePanel.Show();
+        RefreshExplorationHud();
     }
 
     private void AdvanceDialogue()
@@ -962,5 +971,21 @@ public partial class Scene2 : Node2D
     {
         _interactionPanel.Hide();
         _drillOverlay.Show();
+        RefreshExplorationHud();
+    }
+
+    private void CloseDrillOverlay()
+    {
+        _drillOverlay.Hide();
+        RefreshExplorationHud();
+    }
+
+    private void RefreshExplorationHud()
+    {
+        if (_explorationHud == null || _dialoguePanel == null || _drillOverlay == null)
+            return;
+
+        bool isFreeExploration = !_dialoguePanel.Visible && !_drillOverlay.Visible;
+        _explorationHud.Call("set_exploration_visible", isFreeExploration);
     }
 }

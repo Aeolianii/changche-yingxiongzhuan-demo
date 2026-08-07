@@ -208,8 +208,8 @@ func _build_task_tracker() -> void:
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_ribbon.add_child(title)
 
-	_build_quest_entry(tracker, "MainQuest", Vector2(28, 64), "主线", true)
-	_build_quest_entry(tracker, "SideQuest", Vector2(28, 164), "支线", false)
+	_build_quest_entry(tracker, "MainQuest", Vector2(28, 56), "主线", true)
+	_build_quest_entry(tracker, "SideQuest", Vector2(28, 156), "支线", false)
 
 
 func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section: String, is_main: bool) -> void:

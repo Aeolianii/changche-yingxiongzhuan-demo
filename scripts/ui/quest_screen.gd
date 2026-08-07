@@ -323,14 +323,14 @@ func _rebuild_quest_choices() -> void:
 func _build_quest_detail() -> void:
 	_detail_title = _make_rich_text(22)
 	_detail_title.name = "SelectedQuestTitle"
-	_detail_title.position = Vector2(528, 274)
-	_detail_title.size = Vector2(744, 38)
+	_detail_title.position = Vector2(544, 274)
+	_detail_title.size = Vector2(728, 38)
 	add_child(_detail_title)
 
 	_detail_description = _make_rich_text(17)
 	_detail_description.name = "SelectedQuestDescription"
-	_detail_description.position = Vector2(528, 318)
-	_detail_description.size = Vector2(744, 64)
+	_detail_description.position = Vector2(544, 318)
+	_detail_description.size = Vector2(728, 64)
 	add_child(_detail_description)
 
 	var separator := ColorRect.new()

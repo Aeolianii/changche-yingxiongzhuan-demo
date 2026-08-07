@@ -134,6 +134,11 @@ func _verify_component_contract() -> void:
 		_expect((entry.get_node("QuestType") as Label).position.x <= 18.0, "%s category must use the space released by the removed badge." % entry_path)
 		_expect((entry.get_node("TaskName") as Label).position.x <= 19.0, "%s task name must align with the category text." % entry_path)
 		_expect((entry.get_node("Objective") as Label).position.x <= 19.0, "%s objective must align with the task name." % entry_path)
+	var main_quest_entry := hud.get_node("QuestTracker/MainQuest") as Panel
+	var side_quest_entry := hud.get_node("QuestTracker/SideQuest") as Panel
+	_expect(main_quest_entry.position.y <= 56.0 and side_quest_entry.position.y <= 156.0, "Both quest entries must move upward within the tracker.")
+	_expect(is_equal_approx(side_quest_entry.position.y - main_quest_entry.position.y, 100.0), "Quest entry spacing must remain unchanged after the upward shift.")
+	_expect((main_quest_entry.get_node("Accent") as ColorRect).position == Vector2.ZERO and (side_quest_entry.get_node("Accent") as ColorRect).position == Vector2.ZERO, "Quest accent bars must move together with their task wording.")
 	var main_entry_style := (hud.get_node("QuestTracker/MainQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat
 	var side_entry_style := (hud.get_node("QuestTracker/SideQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat
 	_expect(main_entry_style.get_border_width(SIDE_BOTTOM) == 1, "Main quest must keep one lightweight divider.")
@@ -197,6 +202,7 @@ func _verify_component_contract() -> void:
 	var selected_title := quest_screen.get_node("SelectedQuestTitle") as RichTextLabel
 	var selected_description := quest_screen.get_node("SelectedQuestDescription") as RichTextLabel
 	_expect(selected_title.position.y >= 270.0 and selected_description.position.y >= 315.0, "Overall quest wording must sit lower in its summary frame.")
+	_expect(selected_title.position.x >= 544.0 and is_equal_approx(selected_title.position.x, selected_description.position.x), "Overall quest title and description must move right together from the detail frame edge.")
 	_expect(quest_screen.get_node_or_null("QuestFlowHint") == null, "Quest flow must not retain the triangle instruction hint.")
 	var steps_scroll := quest_screen.get_node("QuestStepsScroll") as ScrollContainer
 	_expect(steps_scroll.position.x >= 540.0, "Quest step markers, titles and descriptions must move right together.")

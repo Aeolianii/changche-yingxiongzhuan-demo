@@ -48,6 +48,7 @@
 | 第二章开篇 | 南下行程结束 | 继续观看 | 显示“第二章·南疆水师”，随后切入楼船甲板 | passed / chapter transition runtime 1 |
 | 水师副将迎接 | 从第一章进入第二章 | 推进迎接对白 | 对白期间不能移动且 HUD 隐藏；结束后 HUD 恢复 | passed / chapter transition runtime 1 |
 | 第二章任务激活 | 水师副将迎接结束 | 查看任务栏 | 主线为“巡视水师驻地”，目标显示与甲板值守士兵交谈（0/2） | passed / chapter transition runtime 1 |
+| 任务布局对齐 | 查看探索任务栏并打开任务界面 | 对比主支线任务项与详情摘要 | 主线、支线文字及左侧色条整体上移且间距不变；总任务标题和描述同步右移并保持完整可读 | passed / quest layout render 1 |
 | 士兵巡视汇报 | 第二章自由探索 | 任意顺序与左右值守士兵交谈，并重复询问其中一人 | 两名士兵各累计一次；HUD 显示 0/2、1/2、2/2，并在收齐后提示军官复命 | passed / dialogue patrol runtime 1 |
 | 中军军官复命 | 两名士兵均已汇报 | 与中军军官完成复命对白 | 完成“巡视水师驻地”，主线切换为“筹备水师操练” | passed / dialogue patrol runtime 1 |
 | 县令开启操练 | 军官复命完成 | 与广州县令完成会谈 | 县令与军官身份分离；会谈结束后开启既有操练界面 | passed / dialogue patrol runtime 1 |
@@ -125,6 +126,7 @@
 | 2026-08-07 / ink dialogue render 3 | Codex | 第一章文字安全区右上移并收窄，长台词稳定换为两行；第二章正文和两项选择整体上移 40 像素 | 第一章长台词与第二章真实双选项 1344×896 OpenGL 截图、布局断言 | 交付用户试玩 |
 | 2026-08-07 / ink dialogue render 4 | Codex | 第二章对话框缩至第一章规格：1344×300、24px 正文、约 650px 行宽和 20px 选项 | 真实士兵双选项 OpenGL 截图、两幕布局断言、第二章完整对话推进、C# 构建 | 交付用户试玩 |
 | 2026-08-07 / option highlight runtime 1 | Codex | 剧情选项悬浮、按下与焦点状态统一为透明底，仅文字变为暖黄色 | 聚焦态 OpenGL 截图、五种按钮状态透明度断言、第二章完整对话推进、C# 构建 | 交付用户试玩 |
+| 2026-08-07 / quest layout render 1 | Codex | 探索任务栏的主支线文字与左侧色条整体上移；任务详情的总标题和描述同步右移 | 1344×896 OpenGL 截图、HUD 布局断言及 headless 回归 | 交付用户试玩 |
 
 ## Known issues
 

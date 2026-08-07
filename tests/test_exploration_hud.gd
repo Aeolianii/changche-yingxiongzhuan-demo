@@ -96,14 +96,17 @@ func _verify_component_contract() -> void:
 	_expect(player_status.size == Vector2(495, 192), "Player status must be enlarged by 50 percent.")
 	var portrait_frame := hud.get_node("PlayerStatus/PortraitFrame") as Control
 	_expect(portrait_frame.get_node_or_null("ProtagonistPortrait") != null, "Player portrait is missing.")
-	_expect(portrait_frame.position.x >= 25.0, "Player portrait must move right into the generated diamond center.")
+	_expect(portrait_frame.position.x >= 33.0, "Player portrait must move right into the generated diamond center.")
 	_expect(hud.get_node_or_null("PlayerStatus/StatusSeal") == null, "Player status must not display the lower-right status seal.")
 	var name_plate := hud.get_node("PlayerStatus/NamePlate") as Control
 	_expect(name_plate.position.y >= 60.0, "Player title block must sit inside the generated paper frame.")
 	var player_heading := name_plate.get_node("PlayerName") as Label
 	_expect(player_heading.text == "水师元帅", "Player heading must use 水师元帅.")
 	_expect(player_heading.position.y >= 8.0, "Player heading must move down inside the paper frame.")
-	_expect((name_plate.get_node("PlayerTitle") as Label).text == "伏波将军 · 南疆水师", "Player subtitle is incorrect.")
+	_expect(player_heading.position.x >= 56.0, "Player heading must clear the portrait frame on its left.")
+	var player_subtitle := name_plate.get_node("PlayerTitle") as Label
+	_expect(player_subtitle.text == "伏波将军 · 南疆水师", "Player subtitle is incorrect.")
+	_expect(player_subtitle.position.x >= 57.0, "Player subtitle must clear the portrait frame on its left.")
 	var status_frame := hud.get_node("PlayerStatus/GeneratedStatusFrame") as TextureRect
 	_expect(status_frame.texture != null and status_frame.texture.resource_path.ends_with("player_status_frame.png"), "Player status must use the generated pixel ink-wash frame.")
 	_expect(status_frame.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Player status frame must preserve crisp pixel-art edges.")
@@ -120,6 +123,7 @@ func _verify_component_contract() -> void:
 	_expect(quest_frame.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Quest tracker must preserve crisp pixel-art edges.")
 	for entry_path in ["QuestTracker/MainQuest", "QuestTracker/SideQuest"]:
 		var entry := hud.get_node(entry_path) as Panel
+		_expect(entry.position.x >= 28.0 and entry.size.x <= 232.0, "%s must remain inside the generated tracker's inner border." % entry_path)
 		var entry_style := entry.get_theme_stylebox("panel") as StyleBoxFlat
 		_expect(entry_style != null and is_zero_approx(entry_style.bg_color.a), "%s must remain transparent over the shared tracker background." % entry_path)
 		_expect(entry_style.get_border_width(SIDE_LEFT) == 0 and entry_style.get_border_width(SIDE_TOP) == 0 and entry_style.get_border_width(SIDE_RIGHT) == 0, "%s must not draw a full rectangular outline." % entry_path)
@@ -163,6 +167,10 @@ func _verify_component_contract() -> void:
 		_expect(function_icon.texture != null and function_icon.texture.resource_path.ends_with(expected_hud_icons[slot_index]), "%s must use its generated pixel ink-wash function icon." % slot.name)
 		_expect(function_icon.size == Vector2(56, 56), "%s icon must fill the generated diamond without losing its center." % slot.name)
 		_expect(function_icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "%s icon must preserve the shared pixel density." % slot.name)
+		if slot.name == "ShipButtonSlot":
+			_expect(function_icon.position.x <= 21.0, "Ship icon must shift left into the center of its diamond.")
+		elif slot.name == "MenuButtonSlot":
+			_expect(function_icon.position.x >= 29.0, "Menu icon must shift right into the center of its diamond.")
 		_expect(slot.get_node_or_null("Symbol") == null, "%s must not retain its text symbol." % slot.name)
 
 	var quest_button := hud.find_child("QuestButton", true, false) as Button
@@ -237,7 +245,7 @@ func _verify_component_contract() -> void:
 		_expect(generated_close.texture != null and generated_close.texture.resource_path.ends_with("close_button.png"), "System menu must use the generated close-button texture.")
 		_expect(generated_close.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "System menu close-button texture must preserve its pixel-art edges.")
 		var menu_title := system_menu.get_node("SystemPanel/MenuTitle") as Label
-		_expect(menu_title.position.y <= -30.0, "System menu title must sit inside the generated top plaque.")
+		_expect(menu_title.position.y >= -44.0 and menu_title.position.y <= -30.0, "System menu title must sit lower in the generated top plaque.")
 		for entry_name in ["ContinueGameButton", "SaveGameButton", "LoadGameButton", "SettingsButton", "ReturnTitleButton", "ExitGameButton"]:
 			_expect(hud.find_child(entry_name, true, false) is Button, "%s is missing from the system menu." % entry_name)
 		var generated_button := system_menu.find_child("GeneratedButtonTexture", true, false) as TextureRect
@@ -271,7 +279,7 @@ func _verify_component_contract() -> void:
 			var entry_slot := menu_entries.get_child(entry_index)
 			var entry_icon := entry_slot.get_node("EntryIcon") as TextureRect
 			_expect(entry_icon.texture != null and entry_icon.texture.resource_path.ends_with(expected_menu_icons[entry_index]), "%s must use its generated ink-wash menu icon." % entry_slot.name)
-			_expect(entry_icon.position.x <= 20.0 and entry_icon.size == Vector2(54, 54), "%s icon must fill the generated diamond while remaining centered." % entry_slot.name)
+			_expect(entry_icon.position == Vector2(23, 11) and entry_icon.size == Vector2(54, 54), "%s icon must fill the generated diamond while remaining centered." % entry_slot.name)
 			_expect(entry_icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "%s icon must preserve its pixel-art edges." % entry_slot.name)
 			_expect(entry_slot.get_node_or_null("EntrySymbol") == null, "%s must not retain its text badge." % entry_slot.name)
 		_expect(hud.find_child("TutorialButton", true, false) == null, "System menu must not include a tutorial button.")

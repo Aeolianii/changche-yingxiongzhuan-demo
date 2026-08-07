@@ -103,7 +103,7 @@ func _build_status_panel() -> void:
 
 	var portrait_frame := Panel.new()
 	portrait_frame.name = "PortraitFrame"
-	portrait_frame.position = Vector2(25, 23)
+	portrait_frame.position = Vector2(33, 23)
 	portrait_frame.size = Vector2(141, 141)
 	portrait_frame.clip_contents = true
 	portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -136,14 +136,14 @@ func _build_status_panel() -> void:
 
 	var name_label := _make_label("水师元帅", 23, Color(0.12, 0.13, 0.105, 1.0))
 	name_label.name = "PlayerName"
-	name_label.position = Vector2(36, 8)
+	name_label.position = Vector2(56, 8)
 	name_label.size = Vector2(278, 34)
 	name_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
 	name_panel.add_child(name_label)
 
 	var subtitle := _make_label("伏波将军 · 南疆水师", 15, Color(0.28, 0.29, 0.25, 1.0))
 	subtitle.name = "PlayerTitle"
-	subtitle.position = Vector2(37, 40)
+	subtitle.position = Vector2(57, 40)
 	subtitle.size = Vector2(278, 28)
 	subtitle.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
 	name_panel.add_child(subtitle)
@@ -184,15 +184,15 @@ func _build_task_tracker() -> void:
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_ribbon.add_child(title)
 
-	_build_quest_entry(tracker, "MainQuest", Vector2(14, 64), "主线", true)
-	_build_quest_entry(tracker, "SideQuest", Vector2(14, 164), "支线", false)
+	_build_quest_entry(tracker, "MainQuest", Vector2(28, 64), "主线", true)
+	_build_quest_entry(tracker, "SideQuest", Vector2(28, 164), "支线", false)
 
 
 func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section: String, is_main: bool) -> void:
 	var entry := Panel.new()
 	entry.name = node_name
 	entry.position = at
-	entry.size = Vector2(258, 88)
+	entry.size = Vector2(232, 88)
 	entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var entry_style := StyleBoxFlat.new()
 	entry_style.bg_color = Color(0, 0, 0, 0)
@@ -214,13 +214,13 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 	var tag := _make_label("【%s】" % section, 15, GOLD_BRIGHT if is_main else Color(0.55, 0.82, 0.75, 1.0))
 	tag.name = "QuestType"
 	tag.position = Vector2(18, 5)
-	tag.size = Vector2(224, 22)
+	tag.size = Vector2(198, 22)
 	entry.add_child(tag)
 
 	var task := _make_label("奉诏入殿" if is_main else "访查军港", 18, TEXT_LIGHT)
 	task.name = "TaskName"
 	task.position = Vector2(19, 28)
-	task.size = Vector2(224, 25)
+	task.size = Vector2(198, 25)
 	entry.add_child(task)
 	if is_main:
 		_main_task_label = task
@@ -228,7 +228,7 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 	var objective := _make_label("前往标记地点推进剧情" if is_main else "与船匠交谈（效果占位）", 13, TEXT_MUTED)
 	objective.name = "Objective"
 	objective.position = Vector2(19, 54)
-	objective.size = Vector2(224, 28)
+	objective.size = Vector2(198, 28)
 	objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	entry.add_child(objective)
 
@@ -291,7 +291,12 @@ func _build_function_button(parent: HBoxContainer, action_name: String, icon_tex
 
 	var icon := TextureRect.new()
 	icon.name = "FunctionIcon"
-	icon.position = Vector2(25, 18)
+	var icon_x := 25.0
+	if node_name == "ShipButton":
+		icon_x = 21.0
+	elif node_name == "MenuButton":
+		icon_x = 29.0
+	icon.position = Vector2(icon_x, 18)
 	icon.size = Vector2(56, 56)
 	icon.texture = icon_texture
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -386,7 +391,7 @@ func _build_system_menu() -> void:
 
 	var title := _make_label("系  统", 25, Color(0.12, 0.13, 0.105, 1.0))
 	title.name = "MenuTitle"
-	title.position = Vector2(102, -52)
+	title.position = Vector2(102, -44)
 	title.size = Vector2(246, 56)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -485,7 +490,7 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_t
 
 	var icon := TextureRect.new()
 	icon.name = "EntryIcon"
-	icon.position = Vector2(20, 11)
+	icon.position = Vector2(23, 11)
 	icon.size = Vector2(54, 54)
 	icon.texture = icon_texture
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE

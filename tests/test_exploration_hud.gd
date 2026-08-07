@@ -235,6 +235,7 @@ func _verify_component_contract() -> void:
 		_expect(generated_frame.size.x >= 610.0 and generated_frame.size.y >= 780.0, "System menu frame must be enlarged around the spaced entries.")
 		var generated_close := system_menu.get_node("SystemPanel/CloseButtonOrnament/GeneratedCloseTexture") as TextureRect
 		_expect(generated_close.texture != null and generated_close.texture.resource_path.ends_with("close_button.png"), "System menu must use the generated close-button texture.")
+		_expect(generated_close.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "System menu close-button texture must preserve its pixel-art edges.")
 		var menu_title := system_menu.get_node("SystemPanel/MenuTitle") as Label
 		_expect(menu_title.position.y <= -30.0, "System menu title must sit inside the generated top plaque.")
 		for entry_name in ["ContinueGameButton", "SaveGameButton", "LoadGameButton", "SettingsButton", "ReturnTitleButton", "ExitGameButton"]:
@@ -271,6 +272,7 @@ func _verify_component_contract() -> void:
 			var entry_icon := entry_slot.get_node("EntryIcon") as TextureRect
 			_expect(entry_icon.texture != null and entry_icon.texture.resource_path.ends_with(expected_menu_icons[entry_index]), "%s must use its generated ink-wash menu icon." % entry_slot.name)
 			_expect(entry_icon.position.x <= 20.0 and entry_icon.size == Vector2(54, 54), "%s icon must fill the generated diamond while remaining centered." % entry_slot.name)
+			_expect(entry_icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "%s icon must preserve its pixel-art edges." % entry_slot.name)
 			_expect(entry_slot.get_node_or_null("EntrySymbol") == null, "%s must not retain its text badge." % entry_slot.name)
 		_expect(hud.find_child("TutorialButton", true, false) == null, "System menu must not include a tutorial button.")
 		var exit_button := hud.find_child("ExitGameButton", true, false) as Button

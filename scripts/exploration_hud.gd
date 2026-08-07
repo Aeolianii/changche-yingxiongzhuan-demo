@@ -406,7 +406,7 @@ func _build_system_menu() -> void:
 	close_texture.texture = SYSTEM_MENU_CLOSE
 	close_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	close_texture.stretch_mode = TextureRect.STRETCH_SCALE
-	close_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	close_texture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	close_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	close_slot.add_child(close_texture)
 
@@ -490,7 +490,7 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_t
 	icon.texture = icon_texture
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(icon)
 

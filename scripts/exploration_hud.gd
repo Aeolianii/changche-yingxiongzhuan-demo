@@ -67,6 +67,8 @@ func set_exploration_visible(value: bool) -> void:
 func set_main_task(task_title: String) -> void:
 	if is_instance_valid(_main_task_label):
 		_main_task_label.text = task_title
+	if is_instance_valid(_quest_screen):
+		_quest_screen.call("set_main_task", task_title)
 
 
 func is_menu_open() -> bool:

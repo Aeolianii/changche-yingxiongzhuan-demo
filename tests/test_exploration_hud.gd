@@ -189,6 +189,13 @@ func _verify_component_contract() -> void:
 	_expect(not quest_screen.visible and action_row.visible and function_brushstroke.visible, "Quest return button must restore the game HUD function buttons and brushstroke.")
 	_expect(not hud.call("is_menu_open"), "Quest return button must leave modal UI state.")
 
+	hud.call("set_main_task", "巡视水师驻地")
+	_expect((hud.get_node("QuestTracker/MainQuest/TaskName") as Label).text == "巡视水师驻地", "Story task updates must reach the compact HUD tracker.")
+	quest_button.pressed.emit()
+	_expect("巡视水师驻地" in selected_title.text, "Story task updates must also reach the full quest screen.")
+	_expect("中军楼船" in selected_description.text and "[color=#f1c24f]" in selected_description.text, "Chapter two quest details must replace the chapter one placeholder content.")
+	quest_return.pressed.emit()
+
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	if menu_button != null:
 		menu_button.pressed.emit()
@@ -352,6 +359,22 @@ func _verify_scene_two_visibility() -> void:
 		_expect(hud.visible, "Scene2 HUD must return after the drill overlay closes.")
 	else:
 		failures.append("Scene2 drill overlay was not created.")
+
+	var quest_button := hud.find_child("QuestButton", true, false) as Button
+	quest_button.pressed.emit()
+	await process_frame
+	var quest_title := hud.get_node("QuestScreen/SelectedQuestTitle") as RichTextLabel
+	_expect("巡视水师驻地" in quest_title.text, "Scene2 quest screen must follow its 巡视水师驻地 story task.")
+	player.velocity = Vector2(120, 0)
+	await physics_frame
+	await physics_frame
+	_expect(player.velocity == Vector2.ZERO, "Scene2 player must stop while the quest screen is open.")
+	if DisplayServer.get_name() != "headless":
+		var quest_screenshot_error := root.get_texture().get_image().save_png(QUEST_SCREENSHOT_PATH)
+		_expect(quest_screenshot_error == OK, "Scene2 quest screen preview screenshot could not be saved.")
+	var quest_return := hud.find_child("QuestReturnButton", true, false) as Button
+	quest_return.pressed.emit()
+	_expect(not hud.call("is_menu_open"), "Scene2 quest return button must close the shared quest screen.")
 
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	menu_button.pressed.emit()

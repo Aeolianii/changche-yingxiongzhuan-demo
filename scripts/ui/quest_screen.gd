@@ -75,6 +75,7 @@ const QUESTS := [
 ]
 
 var _selected_quest := 0
+var _quests: Array[Dictionary] = []
 var _quest_buttons: Array[Button] = []
 var _detail_title: RichTextLabel
 var _detail_description: RichTextLabel
@@ -84,6 +85,9 @@ signal close_requested
 
 
 func _ready() -> void:
+	for quest_value in QUESTS:
+		var quest: Dictionary = quest_value
+		_quests.append(quest.duplicate(true))
 	z_index = 80
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_background()
@@ -100,6 +104,20 @@ func show_screen() -> void:
 	_refresh_quest_selectors()
 	_refresh_quest_detail()
 	show()
+
+
+func set_main_task(task_title: String) -> void:
+	if task_title.is_empty():
+		return
+	if _quests.is_empty():
+		return
+	_quests[0] = _make_main_quest_state(task_title)
+	if not _quest_buttons.is_empty():
+		var main_selector := _quest_buttons[0]
+		(main_selector.get_node("QuestName") as Label).text = task_title
+		(main_selector.get_node("QuestObjective") as Label).text = str(_quests[0]["objective"])
+	if _selected_quest == 0:
+		_refresh_quest_detail()
 
 
 func _build_background() -> void:
@@ -207,8 +225,8 @@ func _build_quest_list() -> void:
 	active_label.custom_minimum_size = Vector2(360, 30)
 	list.add_child(active_label)
 
-	for quest_index in range(QUESTS.size()):
-		var quest: Dictionary = QUESTS[quest_index]
+	for quest_index in range(_quests.size()):
+		var quest: Dictionary = _quests[quest_index]
 		var selector := Button.new()
 		selector.name = "QuestChoice%d" % quest_index
 		selector.custom_minimum_size = Vector2(360, 112)
@@ -292,7 +310,7 @@ func _build_quest_detail() -> void:
 
 
 func _select_quest(quest_index: int) -> void:
-	if quest_index < 0 or quest_index >= QUESTS.size():
+	if quest_index < 0 or quest_index >= _quests.size():
 		return
 	_selected_quest = quest_index
 	_refresh_quest_selectors()
@@ -311,7 +329,7 @@ func _refresh_quest_selectors() -> void:
 func _refresh_quest_detail() -> void:
 	if _detail_title == null or _steps_container == null:
 		return
-	var quest: Dictionary = QUESTS[_selected_quest]
+	var quest: Dictionary = _quests[_selected_quest]
 	_detail_title.text = "[color=#f1c24f]【%s】[/color]  %s" % [quest["type"], quest["title"]]
 	_detail_description.text = _highlight_keywords(str(quest["description"]), quest["keywords"])
 
@@ -398,6 +416,66 @@ func _highlight_keywords(text_value: String, keywords: Array) -> String:
 		var keyword := str(keyword_value)
 		highlighted = highlighted.replace(keyword, "[color=#f1c24f]%s[/color]" % keyword)
 	return highlighted
+
+
+func _make_main_quest_state(task_title: String) -> Dictionary:
+	if task_title == "奉诏入殿":
+		var default_main: Dictionary = QUESTS[0]
+		return default_main.duplicate(true)
+	if task_title == "巡视水师驻地":
+		return {
+			"type": "主线",
+			"title": task_title,
+			"objective": "前往标记地点推进剧情",
+			"description": "抵达南疆水师驻地后，先巡视中军楼船与周边泊位，确认官兵值守、舰船修缮和出航准备情况。",
+			"keywords": ["南疆水师驻地", "中军楼船", "舰船修缮", "出航准备"],
+			"steps": [
+				{
+					"title": "巡视中军楼船",
+					"description": "沿主甲板巡视中军楼船，查看各处值守是否正常。",
+					"keywords": ["主甲板", "中军楼船", "值守"],
+					"completed": false,
+					"expanded": true,
+				},
+				{
+					"title": "询问值守军官",
+					"description": "与甲板上的值守军官交谈，了解近期操练与巡防安排。",
+					"keywords": ["值守军官", "操练", "巡防安排"],
+					"completed": false,
+					"expanded": false,
+				},
+				{
+					"title": "检查舰船战备",
+					"description": "检查停泊舰船的修缮、补给与出航准备情况。",
+					"keywords": ["停泊舰船", "补给", "出航准备"],
+					"completed": false,
+					"expanded": false,
+				},
+			],
+		}
+	return {
+		"type": "主线",
+		"title": task_title,
+		"objective": "前往标记地点推进剧情",
+		"description": "当前剧情已推进至“%s”。请按照场景中的标记与对话提示完成这一阶段的主线目标。" % task_title,
+		"keywords": [task_title, "场景标记", "主线目标"],
+		"steps": [
+			{
+				"title": task_title,
+				"description": "跟随场景标记与剧情对话，完成“%s”。" % task_title,
+				"keywords": ["场景标记", task_title],
+				"completed": false,
+				"expanded": true,
+			},
+			{
+				"title": "继续推进剧情",
+				"description": "完成当前目标后，新的主线步骤会随剧情自动更新。",
+				"keywords": ["当前目标", "自动更新"],
+				"completed": false,
+				"expanded": false,
+			},
+		],
+	}
 
 
 func _quest_selector_style(selected: bool, hovered: bool) -> StyleBoxFlat:

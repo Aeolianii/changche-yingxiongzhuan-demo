@@ -231,6 +231,7 @@ func _verify_component_contract() -> void:
 		_expect(blur.material is ShaderMaterial, "System menu must blur the captured background with a shader material.")
 		var generated_frame := system_menu.get_node("SystemPanel/GeneratedFrame") as TextureRect
 		_expect(generated_frame.texture != null and generated_frame.texture.resource_path.ends_with("system_menu_frame.png"), "System menu must use the generated frame texture.")
+		_expect(generated_frame.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "System menu frame must preserve crisp pixel-art edges.")
 		_expect(generated_frame.size.x >= 610.0 and generated_frame.size.y >= 780.0, "System menu frame must be enlarged around the spaced entries.")
 		var generated_close := system_menu.get_node("SystemPanel/CloseButtonOrnament/GeneratedCloseTexture") as TextureRect
 		_expect(generated_close.texture != null and generated_close.texture.resource_path.ends_with("close_button.png"), "System menu must use the generated close-button texture.")

@@ -380,7 +380,7 @@ func _build_system_menu() -> void:
 	generated_frame.texture = SYSTEM_MENU_FRAME
 	generated_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	generated_frame.stretch_mode = TextureRect.STRETCH_SCALE
-	generated_frame.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	generated_frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	generated_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(generated_frame)
 

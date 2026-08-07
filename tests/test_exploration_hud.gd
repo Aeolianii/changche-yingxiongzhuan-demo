@@ -5,6 +5,7 @@ const PALACE_SCENE := preload("res://scenes/palace/palace_demo.tscn")
 const SCENE_TWO := preload("res://scenes/Scene2.tscn")
 const SCREENSHOT_PATH := "res://.godot/exploration_hud_preview.png"
 const MENU_SCREENSHOT_PATH := "res://.godot/system_menu_preview.png"
+const QUEST_SCREENSHOT_PATH := "res://.godot/quest_screen_preview.png"
 
 var failures: Array[String] = []
 
@@ -52,6 +53,13 @@ func _verify_generated_assets() -> void:
 	if quest_image != null and not quest_image.is_empty():
 		_expect(quest_image.get_pixel(0, 0).a < 0.05, "Generated quest frame must have a transparent corner.")
 		_expect(quest_image.get_pixel(quest_image.get_width() / 2, quest_image.get_height() / 2).a > 0.95, "Generated quest frame must include an opaque ink-wash center.")
+
+	var quest_screen_texture := load("res://assets/ui/quest_screen/quest_screen_background.png") as Texture2D
+	var quest_screen_image := quest_screen_texture.get_image() if quest_screen_texture != null else null
+	_expect(quest_screen_image != null and not quest_screen_image.is_empty(), "Quest screen background could not be loaded.")
+	if quest_screen_image != null and not quest_screen_image.is_empty():
+		_expect(quest_screen_image.get_width() * 2 == quest_screen_image.get_height() * 3, "Quest screen background must keep the 3:2 viewport composition.")
+		_expect(quest_screen_image.get_pixel(quest_screen_image.get_width() / 2, quest_screen_image.get_height() / 2).a > 0.95, "Quest screen background must keep an opaque ink-wash panel center.")
 
 	for icon_path in [
 		"res://assets/ui/icons/hud_quest.png",
@@ -153,9 +161,33 @@ func _verify_component_contract() -> void:
 
 	var quest_button := hud.find_child("QuestButton", true, false) as Button
 	quest_button.pressed.emit()
-	var quest_toast := hud.get_node("ComingSoonToast") as Control
-	var quest_toast_message := hud.get_node("ComingSoonToast/Message") as Label
-	_expect(quest_toast.visible and "任务" in quest_toast_message.text and "功能即将开放" in quest_toast_message.text, "QuestButton must show the coming-soon message.")
+	var quest_screen := hud.get_node("QuestScreen") as Control
+	_expect(quest_screen.visible and hud.call("is_quest_screen_open"), "QuestButton must open the interactive quest screen.")
+	_expect(not action_row.visible and not function_brushstroke.visible, "Opening the quest screen must hide the five function buttons and their brushstroke.")
+	var quest_background := quest_screen.get_node("GeneratedQuestBackground") as TextureRect
+	_expect(quest_background.texture != null and quest_background.texture.resource_path.ends_with("quest_screen_background.png"), "Quest screen must use the generated pixel ink-wash background.")
+	var quest_choices := quest_screen.get_node("QuestChoices") as VBoxContainer
+	_expect(quest_choices.get_node_or_null("QuestChoice0") is Button and quest_choices.get_node_or_null("QuestChoice1") is Button, "Quest screen must demonstrate one main quest and one side quest.")
+	var selected_title := quest_screen.get_node("SelectedQuestTitle") as RichTextLabel
+	var selected_description := quest_screen.get_node("SelectedQuestDescription") as RichTextLabel
+	_expect("奉诏入殿" in selected_title.text, "Quest screen must select the demo main quest by default.")
+	_expect("[color=#f1c24f]" in selected_description.text, "Quest description keywords must use yellow BBCode highlighting.")
+	var steps := quest_screen.get_node("QuestStepsScroll/QuestSteps") as VBoxContainer
+	_expect(steps.get_child_count() == 3, "Demo main quest must expose three concrete task steps.")
+	var expanded_description := steps.get_node("QuestStep1/StepDescription") as RichTextLabel
+	var expanded_toggle := steps.get_node("QuestStep1/StepHeader/StepToggle") as Button
+	_expect(expanded_description.visible and expanded_toggle.text == "▼", "Current quest step must start expanded.")
+	expanded_toggle.pressed.emit()
+	_expect(not expanded_description.visible and expanded_toggle.text == "▶", "Quest step triangle must collapse its concrete description.")
+	expanded_toggle.pressed.emit()
+	_expect(expanded_description.visible and expanded_toggle.text == "▼", "Quest step triangle must restore its concrete description.")
+	var side_choice := quest_choices.get_node("QuestChoice1") as Button
+	side_choice.pressed.emit()
+	_expect("访查军港" in selected_title.text and steps.get_child_count() == 3, "Selecting the side quest must refresh the right-hand task flow.")
+	var quest_return := quest_screen.find_child("QuestReturnButton", true, false) as Button
+	quest_return.pressed.emit()
+	_expect(not quest_screen.visible and action_row.visible and function_brushstroke.visible, "Quest return button must restore the game HUD function buttons and brushstroke.")
+	_expect(not hud.call("is_menu_open"), "Quest return button must leave modal UI state.")
 
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	if menu_button != null:
@@ -248,6 +280,18 @@ func _verify_palace_visibility() -> void:
 	_expect(hud.visible, "Palace WAIT_TALK free-movement state must show the exploration HUD.")
 	hud.call("set_main_task", "听取内侍传召")
 	await process_frame
+	var quest_button := hud.find_child("QuestButton", true, false) as Button
+	quest_button.pressed.emit()
+	await process_frame
+	_expect(hud.call("is_quest_screen_open"), "Palace QuestButton must open the shared quest screen.")
+	_expect(not player.controls_enabled, "Palace player controls must pause while the quest screen is open.")
+	if DisplayServer.get_name() != "headless":
+		var quest_screenshot_error := root.get_texture().get_image().save_png(QUEST_SCREENSHOT_PATH)
+		_expect(quest_screenshot_error == OK, "Quest screen preview screenshot could not be saved.")
+	var quest_return := hud.find_child("QuestReturnButton", true, false) as Button
+	quest_return.pressed.emit()
+	await process_frame
+	_expect(player.controls_enabled, "Palace player controls must resume after returning from the quest screen.")
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
 	menu_button.pressed.emit()
 	await process_frame

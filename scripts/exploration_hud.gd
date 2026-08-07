@@ -21,6 +21,7 @@ const MENU_BUTTON_HIGHLIGHT_SHADER := preload("res://shaders/menu_button_highlig
 const SYSTEM_MENU_FRAME := preload("res://assets/ui/system_menu/system_menu_frame.png")
 const SYSTEM_MENU_BUTTON := preload("res://assets/ui/system_menu/menu_button.png")
 const SYSTEM_MENU_CLOSE := preload("res://assets/ui/system_menu/close_button.png")
+const QUEST_SCREEN_SCENE := preload("res://scenes/ui/quest_screen.tscn")
 
 const INK := Color(0.055, 0.073, 0.075, 0.96)
 const PAPER := Color(0.83, 0.77, 0.61, 0.96)
@@ -36,6 +37,7 @@ var _toast_panel: Panel
 var _toast_label: Label
 var _toast_timer: Timer
 var _menu_overlay: Control
+var _quest_screen: Control
 
 signal menu_visibility_changed(is_open: bool)
 
@@ -45,14 +47,18 @@ func _ready() -> void:
 	_build_status_panel()
 	_build_task_tracker()
 	_build_function_buttons()
+	_build_quest_screen()
 	_build_system_menu()
 	_build_toast()
 	set_exploration_visible(false)
 
 
 func set_exploration_visible(value: bool) -> void:
-	if not value and is_menu_open():
-		_close_system_menu()
+	if not value:
+		if is_quest_screen_open():
+			_close_quest_screen()
+		if _is_system_menu_open():
+			_close_system_menu()
 	visible = value
 	if not value and is_instance_valid(_toast_panel):
 		_toast_panel.hide()
@@ -64,6 +70,14 @@ func set_main_task(task_title: String) -> void:
 
 
 func is_menu_open() -> bool:
+	return _is_system_menu_open() or is_quest_screen_open()
+
+
+func is_quest_screen_open() -> bool:
+	return is_instance_valid(_quest_screen) and _quest_screen.visible
+
+
+func _is_system_menu_open() -> bool:
 	return is_instance_valid(_menu_overlay) and _menu_overlay.visible
 
 
@@ -302,11 +316,20 @@ func _build_function_button(parent: HBoxContainer, action_name: String, icon_tex
 	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	button.add_theme_stylebox_override("pressed", _panel_style(Color(0.84, 0.67, 0.31, 0.27), Color(0, 0, 0, 0), 0, 7))
-	if action_name == "菜单":
+	if node_name == "MenuButton":
 		button.pressed.connect(_open_system_menu)
+	elif node_name == "QuestButton":
+		button.pressed.connect(_open_quest_screen)
 	else:
 		button.pressed.connect(_show_locked_message.bind(action_name))
 	slot.add_child(button)
+
+
+func _build_quest_screen() -> void:
+	_quest_screen = QUEST_SCREEN_SCENE.instantiate() as Control
+	_quest_screen.name = "QuestScreen"
+	_quest_screen.connect("close_requested", _close_quest_screen)
+	add_child(_quest_screen)
 
 
 func _build_system_menu() -> void:
@@ -560,11 +583,37 @@ func _open_system_menu() -> void:
 
 
 func _close_system_menu() -> void:
-	if not is_menu_open():
+	if not _is_system_menu_open():
 		return
 	_toast_panel.hide()
 	_menu_overlay.hide()
 	menu_visibility_changed.emit(false)
+
+
+func _open_quest_screen() -> void:
+	if not visible or is_menu_open():
+		return
+	_toast_panel.hide()
+	_set_function_buttons_visible(false)
+	_quest_screen.call("show_screen")
+	menu_visibility_changed.emit(true)
+
+
+func _close_quest_screen() -> void:
+	if not is_quest_screen_open():
+		return
+	_quest_screen.hide()
+	_set_function_buttons_visible(true)
+	menu_visibility_changed.emit(false)
+
+
+func _set_function_buttons_visible(value: bool) -> void:
+	var function_buttons := get_node_or_null("FunctionButtons") as Control
+	var brushstroke := get_node_or_null("FunctionButtonsBrushstroke") as Control
+	if function_buttons != null:
+		function_buttons.visible = value
+	if brushstroke != null:
+		brushstroke.visible = value
 
 
 func _exit_game() -> void:

@@ -115,7 +115,8 @@ func _verify_component_contract() -> void:
 	var quest_title := quest_tracker.get_node("TitleRibbon/QuestTitle") as Label
 	_expect(quest_title.get_parent().position.y <= -2.0 and quest_title.vertical_alignment == VERTICAL_ALIGNMENT_CENTER, "Quest title must move up into the generated plaque center.")
 	var quest_frame := hud.get_node("QuestTracker/GeneratedQuestFrame") as TextureRect
-	_expect(quest_frame.texture != null and quest_frame.texture.resource_path.ends_with("quest_tracker_frame.png"), "Quest tracker must use the generated ink-wash frame.")
+	_expect(quest_frame.texture != null and quest_frame.texture.resource_path.ends_with("quest_tracker_frame.png"), "Quest tracker must use the generated pixel ink-wash frame.")
+	_expect(quest_frame.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Quest tracker must preserve crisp pixel-art edges.")
 	for entry_path in ["QuestTracker/MainQuest", "QuestTracker/SideQuest"]:
 		var entry := hud.get_node(entry_path) as Panel
 		var entry_style := entry.get_theme_stylebox("panel") as StyleBoxFlat

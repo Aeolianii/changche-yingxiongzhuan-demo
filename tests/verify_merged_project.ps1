@@ -81,9 +81,11 @@ $requiredFiles = @(
     'scenes\palace\palace_demo.tscn',
     'scenes\Scene2.tscn',
     'scenes\ui\exploration_hud.tscn',
+    'scenes\ui\chapter_transition.tscn',
     'scripts\palace_demo.gd',
     'scripts\Scene2.cs',
     'scripts\exploration_hud.gd',
+    'scripts\ui\chapter_transition.gd',
     'shaders\menu_blur.gdshader',
     'assets\ui\system_menu\system_menu_frame.png',
     'assets\ui\system_menu\menu_button.png',
@@ -91,6 +93,7 @@ $requiredFiles = @(
     'assets\ui\exploration_hud\player_status_frame.png',
     'assets\ui\exploration_hud\quest_tracker_frame.png',
     'assets\ui\exploration_hud\function_button.png',
+    'assets\ui\chapter_transition\southbound_journey.png',
     'assets\ui\icons\hud_quest.png',
     'assets\ui\icons\hud_character.png',
     'assets\ui\icons\hud_inventory.png',
@@ -103,6 +106,7 @@ $requiredFiles = @(
     'assets\ui\icons\menu_return_title.png',
     'assets\ui\icons\menu_exit.png',
     'tests\test_system_menu_exit.gd',
+    'tests\test_chapter_transition_visual.gd',
     'assets\characters\soldier\picture.png',
     'assets\characters\protagonist\picture.png',
     'assets\characters\magistrate\standard\idle\down\1.png',
@@ -143,6 +147,8 @@ if (Test-Path -LiteralPath $sceneOneScript -PathType Leaf) {
     Assert-Contains $sceneOneContent 'SCENE_TRANSITION_DELAY\s*:=\s*2\.5' 'Scene1 must use the documented 2.5 second transition delay.'
     Assert-Contains $sceneOneContent 'change_scene_to_file\(NEXT_SCENE_PATH\)' 'Scene1 must switch through SceneTree.change_scene_to_file().'
     Assert-Contains $sceneOneContent 'transition_started' 'Scene1 must guard against duplicate transitions.'
+    Assert-Contains $sceneOneContent 'chapter_transition\.call\("play"\)' 'Scene1 must play the chapter transition before loading Scene2.'
+    Assert-Contains $sceneOneContent 'set_meta\(CHAPTER_ENTRY_META, true\)' 'Scene1 must mark Scene2 as entered through the chapter transition.'
     Assert-Contains $sceneOneContent 'if change_result == OK:' 'Scene1 must inspect the scene change result.'
     Assert-Contains $sceneOneContent 'continue_button\.disabled = false' 'Scene1 must restore the continue button after a failed scene change.'
     Assert-Contains $sceneOneContent 'transition_fade\.modulate = Color\([^\r\n]+\)[\s\S]*_show_dialogue\("[^"]+"\)[\s\S]*_set_continue_text\("[^"]+"\)' 'Scene1 must explain a failed Scene2 load and allow retry.'
@@ -167,6 +173,9 @@ if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
     Assert-Contains $sceneTwoContent 'new StyleBoxTexture' 'Scene2 must render its dialogue background through a texture style.'
     Assert-Contains $sceneTwoContent 'set_exploration_visible' 'Scene2 must synchronize exploration HUD visibility.'
     Assert-Contains $sceneTwoContent 'IsMenuOpen\(\)' 'Scene2 must block movement and interaction while the shared menu is open.'
+    Assert-Contains $sceneTwoContent 'ConsumeChapterEntryFlag\(\)' 'Scene2 must consume the one-shot chapter entry flag.'
+    Assert-Contains $sceneTwoContent 'StartArrivalDialogue\(\)' 'Scene2 must show the deputy greeting after the chapter transition.'
+    Assert-Contains $sceneTwoContent 'ActivateArrivalTask\(\)' 'Scene2 must activate the patrol task after the deputy greeting.'
     if ([regex]::IsMatch($sceneTwoContent, 'BgColor\s*=\s*new Color\(0\.9f,\s*0\.85f,\s*0\.67f')) {
         Add-Failure 'Scene2 must not retain the old beige dialogue background style.'
     }
@@ -213,6 +222,7 @@ if (Test-Path -LiteralPath $sceneOneFile -PathType Leaf) {
     Assert-Contains $sceneOneScene '\[node name="PlaceholderFrame" type="ColorRect" parent="UI/Overlay/PortraitDisplay"' 'Scene1 must contain an emperor placeholder card.'
     Assert-Contains $sceneOneScene '\[node name="NameText" type="Label" parent="UI/Overlay/PortraitDisplay/NamePlate"' 'Scene1 must contain a portrait name plate.'
     Assert-Contains $sceneOneScene 'instance=ExtResource\("8_hud"\)' 'Scene1 must instance the shared exploration HUD.'
+    Assert-Contains $sceneOneScene 'instance=ExtResource\("9_chapter"\)' 'Scene1 must instance the chapter transition UI.'
 }
 
 Test-SceneResourceReferences 'scenes\palace\palace_demo.tscn'
@@ -220,6 +230,7 @@ Test-SceneResourceReferences 'scenes\characters\player.tscn'
 Test-SceneResourceReferences 'scenes\characters\npc.tscn'
 Test-SceneResourceReferences 'scenes\Scene2.tscn'
 Test-SceneResourceReferences 'scenes\ui\exploration_hud.tscn'
+Test-SceneResourceReferences 'scenes\ui\chapter_transition.tscn'
 
 if ($failures.Count -gt 0) {
     Write-Host "Merged project verification failed with $($failures.Count) issue(s):" -ForegroundColor Red

@@ -40,6 +40,8 @@ func _verify_transition(skip_wait: bool, wait_seconds: float, label: String) -> 
 	root.add_child(scene_one)
 	current_scene = scene_one
 	await process_frame
+	var chapter_transition := scene_one.get_node("UI/Overlay/ChapterTransition")
+	chapter_transition.set("duration_scale", 0.03)
 
 	# Enter the final documented state without replaying the full dialogue chain.
 	scene_one.set("story_state", IMPERIAL_EDICT_STATE)
@@ -52,3 +54,26 @@ func _verify_transition(skip_wait: bool, wait_seconds: float, label: String) -> 
 
 	if current_scene == null or current_scene.name != SCENE_TWO_NAME:
 		failures.append("Scene2 was not active after the %s transition." % label)
+		return
+
+	var dialogue_panel := current_scene.get_node("UI/DialoguePanel") as Control
+	var speaker_label := current_scene.get_node("UI/DialoguePanel/NamePlate/SpeakerLabel") as Label
+	var exploration_hud := current_scene.get_node("UI/ExplorationHUD") as Control
+	if not dialogue_panel.visible or speaker_label.text != "水师副将":
+		failures.append("Scene2 did not open with the deputy greeting after the %s transition." % label)
+	if exploration_hud.visible:
+		failures.append("Exploration HUD was visible during the deputy greeting after the %s transition." % label)
+
+	var next_button := current_scene.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/NextDialogueButton") as Button
+	next_button.pressed.emit()
+	await process_frame
+	next_button.pressed.emit()
+	await process_frame
+
+	var main_task := exploration_hud.get_node("QuestTracker/MainQuest/TaskName") as Label
+	if dialogue_panel.visible:
+		failures.append("Deputy greeting did not close after the %s transition." % label)
+	if not exploration_hud.visible:
+		failures.append("Exploration HUD did not return after the %s deputy greeting." % label)
+	if main_task.text != "巡视水师驻地":
+		failures.append("Scene2 main task was not activated after the %s deputy greeting." % label)

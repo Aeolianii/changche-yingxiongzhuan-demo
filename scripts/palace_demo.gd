@@ -29,8 +29,8 @@ const ATTENDANT_INSIDE_TARGET := Vector2(690.0, 350.0)
 const SCRIPTED_SPEED := 155.0
 const INTERACTION_DISTANCE := 105.0
 const NEXT_SCENE_PATH := "res://scenes/Scene2.tscn"
+const CHAPTER_ENTRY_META := &"chapter_transition_from_scene_one"
 const SCENE_TRANSITION_DELAY := 2.5
-const SCENE_FADE_DURATION := 0.45
 
 @onready var player: CharacterActor = $YSortedCharacters/Player
 @onready var emperor: CharacterActor = $YSortedCharacters/Emperor
@@ -48,6 +48,7 @@ const SCENE_FADE_DURATION := 0.45
 @onready var exploration_hud: Control = $UI/ExplorationHUD
 @onready var transition_timer: Timer = $SceneTransitionTimer
 @onready var transition_fade: ColorRect = $UI/Overlay/TransitionFade
+@onready var chapter_transition: Control = $UI/Overlay/ChapterTransition
 
 var story_state := StoryState.OPENING_REPORTS
 var opening_index := 0
@@ -60,6 +61,7 @@ func _ready() -> void:
 	interaction_button.pressed.connect(_on_interaction_pressed)
 	exploration_hud.connect("menu_visibility_changed", _on_menu_visibility_changed)
 	transition_timer.timeout.connect(_start_scene_transition)
+	chapter_transition.connect("transition_finished", _change_to_scene_two)
 	transition_timer.wait_time = SCENE_TRANSITION_DELAY
 	interaction_button.hide()
 	player.controls_enabled = true
@@ -267,19 +269,21 @@ func _start_scene_transition() -> void:
 	_refresh_exploration_hud()
 	continue_button.disabled = true
 	interaction_button.hide()
-	var fade_tween := create_tween()
-	fade_tween.tween_property(transition_fade, "modulate:a", 1.0, SCENE_FADE_DURATION)
-	fade_tween.tween_callback(_change_to_scene_two)
+	_hide_dialogue()
+	chapter_transition.call("play")
 
 
 func _change_to_scene_two() -> void:
+	get_tree().root.set_meta(CHAPTER_ENTRY_META, true)
 	var change_result := get_tree().change_scene_to_file(NEXT_SCENE_PATH)
 	if change_result == OK:
 		return
 
+	get_tree().root.remove_meta(CHAPTER_ENTRY_META)
 	transition_started = false
 	player.controls_enabled = true
 	continue_button.disabled = false
 	transition_fade.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	chapter_transition.call("reset_transition")
 	_show_dialogue("【提示】\n南疆场景加载失败，请重试启程。")
 	_set_continue_text("重试启程")

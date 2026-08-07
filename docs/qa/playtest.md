@@ -43,6 +43,11 @@
 | 退出游戏 | 系统菜单已打开 | 点击“退出游戏” | 调用场景树退出并结束应用 | passed / isolated exit runtime 1 |
 | 生成式菜单组件 | 自由移动阶段 | 打开系统菜单并检查框体、按钮和关闭钮 | 三类生成组件透明边缘干净、风格统一、无生成文字；引擎中文清晰且点击区域对齐 | passed / generated menu render 1 |
 | 菜单按钮高度与悬浮 | 系统菜单已打开 | 观察六个按钮并逐个悬浮 | 按钮纵向舒展、文字字号保持 21；悬浮时背景和字体颜色不变化 | passed / system menu button render 3 |
+| 第一章完结题签 | 圣旨收尾完成 | 等待 2.5 秒或点击“立即启程” | 墨色覆盖皇宫，仅播放一次“第一章·奉诏入殿 / 完” | passed / chapter transition runtime 1 |
+| 南下行程过场 | 第一章题签结束 | 继续观看 | 像素水墨行程图淡入并依次显示两段南下旁白 | passed / chapter transition render 1 |
+| 第二章开篇 | 南下行程结束 | 继续观看 | 显示“第二章·南疆水师”，随后切入楼船甲板 | passed / chapter transition runtime 1 |
+| 水师副将迎接 | 从第一章进入第二章 | 推进迎接对白 | 对白期间不能移动且 HUD 隐藏；结束后 HUD 恢复 | passed / chapter transition runtime 1 |
+| 第二章任务激活 | 水师副将迎接结束 | 查看任务栏 | 主线为“巡视水师驻地”，第一步指向巡视中军楼船 | passed / chapter transition runtime 1 |
 
 ## 手动觐见与任务指引验收
 
@@ -101,6 +106,7 @@
 | 2026-08-06 / text-only quest entries render 1 | Codex | 主支线任务的“帅”“商”人物徽章已移除，每项仅保留分类、任务名称和简短描述，并利用释放空间统一左对齐 | 1344×896 OpenGL 截图、节点与文字位置断言、HUD/静态回归 | 交付用户试玩 |
 | 2026-08-06 / generated ink icons render 1 | Codex | 探索区四个单字徽章和系统菜单六个单字徽章已替换为人物、行囊、帆船、卷轴及六类菜单功能的水墨图标 | 1344×896 探索 HUD 与系统菜单截图、十张 PNG Alpha/映射断言、HUD/退出/静态回归 | 交付用户试玩 |
 | 2026-08-06 / quest function button render 1 | Codex | 右上功能区最左侧新增带水墨任务文书图标的“任务”按钮，功能条扩展为任务、人物、物品栏、船只、菜单五项 | 1344×896 OpenGL 截图、图标/顺序/宽度/提示断言、HUD/静态回归 | 交付用户试玩 |
+| 2026-08-07 / chapter transition render 1 | Codex | 第一章领旨与第二章水师之间加入完结题签、像素水墨南下行程、开篇题签和副将迎接；任务在迎接结束后激活 | 1344×896 Vulkan 截图、自动与手动启程串联测试、C# 编译与静态验证 | 交付用户试玩 |
 
 ## Known issues
 

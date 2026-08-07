@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://casbaiubyku7e" path="res://assets/ui/button_medium_green.png" id="6_re2s4"]
 [ext_resource type="Texture2D" uid="uid://dgtwn3k7s2ykh" path="res://assets/ui/button_medium_green_active.png" id="7_xi4kr"]
 [ext_resource type="PackedScene" path="res://scenes/ui/exploration_hud.tscn" id="8_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/chapter_transition.tscn" id="9_chapter"]
 
 [node name="PalaceDemo" type="Node2D" unique_id=838520599]
 process_mode = 3
@@ -264,5 +265,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 1)
+
+[node name="ChapterTransition" parent="UI/Overlay" instance=ExtResource("9_chapter")]
 
 [node name="ExplorationHUD" parent="UI" instance=ExtResource("8_hud")]

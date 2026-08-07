@@ -8,6 +8,7 @@ public partial class Scene2 : Node2D
     private const float PlayerSpeed = 210f;
     private const string AssetRoot = "res://assets/characters";
     private const string DialogueBackgroundPath = "res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar.png";
+    private const string ChapterEntryMeta = "chapter_transition_from_scene_one";
 
     private CharacterBody2D _player = default!;
     private AnimatedSprite2D _playerSprite = default!;
@@ -32,6 +33,9 @@ public partial class Scene2 : Node2D
     private readonly List<AmbientCloud> _ambientClouds = new();
 
     private bool _nearMagistrate;
+    private bool _arrivalDialogueActive;
+    private bool _shouldPlayArrivalDialogue;
+    private int _arrivalDialogueIndex;
     private int _dialogueIndex;
     private string _lastDirection = "down";
     private InteractableNpc _currentTarget;
@@ -74,8 +78,15 @@ public partial class Scene2 : Node2D
         ("广州县令", "下官早已提前统筹全域资源，全境备战就位，可保水师长期驻海、跨海征战粮草无忧。")
     };
 
+    private readonly (string Speaker, string Text)[] _arrivalDialogues =
+    {
+        ("水师副将", "末将恭迎元帅！南疆水师诸营已按旨整备，请元帅先行巡视中军楼船与周边泊位。"),
+        ("水师主帅", "传令各营照常操练。本帅先巡中军楼船，查验官兵值守与舰船战备。")
+    };
+
     public override void _Ready()
     {
+        _shouldPlayArrivalDialogue = ConsumeChapterEntryFlag();
         BuildScene();
         BuildUi();
     }
@@ -624,7 +635,6 @@ public partial class Scene2 : Node2D
         var canvas = GetNode<CanvasLayer>("UI");
 
         _explorationHud = GetNode<Control>("UI/ExplorationHUD");
-        _explorationHud.Call("set_main_task", "巡视水师驻地");
 
         _interactionPanel = CreateInteractionPanel();
         canvas.AddChild(_interactionPanel);
@@ -633,7 +643,13 @@ public partial class Scene2 : Node2D
 
         _drillOverlay = CreateDrillOverlay();
         canvas.AddChild(_drillOverlay);
-        RefreshExplorationHud();
+        if (_shouldPlayArrivalDialogue)
+            StartArrivalDialogue();
+        else
+        {
+            ActivateArrivalTask();
+            RefreshExplorationHud();
+        }
     }
 
     private void InitializeDialoguePanel()
@@ -942,6 +958,12 @@ public partial class Scene2 : Node2D
 
     private void AdvanceDialogue()
     {
+        if (_arrivalDialogueActive)
+        {
+            AdvanceArrivalDialogue();
+            return;
+        }
+
         _dialogueIndex++;
         if (_dialogueIndex >= _storyDialogues.Length)
         {
@@ -965,6 +987,63 @@ public partial class Scene2 : Node2D
             : FindImageInAssetDirectory($"{AssetRoot}/protagonist", "picture.png");
         SetPortrait(portraitPath, isMagistrate ? "县" : "帅", !isMagistrate);
         _nextDialogueButton.Text = _dialogueIndex == _storyDialogues.Length - 1 ? "结束" : "继续";
+    }
+
+    private bool ConsumeChapterEntryFlag()
+    {
+        Window root = GetTree().Root;
+        if (!root.HasMeta(ChapterEntryMeta))
+            return false;
+
+        root.RemoveMeta(ChapterEntryMeta);
+        return true;
+    }
+
+    private void StartArrivalDialogue()
+    {
+        _arrivalDialogueActive = true;
+        _arrivalDialogueIndex = 0;
+        _interactionPanel.Hide();
+        _optionBox.Hide();
+        _nextDialogueButton.Show();
+        _dialoguePanel.Show();
+        ShowArrivalDialogueLine();
+        RefreshExplorationHud();
+    }
+
+    private void AdvanceArrivalDialogue()
+    {
+        _arrivalDialogueIndex++;
+        if (_arrivalDialogueIndex < _arrivalDialogues.Length)
+        {
+            ShowArrivalDialogueLine();
+            return;
+        }
+
+        _arrivalDialogueActive = false;
+        _dialoguePanel.Hide();
+        _optionBox.Show();
+        ActivateArrivalTask();
+        RefreshExplorationHud();
+    }
+
+    private void ShowArrivalDialogueLine()
+    {
+        (string speaker, string text) = _arrivalDialogues[_arrivalDialogueIndex];
+        bool isCommander = speaker == "水师主帅";
+        _speakerLabel.Text = speaker;
+        _dialogueLabel.Text = text;
+        _portraitLabel.Text = isCommander ? "帅" : "副";
+        string portraitPath = isCommander
+            ? FindImageInAssetDirectory($"{AssetRoot}/protagonist", "picture.png")
+            : FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png");
+        SetPortrait(portraitPath, isCommander ? "帅" : "副", isCommander);
+        _nextDialogueButton.Text = _arrivalDialogueIndex == _arrivalDialogues.Length - 1 ? "开始巡视" : "继续";
+    }
+
+    private void ActivateArrivalTask()
+    {
+        _explorationHud.Call("set_main_task", "巡视水师驻地");
     }
 
     private void ShowDrill()

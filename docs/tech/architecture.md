@@ -29,7 +29,9 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 场景一对话 UI 将纯文字显示与角色对白显示分开：纯文字入口会隐藏立绘，角色对白入口显式接收人物名、纹理、左右站位和可选占位字。场景节点只持有一个可切换左右位置的立绘容器，避免为每名角色复制 UI；关闭对话时统一清除可见状态。
 
-场景一完成后由本场景脚本启动一次性计时器和淡出层，再调用 `SceneTree.change_scene_to_file()` 切换到 `res://scenes/Scene2.tscn`。切换失败时恢复完成态 UI，允许玩家重试。
+场景一完成后由本场景脚本启动一次性计时器，并调用独立的 `ChapterTransition` Canvas UI 播放第一章题签、南下行程和第二章题签。过场完成时在场景树根节点写入一次性入口标记，再调用 `SceneTree.change_scene_to_file()` 切换到 `res://scenes/Scene2.tscn`。切换失败时移除标记、关闭过场并恢复完成态 UI，允许玩家重试。
+
+`Scene2` 只在检测到该入口标记时消费并删除它，随后复用既有对话框播放水师副将迎接对白。对白期间移动、交互和探索 HUD 均锁定；对白结束后才调用共享 HUD 的 `set_main_task("巡视水师驻地")` 并恢复自由探索。直接运行 `Scene2.tscn` 时不触发入口对白，便于独立调试。
 
 ## Directory ownership
 
@@ -57,6 +59,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 - Scene2 对话底板固定为 1344×190；更换底板不得改变立绘、名牌、正文和选项节点的现有布局。
 - 探索 HUD 使用 `set_exploration_visible(bool)` 接收场景可见性，并通过 `menu_visibility_changed(bool)` 通知场景菜单暂停状态；场景一切换 `player.controls_enabled`，场景二在物理与交互分发前查询 `is_menu_open()`，HUD 不直接持有场景角色引用。
 - `set_exploration_visible(false)` 必须同步关闭菜单；关闭事件由场景结合剧情、对白和过场状态决定是否恢复输入，避免错误解锁。
+- 章节入口标记必须是一次性的运行时元数据：Scene2 读取后立即删除，场景加载失败时也必须清理，不能污染再次进入。
 - 探索 HUD 使用全屏锚点和角落容器适配窗口；底部中央交互区和底部对话区必须保持无遮挡。
 
 ## Persistence

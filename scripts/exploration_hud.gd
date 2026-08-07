@@ -21,6 +21,9 @@ const MENU_BUTTON_HIGHLIGHT_SHADER := preload("res://shaders/menu_button_highlig
 const SYSTEM_MENU_FRAME := preload("res://assets/ui/system_menu/system_menu_frame.png")
 const SYSTEM_MENU_BUTTON := preload("res://assets/ui/system_menu/menu_button.png")
 const SYSTEM_MENU_CLOSE := preload("res://assets/ui/system_menu/close_button.png")
+const SETTINGS_RETURN_BUTTON := preload("res://assets/ui/system_menu/settings_return_button.png")
+const VOLUME_SLIDER_TRACK := preload("res://assets/ui/system_menu/volume_slider_track.png")
+const VOLUME_SLIDER_KNOB := preload("res://assets/ui/system_menu/volume_slider_knob.png")
 const QUEST_SCREEN_SCENE := preload("res://scenes/ui/quest_screen.tscn")
 
 const INK := Color(0.055, 0.073, 0.075, 0.96)
@@ -504,7 +507,7 @@ func _build_settings_panel() -> void:
 	return_texture.name = "GeneratedReturnTexture"
 	return_texture.position = Vector2(-8, -8)
 	return_texture.size = Vector2(98, 98)
-	return_texture.texture = SYSTEM_MENU_CLOSE
+	return_texture.texture = SETTINGS_RETURN_BUTTON
 	return_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	return_texture.stretch_mode = TextureRect.STRETCH_SCALE
 	return_texture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -515,24 +518,14 @@ func _build_settings_panel() -> void:
 	return_button.name = "SettingsReturnButton"
 	return_button.position = Vector2.ZERO
 	return_button.size = Vector2(82, 82)
-	return_button.text = "返"
 	return_button.tooltip_text = "返回系统菜单"
 	return_button.focus_mode = Control.FOCUS_NONE
 	return_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	return_button.add_theme_font_size_override("font_size", 25)
-	return_button.add_theme_color_override("font_color", TEXT_LIGHT)
 	return_button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	return_button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	return_button.add_theme_stylebox_override("pressed", _panel_style(Color(0.84, 0.67, 0.31, 0.24), Color(0, 0, 0, 0), 0, 38))
 	return_button.pressed.connect(_return_to_system_menu)
 	return_slot.add_child(return_button)
-
-	var return_label := _make_label("返回", 16, TEXT_LIGHT)
-	return_label.name = "ReturnLabel"
-	return_label.position = Vector2(-10, 80)
-	return_label.size = Vector2(102, 28)
-	return_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	return_slot.add_child(return_label)
 
 	var section_title := _make_label("音律调校", 21, GOLD_BRIGHT)
 	section_title.name = "AudioSectionTitle"
@@ -575,6 +568,17 @@ func _build_audio_setting(parent: Control, node_prefix: String, label_text: Stri
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(value_label)
 
+	var generated_track := TextureRect.new()
+	generated_track.name = "GeneratedSliderTrack"
+	generated_track.position = Vector2(22, 68)
+	generated_track.size = Vector2(316, 32)
+	generated_track.texture = VOLUME_SLIDER_TRACK
+	generated_track.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	generated_track.stretch_mode = TextureRect.STRETCH_SCALE
+	generated_track.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	generated_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(generated_track)
+
 	var slider := HSlider.new()
 	slider.name = "%sSlider" % node_prefix
 	slider.position = Vector2(22, 58)
@@ -582,50 +586,20 @@ func _build_audio_setting(parent: Control, node_prefix: String, label_text: Stri
 	slider.min_value = 0.0
 	slider.max_value = 100.0
 	slider.step = 1.0
-	slider.tick_count = 11
-	slider.ticks_on_borders = true
+	slider.tick_count = 0
 	slider.focus_mode = Control.FOCUS_ALL
 	slider.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	slider.add_theme_stylebox_override("slider", _slider_track_style(Color(0.025, 0.045, 0.043, 1.0), GOLD))
-	slider.add_theme_stylebox_override("grabber_area", _slider_track_style(JADE, GOLD))
-	slider.add_theme_stylebox_override("grabber_area_highlight", _slider_track_style(Color(0.25, 0.48, 0.42, 1.0), GOLD_BRIGHT))
-	var grabber := _make_slider_grabber(JADE)
-	var highlighted_grabber := _make_slider_grabber(Color(0.25, 0.48, 0.42, 1.0))
-	slider.add_theme_icon_override("grabber", grabber)
-	slider.add_theme_icon_override("grabber_highlight", highlighted_grabber)
-	slider.add_theme_icon_override("grabber_disabled", grabber)
+	slider.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	slider.add_theme_stylebox_override("slider", StyleBoxEmpty.new())
+	slider.add_theme_stylebox_override("grabber_area", StyleBoxEmpty.new())
+	slider.add_theme_stylebox_override("grabber_area_highlight", StyleBoxEmpty.new())
+	slider.add_theme_icon_override("grabber", VOLUME_SLIDER_KNOB)
+	slider.add_theme_icon_override("grabber_highlight", VOLUME_SLIDER_KNOB)
+	slider.add_theme_icon_override("grabber_disabled", VOLUME_SLIDER_KNOB)
 	slider.value = _get_bus_percent(bus_name)
 	value_label.text = "%d%%" % roundi(slider.value)
 	slider.value_changed.connect(_on_audio_volume_changed.bind(bus_name, value_label))
 	row.add_child(slider)
-
-
-func _slider_track_style(fill_color: Color, border_color: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill_color
-	style.border_color = border_color
-	style.set_border_width_all(2)
-	style.content_margin_top = 7.0
-	style.content_margin_bottom = 7.0
-	return style
-
-
-func _make_slider_grabber(fill_color: Color) -> ImageTexture:
-	var image := Image.create(22, 22, false, Image.FORMAT_RGBA8)
-	image.fill(Color.TRANSPARENT)
-	for y in range(22):
-		for x in range(22):
-			var distance := absf(float(x) - 10.5) + absf(float(y) - 10.5)
-			if distance <= 10.5:
-				var pixel_color := INK
-				if distance <= 9.0:
-					pixel_color = GOLD
-				if distance <= 7.0:
-					pixel_color = fill_color
-				image.set_pixel(x, y, pixel_color)
-	return ImageTexture.create_from_image(image)
-
-
 func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_texture: Texture2D, node_name: String) -> void:
 	var slot := Control.new()
 	slot.name = "%sSlot" % node_name

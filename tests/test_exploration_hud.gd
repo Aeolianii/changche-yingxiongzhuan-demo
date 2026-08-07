@@ -37,6 +37,9 @@ func _verify_generated_assets() -> void:
 		"res://assets/ui/system_menu/system_menu_frame.png",
 		"res://assets/ui/system_menu/menu_button.png",
 		"res://assets/ui/system_menu/close_button.png",
+		"res://assets/ui/system_menu/settings_return_button.png",
+		"res://assets/ui/system_menu/volume_slider_track.png",
+		"res://assets/ui/system_menu/volume_slider_knob.png",
 		"res://assets/ui/exploration_hud/player_status_frame.png",
 		"res://assets/ui/exploration_hud/function_button.png",
 		"res://assets/ui/exploration_hud/function_buttons_brushstroke.png",
@@ -295,6 +298,15 @@ func _verify_component_contract() -> void:
 		_expect(settings_panel.get_node_or_null("MusicVolumeRow") is Panel and settings_panel.get_node_or_null("SfxVolumeRow") is Panel, "Settings panel must contain only the two requested audio rows.")
 		var music_slider := settings_panel.get_node("MusicVolumeRow/MusicVolumeSlider") as HSlider
 		var sfx_slider := settings_panel.get_node("SfxVolumeRow/SfxVolumeSlider") as HSlider
+		var generated_return := settings_panel.get_node("SettingsReturnOrnament/GeneratedReturnTexture") as TextureRect
+		_expect(generated_return.texture.resource_path.ends_with("settings_return_button.png") and generated_return.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Settings return button must use its generated pixel-art component.")
+		var settings_return := settings_panel.find_child("SettingsReturnButton", true, false) as Button
+		_expect(settings_return.text.is_empty() and settings_panel.get_node_or_null("SettingsReturnOrnament/ReturnLabel") == null, "Generated settings return button must not keep redundant return text.")
+		for slider in [music_slider, sfx_slider]:
+			var generated_track := slider.get_parent().get_node("GeneratedSliderTrack") as TextureRect
+			_expect(generated_track.texture.resource_path.ends_with("volume_slider_track.png") and generated_track.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "%s must use the generated volume track." % slider.name)
+			_expect(slider.get_theme_icon("grabber").resource_path.ends_with("volume_slider_knob.png"), "%s must use the generated volume knob." % slider.name)
+			_expect(slider.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST and slider.tick_count == 0, "%s must preserve the generated pixel control without default ticks." % slider.name)
 		_expect(music_slider.min_value == 0.0 and music_slider.max_value == 100.0 and music_slider.step == 1.0, "Music slider must expose a 0-100 range.")
 		_expect(sfx_slider.min_value == 0.0 and sfx_slider.max_value == 100.0 and sfx_slider.step == 1.0, "SFX slider must expose a 0-100 range.")
 		var music_bus_index := AudioServer.get_bus_index(&"Music")
@@ -306,7 +318,6 @@ func _verify_component_contract() -> void:
 		_expect(is_equal_approx(AudioServer.get_bus_volume_db(sfx_bus_index), linear_to_db(0.62)), "SFX slider must update only the SFX bus volume.")
 		_expect((music_slider.get_parent().get_node("ValueLabel") as Label).text == "35%", "Music percentage must follow its slider.")
 		_expect((sfx_slider.get_parent().get_node("ValueLabel") as Label).text == "62%", "SFX percentage must follow its slider.")
-		var settings_return := settings_panel.find_child("SettingsReturnButton", true, false) as Button
 		settings_return.pressed.emit()
 		_expect(not hud.call("is_settings_open") and system_menu.get_node("SystemPanel").visible and system_menu.visible, "Settings return button must restore the system menu without closing its overlay.")
 		music_slider.value = 100.0

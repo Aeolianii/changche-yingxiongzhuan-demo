@@ -160,8 +160,9 @@ func _verify_component_contract() -> void:
 		_expect(function_texture.texture != null and function_texture.texture.resource_path.ends_with("function_button.png"), "%s must use the generated pixel ink-wash button frame." % slot.name)
 		_expect(function_texture.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "%s button frame must preserve crisp pixel-art edges." % slot.name)
 		var function_icon := slot.get_node("FunctionIcon") as TextureRect
-		_expect(function_icon.texture != null and function_icon.texture.resource_path.ends_with(expected_hud_icons[slot_index]), "%s must use its generated ink-wash function icon." % slot.name)
+		_expect(function_icon.texture != null and function_icon.texture.resource_path.ends_with(expected_hud_icons[slot_index]), "%s must use its generated pixel ink-wash function icon." % slot.name)
 		_expect(function_icon.size == Vector2(56, 56), "%s icon must fill the generated diamond without losing its center." % slot.name)
+		_expect(function_icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "%s icon must preserve the shared pixel density." % slot.name)
 		_expect(slot.get_node_or_null("Symbol") == null, "%s must not retain its text symbol." % slot.name)
 
 	var quest_button := hud.find_child("QuestButton", true, false) as Button

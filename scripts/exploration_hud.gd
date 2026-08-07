@@ -461,13 +461,13 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_t
 	generated_button.texture = SYSTEM_MENU_BUTTON
 	generated_button.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	generated_button.stretch_mode = TextureRect.STRETCH_SCALE
-	generated_button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	generated_button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	generated_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(generated_button)
 
 	# Reuse the button texture's alpha as the hover mask. A StyleBox always fills
 	# the rectangular Control, while this overlay follows the paper and diamond
-	# silhouette (including their soft, antialiased edges).
+	# silhouette, including the redrawn stair-stepped pixel edges.
 	var hover_highlight := TextureRect.new()
 	hover_highlight.name = "HoverHighlight"
 	hover_highlight.position = generated_button.position
@@ -475,7 +475,7 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_t
 	hover_highlight.texture = SYSTEM_MENU_BUTTON
 	hover_highlight.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	hover_highlight.stretch_mode = TextureRect.STRETCH_SCALE
-	hover_highlight.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	hover_highlight.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	hover_highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var highlight_material := ShaderMaterial.new()
 	highlight_material.shader = MENU_BUTTON_HIGHLIGHT_SHADER

@@ -241,6 +241,7 @@ func _verify_component_contract() -> void:
 			_expect(hud.find_child(entry_name, true, false) is Button, "%s is missing from the system menu." % entry_name)
 		var generated_button := system_menu.find_child("GeneratedButtonTexture", true, false) as TextureRect
 		_expect(generated_button != null and generated_button.texture.resource_path.ends_with("menu_button.png"), "System menu entries must use the generated button texture.")
+		_expect(generated_button.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "System menu button backgrounds must preserve crisp pixel-art edges.")
 		_expect(generated_button.size.y >= 110.0, "Generated menu button texture must use the second expanded vertical size.")
 		var menu_entries := system_menu.get_node("SystemPanel/MenuEntries") as VBoxContainer
 		_expect(menu_entries.get_theme_constant("separation") >= 29, "System menu entries need enough spacing to prevent diamond overlap.")
@@ -258,6 +259,7 @@ func _verify_component_contract() -> void:
 		_expect(continue_button.get_theme_color("font_hover_color") == continue_button.get_theme_color("font_color"), "System menu button text color must not change on hover.")
 		var hover_highlight := continue_button.get_parent().get_node("HoverHighlight") as TextureRect
 		_expect(hover_highlight.texture == generated_button.texture, "System menu hover highlight must reuse the button texture as its alpha mask.")
+		_expect(hover_highlight.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "System menu hover highlight must follow the button's pixel silhouette.")
 		_expect(hover_highlight.material is ShaderMaterial, "System menu hover highlight must use an alpha-masked shader material.")
 		continue_button.mouse_entered.emit()
 		_expect(hover_highlight.visible, "System menu hover highlight must appear when the pointer enters a button.")

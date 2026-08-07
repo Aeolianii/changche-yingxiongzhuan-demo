@@ -31,12 +31,17 @@ const GOLD_BRIGHT := Color(0.95, 0.82, 0.51, 1.0)
 const JADE := Color(0.16, 0.38, 0.36, 1.0)
 const TEXT_LIGHT := Color(0.96, 0.91, 0.78, 1.0)
 const TEXT_MUTED := Color(0.72, 0.71, 0.64, 1.0)
+const MUSIC_BUS_NAME := &"Music"
+const SFX_BUS_NAME := &"SFX"
+const AUDIO_FLOOR_DB := -80.0
 
 var _main_task_label: Label
 var _toast_panel: Panel
 var _toast_label: Label
 var _toast_timer: Timer
 var _menu_overlay: Control
+var _system_panel: Control
+var _settings_panel: Control
 var _quest_screen: Control
 
 signal menu_visibility_changed(is_open: bool)
@@ -44,11 +49,13 @@ signal menu_visibility_changed(is_open: bool)
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ensure_audio_buses()
 	_build_status_panel()
 	_build_task_tracker()
 	_build_function_buttons()
 	_build_quest_screen()
 	_build_system_menu()
+	_build_settings_panel()
 	_build_toast()
 	set_exploration_visible(false)
 
@@ -77,6 +84,10 @@ func is_menu_open() -> bool:
 
 func is_quest_screen_open() -> bool:
 	return is_instance_valid(_quest_screen) and _quest_screen.visible
+
+
+func is_settings_open() -> bool:
+	return is_instance_valid(_settings_panel) and _settings_panel.visible
 
 
 func _is_system_menu_open() -> bool:
@@ -368,15 +379,15 @@ func _build_system_menu() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu_overlay.add_child(dim)
 
-	var frame := Control.new()
-	frame.name = "SystemPanel"
-	frame.set_anchors_preset(Control.PRESET_CENTER)
-	frame.offset_left = -225.0
-	frame.offset_top = -320.0
-	frame.offset_right = 225.0
-	frame.offset_bottom = 320.0
-	frame.mouse_filter = Control.MOUSE_FILTER_STOP
-	_menu_overlay.add_child(frame)
+	_system_panel = Control.new()
+	_system_panel.name = "SystemPanel"
+	_system_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_system_panel.offset_left = -225.0
+	_system_panel.offset_top = -320.0
+	_system_panel.offset_right = 225.0
+	_system_panel.offset_bottom = 320.0
+	_system_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_menu_overlay.add_child(_system_panel)
 
 	var generated_frame := TextureRect.new()
 	generated_frame.name = "GeneratedFrame"
@@ -387,7 +398,7 @@ func _build_system_menu() -> void:
 	generated_frame.stretch_mode = TextureRect.STRETCH_SCALE
 	generated_frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	generated_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	frame.add_child(generated_frame)
+	_system_panel.add_child(generated_frame)
 
 	var title := _make_label("系  统", 25, Color(0.12, 0.13, 0.105, 1.0))
 	title.name = "MenuTitle"
@@ -395,14 +406,14 @@ func _build_system_menu() -> void:
 	title.size = Vector2(246, 56)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	frame.add_child(title)
+	_system_panel.add_child(title)
 
 	var close_slot := Control.new()
 	close_slot.name = "CloseButtonOrnament"
 	close_slot.position = Vector2(409, -28)
 	close_slot.size = Vector2(82, 82)
 	close_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	frame.add_child(close_slot)
+	_system_panel.add_child(close_slot)
 
 	var close_texture := TextureRect.new()
 	close_texture.name = "GeneratedCloseTexture"
@@ -436,7 +447,7 @@ func _build_system_menu() -> void:
 	menu_list.size = Vector2(314, 505)
 	menu_list.add_theme_constant_override("separation", 29)
 	menu_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	frame.add_child(menu_list)
+	_system_panel.add_child(menu_list)
 
 	var entries := [
 		["继续游戏", MENU_ICON_CONTINUE, "ContinueGameButton"],
@@ -450,6 +461,169 @@ func _build_system_menu() -> void:
 		_build_system_menu_entry(menu_list, entry[0], entry[1], entry[2])
 
 	_menu_overlay.hide()
+
+
+func _build_settings_panel() -> void:
+	_settings_panel = Control.new()
+	_settings_panel.name = "SettingsPanel"
+	_settings_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_settings_panel.offset_left = -225.0
+	_settings_panel.offset_top = -320.0
+	_settings_panel.offset_right = 225.0
+	_settings_panel.offset_bottom = 320.0
+	_settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_menu_overlay.add_child(_settings_panel)
+
+	var generated_frame := TextureRect.new()
+	generated_frame.name = "GeneratedFrame"
+	generated_frame.position = Vector2(-80, -60)
+	generated_frame.size = Vector2(610, 780)
+	generated_frame.texture = SYSTEM_MENU_FRAME
+	generated_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	generated_frame.stretch_mode = TextureRect.STRETCH_SCALE
+	generated_frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	generated_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_settings_panel.add_child(generated_frame)
+
+	var title := _make_label("游戏设置", 25, Color(0.12, 0.13, 0.105, 1.0))
+	title.name = "SettingsTitle"
+	title.position = Vector2(102, -44)
+	title.size = Vector2(246, 56)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_settings_panel.add_child(title)
+
+	var return_slot := Control.new()
+	return_slot.name = "SettingsReturnOrnament"
+	return_slot.position = Vector2(409, -28)
+	return_slot.size = Vector2(82, 112)
+	return_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_settings_panel.add_child(return_slot)
+
+	var return_texture := TextureRect.new()
+	return_texture.name = "GeneratedReturnTexture"
+	return_texture.position = Vector2(-8, -8)
+	return_texture.size = Vector2(98, 98)
+	return_texture.texture = SYSTEM_MENU_CLOSE
+	return_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	return_texture.stretch_mode = TextureRect.STRETCH_SCALE
+	return_texture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	return_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return_slot.add_child(return_texture)
+
+	var return_button := Button.new()
+	return_button.name = "SettingsReturnButton"
+	return_button.position = Vector2.ZERO
+	return_button.size = Vector2(82, 82)
+	return_button.text = "返"
+	return_button.tooltip_text = "返回系统菜单"
+	return_button.focus_mode = Control.FOCUS_NONE
+	return_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	return_button.add_theme_font_size_override("font_size", 25)
+	return_button.add_theme_color_override("font_color", TEXT_LIGHT)
+	return_button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	return_button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	return_button.add_theme_stylebox_override("pressed", _panel_style(Color(0.84, 0.67, 0.31, 0.24), Color(0, 0, 0, 0), 0, 38))
+	return_button.pressed.connect(_return_to_system_menu)
+	return_slot.add_child(return_button)
+
+	var return_label := _make_label("返回", 16, TEXT_LIGHT)
+	return_label.name = "ReturnLabel"
+	return_label.position = Vector2(-10, 80)
+	return_label.size = Vector2(102, 28)
+	return_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return_slot.add_child(return_label)
+
+	var section_title := _make_label("音律调校", 21, GOLD_BRIGHT)
+	section_title.name = "AudioSectionTitle"
+	section_title.position = Vector2(45, 92)
+	section_title.size = Vector2(360, 34)
+	section_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_settings_panel.add_child(section_title)
+
+	_build_audio_setting(_settings_panel, "MusicVolume", "音乐音量", MUSIC_BUS_NAME, Vector2(45, 155))
+	_build_audio_setting(_settings_panel, "SfxVolume", "音效音量", SFX_BUS_NAME, Vector2(45, 335))
+
+	var hint := _make_label("拖动滑块调节音量", 15, TEXT_MUTED)
+	hint.name = "SettingsHint"
+	hint.position = Vector2(45, 510)
+	hint.size = Vector2(360, 28)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_settings_panel.add_child(hint)
+	_settings_panel.hide()
+
+
+func _build_audio_setting(parent: Control, node_prefix: String, label_text: String, bus_name: StringName, at: Vector2) -> void:
+	var row := Panel.new()
+	row.name = "%sRow" % node_prefix
+	row.position = at
+	row.size = Vector2(360, 132)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_stylebox_override("panel", _panel_style(Color(0.035, 0.06, 0.055, 0.88), Color(GOLD.r, GOLD.g, GOLD.b, 0.72), 2, 0))
+	parent.add_child(row)
+
+	var setting_label := _make_label(label_text, 20, TEXT_LIGHT)
+	setting_label.name = "SettingLabel"
+	setting_label.position = Vector2(20, 14)
+	setting_label.size = Vector2(220, 30)
+	row.add_child(setting_label)
+
+	var value_label := _make_label("100%", 18, GOLD_BRIGHT)
+	value_label.name = "ValueLabel"
+	value_label.position = Vector2(268, 14)
+	value_label.size = Vector2(72, 30)
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(value_label)
+
+	var slider := HSlider.new()
+	slider.name = "%sSlider" % node_prefix
+	slider.position = Vector2(22, 58)
+	slider.size = Vector2(316, 52)
+	slider.min_value = 0.0
+	slider.max_value = 100.0
+	slider.step = 1.0
+	slider.tick_count = 11
+	slider.ticks_on_borders = true
+	slider.focus_mode = Control.FOCUS_ALL
+	slider.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	slider.add_theme_stylebox_override("slider", _slider_track_style(Color(0.025, 0.045, 0.043, 1.0), GOLD))
+	slider.add_theme_stylebox_override("grabber_area", _slider_track_style(JADE, GOLD))
+	slider.add_theme_stylebox_override("grabber_area_highlight", _slider_track_style(Color(0.25, 0.48, 0.42, 1.0), GOLD_BRIGHT))
+	var grabber := _make_slider_grabber(JADE)
+	var highlighted_grabber := _make_slider_grabber(Color(0.25, 0.48, 0.42, 1.0))
+	slider.add_theme_icon_override("grabber", grabber)
+	slider.add_theme_icon_override("grabber_highlight", highlighted_grabber)
+	slider.add_theme_icon_override("grabber_disabled", grabber)
+	slider.value = _get_bus_percent(bus_name)
+	value_label.text = "%d%%" % roundi(slider.value)
+	slider.value_changed.connect(_on_audio_volume_changed.bind(bus_name, value_label))
+	row.add_child(slider)
+
+
+func _slider_track_style(fill_color: Color, border_color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill_color
+	style.border_color = border_color
+	style.set_border_width_all(2)
+	style.content_margin_top = 7.0
+	style.content_margin_bottom = 7.0
+	return style
+
+
+func _make_slider_grabber(fill_color: Color) -> ImageTexture:
+	var image := Image.create(22, 22, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	for y in range(22):
+		for x in range(22):
+			var distance := absf(float(x) - 10.5) + absf(float(y) - 10.5)
+			if distance <= 10.5:
+				var pixel_color := INK
+				if distance <= 9.0:
+					pixel_color = GOLD
+				if distance <= 7.0:
+					pixel_color = fill_color
+				image.set_pixel(x, y, pixel_color)
+	return ImageTexture.create_from_image(image)
 
 
 func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_texture: Texture2D, node_name: String) -> void:
@@ -516,8 +690,10 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_t
 	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 	button.mouse_entered.connect(hover_highlight.show)
 	button.mouse_exited.connect(hover_highlight.hide)
-	if action_name == "退出游戏":
+	if node_name == "ExitGameButton":
 		button.pressed.connect(_exit_game)
+	elif node_name == "SettingsButton":
+		button.pressed.connect(_open_settings_panel)
 	else:
 		button.pressed.connect(_show_menu_placeholder.bind(action_name))
 	slot.add_child(button)
@@ -585,6 +761,8 @@ func _open_system_menu() -> void:
 	if not visible or is_menu_open():
 		return
 	_toast_panel.hide()
+	_system_panel.show()
+	_settings_panel.hide()
 	_menu_overlay.show()
 	menu_visibility_changed.emit(true)
 
@@ -594,7 +772,50 @@ func _close_system_menu() -> void:
 		return
 	_toast_panel.hide()
 	_menu_overlay.hide()
+	_settings_panel.hide()
+	_system_panel.show()
 	menu_visibility_changed.emit(false)
+
+
+func _open_settings_panel() -> void:
+	if not _is_system_menu_open():
+		return
+	_toast_panel.hide()
+	_system_panel.hide()
+	_settings_panel.show()
+
+
+func _return_to_system_menu() -> void:
+	if not is_settings_open():
+		return
+	_settings_panel.hide()
+	_system_panel.show()
+
+
+func _ensure_audio_buses() -> void:
+	for bus_name in [MUSIC_BUS_NAME, SFX_BUS_NAME]:
+		if AudioServer.get_bus_index(bus_name) < 0:
+			AudioServer.add_bus()
+			var bus_index := AudioServer.bus_count - 1
+			AudioServer.set_bus_name(bus_index, bus_name)
+			AudioServer.set_bus_send(bus_index, &"Master")
+
+
+func _get_bus_percent(bus_name: StringName) -> float:
+	var bus_index := AudioServer.get_bus_index(bus_name)
+	if bus_index < 0 or AudioServer.is_bus_mute(bus_index):
+		return 0.0
+	return clampf(db_to_linear(AudioServer.get_bus_volume_db(bus_index)) * 100.0, 0.0, 100.0)
+
+
+func _on_audio_volume_changed(value: float, bus_name: StringName, value_label: Label) -> void:
+	var bus_index := AudioServer.get_bus_index(bus_name)
+	if bus_index < 0:
+		return
+	var percent := clampf(value, 0.0, 100.0)
+	AudioServer.set_bus_mute(bus_index, percent <= 0.0)
+	AudioServer.set_bus_volume_db(bus_index, AUDIO_FLOOR_DB if percent <= 0.0 else linear_to_db(percent / 100.0))
+	value_label.text = "%d%%" % roundi(percent)
 
 
 func _open_quest_screen() -> void:

@@ -63,6 +63,13 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 首版无存档。
 
+## Audio settings
+
+- `ExplorationHUD` 在共享系统菜单覆盖层内管理 `SystemPanel` 与 `SettingsPanel` 两个互斥子面板；进入设置不改变覆盖层可见性，因此场景一和场景二继续使用既有 `menu_visibility_changed(bool)` 暂停契约。
+- `default_bus_layout.tres` 声明 `Music` 与 `SFX` 音频总线，父级均为 `Master`；`ExplorationHUD` 仍在运行时检查并补齐缺失总线。设置界面的两条滑动条将 0–100 线性值实时转换为对应总线的分贝值，0 映射为静音下限。
+- 背景音乐播放器应使用 `Music`，交互与战斗音效播放器应使用 `SFX`；当前海战演出音效迁移到 `SFX`。
+- 首版不持久化音量，重新启动游戏后使用项目或运行时默认值。
+
 ## Dependencies and tools
 
 | Dependency | Purpose | Version/policy |

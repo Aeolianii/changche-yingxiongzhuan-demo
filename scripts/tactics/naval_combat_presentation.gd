@@ -26,7 +26,7 @@ var _audio_cursor := 0
 func _ready() -> void:
 	for _index in 4:
 		var player := AudioStreamPlayer.new()
-		player.bus = "Master"
+		player.bus = "SFX"
 		add_child(player)
 		_audio_players.append(player)
 

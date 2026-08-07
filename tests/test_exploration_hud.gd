@@ -5,6 +5,7 @@ const PALACE_SCENE := preload("res://scenes/palace/palace_demo.tscn")
 const SCENE_TWO := preload("res://scenes/Scene2.tscn")
 const SCREENSHOT_PATH := "res://.godot/exploration_hud_preview.png"
 const MENU_SCREENSHOT_PATH := "res://.godot/system_menu_preview.png"
+const SETTINGS_SCREENSHOT_PATH := "res://.godot/settings_screen_preview.png"
 const QUEST_SCREENSHOT_PATH := "res://.godot/quest_screen_preview.png"
 const COMPLETED_QUEST_SCREENSHOT_PATH := "res://.godot/quest_screen_completed_preview.png"
 
@@ -285,6 +286,31 @@ func _verify_component_contract() -> void:
 		_expect(hud.find_child("TutorialButton", true, false) == null, "System menu must not include a tutorial button.")
 		var exit_button := hud.find_child("ExitGameButton", true, false) as Button
 		_expect(exit_button != null and not exit_button.pressed.get_connections().is_empty(), "ExitGameButton must have a quit action connected.")
+		var settings_panel := system_menu.get_node("SettingsPanel") as Control
+		_expect(not settings_panel.visible, "Settings panel must stay hidden until the settings entry is pressed.")
+		var settings_button := hud.find_child("SettingsButton", true, false) as Button
+		settings_button.pressed.emit()
+		_expect(hud.call("is_settings_open") and not system_menu.get_node("SystemPanel").visible, "SettingsButton must replace the system panel with the settings panel.")
+		_expect((settings_panel.get_node("SettingsTitle") as Label).text == "游戏设置", "Settings panel title is incorrect.")
+		_expect(settings_panel.get_node_or_null("MusicVolumeRow") is Panel and settings_panel.get_node_or_null("SfxVolumeRow") is Panel, "Settings panel must contain only the two requested audio rows.")
+		var music_slider := settings_panel.get_node("MusicVolumeRow/MusicVolumeSlider") as HSlider
+		var sfx_slider := settings_panel.get_node("SfxVolumeRow/SfxVolumeSlider") as HSlider
+		_expect(music_slider.min_value == 0.0 and music_slider.max_value == 100.0 and music_slider.step == 1.0, "Music slider must expose a 0-100 range.")
+		_expect(sfx_slider.min_value == 0.0 and sfx_slider.max_value == 100.0 and sfx_slider.step == 1.0, "SFX slider must expose a 0-100 range.")
+		var music_bus_index := AudioServer.get_bus_index(&"Music")
+		var sfx_bus_index := AudioServer.get_bus_index(&"SFX")
+		_expect(music_bus_index >= 0 and sfx_bus_index >= 0, "Settings panel must provide separate Music and SFX buses.")
+		music_slider.value = 35.0
+		sfx_slider.value = 62.0
+		_expect(is_equal_approx(AudioServer.get_bus_volume_db(music_bus_index), linear_to_db(0.35)), "Music slider must update only the Music bus volume.")
+		_expect(is_equal_approx(AudioServer.get_bus_volume_db(sfx_bus_index), linear_to_db(0.62)), "SFX slider must update only the SFX bus volume.")
+		_expect((music_slider.get_parent().get_node("ValueLabel") as Label).text == "35%", "Music percentage must follow its slider.")
+		_expect((sfx_slider.get_parent().get_node("ValueLabel") as Label).text == "62%", "SFX percentage must follow its slider.")
+		var settings_return := settings_panel.find_child("SettingsReturnButton", true, false) as Button
+		settings_return.pressed.emit()
+		_expect(not hud.call("is_settings_open") and system_menu.get_node("SystemPanel").visible and system_menu.visible, "Settings return button must restore the system menu without closing its overlay.")
+		music_slider.value = 100.0
+		sfx_slider.value = 100.0
 
 		var toast := hud.get_node("ComingSoonToast") as Control
 		var message := hud.get_node("ComingSoonToast/Message") as Label
@@ -292,7 +318,6 @@ func _verify_component_contract() -> void:
 			["ContinueGameButton", "继续游戏"],
 			["SaveGameButton", "保存进度"],
 			["LoadGameButton", "读取进度"],
-			["SettingsButton", "游戏设置"],
 			["ReturnTitleButton", "返回标题"],
 		]:
 			var unfinished_button := hud.find_child(unfinished_entry[0], true, false) as Button
@@ -350,6 +375,18 @@ func _verify_palace_visibility() -> void:
 		var screenshot_error := root.get_texture().get_image().save_png(MENU_SCREENSHOT_PATH)
 		_expect(screenshot_error == OK, "System menu preview screenshot could not be saved.")
 	return_title_button.mouse_exited.emit()
+	var settings_button := hud.find_child("SettingsButton", true, false) as Button
+	settings_button.pressed.emit()
+	await process_frame
+	await process_frame
+	_expect(hud.call("is_settings_open"), "Palace settings entry must open the shared settings panel.")
+	_expect(not player.controls_enabled, "Palace player controls must remain paused while settings are open.")
+	if DisplayServer.get_name() != "headless":
+		var settings_screenshot_error := root.get_texture().get_image().save_png(SETTINGS_SCREENSHOT_PATH)
+		_expect(settings_screenshot_error == OK, "Settings screen preview screenshot could not be saved.")
+	var settings_return := hud.find_child("SettingsReturnButton", true, false) as Button
+	settings_return.pressed.emit()
+	await process_frame
 	var close_button := hud.find_child("CloseMenuButton", true, false) as Button
 	close_button.pressed.emit()
 	await process_frame
@@ -430,6 +467,15 @@ func _verify_scene_two_visibility() -> void:
 	await physics_frame
 	await physics_frame
 	_expect(player.velocity == Vector2.ZERO, "Scene2 player must stop while the system menu is open.")
+	var settings_button := hud.find_child("SettingsButton", true, false) as Button
+	settings_button.pressed.emit()
+	_expect(hud.call("is_settings_open"), "Scene2 must open the shared settings panel from the system menu.")
+	player.velocity = Vector2(120, 0)
+	await physics_frame
+	_expect(player.velocity == Vector2.ZERO, "Scene2 player must remain stopped while the settings panel is open.")
+	var settings_return := hud.find_child("SettingsReturnButton", true, false) as Button
+	settings_return.pressed.emit()
+	_expect(not hud.call("is_settings_open") and hud.call("is_menu_open"), "Scene2 settings return must restore the system menu overlay.")
 	var close_button := hud.find_child("CloseMenuButton", true, false) as Button
 	close_button.pressed.emit()
 	_expect(not hud.call("is_menu_open"), "Scene2 system menu must close through the shared close button.")

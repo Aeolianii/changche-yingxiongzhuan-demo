@@ -950,13 +950,15 @@ public partial class Scene2 : Node2D
         };
         button.AddThemeFontSizeOverride("font_size", 20);
         button.AddThemeColorOverride("font_color", new Color(0.94f, 0.91f, 0.82f));
-        button.AddThemeColorOverride("font_hover_color", new Color(1f, 0.86f, 0.54f));
-        button.AddThemeColorOverride("font_pressed_color", new Color(0.78f, 0.68f, 0.48f));
+        var highlightColor = new Color(1f, 0.86f, 0.54f);
+        button.AddThemeColorOverride("font_hover_color", highlightColor);
+        button.AddThemeColorOverride("font_pressed_color", highlightColor);
+        button.AddThemeColorOverride("font_hover_pressed_color", highlightColor);
+        button.AddThemeColorOverride("font_focus_color", highlightColor);
         button.AddThemeColorOverride("font_outline_color", new Color(0.015f, 0.02f, 0.018f, 0.96f));
         button.AddThemeConstantOverride("outline_size", 4);
-        button.AddThemeStyleboxOverride("normal", CreateOptionStyle(new Color(0, 0, 0, 0)));
-        button.AddThemeStyleboxOverride("hover", CreateOptionStyle(new Color(0.08f, 0.16f, 0.13f, 0.30f)));
-        button.AddThemeStyleboxOverride("pressed", CreateOptionStyle(new Color(0.03f, 0.08f, 0.06f, 0.42f)));
+        foreach (string state in new[] { "normal", "hover", "pressed", "hover_pressed", "focus" })
+            button.AddThemeStyleboxOverride(state, CreateOptionStyle(new Color(0, 0, 0, 0)));
         button.Pressed += action;
         _optionBox.AddChild(button);
     }

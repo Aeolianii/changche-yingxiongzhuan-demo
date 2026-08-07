@@ -102,10 +102,27 @@ func _capture_preview(scene_two: Node, portrait: TextureRect, name_plate: PanelC
 	scene_two._unhandled_input(interact)
 	await process_frame
 	_expect(portrait.visible and name_plate.visible, "Soldier dialogue preview did not show its portrait and name plate.")
+	_verify_text_only_option_highlight(scene_two)
+	var option_box := scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
+	(option_box.get_child(0) as Button).grab_focus()
 	exploration_hud.hide()
 	await process_frame
 	var error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
 	_expect(error == OK, "Could not save Scene2 ink dialogue preview.")
+
+
+func _verify_text_only_option_highlight(scene_two: Node) -> void:
+	var option_box := scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
+	_expect(option_box.get_child_count() == 2, "Soldier dialogue must expose two options for highlight verification.")
+	for child in option_box.get_children():
+		var button := child as Button
+		if button == null:
+			failures.append("Dialogue option is not a Button.")
+			continue
+		for state in [&"normal", &"hover", &"pressed", &"hover_pressed", &"focus"]:
+			var style := button.get_theme_stylebox(state)
+			_expect(style is StyleBoxFlat and (style as StyleBoxFlat).bg_color.a < 0.01, "Option %s style must stay transparent." % state)
+		_expect(button.get_theme_color("font_hover_color").is_equal_approx(Color(1.0, 0.86, 0.54, 1.0)), "Option hover must highlight text in yellow.")
 
 
 func _expect(condition: bool, message: String) -> void:

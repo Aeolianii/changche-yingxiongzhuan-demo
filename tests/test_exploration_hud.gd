@@ -105,7 +105,8 @@ func _verify_component_contract() -> void:
 	_expect(player_heading.position.y >= 8.0, "Player heading must move down inside the paper frame.")
 	_expect((name_plate.get_node("PlayerTitle") as Label).text == "伏波将军 · 南疆水师", "Player subtitle is incorrect.")
 	var status_frame := hud.get_node("PlayerStatus/GeneratedStatusFrame") as TextureRect
-	_expect(status_frame.texture != null and status_frame.texture.resource_path.ends_with("player_status_frame.png"), "Player status must use the generated ink-wash frame.")
+	_expect(status_frame.texture != null and status_frame.texture.resource_path.ends_with("player_status_frame.png"), "Player status must use the generated pixel ink-wash frame.")
+	_expect(status_frame.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Player status frame must preserve crisp pixel-art edges.")
 	_expect(hud.get_node_or_null("QuestTracker/MainQuest/CharacterPlaceholder") == null, "Main quest must not display a character badge.")
 	_expect(hud.get_node_or_null("QuestTracker/SideQuest/CharacterPlaceholder") == null, "Side quest must not display a character badge.")
 	var quest_tracker := hud.get_node("QuestTracker") as Control

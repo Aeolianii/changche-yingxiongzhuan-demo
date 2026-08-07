@@ -27,13 +27,15 @@ func _run_tests() -> void:
 	var portrait := scene_two.get_node_or_null("UI/DialoguePanel/LargeTransparentPortrait") as TextureRect
 	var name_plate := scene_two.get_node_or_null("UI/DialoguePanel/NamePlate") as PanelContainer
 	var dialogue_margin := scene_two.get_node_or_null("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin") as MarginContainer
+	var dialogue_label := scene_two.get_node_or_null("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
 	var option_box := scene_two.get_node_or_null("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
+	var next_button := scene_two.get_node_or_null("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/NextDialogueButton") as Button
 
-	if paper_panel == null or portrait == null or name_plate == null or dialogue_margin == null or option_box == null:
+	if paper_panel == null or portrait == null or name_plate == null or dialogue_margin == null or dialogue_label == null or option_box == null or next_button == null:
 		failures.append("Scene2 dialogue UI nodes are incomplete.")
 	else:
 		_verify_background(paper_panel)
-		_verify_ink_layout(paper_panel, portrait, name_plate, dialogue_margin, option_box)
+		_verify_ink_layout(paper_panel, portrait, name_plate, dialogue_margin, dialogue_label, option_box, next_button)
 		if DisplayServer.get_name() != "headless":
 			await _capture_preview(scene_two, portrait, name_plate)
 
@@ -65,18 +67,21 @@ func _verify_background(paper_panel: PanelContainer) -> void:
 	_expect(is_equal_approx(paper_panel.self_modulate.a, 0.88), "Dialogue ink backdrop must be slightly transparent.")
 
 
-func _verify_ink_layout(paper_panel: PanelContainer, portrait: TextureRect, name_plate: PanelContainer, dialogue_margin: MarginContainer, option_box: VBoxContainer) -> void:
-	_expect(paper_panel.position.is_equal_approx(Vector2(-160.0, 536.0)), "Dialogue ink panel position is incorrect.")
-	_expect(paper_panel.size.is_equal_approx(Vector2(1664.0, 360.0)), "Dialogue ink panel must cover dialogue text and options.")
+func _verify_ink_layout(paper_panel: PanelContainer, portrait: TextureRect, name_plate: PanelContainer, dialogue_margin: MarginContainer, dialogue_label: Label, option_box: VBoxContainer, next_button: Button) -> void:
+	_expect(paper_panel.position.is_equal_approx(Vector2(0.0, 596.0)), "Scene2 dialogue panel must align with Scene1.")
+	_expect(paper_panel.size.is_equal_approx(Vector2(1344.0, 300.0)), "Scene2 dialogue panel must match Scene1 size.")
 	_expect(portrait.position.is_equal_approx(Vector2(884.0, 410.0)), "Right portrait position changed.")
 	_expect(portrait.size.is_equal_approx(Vector2(440.0, 520.0)), "Portrait size changed.")
 	_expect(name_plate.position.is_equal_approx(Vector2(1060.0, 830.0)), "NPC name brush position is incorrect.")
 	_expect(name_plate.size.is_equal_approx(Vector2(260.0, 58.0)), "NPC name brush size is incorrect.")
-	_expect(dialogue_margin.get_theme_constant("margin_left") == 246, "Dialogue left layout margin changed.")
-	_expect(dialogue_margin.get_theme_constant("margin_right") == 608, "Dialogue right layout margin changed.")
-	_expect(dialogue_margin.get_theme_constant("margin_top") == 126, "Dialogue text and options must move upward inside the ink backdrop.")
+	_expect(dialogue_margin.get_theme_constant("margin_left") == 206, "Dialogue left layout margin changed.")
+	_expect(dialogue_margin.get_theme_constant("margin_right") == 440, "Dialogue right layout margin changed.")
+	_expect(dialogue_margin.get_theme_constant("margin_top") == 76, "Dialogue text and options must fit inside the compact backdrop.")
 	_expect(dialogue_margin.get_theme_constant("margin_bottom") == 18, "Dialogue bottom layout margin changed.")
-	_expect(option_box.custom_minimum_size.is_equal_approx(Vector2(800.0, 50.0)), "Dialogue option area size changed.")
+	_expect(dialogue_label.get_theme_font_size("font_size") == 24, "Scene2 dialogue font size must match Scene1.")
+	_expect(dialogue_label.custom_minimum_size.is_equal_approx(Vector2(650.0, 62.0)), "Scene2 NPC dialogue width must match Scene1 line length.")
+	_expect(option_box.custom_minimum_size.is_equal_approx(Vector2(650.0, 50.0)), "Dialogue option area must use the compact width.")
+	_expect(next_button.get_theme_font_size("font_size") == 20, "Scene2 continue text must match Scene1 controls.")
 	var name_style := name_plate.get_theme_stylebox("panel")
 	_expect(name_style is StyleBoxTexture, "Name plate must use the generated ink brush texture.")
 	if name_style is StyleBoxTexture:

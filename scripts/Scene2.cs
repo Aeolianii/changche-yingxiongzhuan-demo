@@ -945,10 +945,10 @@ public partial class Scene2 : Node2D
         var button = new Button
         {
             Text = text,
-            CustomMinimumSize = new Vector2(820, 28),
+            CustomMinimumSize = new Vector2(620, 28),
             Alignment = HorizontalAlignment.Left
         };
-        button.AddThemeFontSizeOverride("font_size", 21);
+        button.AddThemeFontSizeOverride("font_size", 20);
         button.AddThemeColorOverride("font_color", new Color(0.94f, 0.91f, 0.82f));
         button.AddThemeColorOverride("font_hover_color", new Color(1f, 0.86f, 0.54f));
         button.AddThemeColorOverride("font_pressed_color", new Color(0.78f, 0.68f, 0.48f));
@@ -1010,17 +1010,17 @@ public partial class Scene2 : Node2D
         {
             _portraitImage.Position = new Vector2(-20, 410);
             _namePlate.Position = new Vector2(24, 830);
-            SetDialogueMargins(608, 246, 126, 18);
-            _dialogueLabel.CustomMinimumSize = new Vector2(800, 62);
-            _optionBox.CustomMinimumSize = new Vector2(800, 50);
+            SetDialogueMargins(426, 240, 76, 18);
+            _dialogueLabel.CustomMinimumSize = new Vector2(630, 62);
+            _optionBox.CustomMinimumSize = new Vector2(630, 50);
         }
         else
         {
             _portraitImage.Position = new Vector2(884, 410);
             _namePlate.Position = new Vector2(1060, 830);
-            SetDialogueMargins(246, 608, 126, 18);
-            _dialogueLabel.CustomMinimumSize = new Vector2(800, 62);
-            _optionBox.CustomMinimumSize = new Vector2(800, 50);
+            SetDialogueMargins(206, 440, 76, 18);
+            _dialogueLabel.CustomMinimumSize = new Vector2(650, 62);
+            _optionBox.CustomMinimumSize = new Vector2(650, 50);
         }
     }
 

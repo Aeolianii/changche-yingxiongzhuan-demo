@@ -434,9 +434,8 @@ offset_bottom = 896.0
 self_modulate = Color(1, 1, 1, 0.88)
 z_index = 2
 layout_mode = 0
-offset_left = -160.0
-offset_top = 536.0
-offset_right = 1504.0
+offset_top = 596.0
+offset_right = 1344.0
 offset_bottom = 896.0
 
 [node name="DialogueMargin" type="MarginContainer" parent="UI/DialoguePanel/FullWidthPaperDialogueBox" unique_id=1148920712]
@@ -447,16 +446,16 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="DialogueLabel" type="Label" parent="UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack" unique_id=393364232]
-custom_minimum_size = Vector2(760, 62)
+custom_minimum_size = Vector2(650, 62)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.93, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.98)
 theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 24
 autowrap_mode = 2
 
 [node name="OptionBox" type="VBoxContainer" parent="UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack" unique_id=762019756]
-custom_minimum_size = Vector2(760, 50)
+custom_minimum_size = Vector2(650, 50)
 layout_mode = 2
 theme_override_constants/separation = 4
 
@@ -468,7 +467,7 @@ theme_override_colors/font_hover_color = Color(1, 0.93, 0.72, 1)
 theme_override_colors/font_pressed_color = Color(0.78, 0.67, 0.44, 1)
 theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.95)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "继续  ▼"
 
 [node name="LargeTransparentPortrait" type="TextureRect" parent="UI/DialoguePanel" unique_id=1803371509]

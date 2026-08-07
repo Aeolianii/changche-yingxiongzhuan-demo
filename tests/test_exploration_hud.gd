@@ -36,6 +36,7 @@ func _verify_generated_assets() -> void:
 		"res://assets/ui/system_menu/close_button.png",
 		"res://assets/ui/exploration_hud/player_status_frame.png",
 		"res://assets/ui/exploration_hud/function_button.png",
+		"res://assets/ui/exploration_hud/function_buttons_brushstroke.png",
 	]:
 		var texture := load(asset_path) as Texture2D
 		var image := texture.get_image() if texture != null else null
@@ -123,6 +124,12 @@ func _verify_component_contract() -> void:
 		var button := hud.find_child(button_name, true, false) as Button
 		_expect(button != null, "%s is missing." % button_name)
 	var action_row := hud.get_node("FunctionButtons")
+	var function_brushstroke := hud.get_node("FunctionButtonsBrushstroke") as TextureRect
+	_expect(function_brushstroke.texture != null and function_brushstroke.texture.resource_path.ends_with("function_buttons_brushstroke.png"), "Function buttons must use the shared ink brushstroke texture.")
+	_expect(function_brushstroke.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_COVERED, "Function button brushstroke must crop its transparent padding while preserving aspect ratio.")
+	_expect(function_brushstroke.size.x >= action_row.size.x, "Function button brushstroke must span the complete five-button row.")
+	_expect(function_brushstroke.get_index() < action_row.get_index(), "Function button brushstroke must render below the five buttons.")
+	_expect(function_brushstroke.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Function button brushstroke must not block button input.")
 	_expect(
 		action_row.get_child_count() == 5
 		and action_row.get_child(0).name == "QuestButtonSlot"

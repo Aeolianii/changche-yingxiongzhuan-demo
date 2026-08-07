@@ -4,6 +4,7 @@ const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/pictu
 const EXPLORATION_STATUS_FRAME := preload("res://assets/ui/exploration_hud/player_status_frame.png")
 const EXPLORATION_QUEST_FRAME := preload("res://assets/ui/exploration_hud/quest_tracker_frame.png")
 const EXPLORATION_FUNCTION_BUTTON := preload("res://assets/ui/exploration_hud/function_button.png")
+const EXPLORATION_FUNCTION_BRUSHSTROKE := preload("res://assets/ui/exploration_hud/function_buttons_brushstroke.png")
 const HUD_ICON_QUEST := preload("res://assets/ui/icons/hud_quest.png")
 const HUD_ICON_CHARACTER := preload("res://assets/ui/icons/hud_character.png")
 const HUD_ICON_INVENTORY := preload("res://assets/ui/icons/hud_inventory.png")
@@ -217,6 +218,21 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 
 
 func _build_function_buttons() -> void:
+	var brushstroke := TextureRect.new()
+	brushstroke.name = "FunctionButtonsBrushstroke"
+	brushstroke.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	brushstroke.offset_left = -610.0
+	brushstroke.offset_top = 32.0
+	brushstroke.offset_right = 0.0
+	brushstroke.offset_bottom = 100.0
+	brushstroke.texture = EXPLORATION_FUNCTION_BRUSHSTROKE
+	brushstroke.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	brushstroke.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	brushstroke.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	brushstroke.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	brushstroke.modulate.a = 0.82
+	add_child(brushstroke)
+
 	var actions := HBoxContainer.new()
 	actions.name = "FunctionButtons"
 	actions.set_anchors_preset(Control.PRESET_TOP_RIGHT)

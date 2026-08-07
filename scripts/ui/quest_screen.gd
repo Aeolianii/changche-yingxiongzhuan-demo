@@ -76,7 +76,12 @@ const QUESTS := [
 
 var _selected_quest := 0
 var _quests: Array[Dictionary] = []
+var _completed_quests: Array[Dictionary] = []
 var _quest_buttons: Array[Button] = []
+var _quest_choices: VBoxContainer
+var _active_tab: Button
+var _completed_tab: Button
+var _show_completed := false
 var _detail_title: RichTextLabel
 var _detail_description: RichTextLabel
 var _steps_container: VBoxContainer
@@ -88,6 +93,7 @@ func _ready() -> void:
 	for quest_value in QUESTS:
 		var quest: Dictionary = quest_value
 		_quests.append(quest.duplicate(true))
+	_completed_quests = _make_completed_quests(str(_quests[0]["title"]))
 	z_index = 80
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_background()
@@ -101,7 +107,9 @@ func _ready() -> void:
 
 func show_screen() -> void:
 	_selected_quest = 0
-	_refresh_quest_selectors()
+	_show_completed = false
+	_refresh_filter_tabs()
+	_rebuild_quest_choices()
 	_refresh_quest_detail()
 	show()
 
@@ -112,11 +120,10 @@ func set_main_task(task_title: String) -> void:
 	if _quests.is_empty():
 		return
 	_quests[0] = _make_main_quest_state(task_title)
-	if not _quest_buttons.is_empty():
-		var main_selector := _quest_buttons[0]
-		(main_selector.get_node("QuestName") as Label).text = task_title
-		(main_selector.get_node("QuestObjective") as Label).text = str(_quests[0]["objective"])
-	if _selected_quest == 0:
+	_completed_quests = _make_completed_quests(task_title)
+	_selected_quest = 0
+	if is_instance_valid(_quest_choices):
+		_rebuild_quest_choices()
 		_refresh_quest_detail()
 
 
@@ -135,13 +142,13 @@ func _build_background() -> void:
 func _build_headers() -> void:
 	var screen_title := _make_label("任务", 36, TEXT_LIGHT)
 	screen_title.name = "ScreenTitle"
-	screen_title.position = Vector2(54, 32)
+	screen_title.position = Vector2(96, 58)
 	screen_title.size = Vector2(260, 58)
 	add_child(screen_title)
 
 	var list_title := _make_label("任务列表", 24, TEXT_LIGHT)
 	list_title.name = "QuestListTitle"
-	list_title.position = Vector2(148, 165)
+	list_title.position = Vector2(148, 174)
 	list_title.size = Vector2(240, 46)
 	list_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	list_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -149,7 +156,7 @@ func _build_headers() -> void:
 
 	var detail_title := _make_label("任务详情", 24, TEXT_LIGHT)
 	detail_title.name = "QuestDetailHeader"
-	detail_title.position = Vector2(740, 165)
+	detail_title.position = Vector2(740, 174)
 	detail_title.size = Vector2(330, 46)
 	detail_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	detail_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -212,21 +219,63 @@ func _build_return_button() -> void:
 
 
 func _build_quest_list() -> void:
-	var list := VBoxContainer.new()
-	list.name = "QuestChoices"
-	list.position = Vector2(86, 232)
-	list.size = Vector2(368, 540)
-	list.add_theme_constant_override("separation", 12)
-	list.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(list)
+	var tabs := HBoxContainer.new()
+	tabs.name = "QuestFilterTabs"
+	tabs.position = Vector2(104, 238)
+	tabs.size = Vector2(330, 40)
+	tabs.add_theme_constant_override("separation", 10)
+	add_child(tabs)
 
-	var active_label := _make_label("进行中", 18, GOLD_BRIGHT)
-	active_label.name = "ActiveQuestLabel"
-	active_label.custom_minimum_size = Vector2(360, 30)
-	list.add_child(active_label)
+	_active_tab = Button.new()
+	_active_tab.name = "ActiveQuestTab"
+	_active_tab.custom_minimum_size = Vector2(126, 38)
+	_active_tab.text = "进行中"
+	_active_tab.focus_mode = Control.FOCUS_NONE
+	_active_tab.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_active_tab.add_theme_font_size_override("font_size", 17)
+	_active_tab.pressed.connect(_set_quest_filter.bind(false))
+	tabs.add_child(_active_tab)
 
-	for quest_index in range(_quests.size()):
-		var quest: Dictionary = _quests[quest_index]
+	_completed_tab = Button.new()
+	_completed_tab.name = "CompletedQuestTab"
+	_completed_tab.custom_minimum_size = Vector2(126, 38)
+	_completed_tab.text = "已完成"
+	_completed_tab.focus_mode = Control.FOCUS_NONE
+	_completed_tab.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_completed_tab.add_theme_font_size_override("font_size", 17)
+	_completed_tab.pressed.connect(_set_quest_filter.bind(true))
+	tabs.add_child(_completed_tab)
+
+	_quest_choices = VBoxContainer.new()
+	_quest_choices.name = "QuestChoices"
+	_quest_choices.position = Vector2(86, 292)
+	_quest_choices.size = Vector2(368, 474)
+	_quest_choices.add_theme_constant_override("separation", 12)
+	_quest_choices.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_quest_choices)
+
+	_refresh_filter_tabs()
+	_rebuild_quest_choices()
+
+
+func _rebuild_quest_choices() -> void:
+	for old_choice in _quest_choices.get_children():
+		_quest_choices.remove_child(old_choice)
+		old_choice.queue_free()
+	_quest_buttons.clear()
+
+	var visible_quests := _visible_quests()
+	if visible_quests.is_empty():
+		var empty_label := _make_label("暂无已完成任务", 16, TEXT_MUTED)
+		empty_label.name = "EmptyQuestLabel"
+		empty_label.custom_minimum_size = Vector2(360, 80)
+		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_quest_choices.add_child(empty_label)
+		return
+
+	for quest_index in range(visible_quests.size()):
+		var quest: Dictionary = visible_quests[quest_index]
 		var selector := Button.new()
 		selector.name = "QuestChoice%d" % quest_index
 		selector.custom_minimum_size = Vector2(360, 112)
@@ -234,7 +283,7 @@ func _build_quest_list() -> void:
 		selector.focus_mode = Control.FOCUS_NONE
 		selector.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		selector.pressed.connect(_select_quest.bind(quest_index))
-		list.add_child(selector)
+		_quest_choices.add_child(selector)
 		_quest_buttons.append(selector)
 
 		var quest_type := _make_label("【%s】" % quest["type"], 16, GOLD_BRIGHT if quest_index == 0 else JADE)
@@ -261,19 +310,19 @@ func _build_quest_list() -> void:
 func _build_quest_detail() -> void:
 	_detail_title = _make_rich_text(22)
 	_detail_title.name = "SelectedQuestTitle"
-	_detail_title.position = Vector2(528, 228)
+	_detail_title.position = Vector2(528, 250)
 	_detail_title.size = Vector2(744, 38)
 	add_child(_detail_title)
 
 	_detail_description = _make_rich_text(17)
 	_detail_description.name = "SelectedQuestDescription"
-	_detail_description.position = Vector2(528, 272)
+	_detail_description.position = Vector2(528, 294)
 	_detail_description.size = Vector2(744, 88)
 	add_child(_detail_description)
 
 	var separator := ColorRect.new()
 	separator.name = "DetailSeparator"
-	separator.position = Vector2(528, 369)
+	separator.position = Vector2(528, 389)
 	separator.size = Vector2(744, 1)
 	separator.color = Color(GOLD.r, GOLD.g, GOLD.b, 0.38)
 	separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -281,21 +330,21 @@ func _build_quest_detail() -> void:
 
 	var flow_title := _make_label("任务流程", 19, GOLD_BRIGHT)
 	flow_title.name = "QuestFlowTitle"
-	flow_title.position = Vector2(528, 382)
+	flow_title.position = Vector2(528, 402)
 	flow_title.size = Vector2(300, 30)
 	add_child(flow_title)
 
 	var flow_hint := _make_label("点击右侧三角查看每一步详情", 13, TEXT_MUTED)
 	flow_hint.name = "QuestFlowHint"
-	flow_hint.position = Vector2(980, 385)
+	flow_hint.position = Vector2(980, 405)
 	flow_hint.size = Vector2(292, 26)
 	flow_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(flow_hint)
 
 	var scroll := ScrollContainer.new()
 	scroll.name = "QuestStepsScroll"
-	scroll.position = Vector2(522, 420)
-	scroll.size = Vector2(758, 355)
+	scroll.position = Vector2(522, 440)
+	scroll.size = Vector2(758, 335)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(scroll)
@@ -310,7 +359,7 @@ func _build_quest_detail() -> void:
 
 
 func _select_quest(quest_index: int) -> void:
-	if quest_index < 0 or quest_index >= _quests.size():
+	if quest_index < 0 or quest_index >= _visible_quests().size():
 		return
 	_selected_quest = quest_index
 	_refresh_quest_selectors()
@@ -329,17 +378,54 @@ func _refresh_quest_selectors() -> void:
 func _refresh_quest_detail() -> void:
 	if _detail_title == null or _steps_container == null:
 		return
-	var quest: Dictionary = _quests[_selected_quest]
+	var visible_quests := _visible_quests()
+	if visible_quests.is_empty():
+		_detail_title.text = "[color=#f1c24f]暂无已完成任务[/color]"
+		_detail_description.text = "完成任务后，记录会出现在这里。"
+		_clear_quest_steps()
+		return
+	var quest: Dictionary = visible_quests[_selected_quest]
 	_detail_title.text = "[color=#f1c24f]【%s】[/color]  %s" % [quest["type"], quest["title"]]
 	_detail_description.text = _highlight_keywords(str(quest["description"]), quest["keywords"])
 
-	for old_step in _steps_container.get_children():
-		_steps_container.remove_child(old_step)
-		old_step.queue_free()
+	_clear_quest_steps()
 
 	var steps: Array = quest["steps"]
 	for step_index in range(steps.size()):
 		_build_step(steps[step_index], step_index)
+
+
+func _clear_quest_steps() -> void:
+	for old_step in _steps_container.get_children():
+		_steps_container.remove_child(old_step)
+		old_step.queue_free()
+
+
+func _set_quest_filter(show_completed: bool) -> void:
+	_show_completed = show_completed
+	_selected_quest = 0
+	_refresh_filter_tabs()
+	_rebuild_quest_choices()
+	_refresh_quest_detail()
+
+
+func _refresh_filter_tabs() -> void:
+	if not is_instance_valid(_active_tab) or not is_instance_valid(_completed_tab):
+		return
+	_apply_filter_tab_style(_active_tab, not _show_completed)
+	_apply_filter_tab_style(_completed_tab, _show_completed)
+
+
+func _apply_filter_tab_style(button: Button, selected: bool) -> void:
+	button.add_theme_color_override("font_color", GOLD_BRIGHT if selected else TEXT_MUTED)
+	button.add_theme_color_override("font_hover_color", TEXT_LIGHT)
+	button.add_theme_stylebox_override("normal", _quest_filter_style(selected, false))
+	button.add_theme_stylebox_override("hover", _quest_filter_style(selected, true))
+	button.add_theme_stylebox_override("pressed", _quest_filter_style(true, true))
+
+
+func _visible_quests() -> Array[Dictionary]:
+	return _completed_quests if _show_completed else _quests
 
 
 func _build_step(step: Dictionary, step_index: int) -> void:
@@ -478,6 +564,28 @@ func _make_main_quest_state(task_title: String) -> Dictionary:
 	}
 
 
+func _make_completed_quests(task_title: String) -> Array[Dictionary]:
+	var previous_by_current := {
+		"听取内侍传召": "阅看岭南急报",
+		"奉诏入殿": "听取内侍传召",
+		"聆听圣谕": "奉诏入殿",
+		"领旨南下": "聆听圣谕",
+		"巡视水师驻地": "奉诏入殿",
+	}
+	var completed_quests: Array[Dictionary] = []
+	if not previous_by_current.has(task_title):
+		return completed_quests
+	var completed_quest := _make_main_quest_state(str(previous_by_current[task_title]))
+	completed_quest["objective"] = "已完成"
+	var completed_steps: Array = completed_quest["steps"]
+	for step_value in completed_steps:
+		var step: Dictionary = step_value
+		step["completed"] = true
+		step["expanded"] = false
+	completed_quests.append(completed_quest)
+	return completed_quests
+
+
 func _quest_selector_style(selected: bool, hovered: bool) -> StyleBoxFlat:
 	var background := Color(0.38, 0.30, 0.13, 0.50) if selected else PANEL_INK
 	if hovered:
@@ -485,6 +593,15 @@ func _quest_selector_style(selected: bool, hovered: bool) -> StyleBoxFlat:
 	var style := _flat_style(background, Color(GOLD.r, GOLD.g, GOLD.b, 0.58 if selected else 0.22), 1)
 	style.set_border_width(SIDE_LEFT, 4 if selected else 2)
 	style.content_margin_left = 12.0
+	return style
+
+
+func _quest_filter_style(selected: bool, hovered: bool) -> StyleBoxFlat:
+	var background := Color(0.34, 0.27, 0.12, 0.70) if selected else Color(0.02, 0.04, 0.035, 0.62)
+	if hovered:
+		background = background.lightened(0.08)
+	var style := _flat_style(background, Color(GOLD.r, GOLD.g, GOLD.b, 0.66 if selected else 0.28), 1)
+	style.set_border_width(SIDE_BOTTOM, 3 if selected else 1)
 	return style
 
 

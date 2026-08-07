@@ -6,6 +6,7 @@ const SCENE_TWO := preload("res://scenes/Scene2.tscn")
 const SCREENSHOT_PATH := "res://.godot/exploration_hud_preview.png"
 const MENU_SCREENSHOT_PATH := "res://.godot/system_menu_preview.png"
 const QUEST_SCREENSHOT_PATH := "res://.godot/quest_screen_preview.png"
+const COMPLETED_QUEST_SCREENSHOT_PATH := "res://.godot/quest_screen_completed_preview.png"
 
 var failures: Array[String] = []
 
@@ -166,10 +167,19 @@ func _verify_component_contract() -> void:
 	_expect(not action_row.visible and not function_brushstroke.visible, "Opening the quest screen must hide the five function buttons and their brushstroke.")
 	var quest_background := quest_screen.get_node("GeneratedQuestBackground") as TextureRect
 	_expect(quest_background.texture != null and quest_background.texture.resource_path.ends_with("quest_screen_background.png"), "Quest screen must use the generated pixel ink-wash background.")
+	var screen_title := quest_screen.get_node("ScreenTitle") as Label
+	var list_header := quest_screen.get_node("QuestListTitle") as Label
+	var detail_header := quest_screen.get_node("QuestDetailHeader") as Label
+	_expect(screen_title.position.x >= 90.0 and screen_title.position.y >= 55.0, "Quest screen title must sit inside the upper-left ink brushstroke.")
+	_expect(list_header.position.y >= 170.0 and detail_header.position.y >= 170.0, "Quest panel headings must sit in the vertical center of their plaques.")
+	var active_tab := quest_screen.get_node("QuestFilterTabs/ActiveQuestTab") as Button
+	var completed_tab := quest_screen.get_node("QuestFilterTabs/CompletedQuestTab") as Button
+	_expect(active_tab.position.y >= 0.0 and active_tab.get_parent().position.x >= 100.0 and active_tab.get_parent().position.y >= 235.0, "Quest filters must move right and down inside the list panel.")
 	var quest_choices := quest_screen.get_node("QuestChoices") as VBoxContainer
 	_expect(quest_choices.get_node_or_null("QuestChoice0") is Button and quest_choices.get_node_or_null("QuestChoice1") is Button, "Quest screen must demonstrate one main quest and one side quest.")
 	var selected_title := quest_screen.get_node("SelectedQuestTitle") as RichTextLabel
 	var selected_description := quest_screen.get_node("SelectedQuestDescription") as RichTextLabel
+	_expect(selected_title.position.y >= 245.0 and selected_description.position.y >= 290.0, "Overall quest wording must move down from the panel border.")
 	_expect("奉诏入殿" in selected_title.text, "Quest screen must select the demo main quest by default.")
 	_expect("[color=#f1c24f]" in selected_description.text, "Quest description keywords must use yellow BBCode highlighting.")
 	var steps := quest_screen.get_node("QuestStepsScroll/QuestSteps") as VBoxContainer
@@ -194,6 +204,13 @@ func _verify_component_contract() -> void:
 	quest_button.pressed.emit()
 	_expect("巡视水师驻地" in selected_title.text, "Story task updates must also reach the full quest screen.")
 	_expect("中军楼船" in selected_description.text and "[color=#f1c24f]" in selected_description.text, "Chapter two quest details must replace the chapter one placeholder content.")
+	completed_tab.pressed.emit()
+	var completed_choice := quest_choices.get_node("QuestChoice0") as Button
+	_expect((completed_choice.get_node("QuestName") as Label).text == "奉诏入殿", "Completed filter must hide active tasks and show the preceding completed quest.")
+	_expect("奉诏入殿" in selected_title.text, "Completed quest selection must refresh the right-hand details.")
+	active_tab.pressed.emit()
+	var restored_active_choice := quest_choices.get_node("QuestChoice0") as Button
+	_expect((restored_active_choice.get_node("QuestName") as Label).text == "巡视水师驻地", "Active filter must restore the current story task and hide completed tasks.")
 	quest_return.pressed.emit()
 
 	var menu_button := hud.find_child("MenuButton", true, false) as Button
@@ -372,6 +389,16 @@ func _verify_scene_two_visibility() -> void:
 	if DisplayServer.get_name() != "headless":
 		var quest_screenshot_error := root.get_texture().get_image().save_png(QUEST_SCREENSHOT_PATH)
 		_expect(quest_screenshot_error == OK, "Scene2 quest screen preview screenshot could not be saved.")
+		var completed_tab := hud.get_node("QuestScreen/QuestFilterTabs/CompletedQuestTab") as Button
+		completed_tab.pressed.emit()
+		await process_frame
+		await process_frame
+		_expect("奉诏入殿" in quest_title.text, "Completed quest preview must render the completed selection.")
+		var completed_screenshot_error := root.get_texture().get_image().save_png(COMPLETED_QUEST_SCREENSHOT_PATH)
+		_expect(completed_screenshot_error == OK, "Completed quest screen preview screenshot could not be saved.")
+		var active_tab := hud.get_node("QuestScreen/QuestFilterTabs/ActiveQuestTab") as Button
+		active_tab.pressed.emit()
+		await process_frame
 	var quest_return := hud.find_child("QuestReturnButton", true, false) as Button
 	quest_return.pressed.emit()
 	_expect(not hud.call("is_menu_open"), "Scene2 quest return button must close the shared quest screen.")

@@ -74,7 +74,7 @@ func _verify_ink_layout(paper_panel: PanelContainer, portrait: TextureRect, name
 	_expect(name_plate.size.is_equal_approx(Vector2(260.0, 58.0)), "NPC name brush size is incorrect.")
 	_expect(dialogue_margin.get_theme_constant("margin_left") == 246, "Dialogue left layout margin changed.")
 	_expect(dialogue_margin.get_theme_constant("margin_right") == 608, "Dialogue right layout margin changed.")
-	_expect(dialogue_margin.get_theme_constant("margin_top") == 166, "Dialogue top layout margin changed.")
+	_expect(dialogue_margin.get_theme_constant("margin_top") == 126, "Dialogue text and options must move upward inside the ink backdrop.")
 	_expect(dialogue_margin.get_theme_constant("margin_bottom") == 18, "Dialogue bottom layout margin changed.")
 	_expect(option_box.custom_minimum_size.is_equal_approx(Vector2(800.0, 50.0)), "Dialogue option area size changed.")
 	var name_style := name_plate.get_theme_stylebox("panel")

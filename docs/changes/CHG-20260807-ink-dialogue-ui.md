@@ -49,3 +49,4 @@
 - `dotnet build NanjiangFleet.csproj --no-restore`：0 warnings / 0 errors。
 - `tests/verify_merged_project.ps1`：静态资源与引用验证通过。
 - 2026-08-07 布局修正：第一章底板调整为 1344×300；第二章调整为 1664×360，正文与选项整体下移约 30 像素进入墨迹中段。
+- 2026-08-07 文字微调：第一章三种文字安全区右移、上移并收窄行宽；第二章正文与选项组上移 40 像素，使底部选项完整落在墨迹内。

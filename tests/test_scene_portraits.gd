@@ -46,9 +46,17 @@ func _run_tests() -> void:
 		_expect(name_plate.texture.resource_path == NAMEPLATE_PATH, "Scene1 must use the generated ink speaker nameplate.")
 		_expect(is_equal_approx(dialogue_panel.self_modulate.a, 0.88), "Scene1 ink dialogue backdrop must be slightly transparent.")
 		_expect(dialogue_panel.size.is_equal_approx(Vector2(1344.0, 300.0)), "Scene1 dialogue ink backdrop must cover the full dialogue area.")
-		_expect(is_equal_approx(dialogue_text.offset_top, 112.0), "Scene1 dialogue text must sit inside the enlarged ink backdrop.")
-		_expect(dialogue_text.offset_left >= 400.0, "Main character dialogue text must leave room for the left portrait.")
+		_expect(is_equal_approx(dialogue_text.offset_top, 70.0), "Scene1 dialogue text must move upward inside the ink backdrop.")
+		_expect(dialogue_text.offset_left >= 450.0, "Main character dialogue text must move right and leave room for the left portrait.")
+		_expect(dialogue_text.size.x <= 640.0, "Scene1 dialogue lines must be narrow enough to wrap earlier.")
 		if DisplayServer.get_name() != "headless":
+			scene_one.call(
+				"_show_character_dialogue",
+				"臣领旨！定当筑水师，固海防，清海寇，复海岛，安万民，通贡路！海疆不平，臣绝不北归！",
+				"水师主帅",
+				load(GENERAL_PORTRAIT_PATH) as Texture2D,
+				true
+			)
 			await process_frame
 			var screenshot_error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
 			_expect(screenshot_error == OK, "Could not save Scene1 ink dialogue preview.")

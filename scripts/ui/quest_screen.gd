@@ -142,8 +142,9 @@ func _build_background() -> void:
 func _build_headers() -> void:
 	var screen_title := _make_label("任务", 36, TEXT_LIGHT)
 	screen_title.name = "ScreenTitle"
-	screen_title.position = Vector2(96, 58)
-	screen_title.size = Vector2(260, 58)
+	screen_title.position = Vector2(180, 58)
+	screen_title.size = Vector2(300, 58)
+	screen_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(screen_title)
 
 	var list_title := _make_label("任务列表", 24, TEXT_LIGHT)
@@ -310,14 +311,14 @@ func _rebuild_quest_choices() -> void:
 func _build_quest_detail() -> void:
 	_detail_title = _make_rich_text(22)
 	_detail_title.name = "SelectedQuestTitle"
-	_detail_title.position = Vector2(528, 250)
+	_detail_title.position = Vector2(528, 274)
 	_detail_title.size = Vector2(744, 38)
 	add_child(_detail_title)
 
 	_detail_description = _make_rich_text(17)
 	_detail_description.name = "SelectedQuestDescription"
-	_detail_description.position = Vector2(528, 294)
-	_detail_description.size = Vector2(744, 88)
+	_detail_description.position = Vector2(528, 318)
+	_detail_description.size = Vector2(744, 64)
 	add_child(_detail_description)
 
 	var separator := ColorRect.new()
@@ -334,24 +335,17 @@ func _build_quest_detail() -> void:
 	flow_title.size = Vector2(300, 30)
 	add_child(flow_title)
 
-	var flow_hint := _make_label("点击右侧三角查看每一步详情", 13, TEXT_MUTED)
-	flow_hint.name = "QuestFlowHint"
-	flow_hint.position = Vector2(980, 405)
-	flow_hint.size = Vector2(292, 26)
-	flow_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	add_child(flow_hint)
-
 	var scroll := ScrollContainer.new()
 	scroll.name = "QuestStepsScroll"
-	scroll.position = Vector2(522, 440)
-	scroll.size = Vector2(758, 335)
+	scroll.position = Vector2(544, 440)
+	scroll.size = Vector2(736, 335)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(scroll)
 
 	_steps_container = VBoxContainer.new()
 	_steps_container.name = "QuestSteps"
-	_steps_container.custom_minimum_size = Vector2(738, 0)
+	_steps_container.custom_minimum_size = Vector2(716, 0)
 	_steps_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_steps_container.add_theme_constant_override("separation", 5)
 	_steps_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -431,14 +425,14 @@ func _visible_quests() -> Array[Dictionary]:
 func _build_step(step: Dictionary, step_index: int) -> void:
 	var block := VBoxContainer.new()
 	block.name = "QuestStep%d" % step_index
-	block.custom_minimum_size = Vector2(730, 0)
+	block.custom_minimum_size = Vector2(708, 0)
 	block.add_theme_constant_override("separation", 4)
 	block.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_steps_container.add_child(block)
 
 	var header := HBoxContainer.new()
 	header.name = "StepHeader"
-	header.custom_minimum_size = Vector2(730, 42)
+	header.custom_minimum_size = Vector2(708, 42)
 	header.add_theme_constant_override("separation", 12)
 	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	block.add_child(header)
@@ -472,7 +466,7 @@ func _build_step(step: Dictionary, step_index: int) -> void:
 
 	var description := _make_rich_text(15)
 	description.name = "StepDescription"
-	description.custom_minimum_size = Vector2(700, 58)
+	description.custom_minimum_size = Vector2(678, 58)
 	description.text = _highlight_keywords(str(step["description"]), step["keywords"])
 	description.visible = bool(step["expanded"])
 	block.add_child(description)

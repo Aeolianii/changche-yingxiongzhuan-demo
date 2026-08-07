@@ -170,7 +170,7 @@ func _verify_component_contract() -> void:
 	var screen_title := quest_screen.get_node("ScreenTitle") as Label
 	var list_header := quest_screen.get_node("QuestListTitle") as Label
 	var detail_header := quest_screen.get_node("QuestDetailHeader") as Label
-	_expect(screen_title.position.x >= 90.0 and screen_title.position.y >= 55.0, "Quest screen title must sit inside the upper-left ink brushstroke.")
+	_expect(screen_title.position.x >= 175.0 and screen_title.position.y >= 55.0 and screen_title.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "Quest screen title must sit in the center of the upper-left ink brushstroke.")
 	_expect(list_header.position.y >= 170.0 and detail_header.position.y >= 170.0, "Quest panel headings must sit in the vertical center of their plaques.")
 	var active_tab := quest_screen.get_node("QuestFilterTabs/ActiveQuestTab") as Button
 	var completed_tab := quest_screen.get_node("QuestFilterTabs/CompletedQuestTab") as Button
@@ -179,7 +179,10 @@ func _verify_component_contract() -> void:
 	_expect(quest_choices.get_node_or_null("QuestChoice0") is Button and quest_choices.get_node_or_null("QuestChoice1") is Button, "Quest screen must demonstrate one main quest and one side quest.")
 	var selected_title := quest_screen.get_node("SelectedQuestTitle") as RichTextLabel
 	var selected_description := quest_screen.get_node("SelectedQuestDescription") as RichTextLabel
-	_expect(selected_title.position.y >= 245.0 and selected_description.position.y >= 290.0, "Overall quest wording must move down from the panel border.")
+	_expect(selected_title.position.y >= 270.0 and selected_description.position.y >= 315.0, "Overall quest wording must sit lower in its summary frame.")
+	_expect(quest_screen.get_node_or_null("QuestFlowHint") == null, "Quest flow must not retain the triangle instruction hint.")
+	var steps_scroll := quest_screen.get_node("QuestStepsScroll") as ScrollContainer
+	_expect(steps_scroll.position.x >= 540.0, "Quest step markers, titles and descriptions must move right together.")
 	_expect("奉诏入殿" in selected_title.text, "Quest screen must select the demo main quest by default.")
 	_expect("[color=#f1c24f]" in selected_description.text, "Quest description keywords must use yellow BBCode highlighting.")
 	var steps := quest_screen.get_node("QuestStepsScroll/QuestSteps") as VBoxContainer

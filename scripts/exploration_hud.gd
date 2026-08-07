@@ -244,7 +244,7 @@ func _build_function_buttons() -> void:
 	brushstroke.texture = EXPLORATION_FUNCTION_BRUSHSTROKE
 	brushstroke.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	brushstroke.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	brushstroke.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	brushstroke.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	brushstroke.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	brushstroke.modulate.a = 0.82
 	add_child(brushstroke)
@@ -285,7 +285,7 @@ func _build_function_button(parent: HBoxContainer, action_name: String, icon_tex
 	generated_texture.texture = EXPLORATION_FUNCTION_BUTTON
 	generated_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	generated_texture.stretch_mode = TextureRect.STRETCH_SCALE
-	generated_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	generated_texture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	generated_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(generated_texture)
 

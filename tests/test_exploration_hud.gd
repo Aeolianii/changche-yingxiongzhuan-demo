@@ -138,6 +138,7 @@ func _verify_component_contract() -> void:
 	var function_brushstroke := hud.get_node("FunctionButtonsBrushstroke") as TextureRect
 	_expect(function_brushstroke.texture != null and function_brushstroke.texture.resource_path.ends_with("function_buttons_brushstroke.png"), "Function buttons must use the shared ink brushstroke texture.")
 	_expect(function_brushstroke.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_COVERED, "Function button brushstroke must crop its transparent padding while preserving aspect ratio.")
+	_expect(function_brushstroke.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Function button brushstroke must preserve its pixel-art bristle edges.")
 	_expect(function_brushstroke.size.x >= action_row.size.x, "Function button brushstroke must span the complete five-button row.")
 	_expect(function_brushstroke.position.x <= action_row.position.x - 80.0, "Function button brushstroke must extend visibly beyond the left side of the button row.")
 	_expect(function_brushstroke.get_index() < action_row.get_index(), "Function button brushstroke must render below the five buttons.")
@@ -156,7 +157,8 @@ func _verify_component_contract() -> void:
 	for slot_index in range(action_row.get_child_count()):
 		var slot := action_row.get_child(slot_index)
 		var function_texture := slot.get_node("GeneratedFunctionTexture") as TextureRect
-		_expect(function_texture.texture != null and function_texture.texture.resource_path.ends_with("function_button.png"), "%s must use the generated ink-wash button frame." % slot.name)
+		_expect(function_texture.texture != null and function_texture.texture.resource_path.ends_with("function_button.png"), "%s must use the generated pixel ink-wash button frame." % slot.name)
+		_expect(function_texture.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "%s button frame must preserve crisp pixel-art edges." % slot.name)
 		var function_icon := slot.get_node("FunctionIcon") as TextureRect
 		_expect(function_icon.texture != null and function_icon.texture.resource_path.ends_with(expected_hud_icons[slot_index]), "%s must use its generated ink-wash function icon." % slot.name)
 		_expect(function_icon.size == Vector2(56, 56), "%s icon must fill the generated diamond without losing its center." % slot.name)

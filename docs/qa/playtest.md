@@ -47,7 +47,11 @@
 | 南下行程过场 | 第一章题签结束 | 继续观看 | 像素水墨行程图淡入并依次显示两段南下旁白 | passed / chapter transition render 1 |
 | 第二章开篇 | 南下行程结束 | 继续观看 | 显示“第二章·南疆水师”，随后切入楼船甲板 | passed / chapter transition runtime 1 |
 | 水师副将迎接 | 从第一章进入第二章 | 推进迎接对白 | 对白期间不能移动且 HUD 隐藏；结束后 HUD 恢复 | passed / chapter transition runtime 1 |
-| 第二章任务激活 | 水师副将迎接结束 | 查看任务栏 | 主线为“巡视水师驻地”，第一步指向巡视中军楼船 | passed / chapter transition runtime 1 |
+| 第二章任务激活 | 水师副将迎接结束 | 查看任务栏 | 主线为“巡视水师驻地”，目标显示与甲板值守士兵交谈（0/2） | passed / chapter transition runtime 1 |
+| 士兵巡视汇报 | 第二章自由探索 | 任意顺序与左右值守士兵交谈，并重复询问其中一人 | 两名士兵各累计一次；HUD 显示 0/2、1/2、2/2，并在收齐后提示军官复命 | passed / dialogue patrol runtime 1 |
+| 中军军官复命 | 两名士兵均已汇报 | 与中军军官完成复命对白 | 完成“巡视水师驻地”，主线切换为“筹备水师操练” | passed / dialogue patrol runtime 1 |
+| 县令开启操练 | 军官复命完成 | 与广州县令完成会谈 | 县令与军官身份分离；会谈结束后开启既有操练界面 | passed / dialogue patrol runtime 1 |
+| 顺序门控 | 士兵汇报未齐或尚未向军官复命 | 提前与军官、县令交谈 | 军官提示先巡视，县令提示先完成军务，均不进入操练 | passed / dialogue patrol runtime 1 |
 
 ## 手动觐见与任务指引验收
 
@@ -107,6 +111,7 @@
 | 2026-08-06 / generated ink icons render 1 | Codex | 探索区四个单字徽章和系统菜单六个单字徽章已替换为人物、行囊、帆船、卷轴及六类菜单功能的水墨图标 | 1344×896 探索 HUD 与系统菜单截图、十张 PNG Alpha/映射断言、HUD/退出/静态回归 | 交付用户试玩 |
 | 2026-08-06 / quest function button render 1 | Codex | 右上功能区最左侧新增带水墨任务文书图标的“任务”按钮，功能条扩展为任务、人物、物品栏、船只、菜单五项 | 1344×896 OpenGL 截图、图标/顺序/宽度/提示断言、HUD/静态回归 | 交付用户试玩 |
 | 2026-08-07 / chapter transition render 1 | Codex | 第一章领旨与第二章水师之间加入完结题签、像素水墨南下行程、开篇题签和副将迎接；任务在迎接结束后激活 | 1344×896 Vulkan 截图、自动与手动启程串联测试、C# 编译与静态验证 | 交付用户试玩 |
+| 2026-08-07 / dialogue patrol runtime 1 | Codex | 第二章驻地巡视改为两名士兵汇报、军官复命、县令会谈的纯对话流程；军官与县令职责分离，只有县令会谈完成后进入操练 | 角色门控与重复去重运行时测试、HUD/对话框/章节串联回归、C# 编译 | 交付用户试玩 |
 
 ## Known issues
 

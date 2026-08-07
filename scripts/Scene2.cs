@@ -5,10 +5,22 @@ using Godot;
 
 public partial class Scene2 : Node2D
 {
+    private enum PatrolTaskStage
+    {
+        TalkToSoldiers = 0,
+        ReportToOfficer = 2,
+        MeetMagistrate = 3,
+        DrillUnlocked = 4
+    }
+
     private const float PlayerSpeed = 210f;
     private const string AssetRoot = "res://assets/characters";
     private const string DialogueBackgroundPath = "res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar.png";
     private const string ChapterEntryMeta = "chapter_transition_from_scene_one";
+    private const string LeftSoldierRole = "patrol_soldier_left";
+    private const string RightSoldierRole = "patrol_soldier_right";
+    private const string OfficerRole = "patrol_officer";
+    private const string MagistrateRole = "magistrate";
 
     private CharacterBody2D _player = default!;
     private AnimatedSprite2D _playerSprite = default!;
@@ -31,12 +43,16 @@ public partial class Scene2 : Node2D
     private readonly List<PatrolGuard> _patrolGuards = new();
     private readonly List<InteractableNpc> _interactableNpcs = new();
     private readonly List<AmbientCloud> _ambientClouds = new();
+    private readonly HashSet<string> _heardSoldierReports = new();
 
     private bool _nearMagistrate;
     private bool _arrivalDialogueActive;
     private bool _shouldPlayArrivalDialogue;
     private int _arrivalDialogueIndex;
     private int _dialogueIndex;
+    private PatrolTaskStage _patrolTaskStage;
+    private (string Speaker, string Text)[] _activeScriptedDialogues = Array.Empty<(string, string)>();
+    private Action _scriptedDialogueCompletion;
     private string _lastDirection = "down";
     private InteractableNpc _currentTarget;
     private InteractableNpc _activeNpc;
@@ -58,7 +74,7 @@ public partial class Scene2 : Node2D
         public string PortraitText { get; init; } = "";
         public string PortraitPath { get; init; } = "";
         public string DialogueLine { get; init; } = "";
-        public bool CanStartDrill { get; init; }
+        public string Role { get; init; } = "";
         public Color NormalModulate { get; init; }
         public Vector2 NormalScale { get; init; }
     }
@@ -71,7 +87,7 @@ public partial class Scene2 : Node2D
         public float WrapX { get; init; }
     }
 
-    private readonly (string Speaker, string Text)[] _storyDialogues =
+    private readonly (string Speaker, string Text)[] _magistrateDialogues =
     {
         ("广州县令", "下官参见伏波大将军！岭南官民苦海乱久矣，听闻将军奉旨南下建水师、镇海疆，万民皆盼将军到来，扫平海患、重安山海！"),
         ("水师主帅", "本官奉旨筹建水师、筑堡固防、剿寇复岛。如今初至岭南，急需战船武备、工坊器械、粮草辎重全面支撑，还需地方鼎力配合。"),
@@ -254,10 +270,10 @@ public partial class Scene2 : Node2D
         });
 
         var leftGuard = AddStandingActor("MagistrateLeftGuard", $"{AssetRoot}/soldier", new Vector2(560, 600), "right", 1.15f, new Color(1, 1, 1, 0.98f));
-        RegisterInteractable(leftGuard, "左侧护卫", "兵", FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png"), false, "封侯非我意，但愿海波平。");
+        RegisterInteractable(leftGuard, "左舷值守士兵", "兵", FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png"), LeftSoldierRole, "左舷岗哨一切如常，末将随时听候查问。");
 
         var rightGuard = AddStandingActor("MagistrateRightGuard", $"{AssetRoot}/soldier", new Vector2(784, 600), "left", 1.15f, new Color(1, 1, 1, 0.98f));
-        RegisterInteractable(rightGuard, "右侧护卫", "兵", FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png"), false, "遥知夷岛微茫外，未敢忘危负岁华。");
+        RegisterInteractable(rightGuard, "右舷值守士兵", "兵", FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png"), RightSoldierRole, "右舷船械已逐项点验，末将随时听候查问。");
     }
 
     private Node2D AddPatrolGuard(string name, string initialDirection, Vector2[] patrolPoints)
@@ -312,7 +328,7 @@ public partial class Scene2 : Node2D
         return movement.Y >= 0f ? "down" : "up";
     }
 
-    private void RegisterInteractable(Node2D actor, string displayName, string portraitText, string portraitPath, bool canStartDrill, string dialogueLine = "")
+    private void RegisterInteractable(Node2D actor, string displayName, string portraitText, string portraitPath, string role, string dialogueLine = "")
     {
         var sprite = actor.GetNode<AnimatedSprite2D>("Sprite");
         _interactableNpcs.Add(new InteractableNpc
@@ -323,7 +339,7 @@ public partial class Scene2 : Node2D
             PortraitText = portraitText,
             PortraitPath = portraitPath,
             DialogueLine = string.IsNullOrEmpty(dialogueLine) ? $"我是{displayName}" : dialogueLine,
-            CanStartDrill = canStartDrill,
+            Role = role,
             NormalModulate = sprite.Modulate,
             NormalScale = sprite.Scale
         });
@@ -392,13 +408,13 @@ public partial class Scene2 : Node2D
     {
         string magistrateDir = FindAssetDirectory("magistrate");
         var magistrate = AddStandingActor("GuangzhouCountyMagistrate", magistrateDir, new Vector2(672, 585), "down", 1.25f, Colors.White);
-        RegisterInteractable(magistrate, "广州县令", "县", FindImageInAssetDirectory(magistrateDir, "picture.png"), true, "先天下之忧而忧，后天下之乐而乐。");
+        RegisterInteractable(magistrate, "广州县令", "县", FindImageInAssetDirectory(magistrateDir, "picture.png"), MagistrateRole, "下官已将岭南粮草与工匠名册带来，请元帅示下。");
     }
 
     private void AddCommander()
     {
         var commander = AddStandingActor("FleetCommander", $"{AssetRoot}/soldier", new Vector2(672, 425), "down", 1.35f, new Color(0.9f, 1f, 1f));
-        RegisterInteractable(commander, "中军士兵", "兵", FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png"), false, "将军找我何事？");
+        RegisterInteractable(commander, "中军军官", "官", FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png"), OfficerRole, "末将在中军楼船候命，请元帅示下。");
     }
 
     private Node2D AddStandingActor(string name, string assetDir, Vector2 position, string direction, float scale, Color modulate)
@@ -836,10 +852,87 @@ public partial class Scene2 : Node2D
 
         ClearOptionButtons();
 
-        if (npc.CanStartDrill)
-            AddDialogueOption("开始操练。", StartDrillFromDialogue);
+        switch (npc.Role)
+        {
+            case LeftSoldierRole:
+            case RightSoldierRole:
+                ConfigureSoldierDialogue(npc);
+                break;
+            case OfficerRole:
+                ConfigureOfficerDialogue();
+                break;
+            case MagistrateRole:
+                ConfigureMagistrateDialogue();
+                break;
+            default:
+                AddDialogueOption("无事。", CloseNpcDialogue);
+                break;
+        }
+    }
 
-        AddDialogueOption("无事。", CloseNpcDialogue);
+    private void ConfigureSoldierDialogue(InteractableNpc soldier)
+    {
+        if (_heardSoldierReports.Contains(soldier.Role))
+        {
+            _dialogueLabel.Text = "属下方才所报句句属实，若有异动，定即刻呈报中军。";
+            AddDialogueOption("知道了。", CloseNpcDialogue);
+            return;
+        }
+
+        if (_patrolTaskStage != PatrolTaskStage.TalkToSoldiers)
+        {
+            _dialogueLabel.Text = "属下继续在此值守，请元帅放心。";
+            AddDialogueOption("继续当值。", CloseNpcDialogue);
+            return;
+        }
+
+        _dialogueLabel.Text = soldier.Role == LeftSoldierRole
+            ? "禀元帅，左舷岗哨与泊位缆索均已查验，有一处旧缆磨损，正待更换。"
+            : "禀元帅，右舷船炮与救火水桶已经点齐，夜巡两班皆按时换岗。";
+        AddDialogueOption("详细说来。", () => StartSoldierReportDialogue(soldier));
+        AddDialogueOption("稍后再问。", CloseNpcDialogue);
+    }
+
+    private void ConfigureOfficerDialogue()
+    {
+        if (_patrolTaskStage == PatrolTaskStage.TalkToSoldiers)
+        {
+            _dialogueLabel.Text = "请元帅先听取左右两舷值守士兵的汇报，末将随后汇总军令。";
+            AddDialogueOption("本帅先去巡视。", CloseNpcDialogue);
+            return;
+        }
+
+        if (_patrolTaskStage == PatrolTaskStage.ReportToOfficer)
+        {
+            _dialogueLabel.Text = "两舷值守士兵已经呈报完毕，请元帅训示，末将即刻传令整顿。";
+            AddDialogueOption("汇总巡视情况。", StartOfficerReportDialogue);
+            AddDialogueOption("稍后复命。", CloseNpcDialogue);
+            return;
+        }
+
+        _dialogueLabel.Text = "巡视军令已经传至各岗。末将督促诸营整改，不敢懈怠。";
+        AddDialogueOption("严加督办。", CloseNpcDialogue);
+    }
+
+    private void ConfigureMagistrateDialogue()
+    {
+        if (_patrolTaskStage < PatrolTaskStage.MeetMagistrate)
+        {
+            _dialogueLabel.Text = "军务为先。请元帅先完成驻地巡视，下官在此静候召见。";
+            AddDialogueOption("稍候片刻。", CloseNpcDialogue);
+            return;
+        }
+
+        if (_patrolTaskStage == PatrolTaskStage.MeetMagistrate)
+        {
+            _dialogueLabel.Text = "下官已将岭南粮草、工匠与船材名册带来，愿与元帅共议水师操练。";
+            AddDialogueOption("商议水师操练。", StartDialogue);
+            AddDialogueOption("稍后再议。", CloseNpcDialogue);
+            return;
+        }
+
+        _dialogueLabel.Text = "地方所需粮草与工匠，下官会依议定之数按期送至军港。";
+        AddDialogueOption("有劳县令。", CloseNpcDialogue);
     }
 
     private void AddDialogueOption(string text, Action action)
@@ -939,14 +1032,46 @@ public partial class Scene2 : Node2D
         RefreshExplorationHud();
     }
 
-    private void StartDrillFromDialogue()
-    {
-        CloseNpcDialogue();
-        StartDialogue();
-    }
-
     private void StartDialogue()
     {
+        if (_patrolTaskStage != PatrolTaskStage.MeetMagistrate)
+            return;
+
+        BeginScriptedDialogue(_magistrateDialogues, CompleteMagistrateBriefing);
+    }
+
+    private void StartSoldierReportDialogue(InteractableNpc soldier)
+    {
+        (string Speaker, string Text)[] report = soldier.Role == LeftSoldierRole
+            ? new[]
+            {
+                (soldier.DisplayName, "左舷昼夜各设两岗，泊位缆索大多完好，唯三号旧缆磨损，尚未领到替换麻索。"),
+                ("水师主帅", "记下旧缆所在。继续轮值，未换新缆前加派一人看守。")
+            }
+            : new[]
+            {
+                (soldier.DisplayName, "右舷船炮、火药桶与救火水具已经点齐，夜巡换岗无误，只是新兵口令还不够熟练。"),
+                ("水师主帅", "今夜加练口令与火警应对，不得惊扰正常值守。")
+            };
+
+        BeginScriptedDialogue(report, () => CompleteSoldierReport(soldier.Role));
+    }
+
+    private void StartOfficerReportDialogue()
+    {
+        var report = new[]
+        {
+            ("水师主帅", "两舷岗哨轮值无误，船炮与救火水具齐备；但左舷三号旧缆磨损，右舷新兵口令仍需加练。"),
+            ("中军军官", "末将领命。即刻从库中补发麻索，今夜增设口令与火警操练，明日再呈查验结果。"),
+            ("水师主帅", "驻地巡视至此完成。诸营照令整顿，本帅随后与广州县令商议军需和操练。")
+        };
+        BeginScriptedDialogue(report, CompleteOfficerReport);
+    }
+
+    private void BeginScriptedDialogue((string Speaker, string Text)[] dialogue, Action completion)
+    {
+        _activeScriptedDialogues = dialogue;
+        _scriptedDialogueCompletion = completion;
         _interactionPanel.Hide();
         _optionBox.Hide();
         _nextDialogueButton.Show();
@@ -965,11 +1090,17 @@ public partial class Scene2 : Node2D
         }
 
         _dialogueIndex++;
-        if (_dialogueIndex >= _storyDialogues.Length)
+        if (_dialogueIndex >= _activeScriptedDialogues.Length)
         {
             _dialoguePanel.Hide();
             _optionBox.Show();
-            ShowDrill();
+            _activeNpc = null;
+            ClearOptionButtons();
+            Action completion = _scriptedDialogueCompletion;
+            _scriptedDialogueCompletion = null;
+            _activeScriptedDialogues = Array.Empty<(string, string)>();
+            completion?.Invoke();
+            RefreshExplorationHud();
             return;
         }
 
@@ -978,15 +1109,21 @@ public partial class Scene2 : Node2D
 
     private void ShowDialogueLine()
     {
-        _speakerLabel.Text = _storyDialogues[_dialogueIndex].Speaker;
-        _dialogueLabel.Text = _storyDialogues[_dialogueIndex].Text;
-        bool isMagistrate = _storyDialogues[_dialogueIndex].Speaker == "广州县令";
-        _portraitLabel.Text = isMagistrate ? "县" : "帅";
-        string portraitPath = isMagistrate
-            ? FindImageInAssetDirectory(FindAssetDirectory("magistrate"), "picture.png")
-            : FindImageInAssetDirectory($"{AssetRoot}/protagonist", "picture.png");
-        SetPortrait(portraitPath, isMagistrate ? "县" : "帅", !isMagistrate);
-        _nextDialogueButton.Text = _dialogueIndex == _storyDialogues.Length - 1 ? "结束" : "继续";
+        (string speaker, string text) = _activeScriptedDialogues[_dialogueIndex];
+        bool isCommander = speaker == "水师主帅";
+        bool isMagistrate = speaker == "广州县令";
+        string fallback = isCommander ? "帅" : isMagistrate ? "县" : speaker == "中军军官" ? "官" : "兵";
+        string portraitPath = isCommander
+            ? FindImageInAssetDirectory($"{AssetRoot}/protagonist", "picture.png")
+            : isMagistrate
+                ? FindImageInAssetDirectory(FindAssetDirectory("magistrate"), "picture.png")
+                : FindImageInAssetDirectory($"{AssetRoot}/soldier", "picture.png");
+
+        _speakerLabel.Text = speaker;
+        _dialogueLabel.Text = text;
+        _portraitLabel.Text = fallback;
+        SetPortrait(portraitPath, fallback, isCommander);
+        _nextDialogueButton.Text = _dialogueIndex == _activeScriptedDialogues.Length - 1 ? "结束" : "继续";
     }
 
     private bool ConsumeChapterEntryFlag()
@@ -1043,7 +1180,71 @@ public partial class Scene2 : Node2D
 
     private void ActivateArrivalTask()
     {
-        _explorationHud.Call("set_main_task", "巡视水师驻地");
+        _heardSoldierReports.Clear();
+        _patrolTaskStage = PatrolTaskStage.TalkToSoldiers;
+        UpdateTaskHud();
+    }
+
+    private void CompleteSoldierReport(string soldierRole)
+    {
+        if (_patrolTaskStage != PatrolTaskStage.TalkToSoldiers || !_heardSoldierReports.Add(soldierRole))
+            return;
+
+        if (_heardSoldierReports.Count >= 2)
+            _patrolTaskStage = PatrolTaskStage.ReportToOfficer;
+        UpdateTaskHud();
+    }
+
+    private void CompleteOfficerReport()
+    {
+        if (_patrolTaskStage != PatrolTaskStage.ReportToOfficer)
+            return;
+
+        _patrolTaskStage = PatrolTaskStage.MeetMagistrate;
+        UpdateTaskHud();
+    }
+
+    private void CompleteMagistrateBriefing()
+    {
+        if (_patrolTaskStage != PatrolTaskStage.MeetMagistrate)
+            return;
+
+        _patrolTaskStage = PatrolTaskStage.DrillUnlocked;
+        UpdateTaskHud();
+        ShowDrill();
+    }
+
+    private void UpdateTaskHud()
+    {
+        string taskTitle;
+        string objective;
+        int progressStage;
+
+        switch (_patrolTaskStage)
+        {
+            case PatrolTaskStage.TalkToSoldiers:
+                taskTitle = "巡视水师驻地";
+                objective = $"与甲板值守士兵交谈（{_heardSoldierReports.Count}/2）";
+                progressStage = _heardSoldierReports.Count;
+                break;
+            case PatrolTaskStage.ReportToOfficer:
+                taskTitle = "巡视水师驻地";
+                objective = "士兵汇报已齐（2/2），向中军军官复命";
+                progressStage = (int)_patrolTaskStage;
+                break;
+            case PatrolTaskStage.MeetMagistrate:
+                taskTitle = "筹备水师操练";
+                objective = "与广州县令交谈";
+                progressStage = (int)_patrolTaskStage;
+                break;
+            default:
+                taskTitle = "参加水师操练";
+                objective = "检阅水师操练";
+                progressStage = (int)_patrolTaskStage;
+                break;
+        }
+
+        _explorationHud.Call("set_main_task_progress", taskTitle, objective, progressStage);
     }
 
     private void ShowDrill()

@@ -107,6 +107,7 @@ $requiredFiles = @(
     'assets\ui\icons\menu_exit.png',
     'tests\test_system_menu_exit.gd',
     'tests\test_chapter_transition_visual.gd',
+    'tests\test_scene_two_dialogue_patrol.gd',
     'assets\characters\soldier\picture.png',
     'assets\characters\protagonist\picture.png',
     'assets\characters\magistrate\standard\idle\down\1.png',
@@ -176,6 +177,13 @@ if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
     Assert-Contains $sceneTwoContent 'ConsumeChapterEntryFlag\(\)' 'Scene2 must consume the one-shot chapter entry flag.'
     Assert-Contains $sceneTwoContent 'StartArrivalDialogue\(\)' 'Scene2 must show the deputy greeting after the chapter transition.'
     Assert-Contains $sceneTwoContent 'ActivateArrivalTask\(\)' 'Scene2 must activate the patrol task after the deputy greeting.'
+    Assert-Contains $sceneTwoContent 'LeftSoldierRole\s*=\s*"patrol_soldier_left"' 'Scene2 must identify the left patrol soldier independently.'
+    Assert-Contains $sceneTwoContent 'RightSoldierRole\s*=\s*"patrol_soldier_right"' 'Scene2 must identify the right patrol soldier independently.'
+    Assert-Contains $sceneTwoContent 'OfficerRole\s*=\s*"patrol_officer"' 'Scene2 must keep the patrol officer distinct from the magistrate.'
+    Assert-Contains $sceneTwoContent '_heardSoldierReports\.Add\(soldierRole\)' 'Scene2 must deduplicate soldier reports by role.'
+    Assert-Contains $sceneTwoContent 'CompleteOfficerReport\(\)' 'Scene2 must complete patrol through the officer report.'
+    Assert-Contains $sceneTwoContent 'CompleteMagistrateBriefing\(\)' 'Scene2 must unlock the drill through the magistrate briefing.'
+    Assert-Contains $sceneTwoContent 'set_main_task_progress' 'Scene2 must project patrol progress into the shared HUD.'
     if ([regex]::IsMatch($sceneTwoContent, 'BgColor\s*=\s*new Color\(0\.9f,\s*0\.85f,\s*0\.67f')) {
         Add-Failure 'Scene2 must not retain the old beige dialogue background style.'
     }
@@ -203,6 +211,7 @@ if (Test-Path -LiteralPath $hudScript -PathType Leaf) {
     Assert-Contains $hudContent 'assets/ui/system_menu/menu_button\.png' 'System menu must load the generated button texture.'
     Assert-Contains $hudContent 'assets/ui/system_menu/close_button\.png' 'System menu must load the generated close-button texture.'
     Assert-Contains $hudContent 'get_tree\(\)\.quit\(\)' 'ExitGameButton must quit the running game.'
+    Assert-Contains $hudContent 'func set_main_task_progress\(' 'Exploration HUD must expose task title, objective and stage updates.'
     Assert-Contains $hudContent '\u8BE5\u529F\u80FD\u5373\u5C06\u5B9E\u73B0' 'Unfinished system menu entries must show the documented placeholder message.'
 }
 

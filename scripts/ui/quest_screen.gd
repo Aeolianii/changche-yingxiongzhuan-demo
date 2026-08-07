@@ -127,6 +127,18 @@ func set_main_task(task_title: String) -> void:
 		_refresh_quest_detail()
 
 
+func set_main_task_progress(task_title: String, objective: String, progress_stage: int) -> void:
+	if task_title.is_empty() or _quests.is_empty():
+		return
+	_quests[0] = _make_main_quest_state(task_title, progress_stage)
+	_quests[0]["objective"] = objective
+	_completed_quests = _make_completed_quests(task_title)
+	_selected_quest = 0
+	if is_instance_valid(_quest_choices):
+		_rebuild_quest_choices()
+		_refresh_quest_detail()
+
+
 func _build_background() -> void:
 	var background := TextureRect.new()
 	background.name = "GeneratedQuestBackground"
@@ -498,7 +510,7 @@ func _highlight_keywords(text_value: String, keywords: Array) -> String:
 	return highlighted
 
 
-func _make_main_quest_state(task_title: String) -> Dictionary:
+func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dictionary:
 	if task_title == "奉诏入殿":
 		var default_main: Dictionary = QUESTS[0]
 		return default_main.duplicate(true)
@@ -506,30 +518,47 @@ func _make_main_quest_state(task_title: String) -> Dictionary:
 		return {
 			"type": "主线",
 			"title": task_title,
-			"objective": "前往标记地点推进剧情",
-			"description": "抵达南疆水师驻地后，先巡视中军楼船与周边泊位，确认官兵值守、舰船修缮和出航准备情况。",
-			"keywords": ["南疆水师驻地", "中军楼船", "舰船修缮", "出航准备"],
+			"objective": "与甲板值守士兵交谈（0/2）",
+			"description": "抵达南疆水师驻地后，先听取中军楼船两舷值守士兵的汇报，再向中军军官复命，完成此次驻地巡视。",
+			"keywords": ["南疆水师驻地", "值守士兵", "中军军官", "驻地巡视"],
 			"steps": [
 				{
-					"title": "巡视中军楼船",
-					"description": "沿主甲板巡视中军楼船，查看各处值守是否正常。",
-					"keywords": ["主甲板", "中军楼船", "值守"],
-					"completed": false,
-					"expanded": true,
+					"title": "听取甲板士兵汇报",
+					"description": "分别与左右两舷的值守士兵交谈，了解岗哨、缆索和舰船战备情况。",
+					"keywords": ["左右两舷", "值守士兵", "岗哨", "舰船战备"],
+					"completed": progress_stage >= 2,
+					"expanded": progress_stage < 2,
 				},
 				{
-					"title": "询问值守军官",
-					"description": "与甲板上的值守军官交谈，了解近期操练与巡防安排。",
-					"keywords": ["值守军官", "操练", "巡防安排"],
-					"completed": false,
-					"expanded": false,
+					"title": "向中军军官复命",
+					"description": "汇总两名士兵的报告，向中军军官下达整顿值守与检修缆索的军令。",
+					"keywords": ["士兵报告", "中军军官", "整顿值守", "检修缆索"],
+					"completed": progress_stage >= 3,
+					"expanded": progress_stage >= 2,
+				},
+			],
+		}
+	if task_title == "筹备水师操练":
+		return {
+			"type": "主线",
+			"title": task_title,
+			"objective": "与广州县令交谈",
+			"description": "驻地巡视已经完成。广州县令正在甲板候命，与其商议粮草、器械和地方协同，随后开启水师操练。",
+			"keywords": ["驻地巡视", "广州县令", "粮草", "水师操练"],
+			"steps": [
+				{
+					"title": "与广州县令会谈",
+					"description": "听取广州县令关于军需筹措与地方支援的说明。",
+					"keywords": ["广州县令", "军需筹措", "地方支援"],
+					"completed": progress_stage >= 4,
+					"expanded": progress_stage < 4,
 				},
 				{
-					"title": "检查舰船战备",
-					"description": "检查停泊舰船的修缮、补给与出航准备情况。",
-					"keywords": ["停泊舰船", "补给", "出航准备"],
+					"title": "开始水师操练",
+					"description": "完成会谈后检阅水师操练。",
+					"keywords": ["完成会谈", "水师操练"],
 					"completed": false,
-					"expanded": false,
+					"expanded": progress_stage >= 4,
 				},
 			],
 		}
@@ -565,6 +594,8 @@ func _make_completed_quests(task_title: String) -> Array[Dictionary]:
 		"聆听圣谕": "奉诏入殿",
 		"领旨南下": "聆听圣谕",
 		"巡视水师驻地": "奉诏入殿",
+		"筹备水师操练": "巡视水师驻地",
+		"参加水师操练": "筹备水师操练",
 	}
 	var completed_quests: Array[Dictionary] = []
 	if not previous_by_current.has(task_title):

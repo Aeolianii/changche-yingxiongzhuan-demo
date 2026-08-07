@@ -39,6 +39,7 @@ const SFX_BUS_NAME := &"SFX"
 const AUDIO_FLOOR_DB := -80.0
 
 var _main_task_label: Label
+var _main_objective_label: Label
 var _toast_panel: Panel
 var _toast_label: Label
 var _toast_timer: Timer
@@ -79,6 +80,15 @@ func set_main_task(task_title: String) -> void:
 		_main_task_label.text = task_title
 	if is_instance_valid(_quest_screen):
 		_quest_screen.call("set_main_task", task_title)
+
+
+func set_main_task_progress(task_title: String, objective: String, progress_stage: int) -> void:
+	if is_instance_valid(_main_task_label):
+		_main_task_label.text = task_title
+	if is_instance_valid(_main_objective_label):
+		_main_objective_label.text = objective
+	if is_instance_valid(_quest_screen):
+		_quest_screen.call("set_main_task_progress", task_title, objective, progress_stage)
 
 
 func is_menu_open() -> bool:
@@ -245,6 +255,8 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 	objective.size = Vector2(198, 28)
 	objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	entry.add_child(objective)
+	if is_main:
+		_main_objective_label = objective
 
 
 func _build_function_buttons() -> void:

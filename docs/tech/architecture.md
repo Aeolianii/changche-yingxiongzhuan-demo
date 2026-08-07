@@ -33,6 +33,8 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 `Scene2` 只在检测到该入口标记时消费并删除它，随后复用既有对话框播放水师副将迎接对白。对白期间移动、交互和探索 HUD 均锁定；对白结束后才调用共享 HUD 的 `set_main_task("巡视水师驻地")` 并恢复自由探索。直接运行 `Scene2.tscn` 时不触发入口对白，便于独立调试。
 
+第二章巡视使用场景内轻量任务状态机，不通过环境节点触发：两名值守士兵以稳定角色标识分别登记一次汇报，收齐后开放中军军官复命；军官复命完成后开放广州县令会谈，县令会谈完成回调既有操练覆盖层。共享 HUD 接收任务标题、当前目标和步骤阶段，只负责投影，不反向控制 Scene2 剧情。
+
 ## Directory ownership
 
 | Path | Responsibility |
@@ -60,6 +62,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 - 探索 HUD 使用 `set_exploration_visible(bool)` 接收场景可见性，并通过 `menu_visibility_changed(bool)` 通知场景菜单暂停状态；场景一切换 `player.controls_enabled`，场景二在物理与交互分发前查询 `is_menu_open()`，HUD 不直接持有场景角色引用。
 - `set_exploration_visible(false)` 必须同步关闭菜单；关闭事件由场景结合剧情、对白和过场状态决定是否恢复输入，避免错误解锁。
 - 章节入口标记必须是一次性的运行时元数据：Scene2 读取后立即删除，场景加载失败时也必须清理，不能污染再次进入。
+- Scene2 的士兵汇报必须按角色标识去重；军官复命和县令操练入口必须由任务阶段约束，不能只依赖玩家点击某个通用选项。
 - 探索 HUD 使用全屏锚点和角落容器适配窗口；底部中央交互区和底部对话区必须保持无遮挡。
 
 ## Persistence

@@ -181,7 +181,15 @@ func _verify_component_contract() -> void:
 		_expect(continue_button.size.y >= 68.0, "System menu click targets must match the second expanded button height.")
 		_expect(continue_button.get_theme_font_size("font_size") == 21, "System menu button font size must remain 21.")
 		_expect(continue_button.get_theme_stylebox("hover") is StyleBoxEmpty, "System menu buttons must not add a hover highlight.")
+		_expect(continue_button.get_theme_stylebox("pressed") is StyleBoxEmpty, "System menu buttons must not add a rectangular pressed highlight.")
 		_expect(continue_button.get_theme_color("font_hover_color") == continue_button.get_theme_color("font_color"), "System menu button text color must not change on hover.")
+		var hover_highlight := continue_button.get_parent().get_node("HoverHighlight") as TextureRect
+		_expect(hover_highlight.texture == generated_button.texture, "System menu hover highlight must reuse the button texture as its alpha mask.")
+		_expect(hover_highlight.material is ShaderMaterial, "System menu hover highlight must use an alpha-masked shader material.")
+		continue_button.mouse_entered.emit()
+		_expect(hover_highlight.visible, "System menu hover highlight must appear when the pointer enters a button.")
+		continue_button.mouse_exited.emit()
+		_expect(not hover_highlight.visible, "System menu hover highlight must disappear when the pointer exits a button.")
 		var expected_menu_icons := ["menu_continue.png", "menu_save.png", "menu_load.png", "menu_settings.png", "menu_return_title.png", "menu_exit.png"]
 		for entry_index in range(menu_entries.get_child_count()):
 			var entry_slot := menu_entries.get_child(entry_index)
@@ -238,9 +246,13 @@ func _verify_palace_visibility() -> void:
 	await process_frame
 	_expect(hud.call("is_menu_open"), "Palace menu did not open from the shared HUD.")
 	_expect(not player.controls_enabled, "Palace player controls must pause while the system menu is open.")
+	var return_title_button := hud.find_child("ReturnTitleButton", true, false) as Button
+	return_title_button.mouse_entered.emit()
+	await process_frame
 	if DisplayServer.get_name() != "headless":
 		var screenshot_error := root.get_texture().get_image().save_png(MENU_SCREENSHOT_PATH)
 		_expect(screenshot_error == OK, "System menu preview screenshot could not be saved.")
+	return_title_button.mouse_exited.emit()
 	var close_button := hud.find_child("CloseMenuButton", true, false) as Button
 	close_button.pressed.emit()
 	await process_frame

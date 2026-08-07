@@ -16,6 +16,7 @@ const MENU_ICON_SETTINGS := preload("res://assets/ui/icons/menu_settings.png")
 const MENU_ICON_RETURN_TITLE := preload("res://assets/ui/icons/menu_return_title.png")
 const MENU_ICON_EXIT := preload("res://assets/ui/icons/menu_exit.png")
 const MENU_BLUR_SHADER := preload("res://shaders/menu_blur.gdshader")
+const MENU_BUTTON_HIGHLIGHT_SHADER := preload("res://shaders/menu_button_highlight.gdshader")
 const SYSTEM_MENU_FRAME := preload("res://assets/ui/system_menu/system_menu_frame.png")
 const SYSTEM_MENU_BUTTON := preload("res://assets/ui/system_menu/menu_button.png")
 const SYSTEM_MENU_CLOSE := preload("res://assets/ui/system_menu/close_button.png")
@@ -423,6 +424,24 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_t
 	generated_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(generated_button)
 
+	# Reuse the button texture's alpha as the hover mask. A StyleBox always fills
+	# the rectangular Control, while this overlay follows the paper and diamond
+	# silhouette (including their soft, antialiased edges).
+	var hover_highlight := TextureRect.new()
+	hover_highlight.name = "HoverHighlight"
+	hover_highlight.position = generated_button.position
+	hover_highlight.size = generated_button.size
+	hover_highlight.texture = SYSTEM_MENU_BUTTON
+	hover_highlight.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	hover_highlight.stretch_mode = TextureRect.STRETCH_SCALE
+	hover_highlight.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	hover_highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var highlight_material := ShaderMaterial.new()
+	highlight_material.shader = MENU_BUTTON_HIGHLIGHT_SHADER
+	hover_highlight.material = highlight_material
+	hover_highlight.hide()
+	slot.add_child(hover_highlight)
+
 	var icon := TextureRect.new()
 	icon.name = "EntryIcon"
 	icon.position = Vector2(20, 11)
@@ -448,7 +467,9 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_t
 	button.add_theme_color_override("font_pressed_color", Color(0.08, 0.07, 0.045, 1.0))
 	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
-	button.add_theme_stylebox_override("pressed", _panel_style(Color(0.83, 0.64, 0.31, 0.42), Color(0, 0, 0, 0), 0, 3))
+	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	button.mouse_entered.connect(hover_highlight.show)
+	button.mouse_exited.connect(hover_highlight.hide)
 	if action_name == "退出游戏":
 		button.pressed.connect(_exit_game)
 	else:

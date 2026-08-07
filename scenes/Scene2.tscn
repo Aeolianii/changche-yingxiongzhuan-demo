@@ -434,10 +434,10 @@ offset_bottom = 896.0
 self_modulate = Color(1, 1, 1, 0.88)
 z_index = 2
 layout_mode = 0
-offset_left = 18.0
-offset_top = 646.0
-offset_right = 1326.0
-offset_bottom = 892.0
+offset_left = -160.0
+offset_top = 536.0
+offset_right = 1504.0
+offset_bottom = 896.0
 
 [node name="DialogueMargin" type="MarginContainer" parent="UI/DialoguePanel/FullWidthPaperDialogueBox" unique_id=1148920712]
 layout_mode = 2

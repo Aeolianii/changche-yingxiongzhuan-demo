@@ -66,15 +66,15 @@ func _verify_background(paper_panel: PanelContainer) -> void:
 
 
 func _verify_ink_layout(paper_panel: PanelContainer, portrait: TextureRect, name_plate: PanelContainer, dialogue_margin: MarginContainer, option_box: VBoxContainer) -> void:
-	_expect(paper_panel.position.is_equal_approx(Vector2(18.0, 646.0)), "Dialogue ink panel position is incorrect.")
-	_expect(paper_panel.size.is_equal_approx(Vector2(1308.0, 246.0)), "Dialogue ink panel size is incorrect.")
+	_expect(paper_panel.position.is_equal_approx(Vector2(-160.0, 536.0)), "Dialogue ink panel position is incorrect.")
+	_expect(paper_panel.size.is_equal_approx(Vector2(1664.0, 360.0)), "Dialogue ink panel must cover dialogue text and options.")
 	_expect(portrait.position.is_equal_approx(Vector2(884.0, 410.0)), "Right portrait position changed.")
 	_expect(portrait.size.is_equal_approx(Vector2(440.0, 520.0)), "Portrait size changed.")
 	_expect(name_plate.position.is_equal_approx(Vector2(1060.0, 830.0)), "NPC name brush position is incorrect.")
 	_expect(name_plate.size.is_equal_approx(Vector2(260.0, 58.0)), "NPC name brush size is incorrect.")
-	_expect(dialogue_margin.get_theme_constant("margin_left") == 68, "Dialogue left layout margin changed.")
-	_expect(dialogue_margin.get_theme_constant("margin_right") == 430, "Dialogue right layout margin changed.")
-	_expect(dialogue_margin.get_theme_constant("margin_top") == 26, "Dialogue top layout margin changed.")
+	_expect(dialogue_margin.get_theme_constant("margin_left") == 246, "Dialogue left layout margin changed.")
+	_expect(dialogue_margin.get_theme_constant("margin_right") == 608, "Dialogue right layout margin changed.")
+	_expect(dialogue_margin.get_theme_constant("margin_top") == 166, "Dialogue top layout margin changed.")
 	_expect(dialogue_margin.get_theme_constant("margin_bottom") == 18, "Dialogue bottom layout margin changed.")
 	_expect(option_box.custom_minimum_size.is_equal_approx(Vector2(800.0, 50.0)), "Dialogue option area size changed.")
 	var name_style := name_plate.get_theme_stylebox("panel")
@@ -86,19 +86,18 @@ func _verify_ink_layout(paper_panel: PanelContainer, portrait: TextureRect, name
 func _capture_preview(scene_two: Node, portrait: TextureRect, name_plate: PanelContainer) -> void:
 	var dialogue_panel := scene_two.get_node("UI/DialoguePanel") as Control
 	var exploration_hud := scene_two.get_node("UI/ExplorationHUD") as Control
-	var portrait_box := scene_two.get_node("UI/DialoguePanel/PortraitBox") as ColorRect
-	var portrait_label := scene_two.get_node("UI/DialoguePanel/PortraitLabel") as Label
-	var speaker_label := scene_two.get_node("UI/DialoguePanel/NamePlate/SpeakerLabel") as Label
-	var dialogue_label := scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
-	portrait.texture = load("res://assets/characters/magistrate/picture.png") as Texture2D
-	portrait.show()
-	portrait_box.hide()
-	portrait_label.hide()
-	name_plate.show()
-	speaker_label.text = "广州县令"
-	dialogue_label.text = "下官已将岭南粮草、工匠与船材名册带来，请元帅示下。"
+	var player := scene_two.get_node("World/Actors/Player") as CharacterBody2D
+	var soldier := scene_two.get_node("World/Actors/Npcs/MagistrateLeftGuard") as Node2D
+	player.global_position = soldier.global_position + Vector2(0, 54)
+	await physics_frame
+	await physics_frame
+	var interact := InputEventAction.new()
+	interact.action = &"interact"
+	interact.pressed = true
+	scene_two._unhandled_input(interact)
+	await process_frame
+	_expect(portrait.visible and name_plate.visible, "Soldier dialogue preview did not show its portrait and name plate.")
 	exploration_hud.hide()
-	dialogue_panel.show()
 	await process_frame
 	var error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
 	_expect(error == OK, "Could not save Scene2 ink dialogue preview.")

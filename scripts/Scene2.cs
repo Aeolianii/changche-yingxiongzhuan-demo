@@ -1010,7 +1010,7 @@ public partial class Scene2 : Node2D
         {
             _portraitImage.Position = new Vector2(-20, 410);
             _namePlate.Position = new Vector2(24, 830);
-            SetDialogueMargins(430, 68, 26, 18);
+            SetDialogueMargins(608, 246, 166, 18);
             _dialogueLabel.CustomMinimumSize = new Vector2(800, 62);
             _optionBox.CustomMinimumSize = new Vector2(800, 50);
         }
@@ -1018,7 +1018,7 @@ public partial class Scene2 : Node2D
         {
             _portraitImage.Position = new Vector2(884, 410);
             _namePlate.Position = new Vector2(1060, 830);
-            SetDialogueMargins(68, 430, 26, 18);
+            SetDialogueMargins(246, 608, 166, 18);
             _dialogueLabel.CustomMinimumSize = new Vector2(800, 62);
             _optionBox.CustomMinimumSize = new Vector2(800, 50);
         }

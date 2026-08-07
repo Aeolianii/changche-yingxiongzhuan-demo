@@ -214,14 +214,14 @@ func _set_portrait_side(portrait_on_left: bool) -> void:
 func _set_dialogue_text_layout(speaker_side: int) -> void:
 	match speaker_side:
 		1:
-			dialogue_text.offset_left = 342.0
-			dialogue_text.offset_right = -118.0
+			dialogue_text.offset_left = 404.0
+			dialogue_text.offset_right = -180.0
 		0:
-			dialogue_text.offset_left = 118.0
-			dialogue_text.offset_right = -342.0
+			dialogue_text.offset_left = 180.0
+			dialogue_text.offset_right = -404.0
 		_:
-			dialogue_text.offset_left = 150.0
-			dialogue_text.offset_right = -150.0
+			dialogue_text.offset_left = 212.0
+			dialogue_text.offset_right = -212.0
 
 
 func _hide_portrait() -> void:

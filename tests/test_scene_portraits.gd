@@ -45,7 +45,9 @@ func _run_tests() -> void:
 		_expect(dialogue_panel.texture.resource_path == DIALOGUE_BACKDROP_PATH, "Scene1 must use the generated ink dialogue backdrop.")
 		_expect(name_plate.texture.resource_path == NAMEPLATE_PATH, "Scene1 must use the generated ink speaker nameplate.")
 		_expect(is_equal_approx(dialogue_panel.self_modulate.a, 0.88), "Scene1 ink dialogue backdrop must be slightly transparent.")
-		_expect(dialogue_text.offset_left >= 340.0, "Main character dialogue text must leave room for the left portrait.")
+		_expect(dialogue_panel.size.is_equal_approx(Vector2(1344.0, 300.0)), "Scene1 dialogue ink backdrop must cover the full dialogue area.")
+		_expect(is_equal_approx(dialogue_text.offset_top, 112.0), "Scene1 dialogue text must sit inside the enlarged ink backdrop.")
+		_expect(dialogue_text.offset_left >= 400.0, "Main character dialogue text must leave room for the left portrait.")
 		if DisplayServer.get_name() != "headless":
 			await process_frame
 			var screenshot_error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)

@@ -221,7 +221,7 @@ func _build_function_buttons() -> void:
 	var brushstroke := TextureRect.new()
 	brushstroke.name = "FunctionButtonsBrushstroke"
 	brushstroke.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	brushstroke.offset_left = -610.0
+	brushstroke.offset_left = -680.0
 	brushstroke.offset_top = 32.0
 	brushstroke.offset_right = 0.0
 	brushstroke.offset_bottom = 100.0

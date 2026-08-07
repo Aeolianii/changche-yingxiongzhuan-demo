@@ -128,6 +128,7 @@ func _verify_component_contract() -> void:
 	_expect(function_brushstroke.texture != null and function_brushstroke.texture.resource_path.ends_with("function_buttons_brushstroke.png"), "Function buttons must use the shared ink brushstroke texture.")
 	_expect(function_brushstroke.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_COVERED, "Function button brushstroke must crop its transparent padding while preserving aspect ratio.")
 	_expect(function_brushstroke.size.x >= action_row.size.x, "Function button brushstroke must span the complete five-button row.")
+	_expect(function_brushstroke.position.x <= action_row.position.x - 80.0, "Function button brushstroke must extend visibly beyond the left side of the button row.")
 	_expect(function_brushstroke.get_index() < action_row.get_index(), "Function button brushstroke must render below the five buttons.")
 	_expect(function_brushstroke.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Function button brushstroke must not block button input.")
 	_expect(

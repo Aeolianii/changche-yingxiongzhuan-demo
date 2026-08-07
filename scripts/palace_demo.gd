@@ -170,6 +170,7 @@ func _show_audience_dialogue() -> void:
 func _show_dialogue(text: String) -> void:
 	dialogue_text.text = text
 	_set_continue_text("继续")
+	_set_dialogue_text_layout(-1)
 	_hide_portrait()
 	dialogue_panel.show()
 
@@ -178,6 +179,7 @@ func _show_character_dialogue(text: String, speaker: String, portrait_texture: T
 	dialogue_text.text = text
 	_set_continue_text("继续")
 	_show_portrait(speaker, portrait_texture, portrait_on_left, placeholder_text)
+	_set_dialogue_text_layout(1 if portrait_on_left else 0)
 	dialogue_panel.show()
 
 
@@ -203,10 +205,23 @@ func _set_portrait_side(portrait_on_left: bool) -> void:
 	portrait_display.anchor_right = portrait_display.anchor_left
 	if portrait_on_left:
 		portrait_display.offset_left = 18.0
-		portrait_display.offset_right = 458.0
+		portrait_display.offset_right = 418.0
 	else:
-		portrait_display.offset_left = -458.0
+		portrait_display.offset_left = -418.0
 		portrait_display.offset_right = -18.0
+
+
+func _set_dialogue_text_layout(speaker_side: int) -> void:
+	match speaker_side:
+		1:
+			dialogue_text.offset_left = 342.0
+			dialogue_text.offset_right = -118.0
+		0:
+			dialogue_text.offset_left = 118.0
+			dialogue_text.offset_right = -342.0
+		_:
+			dialogue_text.offset_left = 150.0
+			dialogue_text.offset_right = -150.0
 
 
 func _hide_portrait() -> void:
@@ -228,7 +243,7 @@ func _show_interaction(text: String) -> void:
 func _set_continue_text(text: String) -> void:
 	var label := continue_button.get_node_or_null("Text") as Label
 	if label != null:
-		label.text = text
+		label.text = "%s  ▼" % text
 
 
 func _set_task(text: String) -> void:

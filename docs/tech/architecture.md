@@ -15,7 +15,7 @@
 
 `ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。两个主场景各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、系统菜单、短时提示和退出请求；菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
 
-Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容器，其 `panel` 样式直接拉伸用户重新裁剪的 512×144 `BackgroundBar.png`；黑色描边外侧像素使用 Alpha 透明显示游戏背景，纹理样式保留原有内容边距，因此只改变底板绘制，不改变容器树和交互节点。
+Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容器，但其 `panel` 样式改为拉伸共享的生成式像素水墨对话底板；姓名容器使用共享姓名笔触。Scene1 直接引用同一资源。两处保留各自既有状态机，只统一底板、人物左右站位和正文安全边距。
 
 角色为 `CharacterBody2D`，脚底小矩形碰撞，`AnimatedSprite2D` 使用独立帧构建 `SpriteFrames`。主角负责输入和相机目标，NPC 复用同一角色动画接口。
 
@@ -58,7 +58,8 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 - 不从生成图片自动识别碰撞，不使用程序生成地形边界。
 - 装饰物不碰撞；只有建筑、墙体、栏杆、水体和世界边缘阻挡玩家。
 - 宫殿室内外在同一坐标平面；门洞通过手工碰撞缺口表达，不增加高度变量。
-- Scene2 对话底板固定为 1344×190；更换底板不得改变立绘、名牌、正文和选项节点的现有布局。
+- Scene1 与 Scene2 必须引用同一套对话底板和姓名笔触资源；主角站左、NPC 站右，无说话者时隐藏立绘与姓名。
+- 对话视觉主体由单张横向水墨笔触构成；代码只负责透明度、拉伸、文字布局和交互状态，不重新拼装矩形外框。
 - 探索 HUD 使用 `set_exploration_visible(bool)` 接收场景可见性，并通过 `menu_visibility_changed(bool)` 通知场景菜单暂停状态；场景一切换 `player.controls_enabled`，场景二在物理与交互分发前查询 `is_menu_open()`，HUD 不直接持有场景角色引用。
 - `set_exploration_visible(false)` 必须同步关闭菜单；关闭事件由场景结合剧情、对白和过场状态决定是否恢复输入，避免错误解锁。
 - 章节入口标记必须是一次性的运行时元数据：Scene2 读取后立即删除，场景加载失败时也必须清理，不能污染再次进入。

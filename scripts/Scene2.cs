@@ -15,7 +15,8 @@ public partial class Scene2 : Node2D
 
     private const float PlayerSpeed = 210f;
     private const string AssetRoot = "res://assets/characters";
-    private const string DialogueBackgroundPath = "res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar.png";
+    private const string DialogueBackgroundPath = "res://assets/ui/dialogue/ink_dialogue_backdrop.png";
+    private const string DialogueNameplatePath = "res://assets/ui/dialogue/ink_speaker_nameplate.png";
     private const string ChapterEntryMeta = "chapter_transition_from_scene_one";
     private const string LeftSoldierRole = "patrol_soldier_left";
     private const string RightSoldierRole = "patrol_soldier_right";
@@ -693,26 +694,30 @@ public partial class Scene2 : Node2D
         var paperStyle = new StyleBoxTexture
         {
             Texture = GD.Load<Texture2D>(DialogueBackgroundPath),
-            ContentMarginLeft = 5,
-            ContentMarginRight = 5,
-            ContentMarginTop = 5,
-            ContentMarginBottom = 5,
+            ContentMarginLeft = 24,
+            ContentMarginRight = 24,
+            ContentMarginTop = 18,
+            ContentMarginBottom = 18,
             AxisStretchHorizontal = StyleBoxTexture.AxisStretchMode.Stretch,
             AxisStretchVertical = StyleBoxTexture.AxisStretchMode.Stretch
         };
         _paperPanel.AddThemeStyleboxOverride("panel", paperStyle);
 
-        var nameStyle = new StyleBoxFlat
+        var nameStyle = new StyleBoxTexture
         {
-            BgColor = new Color(0.03f, 0.025f, 0.02f, 0.78f),
-            BorderColor = new Color(0.72f, 0.58f, 0.34f, 0.65f),
-            BorderWidthBottom = 2
+            Texture = GD.Load<Texture2D>(DialogueNameplatePath),
+            ContentMarginLeft = 18,
+            ContentMarginRight = 18,
+            ContentMarginTop = 7,
+            ContentMarginBottom = 7,
+            AxisStretchHorizontal = StyleBoxTexture.AxisStretchMode.Stretch,
+            AxisStretchVertical = StyleBoxTexture.AxisStretchMode.Stretch
         };
         _namePlate.AddThemeStyleboxOverride("panel", nameStyle);
 
-        _nextDialogueButton.AddThemeStyleboxOverride("normal", CreateOptionStyle(new Color(0.72f, 0.58f, 0.34f, 0.18f)));
-        _nextDialogueButton.AddThemeStyleboxOverride("hover", CreateOptionStyle(new Color(0.72f, 0.58f, 0.34f, 0.32f)));
-        _nextDialogueButton.AddThemeStyleboxOverride("pressed", CreateOptionStyle(new Color(0.52f, 0.35f, 0.18f, 0.34f)));
+        _nextDialogueButton.AddThemeStyleboxOverride("normal", CreateOptionStyle(new Color(0, 0, 0, 0)));
+        _nextDialogueButton.AddThemeStyleboxOverride("hover", CreateOptionStyle(new Color(0.08f, 0.16f, 0.13f, 0.34f)));
+        _nextDialogueButton.AddThemeStyleboxOverride("pressed", CreateOptionStyle(new Color(0.03f, 0.08f, 0.06f, 0.46f)));
     }
 
     private Control CreateInteractionPanel()
@@ -944,11 +949,14 @@ public partial class Scene2 : Node2D
             Alignment = HorizontalAlignment.Left
         };
         button.AddThemeFontSizeOverride("font_size", 21);
-        button.AddThemeColorOverride("font_color", new Color(0.08f, 0.06f, 0.04f));
-        button.AddThemeColorOverride("font_hover_color", new Color(0.28f, 0.12f, 0.04f));
-        button.AddThemeStyleboxOverride("normal", CreateOptionStyle(new Color(0.88f, 0.82f, 0.62f, 0.0f)));
-        button.AddThemeStyleboxOverride("hover", CreateOptionStyle(new Color(0.72f, 0.58f, 0.34f, 0.2f)));
-        button.AddThemeStyleboxOverride("pressed", CreateOptionStyle(new Color(0.52f, 0.35f, 0.18f, 0.28f)));
+        button.AddThemeColorOverride("font_color", new Color(0.94f, 0.91f, 0.82f));
+        button.AddThemeColorOverride("font_hover_color", new Color(1f, 0.86f, 0.54f));
+        button.AddThemeColorOverride("font_pressed_color", new Color(0.78f, 0.68f, 0.48f));
+        button.AddThemeColorOverride("font_outline_color", new Color(0.015f, 0.02f, 0.018f, 0.96f));
+        button.AddThemeConstantOverride("outline_size", 4);
+        button.AddThemeStyleboxOverride("normal", CreateOptionStyle(new Color(0, 0, 0, 0)));
+        button.AddThemeStyleboxOverride("hover", CreateOptionStyle(new Color(0.08f, 0.16f, 0.13f, 0.30f)));
+        button.AddThemeStyleboxOverride("pressed", CreateOptionStyle(new Color(0.03f, 0.08f, 0.06f, 0.42f)));
         button.Pressed += action;
         _optionBox.AddChild(button);
     }
@@ -1001,16 +1009,16 @@ public partial class Scene2 : Node2D
         if (portraitOnLeft)
         {
             _portraitImage.Position = new Vector2(-20, 410);
-            _namePlate.Position = new Vector2(34, 846);
-            SetDialogueMargins(450, 44, 16, 18);
+            _namePlate.Position = new Vector2(24, 830);
+            SetDialogueMargins(430, 68, 26, 18);
             _dialogueLabel.CustomMinimumSize = new Vector2(800, 62);
             _optionBox.CustomMinimumSize = new Vector2(800, 50);
         }
         else
         {
             _portraitImage.Position = new Vector2(884, 410);
-            _namePlate.Position = new Vector2(1078, 846);
-            SetDialogueMargins(54, 450, 16, 18);
+            _namePlate.Position = new Vector2(1060, 830);
+            SetDialogueMargins(68, 430, 26, 18);
             _dialogueLabel.CustomMinimumSize = new Vector2(800, 62);
             _optionBox.CustomMinimumSize = new Vector2(800, 50);
         }

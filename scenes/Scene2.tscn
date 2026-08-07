@@ -431,11 +431,13 @@ offset_right = 1344.0
 offset_bottom = 896.0
 
 [node name="FullWidthPaperDialogueBox" type="PanelContainer" parent="UI/DialoguePanel" unique_id=1396190099]
+self_modulate = Color(1, 1, 1, 0.88)
 z_index = 2
 layout_mode = 0
-offset_top = 706.0
-offset_right = 1344.0
-offset_bottom = 896.0
+offset_left = 18.0
+offset_top = 646.0
+offset_right = 1326.0
+offset_bottom = 892.0
 
 [node name="DialogueMargin" type="MarginContainer" parent="UI/DialoguePanel/FullWidthPaperDialogueBox" unique_id=1148920712]
 layout_mode = 2
@@ -447,7 +449,9 @@ theme_override_constants/separation = 8
 [node name="DialogueLabel" type="Label" parent="UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack" unique_id=393364232]
 custom_minimum_size = Vector2(760, 62)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.08, 0.06, 0.04, 1)
+theme_override_colors/font_color = Color(0.96, 0.93, 0.84, 1)
+theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.98)
+theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 25
 autowrap_mode = 2
 
@@ -459,9 +463,13 @@ theme_override_constants/separation = 4
 [node name="NextDialogueButton" type="Button" parent="UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack" unique_id=1125195048]
 custom_minimum_size = Vector2(180, 38)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.12, 0.07, 0.03, 1)
+theme_override_colors/font_color = Color(0.95, 0.86, 0.65, 1)
+theme_override_colors/font_hover_color = Color(1, 0.93, 0.72, 1)
+theme_override_colors/font_pressed_color = Color(0.78, 0.67, 0.44, 1)
+theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.95)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 22
-text = "继续"
+text = "继续  ▼"
 
 [node name="LargeTransparentPortrait" type="TextureRect" parent="UI/DialoguePanel" unique_id=1803371509]
 z_index = 4
@@ -495,14 +503,16 @@ vertical_alignment = 1
 [node name="NamePlate" type="PanelContainer" parent="UI/DialoguePanel" unique_id=118357945]
 z_index = 6
 layout_mode = 0
-offset_left = 1078.0
-offset_top = 846.0
-offset_right = 1308.0
-offset_bottom = 890.0
+offset_left = 1058.0
+offset_top = 830.0
+offset_right = 1318.0
+offset_bottom = 888.0
 
 [node name="SpeakerLabel" type="Label" parent="UI/DialoguePanel/NamePlate" unique_id=875883781]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.88, 0.72, 1)
+theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.96)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 23
 text = "广州县令"
 horizontal_alignment = 1

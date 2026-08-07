@@ -113,7 +113,8 @@ $requiredFiles = @(
     'assets\characters\magistrate\standard\idle\down\1.png',
     'assets\characters\protagonist\standard\walk\down\1.png',
     'assets\characters\soldier\standard\walk\down\1.png',
-    'assets\ui\paper\PNGs\Backgrounds\BackgroundBar.png',
+    'assets\ui\dialogue\ink_dialogue_backdrop.png',
+    'assets\ui\dialogue\ink_speaker_nameplate.png',
     'assets\backgrounds\naval_base.png'
 )
 
@@ -170,7 +171,8 @@ if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
     $sceneTwoContent = [System.IO.File]::ReadAllText($sceneTwoScript)
     Assert-Contains $sceneTwoContent 'AssetRoot\s*=\s*"res://assets/characters"' 'Scene2 must load characters from the unified assets directory.'
     Assert-Contains $sceneTwoContent '\$"\{AssetRoot\}/soldier"' 'Scene2 must load the complete soldier asset set.'
-    Assert-Contains $sceneTwoContent 'res://assets/ui/paper/PNGs/Backgrounds/BackgroundBar\.png' 'Scene2 must use BackgroundBar.png as its dialogue background.'
+    Assert-Contains $sceneTwoContent 'res://assets/ui/dialogue/ink_dialogue_backdrop\.png' 'Scene2 must use the generated ink dialogue backdrop.'
+    Assert-Contains $sceneTwoContent 'res://assets/ui/dialogue/ink_speaker_nameplate\.png' 'Scene2 must use the generated ink speaker nameplate.'
     Assert-Contains $sceneTwoContent 'new StyleBoxTexture' 'Scene2 must render its dialogue background through a texture style.'
     Assert-Contains $sceneTwoContent 'set_exploration_visible' 'Scene2 must synchronize exploration HUD visibility.'
     Assert-Contains $sceneTwoContent 'IsMenuOpen\(\)' 'Scene2 must block movement and interaction while the shared menu is open.'
@@ -232,6 +234,8 @@ if (Test-Path -LiteralPath $sceneOneFile -PathType Leaf) {
     Assert-Contains $sceneOneScene '\[node name="NameText" type="Label" parent="UI/Overlay/PortraitDisplay/NamePlate"' 'Scene1 must contain a portrait name plate.'
     Assert-Contains $sceneOneScene 'instance=ExtResource\("8_hud"\)' 'Scene1 must instance the shared exploration HUD.'
     Assert-Contains $sceneOneScene 'instance=ExtResource\("9_chapter"\)' 'Scene1 must instance the chapter transition UI.'
+    Assert-Contains $sceneOneScene 'assets/ui/dialogue/ink_dialogue_backdrop\.png' 'Scene1 must share the generated ink dialogue backdrop.'
+    Assert-Contains $sceneOneScene 'assets/ui/dialogue/ink_speaker_nameplate\.png' 'Scene1 must share the generated ink speaker nameplate.'
 }
 
 Test-SceneResourceReferences 'scenes\palace\palace_demo.tscn'

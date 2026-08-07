@@ -3,6 +3,9 @@ extends SceneTree
 const SCENE_ONE_PATH := "res://scenes/palace/palace_demo.tscn"
 const SOLDIER_PORTRAIT_PATH := "res://assets/characters/soldier/picture.png"
 const GENERAL_PORTRAIT_PATH := "res://assets/characters/protagonist/picture.png"
+const DIALOGUE_BACKDROP_PATH := "res://assets/ui/dialogue/ink_dialogue_backdrop.png"
+const NAMEPLATE_PATH := "res://assets/ui/dialogue/ink_speaker_nameplate.png"
+const SCREENSHOT_PATH := "res://.godot/ink_dialogue_scene1_preview.png"
 
 var failures: Array[String] = []
 
@@ -27,8 +30,11 @@ func _run_tests() -> void:
 	var placeholder_frame := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay/PlaceholderFrame") as ColorRect
 	var placeholder_text := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay/PlaceholderFrame/PlaceholderInner/PlaceholderText") as Label
 	var name_text := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay/NamePlate/NameText") as Label
+	var name_plate := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay/NamePlate") as TextureRect
+	var dialogue_panel := scene_one.get_node_or_null("UI/Overlay/DialoguePanel") as TextureRect
+	var dialogue_text := scene_one.get_node_or_null("UI/Overlay/DialoguePanel/DialogueText") as Label
 
-	if portrait_display == null or portrait_image == null or placeholder_frame == null or placeholder_text == null or name_text == null:
+	if portrait_display == null or portrait_image == null or placeholder_frame == null or placeholder_text == null or name_text == null or name_plate == null or dialogue_panel == null or dialogue_text == null:
 		failures.append("Scene1 portrait UI nodes are incomplete.")
 	elif not scene_one.has_method("_show_character_dialogue"):
 		failures.append("Scene1 does not expose the character dialogue portrait behavior.")
@@ -36,6 +42,14 @@ func _run_tests() -> void:
 		_verify_image_portrait(scene_one, portrait_display, portrait_image, placeholder_frame, name_text, SOLDIER_PORTRAIT_PATH, "内侍", false)
 		_verify_placeholder(scene_one, portrait_display, portrait_image, placeholder_frame, placeholder_text, name_text)
 		_verify_image_portrait(scene_one, portrait_display, portrait_image, placeholder_frame, name_text, GENERAL_PORTRAIT_PATH, "水师主帅", true)
+		_expect(dialogue_panel.texture.resource_path == DIALOGUE_BACKDROP_PATH, "Scene1 must use the generated ink dialogue backdrop.")
+		_expect(name_plate.texture.resource_path == NAMEPLATE_PATH, "Scene1 must use the generated ink speaker nameplate.")
+		_expect(is_equal_approx(dialogue_panel.self_modulate.a, 0.88), "Scene1 ink dialogue backdrop must be slightly transparent.")
+		_expect(dialogue_text.offset_left >= 340.0, "Main character dialogue text must leave room for the left portrait.")
+		if DisplayServer.get_name() != "headless":
+			await process_frame
+			var screenshot_error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
+			_expect(screenshot_error == OK, "Could not save Scene1 ink dialogue preview.")
 		_verify_narration_hides_portrait(scene_one, portrait_display)
 
 	scene_one.queue_free()

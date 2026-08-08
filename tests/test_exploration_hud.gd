@@ -139,8 +139,14 @@ func _verify_component_contract() -> void:
 	_expect(main_quest_entry.position.y <= 48.0 and side_quest_entry.position.y <= 156.0, "Main quest must move upward within the tracker.")
 	var main_objective := main_quest_entry.get_node("Objective") as Label
 	_expect(main_objective.max_lines_visible == 2, "Main quest objective must be limited to two lines.")
+	_expect(main_objective.size.y >= 40.0 and main_quest_entry.size.y >= 96.0, "Main quest objective must have enough height to display its second line.")
 	_expect(main_objective.clip_text and main_objective.text_overrun_behavior == TextServer.OVERRUN_TRIM_ELLIPSIS, "Overflowing main quest text must be clipped with an ellipsis.")
 	_expect(main_objective.position.y + main_objective.size.y <= main_quest_entry.size.y, "Main quest objective must remain above its divider.")
+	var original_objective_text := main_objective.text
+	main_objective.text = "士兵汇报已齐（2/2），向中军军官复命"
+	await process_frame
+	_expect(main_objective.get_visible_line_count() == 2, "The patrol objective must visibly use the available second line.")
+	main_objective.text = original_objective_text
 	_expect((main_quest_entry.get_node("Accent") as ColorRect).position == Vector2.ZERO and (side_quest_entry.get_node("Accent") as ColorRect).position == Vector2.ZERO, "Quest accent bars must move together with their task wording.")
 	var main_entry_style := (hud.get_node("QuestTracker/MainQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat
 	var side_entry_style := (hud.get_node("QuestTracker/SideQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat

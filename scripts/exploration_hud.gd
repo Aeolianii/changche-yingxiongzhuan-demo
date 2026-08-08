@@ -213,10 +213,11 @@ func _build_task_tracker() -> void:
 
 
 func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section: String, is_main: bool) -> void:
+	var entry_height := 96.0 if is_main else 88.0
 	var entry := Panel.new()
 	entry.name = node_name
 	entry.position = at
-	entry.size = Vector2(232, 88)
+	entry.size = Vector2(232, entry_height)
 	entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var entry_style := StyleBoxFlat.new()
 	entry_style.bg_color = Color(0, 0, 0, 0)
@@ -230,7 +231,7 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 	var accent := ColorRect.new()
 	accent.name = "Accent"
 	accent.position = Vector2(0, 0)
-	accent.size = Vector2(4, 88)
+	accent.size = Vector2(4, entry_height)
 	accent.color = GOLD if is_main else JADE
 	accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	entry.add_child(accent)
@@ -252,7 +253,7 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 	var objective := _make_label("前往标记地点推进剧情" if is_main else "与船匠交谈（效果占位）", 13, TEXT_MUTED)
 	objective.name = "Objective"
 	objective.position = Vector2(19, 52)
-	objective.size = Vector2(198, 32)
+	objective.size = Vector2(198, 40 if is_main else 32)
 	objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	objective.max_lines_visible = 2
 	objective.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS

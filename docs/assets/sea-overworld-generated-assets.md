@@ -12,6 +12,7 @@
 | 广东海岸原型海上地图（高清版） | `assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png` | 3344×1882 | 单张16:9背景；场景内以0.75倍显示，地图范围不变 |
 | B 区东部海域扩展 | `assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png` | 3344×1882 | 三个大型地标岛；西侧纯海水衔接；场景内以0.75倍显示 |
 | C 区南部海域扩展（左侧疏散版） | `assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v2.png` | 3344×1882 | 四个大型地标岛分为左右两组；组间保留宽海峡；顶部衔接 A，最右侧预留 D；场景内以0.75倍显示 |
+| D 区东南海域扩展 | `assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v1.png` | 3344×1882 | 五个可进入主岛复合体与小型障碍礁群；顶部衔接 B、左侧衔接 C；场景内以0.75倍显示 |
 | 主角Q版四方向 | `assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png` | 1776×887 | 4列×1行，每格444×887 |
 | 玩家船只方向与状态 | `assets/sprites/sea_overworld/player_ship_4dir_states_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 | 可复用岛屿 | `assets/sprites/sea_overworld/island_locations_atlas_v1.png` | 1920×820 | 4列×1行，每格480×820 |
@@ -258,6 +259,23 @@ North seam invariant: keep the TOP 16% completely uninterrupted open sea matchin
 Replacement: erase the old positions of the two moved islands and all leftover surf, wakes, shadows, reefs, seams, or ghost artifacts, replacing them with perfectly continuous matching ocean.
 Preserve: exactly the same four island identities, architecture, large readable scale, crisp high-detail pixel art, nearest-neighbor-looking edges, palette, lighting, camera, Chinese wuxia RPG ink-wash atmosphere, and water texture. Preserve the two left islands exactly.
 Constraints: exactly FOUR island landmasses total. No detached rocks, reefs, tiny islets, sandbars, extra landmarks, text, labels, routes, compass, border, UI, ships, people, monsters, logos, or watermark. No island touches another. No four-corner rectangle, aligned grid, equal spacing, photorealism, painterly blur, soft 3D rendering, crop, or transparency.
+```
+
+### 4.14 D 区东南海域扩展
+
+内置生图模式：图像编辑。以 B 区水面为编辑底图，以 C 区和 A 区作为接缝、岛形、附岛与障碍礁群参考；经过间距与左侧位置修正后，以最近邻采样统一为 3344×1882 PNG。最终修正提示词如下：
+
+```text
+Use case: precise-object-edit
+Asset type: final production-ready southeast D-zone Godot world-map tile
+Input images: Image 1 is the D-zone edit target. Image 2 is the strict west seam-water reference.
+Primary request: reposition ONLY the two LEFT playable major island complexes to exact approximate target centers. Put the upper fortified reef-gate complex center at 32% canvas width / 27% canvas height. Put the misty forest/cave archipelago center at 31% canvas width / 55% canvas height. Preserve their current vertical identity/order, exact shapes, sizes, architecture, satellite islets, reef details, mist, and surf.
+Safe placement invariant: the leftmost visible surf pixel of either moved complex must be at or after 17% canvas width, while both centers must be no farther right than 33% canvas width. This creates the intended slightly-left placement while retaining the C/D seam.
+Fixed invariants: keep the upper-right crescent harbor, middle-right ancient-shrine ridge, bottom chain-shaped fishing/mangrove complex, and every non-playable obstacle cluster exactly fixed pixel-for-pixel.
+Seam invariants: the entire LEFTMOST 17% and TOP 16% remain completely uninterrupted cyan ocean with no land, island, rock, reef, satellite islet, surf, mist, shadow, wake, object, seam, band, border, or gradient.
+Replacement: erase the two old positions and all residual pixels, replacing them with continuous matching water.
+Preserve: exactly five playable major island complexes; current broad central corridor; irregular unequal spacing; non-round silhouettes; crisp high-detail Chinese wuxia pixel art; camera, palette, water texture, and lighting.
+Constraints: do not add, remove, resize, redesign, or restyle any island or obstacle. No mainland, text, labels, routes, compass, border, UI, ships, people, monsters, logos, watermark, crop, blur, or transparency.
 ```
 
 ## 5. 当前使用边界

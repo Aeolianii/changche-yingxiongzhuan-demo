@@ -4,11 +4,13 @@ const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_shi
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const BASE_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png")
 const EAST_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png")
+const C_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v1.png")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 const MAP_CHUNK_SIZE := Vector2(2508, 1412)
 const MAP_CHUNK_OVERLAP := 120.0
 const EAST_MAP_ORIGIN := Vector2(MAP_CHUNK_SIZE.x - MAP_CHUNK_OVERLAP, 0)
-const MAP_SIZE := Vector2(EAST_MAP_ORIGIN.x + MAP_CHUNK_SIZE.x, MAP_CHUNK_SIZE.y)
+const C_MAP_ORIGIN := Vector2(0, MAP_CHUNK_SIZE.y - MAP_CHUNK_OVERLAP)
+const MAP_SIZE := Vector2(EAST_MAP_ORIGIN.x + MAP_CHUNK_SIZE.x, C_MAP_ORIGIN.y + MAP_CHUNK_SIZE.y)
 const PLAYER_LAYER := 1
 const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
 const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
@@ -113,6 +115,18 @@ func _build_world_collisions() -> void:
 	_add_circle_blocker(Vector2(4417, 1078), 270.0)
 	_add_circle_blocker(Vector2(4235, 1078), 150.0)
 	_add_circle_blocker(Vector2(4595, 1078), 150.0)
+	_add_circle_blocker(Vector2(601, 1706), 160.0)
+	_add_circle_blocker(Vector2(501, 1706), 90.0)
+	_add_circle_blocker(Vector2(701, 1706), 90.0)
+	_add_circle_blocker(Vector2(1515, 1854), 190.0)
+	_add_circle_blocker(Vector2(1370, 1854), 100.0)
+	_add_circle_blocker(Vector2(1660, 1854), 100.0)
+	_add_circle_blocker(Vector2(792, 2267), 170.0)
+	_add_circle_blocker(Vector2(642, 2267), 95.0)
+	_add_circle_blocker(Vector2(942, 2267), 95.0)
+	_add_circle_blocker(Vector2(1715, 2404), 200.0)
+	_add_circle_blocker(Vector2(1545, 2404), 105.0)
+	_add_circle_blocker(Vector2(1885, 2404), 105.0)
 
 	var coast := CollisionPolygon2D.new()
 	coast.name = "NorthwestCoast"
@@ -122,6 +136,8 @@ func _build_world_collisions() -> void:
 		Vector2(390, 665), Vector2(230, 735), Vector2(0, 760)
 	])
 	world_collision.add_child(coast)
+	_add_rect_blocker(Vector2(3702, 1412), Vector2(2388, 68))
+	_add_rect_blocker(Vector2(2508, 2058), Vector2(68, 1292))
 
 
 func _build_locations() -> void:
@@ -132,6 +148,10 @@ func _build_locations() -> void:
 	_build_location("红湾卫所", Vector2(3245, 414), 270.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
 	_build_location("南澳商港", Vector2(4328, 345), 380.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
 	_build_location("东极秘岛", Vector2(4417, 1078), 340.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("澄海灯岛", Vector2(601, 1706), 210.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("龙门海寨", Vector2(1515, 1854), 240.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("白沙渔岛", Vector2(792, 2267), 220.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("玄潮古屿", Vector2(1715, 2404), 240.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
 
 
 func _build_auto_triggers() -> void:
@@ -152,25 +172,32 @@ func _configure_sea_map_hud() -> void:
 	var map_chunks: Array[Dictionary] = [
 		{"texture": BASE_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, MAP_CHUNK_SIZE)},
 		{"texture": EAST_MAP_TEXTURE, "world_rect": Rect2(EAST_MAP_ORIGIN, MAP_CHUNK_SIZE)},
+		{"texture": C_MAP_TEXTURE, "world_rect": Rect2(C_MAP_ORIGIN, MAP_CHUNK_SIZE), "fade_from_top": true},
 	]
 	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations, map_chunks)
 
 
 func _build_background_chunks() -> void:
-	var east_background := $World.get_node_or_null("EastBackground") as Sprite2D
-	if east_background == null:
-		east_background = Sprite2D.new()
-		east_background.name = "EastBackground"
-		$World.add_child(east_background)
-	east_background.position = EAST_MAP_ORIGIN
-	east_background.z_index = -99
-	east_background.centered = false
-	east_background.texture = EAST_MAP_TEXTURE
-	east_background.scale = Vector2(0.75, 0.75)
-	east_background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_configure_background_chunk("EastBackground", EAST_MAP_TEXTURE, EAST_MAP_ORIGIN, -99, false)
+	_configure_background_chunk("CBackground", C_MAP_TEXTURE, C_MAP_ORIGIN, -98, true)
+
+
+func _configure_background_chunk(node_name: String, texture: Texture2D, origin: Vector2, draw_order: int, fade_from_top: bool) -> void:
+	var background := $World.get_node_or_null(node_name) as Sprite2D
+	if background == null:
+		background = Sprite2D.new()
+		background.name = node_name
+		$World.add_child(background)
+	background.position = origin
+	background.z_index = draw_order
+	background.centered = false
+	background.texture = texture
+	background.scale = Vector2(0.75, 0.75)
+	background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var blend_material := ShaderMaterial.new()
 	blend_material.shader = MAP_CHUNK_BLEND_SHADER
-	east_background.material = blend_material
+	blend_material.set_shader_parameter("fade_from_top", fade_from_top)
+	background.material = blend_material
 
 
 func _configure_world_bounds() -> void:
@@ -398,6 +425,15 @@ func _add_circle_blocker(at: Vector2, radius: float) -> void:
 	shape_node.position = at
 	var shape := CircleShape2D.new()
 	shape.radius = radius
+	shape_node.shape = shape
+	world_collision.add_child(shape_node)
+
+
+func _add_rect_blocker(at: Vector2, size: Vector2) -> void:
+	var shape_node := CollisionShape2D.new()
+	shape_node.position = at
+	var shape := RectangleShape2D.new()
+	shape.size = size
 	shape_node.shape = shape
 	world_collision.add_child(shape_node)
 

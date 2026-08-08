@@ -11,6 +11,7 @@
 |---|---|---:|---|
 | 广东海岸原型海上地图（高清版） | `assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png` | 3344×1882 | 单张16:9背景；场景内以0.75倍显示，地图范围不变 |
 | B 区东部海域扩展 | `assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png` | 3344×1882 | 三个大型地标岛；西侧纯海水衔接；场景内以0.75倍显示 |
+| C 区南部海域扩展 | `assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v1.png` | 3344×1882 | 四个大型地标岛不规则疏散分布；顶部纯海水衔接 A；右侧预留 D；场景内以0.75倍显示 |
 | 主角Q版四方向 | `assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png` | 1776×887 | 4列×1行，每格444×887 |
 | 玩家船只方向与状态 | `assets/sprites/sea_overworld/player_ship_4dir_states_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 | 可复用岛屿 | `assets/sprites/sea_overworld/island_locations_atlas_v1.png` | 1920×820 | 4列×1行，每格480×820 |
@@ -225,6 +226,22 @@ Replacement: replace every removed object and all its surf/wake/shadow traces wi
 Seam invariant: the western 15% of the entire canvas must be completely uninterrupted open water matching Image 2's right-edge water—no land, rocks, reef, surf rings, shadows, objects, color bands, borders, or gradients.
 Preserve: keep the same 16:9 framing, exact crisp pixel-art scale, top-down isometric-oblique camera, lighting, water hue and texture, three remaining island designs and their approximate positions. Keep all three islands fully inside safe margins and clearly separated.
 Constraints: exactly three island landmasses in the whole image; shoreline rocks physically attached to those three landmasses are allowed, but no detached rocks/islets. No text, labels, borders, UI, compass, ships, people, monsters, logos, or watermark. No painterly blur and no photorealism.
+```
+
+### 4.12 C 区南部海域扩展
+
+内置生图模式：图像编辑。以当前 C 区草稿为编辑目标，以 A 区底边为北侧接缝与水面风格参考；生成后使用最近邻采样统一为 3344×1882 PNG。
+
+```text
+Use case: precise-object-edit for a production-ready 2D game world-map background tile
+Input images: Image 1 is the current south C-zone edit target. Image 2 is the A-zone reference directly above C and the north seam-water reference.
+Primary request: keep C south of A and keep exactly the same four recognizable island designs, but spread the islands farther apart because the current layout feels crowded. Preserve a natural irregular archipelago with unequal distances, not a grid or four-corner rectangle.
+New approximate positions: move lighthouse island toward upper-left, centered around 19% canvas width / 29% height; move fortified sea-gate island farther right and slightly upward, centered around 55% width / 34% height; keep fishing-village island left-lower, centered around 27% width / 65% height; move ancient forest/cave island farther right and slightly upward, centered around 59% width / 78% height. These are approximate organic placements. Make all visible ocean gaps clearly wider than before; the closest pair must still have at least one-third of a medium island's width of uninterrupted water between their surf lines. No two centers align horizontally or vertically.
+North seam invariant: the TOP 15% of the canvas remains completely uninterrupted open sea matching Image 2's bottom-edge water—same cyan hue, brightness, texture, and lighting. No land, rock, reef, surf, shadow, wake, object, band, border, or gradient may enter it.
+Future-D invariant: retain at least the RIGHTMOST 25% as uninterrupted open ocean for the future D zone. C has no neighbor on its left, so islands may sit near the left while staying fully inside safe margins.
+Replacement: replace all vacated island positions, surf, shadows, wakes, seams, and artifacts with perfectly continuous ocean. Rebuild clean natural water around each new island position.
+Preserve: exactly four island identities, architecture, relative sizes, crisp high-detail pixel art, isometric-oblique top-down camera, palette, lighting, water texture scale, and Chinese wuxia RPG ink-wash atmosphere.
+Constraints: exactly four island landmasses total. No detached rocks, reefs, tiny islets, sandbars, extra landmarks, text, labels, routes, compass, border, UI, ships, people, monsters, logos, or watermark. No islands touch or overlap. No photorealism, painterly blur, or soft 3D rendering.
 ```
 
 ## 5. 当前使用边界

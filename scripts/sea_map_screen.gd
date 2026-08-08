@@ -213,6 +213,7 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 		if index > 0:
 			var blend_material := ShaderMaterial.new()
 			blend_material.shader = MAP_CHUNK_BLEND_SHADER
+			blend_material.set_shader_parameter("fade_from_top", bool(chunk_data.get("fade_from_top", false)))
 			map_texture.material = blend_material
 		_map_texture_layer.add_child(map_texture)
 

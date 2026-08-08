@@ -7,6 +7,7 @@ const QUEST_SCREENSHOT_PATH := "res://.godot/sea_overworld_quest_preview.png"
 const MAP_SCREENSHOT_PATH := "res://.godot/sea_overworld_map_preview.png"
 const FULL_MOON_SCREENSHOT_PATH := "res://.godot/sea_overworld_lunar_full_preview.png"
 const EAST_SCREENSHOT_PATH := "res://.godot/sea_overworld_east_preview.png"
+const C_ZONE_SCREENSHOT_PATH := "res://.godot/sea_overworld_c_zone_preview.png"
 
 var failures: Array[String] = []
 
@@ -27,6 +28,7 @@ func _run() -> void:
 	await _verify_keyboard_movement(scene)
 	await _verify_location_interaction(scene)
 	await _verify_east_expansion(scene)
+	await _verify_c_expansion(scene)
 	await _verify_auto_triggers(scene)
 	await _capture_preview(scene)
 
@@ -43,14 +45,18 @@ func _run() -> void:
 func _verify_assets() -> void:
 	var packed_scene_state := SEA_SCENE.get_state()
 	var has_serialized_east_background := false
+	var has_serialized_c_background := false
 	for node_index in range(packed_scene_state.get_node_count()):
 		if packed_scene_state.get_node_path(node_index) == NodePath("./World/EastBackground"):
 			has_serialized_east_background = true
-			break
+		elif packed_scene_state.get_node_path(node_index) == NodePath("./World/CBackground"):
+			has_serialized_c_background = true
 	_expect(has_serialized_east_background, "East map chunk must be serialized in sea_overworld.tscn for editor visibility.")
+	_expect(has_serialized_c_background, "C map chunk must be serialized in sea_overworld.tscn for editor visibility.")
 	for asset_path in [
 		"res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png",
 		"res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png",
+		"res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v1.png",
 		"res://assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png",
 		"res://assets/sprites/sea_overworld/player_ship_4dir_states_v1.png",
 		"res://assets/sprites/sea_overworld/event_ships_atlas_v2.png",
@@ -81,10 +87,21 @@ func _verify_assets() -> void:
 		if world_child is Sprite2D and (world_child as Sprite2D).texture == east_map:
 			east_texture_node_count += 1
 	_expect(east_texture_node_count == 1, "Serialized east map chunk must not be duplicated at runtime.")
+	var c_map := load("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v1.png") as Texture2D
+	_expect(c_map != null and c_map.get_size() == hd_map.get_size(), "C map chunk must match the base map source dimensions.")
+	var c_background := current_scene.get_node("World/CBackground") as Sprite2D
+	_expect(c_background.texture == c_map and c_background.position.is_equal_approx(Vector2(0, 1292)), "C map chunk must overlap below A at the configured north seam.")
+	_expect(c_background.material is ShaderMaterial, "C map chunk must use alpha seam blending.")
+	_expect(bool((c_background.material as ShaderMaterial).get_shader_parameter("fade_from_top")), "C map chunk must fade from its top edge below A.")
+	var c_texture_node_count := 0
+	for world_child in current_scene.get_node("World").get_children():
+		if world_child is Sprite2D and (world_child as Sprite2D).texture == c_map:
+			c_texture_node_count += 1
+	_expect(c_texture_node_count == 1, "Serialized C map chunk must not be duplicated at runtime.")
 	var player := current_scene.get_node("World/Player") as CharacterBody2D
 	var camera := player.get_node("Camera2D") as Camera2D
-	_expect(camera.limit_right == 4896 and camera.limit_bottom == 1412, "Camera limits must cover both map chunks.")
-	_expect((player.get("movement_bounds") as Rect2).end.is_equal_approx(Vector2(4862, 1378)), "Player movement bounds must cover the expanded sea world.")
+	_expect(camera.limit_right == 4896 and camera.limit_bottom == 2704, "Camera limits must cover the A-B top row and southern C chunk.")
+	_expect((player.get("movement_bounds") as Rect2).end.is_equal_approx(Vector2(4862, 2670)), "Player movement bounds must cover the L-shaped three-chunk sea world envelope.")
 
 
 func _verify_shared_exploration_hud(scene: Node) -> void:
@@ -155,6 +172,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	var map_texture_layer := map_screen.get_node("MapPanel/MapViewport/MapTextureLayer") as Control
 	var map_texture := map_texture_layer.get_node("MapTexture") as TextureRect
 	var east_map_texture := map_texture_layer.get_node("MapTexture2") as TextureRect
+	var c_map_texture := map_texture_layer.get_node("MapTexture3") as TextureRect
 	var location_layer := map_screen.get_node("MapPanel/MapViewport/MapLocationLayer") as Control
 	var player_name := map_screen.get_node("MapPanel/MapViewport/PlayerMarker/PlayerName") as Label
 	_expect(map_screen.visible, "Clicking the sea-map diamond must open the full map screen.")
@@ -168,11 +186,14 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	_expect(map_texture.texture.resource_path.ends_with("guangdong_sea_map_v2_hd.png"), "Full map screen must show the complete sea-overworld map texture.")
 	_expect(east_map_texture.texture.resource_path.ends_with("guangdong_east_sea_expansion_v1.png"), "Full map screen must show the eastern expansion texture.")
 	_expect(east_map_texture.material is ShaderMaterial, "Full map eastern texture must retain seam blending.")
-	_expect(location_layer.get_child_count() == 7, "Full map must show exactly the seven enterable island labels.")
+	_expect(c_map_texture.texture.resource_path.ends_with("guangdong_sea_zone_c_v1.png"), "Full map screen must show the C-zone expansion texture.")
+	_expect(c_map_texture.material is ShaderMaterial, "Full map C-zone texture must retain seam blending.")
+	_expect(bool((c_map_texture.material as ShaderMaterial).get_shader_parameter("fade_from_top")), "Full map C-zone texture must fade from its north edge.")
+	_expect(location_layer.get_child_count() == 11, "Full map must show exactly the eleven enterable island labels.")
 	var location_names: Array[String] = []
 	for location_label in location_layer.get_children():
 		location_names.append((location_label as Label).text)
-	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "东极秘岛"]:
+	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "东极秘岛", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
 	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
@@ -337,6 +358,60 @@ func _verify_east_expansion(scene: Node) -> void:
 		_expect(screenshot_error == OK, "East expansion preview screenshot could not be saved.")
 
 	player.global_position = Vector2(2800, 700)
+	for _frame in range(3):
+		await physics_frame
+
+
+func _verify_c_expansion(scene: Node) -> void:
+	var player := scene.get_node("World/Player") as CharacterBody2D
+	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
+	var enter_button := scene.get_node("UI/Root/InteractionPrompt/EnterButton") as BaseButton
+	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
+	var toast_label := scene.get_node("UI/ExplorationHUD/ComingSoonToast/Message") as Label
+	var locations := get_nodes_in_group("sea_location")
+	var c_locations: Array[Area2D] = []
+	for expected_name in ["澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿"]:
+		var location := _find_location(locations, expected_name)
+		_expect(location != null, "C-zone location %s is missing." % expected_name)
+		if location == null:
+			continue
+		c_locations.append(location)
+		_expect(location.position.y > 1412.0, "%s must be positioned south of A." % expected_name)
+		_expect(str(location.get_meta("entry_message", "")) == "该岛屿即将开放", "%s must use the island coming-soon message." % expected_name)
+
+	var island_distances: Array[float] = []
+	for first_index in range(c_locations.size()):
+		for second_index in range(first_index + 1, c_locations.size()):
+			var island_distance := c_locations[first_index].position.distance_to(c_locations[second_index].position)
+			island_distances.append(island_distance)
+			_expect(island_distance > 540.0, "C-zone islands must retain wide navigable gaps.")
+	if not island_distances.is_empty():
+		island_distances.sort()
+		_expect(island_distances.back() - island_distances.front() > 500.0, "C-zone island spacing must remain visibly irregular rather than equal.")
+
+	for location in c_locations:
+		player.global_position = Vector2(2200, 1800)
+		for _frame in range(3):
+			await physics_frame
+		var radius := float(location.get_meta("trigger_radius", 0.0))
+		player.global_position = location.global_position + Vector2(0, radius - 35.0)
+		for _frame in range(3):
+			await physics_frame
+		var location_name := str(location.get_meta("location_name", ""))
+		_expect(prompt.visible and location_name in location_label.text, "%s must expose its entry prompt from open water." % location_name)
+		enter_button.pressed.emit()
+		await process_frame
+		_expect(location_name in toast_label.text and "该岛屿即将开放" in toast_label.text, "%s must show the island coming-soon toast." % location_name)
+
+	if not c_locations.is_empty() and DisplayServer.get_name() != "headless":
+		var preview_location: Area2D = c_locations.back() as Area2D
+		player.global_position = preview_location.global_position + Vector2(0, float(preview_location.get_meta("trigger_radius")) - 35.0)
+		for _frame in range(3):
+			await physics_frame
+		var screenshot_error := root.get_texture().get_image().save_png(C_ZONE_SCREENSHOT_PATH)
+		_expect(screenshot_error == OK, "C-zone preview screenshot could not be saved.")
+
+	player.global_position = Vector2(2200, 1800)
 	for _frame in range(3):
 		await physics_frame
 

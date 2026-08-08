@@ -66,6 +66,9 @@
 | 东部海域连续航行 | 从旧海图中央向东航行 | 穿过原图右缘并继续移动 | 画面无空白或明显硬接缝，船只、相机和月相继续正常运行 | passed / sea overworld runtime + combined map render 1 |
 | 东部地点进入占位 | 依次靠近三个东部地点 | 查看名称并点击进入或按 E | 提示对应地点“该岛屿即将开放”，不切换场景；驶离后入口隐藏 | passed / three east locations runtime + render 1 |
 | 双分块完整海图 | 打开右下海图入口 | 查看地图、七个地点和玩家位置 | 基础图与东部扩展同时显示，七个地点位置正确，玩家标记可移动到东半区 | passed / combined full-map runtime + render 1 |
+| C 区连续航行 | 从 A 区向南航行 | 穿过 A/C 接缝并环绕四岛 | 无空白或明显硬接缝，四岛之间均有宽航道，右侧未开放 D 区不可驶入 | passed / C-zone runtime + render 1 |
+| C 区四岛进入 | 依次靠近四个 C 区地点 | 查看名称并点击进入或按 E | 提示对应地点“该岛屿即将开放”，驶离后入口隐藏 | passed / four C locations runtime 1 |
+| 三分块完整海图 | 打开右下海图入口 | 查看三张地图、十一个地点和玩家位置 | A/B 在上、C 在 A 下方组成 L 形，十一个地点位置正确，玩家标记可进入 C 区 | passed / combined full-map runtime + render 1 |
 
 ## 手动觐见与任务指引验收
 

@@ -15,7 +15,7 @@
 
 `SeaOverworld` 是独立运行的海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用单张放大的广东海岸原型背景、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；当前不接入正式章节切换。
 
-`ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。两个主场景各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、系统菜单、短时提示和退出请求；菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
+`ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。宫城、水师驻地和海上大地图各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、任务界面、系统菜单、短时提示和退出请求；海上大地图通过独立的 `sea_overworld` 任务上下文覆盖任务栏与任务流程，不改变前两章任务数据。菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
 
 Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容器，但其 `panel` 样式改为拉伸共享的生成式像素水墨对话底板；姓名容器使用共享姓名笔触。Scene1 直接引用同一资源。两处保留各自既有状态机，只统一底板、人物左右站位和正文安全边距。
 

@@ -91,6 +91,32 @@ func set_main_task_progress(task_title: String, objective: String, progress_stag
 		_quest_screen.call("set_main_task_progress", task_title, objective, progress_stage)
 
 
+func set_quest_context(context_id: StringName) -> void:
+	if context_id != &"sea_overworld":
+		return
+	if is_instance_valid(_main_task_label):
+		_main_task_label.text = "探索大地图"
+	if is_instance_valid(_main_objective_label):
+		_main_objective_label.text = "使用WASD或方向键驾驶船只"
+	var side_task := get_node_or_null("QuestTracker/SideQuest/TaskName") as Label
+	var side_objective := get_node_or_null("QuestTracker/SideQuest/Objective") as Label
+	if side_task != null:
+		side_task.text = "海上见闻"
+	if side_objective != null:
+		side_objective.text = "接触海上的船只或漂流事件"
+	if is_instance_valid(_quest_screen):
+		_quest_screen.call("set_quest_context", context_id)
+
+
+func show_toast(message: String) -> void:
+	if not is_instance_valid(_toast_panel):
+		return
+	_position_toast(false)
+	_toast_label.text = message
+	_toast_panel.show()
+	_toast_timer.start()
+
+
 func is_menu_open() -> bool:
 	return _is_system_menu_open() or is_quest_screen_open()
 

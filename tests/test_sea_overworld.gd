@@ -3,6 +3,7 @@ extends SceneTree
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SCREENSHOT_PATH := "res://.godot/sea_overworld_preview.png"
 const MOVEMENT_SCREENSHOT_PATH := "res://.godot/sea_overworld_movement_preview.png"
+const QUEST_SCREENSHOT_PATH := "res://.godot/sea_overworld_quest_preview.png"
 
 var failures: Array[String] = []
 
@@ -19,6 +20,7 @@ func _run() -> void:
 	await physics_frame
 
 	_verify_assets()
+	await _verify_shared_exploration_hud(scene)
 	await _verify_keyboard_movement(scene)
 	await _verify_location_interaction(scene)
 	await _verify_auto_triggers(scene)
@@ -50,6 +52,36 @@ func _verify_assets() -> void:
 	_expect(background.scale.is_equal_approx(Vector2(0.75, 0.75)), "High-resolution map must retain the existing world footprint.")
 
 
+func _verify_shared_exploration_hud(scene: Node) -> void:
+	var hud := scene.get_node("UI/ExplorationHUD") as Control
+	var main_task := hud.get_node("QuestTracker/MainQuest/TaskName") as Label
+	var main_objective := hud.get_node("QuestTracker/MainQuest/Objective") as Label
+	var side_task := hud.get_node("QuestTracker/SideQuest/TaskName") as Label
+	_expect(hud.visible, "Sea overworld must reuse the shared exploration HUD from scenes one and two.")
+	_expect(main_task.text == "探索大地图" and "WASD" in main_objective.text, "Sea overworld tracker must start with the map-exploration task.")
+	_expect(side_task.text == "海上见闻", "Sea overworld must replace the shared HUD's old placeholder side task.")
+	_expect(scene.get_node_or_null("UI/Root/TitlePanel") == null and scene.get_node_or_null("UI/Root/HelpPanel") == null, "Old sea-map title and help panels must be removed.")
+	_expect(scene.get_node_or_null("UI/Root/ToastPanel") == null, "Old sea-map toast UI must be replaced by the shared HUD toast.")
+
+	var quest_button := hud.find_child("QuestButton", true, false) as Button
+	quest_button.pressed.emit()
+	await process_frame
+	var quest_screen := hud.get_node("QuestScreen") as Control
+	var selected_title := quest_screen.get_node("SelectedQuestTitle") as RichTextLabel
+	var steps := quest_screen.get_node("QuestStepsScroll/QuestSteps") as VBoxContainer
+	_expect(quest_screen.visible and "探索大地图" in selected_title.text, "Shared quest screen must open on the sea-map exploration task.")
+	_expect(steps.get_child_count() == 4, "Explore-map quest must display its four-step task flow.")
+	_expect("奉诏入殿" not in selected_title.text and "巡视水师驻地" not in selected_title.text, "Sea-map quest screen must not show scene-one or scene-two task names.")
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		var screenshot_error := root.get_texture().get_image().save_png(QUEST_SCREENSHOT_PATH)
+		_expect(screenshot_error == OK, "Sea overworld quest preview screenshot could not be saved.")
+	var return_button := quest_screen.find_child("QuestReturnButton", true, false) as Button
+	return_button.pressed.emit()
+	await process_frame
+	_expect(not quest_screen.visible, "Returning from the sea-map quest screen must restore exploration.")
+
+
 func _verify_keyboard_movement(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var wake := player.get_node("WakeSprite") as Sprite2D
@@ -63,6 +95,8 @@ func _verify_keyboard_movement(scene: Node) -> void:
 	var moving_hero_y := hero.position.y
 	_expect(player.position.x > starting_position.x, "WASD/direction input did not move the sea-map ship.")
 	_expect(wake.visible, "Moving ship must show the animated wake layer.")
+	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
+	_expect("靠近任意岛屿" in task_objective.text, "First map-exploration step must advance after sailing.")
 	if DisplayServer.get_name() != "headless":
 		await process_frame
 		var screenshot_error := root.get_texture().get_image().save_png(MOVEMENT_SCREENSHOT_PATH)
@@ -79,10 +113,11 @@ func _verify_keyboard_movement(scene: Node) -> void:
 func _verify_location_interaction(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
-	var enter_button := scene.get_node("UI/Root/InteractionPrompt/PromptMargin/PromptRow/EnterButton") as Button
-	var location_label := scene.get_node("UI/Root/InteractionPrompt/PromptMargin/PromptRow/LocationName") as Label
-	var toast := scene.get_node("UI/Root/ToastPanel") as Control
-	var toast_label := scene.get_node("UI/Root/ToastPanel/ToastMargin/ToastLabel") as Label
+	var enter_button := scene.get_node("UI/Root/InteractionPrompt/EnterButton") as BaseButton
+	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
+	var toast := scene.get_node("UI/ExplorationHUD/ComingSoonToast") as Control
+	var toast_label := scene.get_node("UI/ExplorationHUD/ComingSoonToast/Message") as Label
+	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
 	var locations := get_nodes_in_group("sea_location")
 	_expect(not locations.is_empty(), "Sea overworld must provide at least one location trigger.")
 	if locations.is_empty():
@@ -95,12 +130,14 @@ func _verify_location_interaction(scene: Node) -> void:
 	await physics_frame
 	await physics_frame
 	_expect(prompt.visible, "Approaching a location must show the highlighted interaction prompt.")
+	_expect("点击进入按钮" in task_objective.text, "Approaching an island must advance the explore-map task flow.")
 	var position_before_prompt := player.position
 	await physics_frame
 	_expect(player.position.is_equal_approx(position_before_prompt), "Location proximity must not automatically move or slow the stopped ship.")
 	enter_button.pressed.emit()
 	await process_frame
 	_expect(toast.visible and "该地点即将开放" in toast_label.text, "Enter button must show the location coming-soon message.")
+	_expect("接触海上的船只" in task_objective.text, "Trying to enter an island must advance the explore-map task flow.")
 	player.global_position = Vector2(1180, 1320)
 	for _frame in range(4):
 		await physics_frame
@@ -122,7 +159,7 @@ func _verify_location_interaction(scene: Node) -> void:
 
 func _verify_auto_triggers(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
-	var toast_label := scene.get_node("UI/Root/ToastPanel/ToastMargin/ToastLabel") as Label
+	var toast_label := scene.get_node("UI/ExplorationHUD/ComingSoonToast/Message") as Label
 	var triggers := get_nodes_in_group("sea_auto_trigger")
 	var saw_event := false
 	var saw_ship := false
@@ -140,11 +177,13 @@ func _verify_auto_triggers(scene: Node) -> void:
 			saw_event = saw_event or "该事件开发中" in toast_label.text
 	_expect(saw_ship, "Touching a sea-map ship must automatically show its development placeholder.")
 	_expect(saw_event, "Touching a sea event must automatically show its development placeholder.")
+	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
+	_expect(task_objective.text == "继续探索岭南海域", "Sea target contact must finish the prototype exploration task flow.")
 
 
 func _capture_preview(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
-	var enter_button := scene.get_node("UI/Root/InteractionPrompt/PromptMargin/PromptRow/EnterButton") as Button
+	var enter_button := scene.get_node("UI/Root/InteractionPrompt/EnterButton") as BaseButton
 	var locations := get_nodes_in_group("sea_location")
 	if locations.is_empty():
 		return

@@ -4,44 +4,40 @@ const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_shi
 const MAP_SIZE := Vector2(2508, 1412)
 const PLAYER_LAYER := 1
 
-const INK := Color(0.035, 0.06, 0.065, 0.94)
-const INK_SOFT := Color(0.055, 0.1, 0.105, 0.9)
-const GOLD := Color(0.82, 0.65, 0.3, 1.0)
 const GOLD_BRIGHT := Color(1.0, 0.86, 0.48, 1.0)
 const PAPER := Color(0.95, 0.9, 0.75, 1.0)
-const JADE := Color(0.12, 0.35, 0.34, 1.0)
 
 @onready var player: CharacterBody2D = $World/Player
 @onready var world_collision: StaticBody2D = $World/WorldCollision
 @onready var world_markers: Node2D = $World/WorldMarkers
-@onready var interaction_prompt: PanelContainer = $UI/Root/InteractionPrompt
-@onready var location_name_label: Label = $UI/Root/InteractionPrompt/PromptMargin/PromptRow/LocationName
-@onready var enter_button: Button = $UI/Root/InteractionPrompt/PromptMargin/PromptRow/EnterButton
-@onready var toast_panel: PanelContainer = $UI/Root/ToastPanel
-@onready var toast_label: Label = $UI/Root/ToastPanel/ToastMargin/ToastLabel
-@onready var toast_timer: Timer = $ToastTimer
-@onready var title_panel: PanelContainer = $UI/Root/TitlePanel
-@onready var help_panel: PanelContainer = $UI/Root/HelpPanel
+@onready var exploration_hud: Control = $UI/ExplorationHUD
+@onready var interaction_prompt: Control = $UI/Root/InteractionPrompt
+@onready var location_name_label: Label = $UI/Root/InteractionPrompt/LocationName
+@onready var enter_button: BaseButton = $UI/Root/InteractionPrompt/EnterButton
 
 var _active_location_name := ""
 var _active_location_area: Area2D
 var _active_location_label: Label
 var _floating_visuals: Array[CanvasItem] = []
 var _float_elapsed := 0.0
+var _exploration_stage := 0
 
 
 func _ready() -> void:
-	_configure_ui()
 	_build_world_collisions()
 	_build_locations()
 	_build_auto_triggers()
 	enter_button.pressed.connect(_enter_active_location)
-	toast_timer.timeout.connect(toast_panel.hide)
+	exploration_hud.connect("menu_visibility_changed", _on_hud_menu_visibility_changed)
+	exploration_hud.call("set_quest_context", &"sea_overworld")
+	_refresh_exploration_task()
+	exploration_hud.call("set_exploration_visible", true)
 	interaction_prompt.hide()
-	toast_panel.hide()
 
 
 func _process(delta: float) -> void:
+	if _exploration_stage == 0 and player.velocity.length_squared() > 0.01:
+		_advance_exploration_stage(1)
 	_float_elapsed += delta
 	for index in range(_floating_visuals.size()):
 		var visual := _floating_visuals[index]
@@ -50,6 +46,8 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if bool(exploration_hud.call("is_menu_open")):
+		return
 	if not (event is InputEventKey):
 		return
 	var key_event := event as InputEventKey
@@ -59,20 +57,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if not _active_location_name.is_empty():
 			_enter_active_location()
 			get_viewport().set_input_as_handled()
-
-
-func _configure_ui() -> void:
-	title_panel.add_theme_stylebox_override("panel", _panel_style(INK, GOLD, 2, 7))
-	help_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.035, 0.06, 0.065, 0.88), Color(GOLD.r, GOLD.g, GOLD.b, 0.55), 1, 6))
-	interaction_prompt.add_theme_stylebox_override("panel", _panel_style(INK, GOLD_BRIGHT, 2, 7))
-	toast_panel.add_theme_stylebox_override("panel", _panel_style(INK_SOFT, GOLD, 2, 7))
-	enter_button.add_theme_stylebox_override("normal", _panel_style(JADE, GOLD, 1, 5))
-	enter_button.add_theme_stylebox_override("hover", _panel_style(Color(0.17, 0.45, 0.42, 1.0), GOLD_BRIGHT, 2, 5))
-	enter_button.add_theme_stylebox_override("pressed", _panel_style(Color(0.08, 0.24, 0.23, 1.0), GOLD_BRIGHT, 2, 5))
-	enter_button.add_theme_color_override("font_color", PAPER)
-	enter_button.add_theme_color_override("font_hover_color", Color.WHITE)
-	enter_button.add_theme_color_override("font_pressed_color", GOLD_BRIGHT)
-
 
 func _build_world_collisions() -> void:
 	_add_circle_blocker(Vector2(1230, 682), 185.0)
@@ -215,7 +199,9 @@ func _on_location_body_entered(body: Node2D, area: Area2D, label: Label) -> void
 	_active_location_name = str(area.get_meta("location_name", ""))
 	label.show()
 	location_name_label.text = "【%s】" % _active_location_name
-	interaction_prompt.show()
+	if not bool(exploration_hud.call("is_menu_open")):
+		interaction_prompt.show()
+	_advance_exploration_stage(2)
 
 
 func _on_location_body_exited(body: Node2D, area: Area2D, label: Label) -> void:
@@ -238,18 +224,44 @@ func _on_auto_trigger_body_entered(body: Node2D, area: Area2D) -> void:
 		_show_toast("%s · 该船只开发中" % display_name)
 	else:
 		_show_toast("%s · 该事件开发中" % display_name)
+	_advance_exploration_stage(4)
 
 
 func _enter_active_location() -> void:
 	if _active_location_name.is_empty():
 		return
 	_show_toast("%s · 该地点即将开放" % _active_location_name)
+	_advance_exploration_stage(3)
 
 
 func _show_toast(message: String) -> void:
-	toast_label.text = message
-	toast_panel.show()
-	toast_timer.start()
+	exploration_hud.call("show_toast", message)
+
+
+func _advance_exploration_stage(next_stage: int) -> void:
+	if next_stage <= _exploration_stage:
+		return
+	_exploration_stage = next_stage
+	_refresh_exploration_task()
+
+
+func _refresh_exploration_task() -> void:
+	var objective := "使用WASD或方向键驾驶船只"
+	match _exploration_stage:
+		1:
+			objective = "靠近任意岛屿，查看地点名称"
+		2:
+			objective = "点击进入按钮或按E尝试进入地点"
+		3:
+			objective = "接触海上的船只或漂流事件"
+		4:
+			objective = "继续探索岭南海域"
+	exploration_hud.call("set_main_task_progress", "探索大地图", objective, _exploration_stage)
+
+
+func _on_hud_menu_visibility_changed(is_open: bool) -> void:
+	player.controls_enabled = not is_open
+	interaction_prompt.visible = not is_open and not _active_location_name.is_empty()
 
 
 func _clear_active_location_visuals() -> void:
@@ -272,16 +284,3 @@ func _atlas_region(texture: Texture2D, columns: int, rows: int, column: int, row
 	atlas_texture.atlas = texture
 	atlas_texture.region = Rect2(Vector2(column, row) * frame_size, frame_size)
 	return atlas_texture
-
-
-func _panel_style(background: Color, border: Color, border_width: int, radius: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = background
-	style.border_color = border
-	style.set_border_width_all(border_width)
-	style.set_corner_radius_all(radius)
-	style.content_margin_left = 10.0
-	style.content_margin_top = 7.0
-	style.content_margin_right = 10.0
-	style.content_margin_bottom = 7.0
-	return style

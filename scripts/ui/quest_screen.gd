@@ -139,6 +139,19 @@ func set_main_task_progress(task_title: String, objective: String, progress_stag
 		_refresh_quest_detail()
 
 
+func set_quest_context(context_id: StringName) -> void:
+	if context_id != &"sea_overworld":
+		return
+	_quests = _make_sea_overworld_quests()
+	_completed_quests.clear()
+	_selected_quest = 0
+	_show_completed = false
+	if is_instance_valid(_quest_choices):
+		_refresh_filter_tabs()
+		_rebuild_quest_choices()
+		_refresh_quest_detail()
+
+
 func _build_background() -> void:
 	var background := TextureRect.new()
 	background.name = "GeneratedQuestBackground"
@@ -511,6 +524,8 @@ func _highlight_keywords(text_value: String, keywords: Array) -> String:
 
 
 func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dictionary:
+	if task_title == "探索大地图":
+		return _make_sea_overworld_main_task(progress_stage)
 	if task_title == "奉诏入殿":
 		var default_main: Dictionary = QUESTS[0]
 		return default_main.duplicate(true)
@@ -582,6 +597,75 @@ func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dict
 				"keywords": ["当前目标", "自动更新"],
 				"completed": false,
 				"expanded": false,
+			},
+		],
+	}
+
+
+func _make_sea_overworld_quests() -> Array[Dictionary]:
+	return [
+		_make_sea_overworld_main_task(0),
+		{
+			"type": "支线",
+			"title": "海上见闻",
+			"objective": "接触海上的船只或漂流事件",
+			"description": "岭南海域往来船只众多，海面也不时出现漂流物。主动接近这些目标，了解大地图上的自动事件触发方式。",
+			"keywords": ["岭南海域", "往来船只", "漂流物", "自动事件"],
+			"steps": [
+				{
+					"title": "发现海上目标",
+					"description": "在航行途中寻找渔船、商船或漂流木箱。",
+					"keywords": ["渔船", "商船", "漂流木箱"],
+					"completed": false,
+					"expanded": true,
+				},
+				{
+					"title": "靠近并触发见闻",
+					"description": "驶入目标附近后，海上船只和事件会自动显示开发中提示。",
+					"keywords": ["驶入目标附近", "自动", "开发中"],
+					"completed": false,
+					"expanded": false,
+				},
+			],
+		},
+	]
+
+
+func _make_sea_overworld_main_task(progress_stage: int) -> Dictionary:
+	return {
+		"type": "主线",
+		"title": "探索大地图",
+		"objective": "使用WASD或方向键驾驶船只",
+		"description": "驾驶座船探索岭南海域，熟悉海上大地图的移动、地点接近、进入提示以及海上目标自动触发流程。",
+		"keywords": ["岭南海域", "海上大地图", "地点接近", "进入提示", "自动触发"],
+		"steps": [
+			{
+				"title": "熟悉海上航行",
+				"description": "使用WASD或方向键在海图上驾驶船只，自由往返各片海域。",
+				"keywords": ["WASD", "方向键", "驾驶船只"],
+				"completed": progress_stage >= 1,
+				"expanded": progress_stage == 0,
+			},
+			{
+				"title": "靠近海岛地点",
+				"description": "靠近任意可进入地点，查看地点名称与进入提示。",
+				"keywords": ["可进入地点", "地点名称", "进入提示"],
+				"completed": progress_stage >= 2,
+				"expanded": progress_stage == 1,
+			},
+			{
+				"title": "尝试进入地点",
+				"description": "点击地点按钮或按E尝试进入；当前版本会显示该地点即将开放。",
+				"keywords": ["点击地点按钮", "按E", "即将开放"],
+				"completed": progress_stage >= 3,
+				"expanded": progress_stage == 2,
+			},
+			{
+				"title": "触发海上目标",
+				"description": "接触海上的事件或船只，查看自动触发的开发中提示。",
+				"keywords": ["海上事件", "船只", "自动触发", "开发中"],
+				"completed": progress_stage >= 4,
+				"expanded": progress_stage >= 3,
 			},
 		],
 	}

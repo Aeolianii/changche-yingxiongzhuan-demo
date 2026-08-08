@@ -1,13 +1,13 @@
 # Technical architecture
 
 - Status: approved
-- Engine/version: Godot .NET 4.7.1
+- Engine/version: Godot 4.7.1
 - Target platform: Windows
 - Canonical project root: `combined-project/`
 
 ## Runtime map
 
-项目入口为 GDScript 场景 `PalaceDemo`，第二场景为 C# 场景 `Scene2`。Godot .NET 项目同时承载两种官方脚本语言。
+项目入口 `PalaceDemo` 与第二场景 `Scene2` 均使用 GDScript，标准版与 .NET 版 Godot 均可运行。
 
 `PalaceDemo` 包含 Background、WorldCollisions、YSortedCharacters、InteractionPoints、Camera2D 和 UI。
 
@@ -81,13 +81,12 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 | Dependency | Purpose | Version/policy |
 |---|---|---|
-| Godot | 2D 运行与编辑 | .NET 4.7.1 stable |
-| Godot .NET SDK | 编译场景二 C# 脚本 | 4.7.1 / .NET 9 |
+| Godot | 2D 运行与编辑 | 4.7.1 stable |
 
 ## Known debt and risks
 
 - 生成背景可能与角色像素密度不一致，必须先做角色叠放检查。
 - 单张背景不可像 TileMap 一样局部重绘，但便于原型快速替换。
 - 场景一原设计分辨率为 1280×720，场景二为 1344×896；合并项目统一采用 1344×896，并须回归检查场景一相机与 UI。
-- 混合语言项目必须使用 Godot .NET 编辑器；普通 Godot 编辑器无法编译场景二。
+- 场景逻辑已统一为 GDScript，不再依赖 .NET SDK 或 Godot .NET 编辑器。
 - 两个源项目包含内容相同但路径不同的角色素材，其历史 `.import`/`.translation` 产物可能携带重复 UID。合并仓库只保留原始图片、CSV 和授权元数据，导入产物由合并项目重新生成，禁止直接沿用冲突 UID。

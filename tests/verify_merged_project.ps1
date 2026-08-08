@@ -77,13 +77,12 @@ function Test-SceneResourceReferences {
 
 $requiredFiles = @(
     'project.godot',
-    'NanjiangFleet.csproj',
     'scenes\palace\palace_demo.tscn',
     'scenes\Scene2.tscn',
     'scenes\ui\exploration_hud.tscn',
     'scenes\ui\chapter_transition.tscn',
     'scripts\palace_demo.gd',
-    'scripts\Scene2.cs',
+    'scripts\scene_2.gd',
     'scripts\exploration_hud.gd',
     'scripts\ui\chapter_transition.gd',
     'shaders\menu_blur.gdshader',
@@ -136,8 +135,9 @@ $projectFile = Join-Path $projectRoot 'project.godot'
 if (Test-Path -LiteralPath $projectFile -PathType Leaf) {
     $projectContent = [System.IO.File]::ReadAllText($projectFile)
     Assert-Contains $projectContent 'run/main_scene="res://scenes/palace/palace_demo\.tscn"' 'Project must start from Scene1.'
-    Assert-Contains $projectContent 'config/features=PackedStringArray\([^\r\n]*"C#"' 'Project must retain the C# feature.'
-    Assert-Contains $projectContent 'project/assembly_name="NanjiangFleet"' 'Project must retain the Scene2 .NET assembly name.'
+    if ($projectContent -match '"C#"|\[dotnet\]|project/assembly_name') {
+        Add-Failure 'Project must not retain obsolete C# or .NET configuration.'
+    }
     Assert-Contains $projectContent '"physical_keycode":32' 'The interact action must include Space.'
     Assert-Contains $projectContent '"physical_keycode":69' 'The interact action must include E.'
 }
@@ -166,27 +166,27 @@ if (Test-Path -LiteralPath $sceneOneScript -PathType Leaf) {
     Assert-Contains $sceneOneContent 'menu_visibility_changed' 'Scene1 must pause and resume player controls from the shared menu signal.'
 }
 
-$sceneTwoScript = Join-Path $projectRoot 'scripts\Scene2.cs'
+$sceneTwoScript = Join-Path $projectRoot 'scripts\scene_2.gd'
 if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
     $sceneTwoContent = [System.IO.File]::ReadAllText($sceneTwoScript)
-    Assert-Contains $sceneTwoContent 'AssetRoot\s*=\s*"res://assets/characters"' 'Scene2 must load characters from the unified assets directory.'
-    Assert-Contains $sceneTwoContent '\$"\{AssetRoot\}/soldier"' 'Scene2 must load the complete soldier asset set.'
+    Assert-Contains $sceneTwoContent 'ASSET_ROOT\s*:=\s*"res://assets/characters"' 'Scene2 must load characters from the unified assets directory.'
+    Assert-Contains $sceneTwoContent '"%s/soldier"\s*%\s*ASSET_ROOT' 'Scene2 must load the complete soldier asset set.'
     Assert-Contains $sceneTwoContent 'res://assets/ui/dialogue/ink_dialogue_backdrop\.png' 'Scene2 must use the generated ink dialogue backdrop.'
     Assert-Contains $sceneTwoContent 'res://assets/ui/dialogue/ink_speaker_nameplate\.png' 'Scene2 must use the generated ink speaker nameplate.'
-    Assert-Contains $sceneTwoContent 'new StyleBoxTexture' 'Scene2 must render its dialogue background through a texture style.'
+    Assert-Contains $sceneTwoContent 'StyleBoxTexture\.new\(\)' 'Scene2 must render its dialogue background through a texture style.'
     Assert-Contains $sceneTwoContent 'set_exploration_visible' 'Scene2 must synchronize exploration HUD visibility.'
-    Assert-Contains $sceneTwoContent 'IsMenuOpen\(\)' 'Scene2 must block movement and interaction while the shared menu is open.'
-    Assert-Contains $sceneTwoContent 'ConsumeChapterEntryFlag\(\)' 'Scene2 must consume the one-shot chapter entry flag.'
-    Assert-Contains $sceneTwoContent 'StartArrivalDialogue\(\)' 'Scene2 must show the deputy greeting after the chapter transition.'
-    Assert-Contains $sceneTwoContent 'ActivateArrivalTask\(\)' 'Scene2 must activate the patrol task after the deputy greeting.'
-    Assert-Contains $sceneTwoContent 'LeftSoldierRole\s*=\s*"patrol_soldier_left"' 'Scene2 must identify the left patrol soldier independently.'
-    Assert-Contains $sceneTwoContent 'RightSoldierRole\s*=\s*"patrol_soldier_right"' 'Scene2 must identify the right patrol soldier independently.'
-    Assert-Contains $sceneTwoContent 'OfficerRole\s*=\s*"patrol_officer"' 'Scene2 must keep the patrol officer distinct from the magistrate.'
-    Assert-Contains $sceneTwoContent '_heardSoldierReports\.Add\(soldierRole\)' 'Scene2 must deduplicate soldier reports by role.'
-    Assert-Contains $sceneTwoContent 'CompleteOfficerReport\(\)' 'Scene2 must complete patrol through the officer report.'
-    Assert-Contains $sceneTwoContent 'CompleteMagistrateBriefing\(\)' 'Scene2 must unlock the drill through the magistrate briefing.'
+    Assert-Contains $sceneTwoContent '_is_menu_open\(\)' 'Scene2 must block movement and interaction while the shared menu is open.'
+    Assert-Contains $sceneTwoContent '_consume_chapter_entry_flag\(\)' 'Scene2 must consume the one-shot chapter entry flag.'
+    Assert-Contains $sceneTwoContent '_start_arrival_dialogue\(\)' 'Scene2 must show the deputy greeting after the chapter transition.'
+    Assert-Contains $sceneTwoContent '_activate_arrival_task\(\)' 'Scene2 must activate the patrol task after the deputy greeting.'
+    Assert-Contains $sceneTwoContent 'LEFT_SOLDIER_ROLE\s*:=\s*"patrol_soldier_left"' 'Scene2 must identify the left patrol soldier independently.'
+    Assert-Contains $sceneTwoContent 'RIGHT_SOLDIER_ROLE\s*:=\s*"patrol_soldier_right"' 'Scene2 must identify the right patrol soldier independently.'
+    Assert-Contains $sceneTwoContent 'OFFICER_ROLE\s*:=\s*"patrol_officer"' 'Scene2 must keep the patrol officer distinct from the magistrate.'
+    Assert-Contains $sceneTwoContent '_heard_soldier_reports\[soldier_role\]\s*=\s*true' 'Scene2 must deduplicate soldier reports by role.'
+    Assert-Contains $sceneTwoContent '_complete_officer_report\(\)' 'Scene2 must complete patrol through the officer report.'
+    Assert-Contains $sceneTwoContent '_complete_magistrate_briefing\(\)' 'Scene2 must unlock the drill through the magistrate briefing.'
     Assert-Contains $sceneTwoContent 'set_main_task_progress' 'Scene2 must project patrol progress into the shared HUD.'
-    if ([regex]::IsMatch($sceneTwoContent, 'BgColor\s*=\s*new Color\(0\.9f,\s*0\.85f,\s*0\.67f')) {
+    if ([regex]::IsMatch($sceneTwoContent, 'bg_color\s*=\s*Color\(0\.9,\s*0\.85,\s*0\.67')) {
         Add-Failure 'Scene2 must not retain the old beige dialogue background style.'
     }
 }

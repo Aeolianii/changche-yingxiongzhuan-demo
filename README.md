@@ -4,23 +4,22 @@
 
 1. 场景一“皇帝召见水师主帅”使用 GDScript。
 2. 场景一完成后自动淡出并进入场景二“南疆水师”。
-3. 场景二使用 C#，保留原有移动、NPC 对话和水师操练内容。
+3. 场景二已迁移为 GDScript，保留原有移动、NPC 对话和水师操练内容。
 
 仓库同时收录了**南疆战棋海战**玩法模块（见下文“新增：南疆战棋海战”），作为独立可玩场景运行，不影响主线流程。
 
 ## 运行环境
 
-- Godot .NET 4.7.1
-- .NET SDK 9
+- Godot 4.7.1
 - Windows
 
-必须使用 Godot 的 .NET 版本打开；普通版本不能编译 `scripts/Scene2.cs`。
+项目现已完全使用 GDScript，可以使用 Godot 标准版或 .NET 版打开。
 
 ## 下载与运行
 
 1. 克隆仓库，或在 GitHub 点击 **Code → Download ZIP** 并完整解压。
-2. 用 Godot .NET 4.7.1 导入根目录的 `project.godot`。
-3. 等待首次资源导入和 C# 构建完成。
+2. 用 Godot 4.7.1 导入根目录的 `project.godot`。
+3. 等待首次资源导入完成。
 4. 按 F5，从 `res://scenes/palace/palace_demo.tscn` 开始。
 
 场景一完成旁白出现后，会在 2.5 秒后自动进入场景二。点击“立即启程”可以跳过等待。
@@ -37,12 +36,6 @@
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tests\verify_merged_project.ps1
-```
-
-C# 构建：
-
-```powershell
-dotnet build .\NanjiangFleet.csproj
 ```
 
 自动切换运行测试：

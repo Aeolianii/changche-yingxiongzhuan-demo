@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bq5r7wq7qscn2"]
 
-[ext_resource type="Script" uid="uid://dulypbqwra1lf" path="res://scripts/Scene2.cs" id="1_scene2"]
+[ext_resource type="Script" uid="uid://cqnojsb1gdqh1" path="res://scripts/scene_2.gd" id="1_scene2"]
 [ext_resource type="Texture2D" uid="uid://dxcg61q3g046w" path="res://assets/backgrounds/naval_base.png" id="2_background"]
 [ext_resource type="PackedScene" path="res://scenes/ui/exploration_hud.tscn" id="3_hud"]
 

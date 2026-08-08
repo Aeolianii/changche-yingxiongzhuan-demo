@@ -4,7 +4,7 @@
 - Version: 0.1
 - Owner: TSOC
 - Last updated: 2026-07-21
-- Target engine: Godot .NET 4.7.1
+- Target engine: Godot 4.7.1
 - Target platform: Windows / Steam
 
 ## 1. 执行摘要
@@ -15,7 +15,7 @@
 
 > 2D 手绘背景 + 低模 3D 人物 + 固定正交 3D 镜头 + 卡通渲染 + 2D UI/立绘。
 
-当前项目仍是纯 2D 原型：场景一使用 GDScript，场景二使用 C#，角色为 `CharacterBody2D + AnimatedSprite2D`。本计划不把目标架构描述为已经完成，也不要求立刻重写现有两幕。第一优先级是在独立验证场景中证明混合 2.5D 管线、同屏单位性能和基础小队战斗成立；验证通过后，才进入批量资产生产和正式场景迁移。
+当前项目仍是纯 2D 原型：两个场景均使用 GDScript，角色为 `CharacterBody2D + AnimatedSprite2D`。本计划不把目标架构描述为已经完成。第一优先级是在独立验证场景中证明混合 2.5D 管线、同屏单位性能和基础小队战斗成立；验证通过后，才进入批量资产生产和正式场景迁移。
 
 ## 2. 产品定位
 
@@ -119,15 +119,14 @@
 | 特效 | `GPUParticles3D`、`AnimatedTexture` | 烟尘、炮火、水花、箭矢和命中特效 |
 | UI | `CanvasLayer`、`Control`、`Theme`、`NinePatchRect` | 对话、军令、队伍、地图、任务和设置 |
 | 音频 | `AudioStreamPlayer`、`AudioStreamPlayer3D` | UI、环境、战斗和空间音效 |
-| 数据 | C# 自定义 `Resource` | 英雄、兵种、舰船、技能、阵营和任务定义 |
+| 数据 | GDScript 自定义 `Resource` | 英雄、兵种、舰船、技能、阵营和任务定义 |
 | 存档 | `FileAccess` + 版本字段 | 世界状态、队伍、任务与设置持久化 |
 
 ### 4.4 语言与代码边界
 
-- 当前混合 GDScript/C# 原型保持可运行，不做无收益重写。
-- 新增长期系统优先使用 C#：战斗、单位、编队、世界状态、数据模型和存档。
-- GDScript 暂时保留在场景一剧情原型；当迁移收益大于风险时再单独立项转换。
-- UI 场景可以继续由编辑器搭建，行为脚本遵循所属模块的主语言。
+- 当前原型统一使用 GDScript，避免额外的 .NET 构建与部署依赖。
+- 新增长期系统继续使用 GDScript：战斗、单位、编队、世界状态、数据模型和存档。
+- UI 场景继续由编辑器搭建，行为脚本按模块拆分，避免堆积到单个场景脚本。
 - 核心数值和状态不得继续硬编码在单个场景脚本中。
 
 ### 4.5 数据模型
@@ -147,14 +146,13 @@
 
 ### 4.6 工具与资产管线
 
-- Godot .NET 4.7.1：运行时、场景和资源导入。
-- .NET SDK 9：C# 编译与纯逻辑测试。
+- Godot 4.7.1：运行时、场景、资源导入与 GDScript 测试。
 - Blender：低模、绑定、权重和动作检查；如需安装或升级，一律安装到 `D:/Programs/`。
 - 推荐交换格式：源文件 `.blend`，Godot 导入文件 `.glb`。
 - 2D 源文件：分层 PSD/KRA/Aseprite 等；运行时导出 PNG 或经质量验证的 WebP。
 - Git：代码与文档版本管理。
 - Git LFS：进入批量生产前评估用于 `.blend`、`.glb`、大尺寸分层源图和无损音频；未验证仓库配置前不直接启用。
-- 自动验证：Godot `--headless`、现有 PowerShell 验证脚本，以及后续为纯 C# 规则层增加的单元测试。
+- 自动验证：Godot `--headless`、现有 PowerShell 验证脚本，以及后续为纯 GDScript 规则层增加的单元测试。
 
 ## 5. 核心玩法计划
 

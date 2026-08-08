@@ -53,7 +53,9 @@ func _verify_assets() -> void:
 func _verify_keyboard_movement(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var wake := player.get_node("WakeSprite") as Sprite2D
+	var ship := player.get_node("VisualRoot/ShipSprite") as Sprite2D
 	var hero := player.get_node("VisualRoot/HeroSprite") as Sprite2D
+	var ship_foreground := player.get_node("VisualRoot/ShipForegroundSprite") as Sprite2D
 	var starting_position := player.position
 	Input.action_press("move_right")
 	for _frame in range(4):
@@ -70,6 +72,8 @@ func _verify_keyboard_movement(scene: Node) -> void:
 	await physics_frame
 	_expect(not wake.visible, "Ship wake must hide after movement stops.")
 	_expect(is_equal_approx(hero.position.y, moving_hero_y), "The protagonist must stay attached to the same ship-deck anchor when movement stops.")
+	_expect(ship.z_index < hero.z_index and hero.z_index < ship_foreground.z_index, "The protagonist must be composited between the ship base and foreground hull.")
+	_expect(ship_foreground.texture != null and ship_foreground.position.y > hero.position.y, "The foreground hull must cover the protagonist's lower body at the deck line.")
 
 
 func _verify_location_interaction(scene: Node) -> void:

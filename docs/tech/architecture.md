@@ -13,7 +13,7 @@
 
 `Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操练覆盖层。
 
-`SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用横向拼接的广东海岸基础图与东部扩展图、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；扩展分块由场景脚本按统一缩放与重叠偏移创建，水师操练完成后可由场景二的广州县令对话进入，并可从南海军港返回场景二。
+`SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用横向拼接的广东海岸基础图与东部扩展图、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；东部扩展以 `World/EastBackground` 节点序列化在场景中，便于在 Godot 2D 编辑器中直接查看，场景脚本仅负责校正统一缩放、重叠偏移和运行时兼容。水师操练完成后可由场景二的广州县令对话进入，并可从南海军港返回场景二。
 
 `ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。宫城、水师驻地和海上大地图各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、任务界面、系统菜单、短时提示和退出请求；海上大地图通过独立的 `sea_overworld` 任务上下文覆盖任务栏与任务流程，并把左上状态区切换为月相时钟、把海图入口锚定在右下角，不改变前两章任务数据。菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
 

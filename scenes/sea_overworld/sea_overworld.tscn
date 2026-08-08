@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/sea_overworld.gd" id="1_world"]
 [ext_resource type="Script" path="res://scripts/sea_overworld_player.gd" id="2_player"]
@@ -6,6 +6,11 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/exploration_hud.tscn" id="4_hud"]
 [ext_resource type="Texture2D" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="5_button"]
 [ext_resource type="Texture2D" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="6_button_active"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png" id="7_east_map"]
+[ext_resource type="Shader" path="res://shaders/map_chunk_blend.gdshader" id="8_chunk_blend"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_east_blend"]
+shader = ExtResource("8_chunk_blend")
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 23.0
@@ -21,6 +26,15 @@ texture_filter = 1
 texture = ExtResource("3_map")
 centered = false
 scale = Vector2(0.75, 0.75)
+
+[node name="EastBackground" type="Sprite2D" parent="World"]
+z_index = -99
+position = Vector2(2388, 0)
+texture_filter = 1
+material = SubResource("ShaderMaterial_east_blend")
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("7_east_map")
+centered = false
 
 [node name="WorldCollision" type="StaticBody2D" parent="World"]
 collision_layer = 1

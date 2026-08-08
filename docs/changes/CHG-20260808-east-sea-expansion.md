@@ -11,6 +11,7 @@
 - 使用 Codex 内置生图工具，以现有广东海岸海图为构图、像素密度和配色参考，生成一张无文字、无角色、无 UI 的东部海域背景。
 - 东部扩展与原图保持相同最终像素规格和 `0.75` 场景缩放，西侧预留纯海水衔接带，并在场景中与原图右缘重叠融合。
 - 将世界宽度、相机边界、玩家活动边界和完整海图投影扩展到两个地图分块。
+- 将 B 区作为 `World/EastBackground` 正式写入 `sea_overworld.tscn`，使编辑器场景树和 2D 视图可直接显示。
 - 新增红湾卫所、南澳商港和东极秘岛三个可进入地点，保持岛屿稀疏与远航留白。
 - 为主要新岛屿增加手工碰撞；靠近地点显示既有底部水墨进入按钮，点击或按 E 后显示“【地点名】· 该岛屿即将开放”。
 
@@ -28,6 +29,7 @@
 3. 三个东部地点均出现在完整海图中，并具有靠近显示、驶离隐藏、鼠标点击和 E 键进入占位反馈。
 4. 主要岛屿不可被玩家船只直接穿越，航路之间没有新增死路。
 5. 原有四地点、海图、月相、任务、事件与场景二往返测试保持通过。
+6. 打开 `sea_overworld.tscn` 时可在 `World` 下直接看到 `EastBackground`，运行后不会重复创建第二张 B 区节点。
 
 ## 文档影响
 
@@ -53,3 +55,4 @@
 - Godot 4.7.1 OpenGL 图形模式：`tests/test_sea_overworld.gd` 通过，产出 `.godot/sea_overworld_east_preview.png` 与 `.godot/sea_overworld_map_preview.png` 并完成视觉检查。
 - 共享 HUD 回归：`tests/test_exploration_hud.gd` 通过。
 - 场景二往返回归：`tests/test_scene_two_sea_link.gd` 通过。
+- 场景序列化检查：`tests/test_sea_overworld.gd` 确认 `./World/EastBackground` 存在于 `PackedSceneState`。

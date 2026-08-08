@@ -157,8 +157,11 @@ func _configure_sea_map_hud() -> void:
 
 
 func _build_background_chunks() -> void:
-	var east_background := Sprite2D.new()
-	east_background.name = "EastBackground"
+	var east_background := $World.get_node_or_null("EastBackground") as Sprite2D
+	if east_background == null:
+		east_background = Sprite2D.new()
+		east_background.name = "EastBackground"
+		$World.add_child(east_background)
 	east_background.position = EAST_MAP_ORIGIN
 	east_background.z_index = -99
 	east_background.centered = false
@@ -168,7 +171,6 @@ func _build_background_chunks() -> void:
 	var blend_material := ShaderMaterial.new()
 	blend_material.shader = MAP_CHUNK_BLEND_SHADER
 	east_background.material = blend_material
-	$World.add_child(east_background)
 
 
 func _configure_world_bounds() -> void:

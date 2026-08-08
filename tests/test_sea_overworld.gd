@@ -41,6 +41,13 @@ func _run() -> void:
 
 
 func _verify_assets() -> void:
+	var packed_scene_state := SEA_SCENE.get_state()
+	var has_serialized_east_background := false
+	for node_index in range(packed_scene_state.get_node_count()):
+		if packed_scene_state.get_node_path(node_index) == NodePath("./World/EastBackground"):
+			has_serialized_east_background = true
+			break
+	_expect(has_serialized_east_background, "East map chunk must be serialized in sea_overworld.tscn for editor visibility.")
 	for asset_path in [
 		"res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png",
 		"res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png",
@@ -69,6 +76,11 @@ func _verify_assets() -> void:
 	var east_background := current_scene.get_node("World/EastBackground") as Sprite2D
 	_expect(east_background.texture == east_map and east_background.position.is_equal_approx(Vector2(2388, 0)), "East map chunk must overlap the base map at the configured seam.")
 	_expect(east_background.material is ShaderMaterial, "East map chunk must use alpha seam blending.")
+	var east_texture_node_count := 0
+	for world_child in current_scene.get_node("World").get_children():
+		if world_child is Sprite2D and (world_child as Sprite2D).texture == east_map:
+			east_texture_node_count += 1
+	_expect(east_texture_node_count == 1, "Serialized east map chunk must not be duplicated at runtime.")
 	var player := current_scene.get_node("World/Player") as CharacterBody2D
 	var camera := player.get_node("Camera2D") as Camera2D
 	_expect(camera.limit_right == 4896 and camera.limit_bottom == 1412, "Camera limits must cover both map chunks.")

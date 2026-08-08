@@ -1,7 +1,7 @@
 # 《厂车英雄传》游戏策划案 V1
 
 - Status: proposal
-- Version: 0.8
+- Version: 0.9
 - Target: 90—120 分钟公开 Demo，并可扩展为 12—20 小时单机战役
 - Engine: Godot 4.7 / GDScript
 - 核心类型: 古风剧情探索 + 水寨经营 + 四方向方格海战战棋
@@ -487,39 +487,7 @@
 
 这次结算可以选择攻击改装 I（70 铜钱 + 14 铁石），或防御改装 I（70 铜钱 + 16 木材），但不能用另一类材料替代，符合“一场胜利带来一个明确且有取舍的成长选择”。
 
-## 17. 数据实现建议
-
-### 17.1 Resource 类型
-
-建议将硬编码字典逐步迁移为 GDScript `Resource`：
-
-- `ShipClassData`: 基础耐久、固定重量、攻击力、防御力、暴击率、移动力和可用攻击方式。
-- `AttackPatternData`: 攻击方式、基础射程、红色范围生成规则、伤害修正和遮挡规则。
-- `ShipInstanceData`: 唯一舰船 ID、船型、当前耐久、改装等级和三个装备槽。
-- `BattleShipState`: 当前格、移动前格、`LEFT/RIGHT` 朝向、是否已移动和是否已攻击；战斗结束后不保存朝向。
-- `EquipmentData`: 槽位、适用船型、效果 ID、属性修正、铜钱与材料成本、解锁条件。
-- `MissionData`: 地图、可容纳 10 艘船的玩家部署区、固定敌方舰船列表、胜负条件、回合、奖励和可选目标；不保存固定的玩家出战数量。
-- `OfficerData`: 人物身份、关系、能力和剧情标签。
-
-### 17.2 存档字段
-
-```text
-save_version
-chapter_id / story_flags
-copper / ironstone / timber
-merit / reputation
-faction_relations
-shipyard_capacity / owned_ship_ids
-ship_instances / ship_hp / upgrades
-ship_equipment_by_ship_id
-stored_equipment_ids
-completed_missions / active_mission
-settings
-```
-
-`ship_equipment_by_ship_id` 按舰船 ID 保存三个槽位的装备实例 ID，确保装备跟随具体舰船而不是跟随某次编队。装备效果通过稳定 `effect_id` 分发，不把显示名称写进规则判断。
-
-## 18. 开发顺序
+## 17. 开发顺序
 
 ### P0：下一可玩版本
 
@@ -546,7 +514,7 @@ settings
 3. 根据真人试玩决定是否开发陆战，不提前加入个人战斗数值。
 4. 根据试玩反馈再评估扰乱/压制、补给/任务物品和舰船熟练度，不纳入当前排期。
 
-## 19. 验收指标
+## 18. 验收指标
 
 | 指标 | 目标 |
 |---|---:|

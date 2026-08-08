@@ -11,6 +11,8 @@ const HUD_ICON_INVENTORY := preload("res://assets/ui/icons/hud_inventory.png")
 const HUD_ICON_SHIP := preload("res://assets/ui/icons/hud_ship.png")
 const HUD_ICON_MENU := preload("res://assets/ui/icons/hud_menu.png")
 const HUD_ICON_MAP := preload("res://assets/ui/icons/hud_map_v1.png")
+const SEA_MOON_TEXTURE := preload("res://assets/ui/sea_overworld/moon_clock_moon.png")
+const MOON_PHASE_SHADER := preload("res://shaders/moon_phase.gdshader")
 const MENU_ICON_CONTINUE := preload("res://assets/ui/icons/menu_continue.png")
 const MENU_ICON_SAVE := preload("res://assets/ui/icons/menu_save.png")
 const MENU_ICON_LOAD := preload("res://assets/ui/icons/menu_load.png")
@@ -39,6 +41,7 @@ const TEXT_MUTED := Color(0.72, 0.71, 0.64, 1.0)
 const MUSIC_BUS_NAME := &"Music"
 const SFX_BUS_NAME := &"SFX"
 const AUDIO_FLOOR_DB := -80.0
+const LUNAR_CYCLE_DAYS := 29.5
 
 var _main_task_label: Label
 var _main_objective_label: Label
@@ -51,6 +54,11 @@ var _settings_panel: Control
 var _quest_screen: Control
 var _map_screen: Control
 var _map_icon: TextureRect
+var _moon_icon: TextureRect
+var _moon_phase_label: Label
+var _moon_material: ShaderMaterial
+var _sea_map_status: Control
+var _sea_map_mode := false
 
 signal menu_visibility_changed(is_open: bool)
 
@@ -120,6 +128,15 @@ func set_quest_context(context_id: StringName) -> void:
 func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array) -> void:
 	if is_instance_valid(_map_screen):
 		_map_screen.call("configure", player_node, world_size, locations)
+
+
+func set_lunar_day(total_days: float) -> void:
+	if not _sea_map_mode or not is_instance_valid(_moon_material):
+		return
+	var normalized_phase := fposmod(total_days, LUNAR_CYCLE_DAYS) / LUNAR_CYCLE_DAYS
+	_moon_material.set_shader_parameter("phase", normalized_phase)
+	if is_instance_valid(_moon_phase_label):
+		_moon_phase_label.text = _lunar_phase_name(normalized_phase)
 
 
 func show_toast(message: String) -> void:
@@ -219,8 +236,9 @@ func _build_status_panel() -> void:
 
 func _enable_sea_map_status() -> void:
 	var status := get_node_or_null("PlayerStatus") as Control
-	if status == null:
+	if status == null or _sea_map_mode:
 		return
+	_sea_map_mode = true
 	status.position = Vector2(69.5, 20)
 	status.size = Vector2(195, 195)
 	var generated_frame := status.get_node("GeneratedStatusFrame") as TextureRect
@@ -233,18 +251,62 @@ func _enable_sea_map_status() -> void:
 	portrait.hide()
 	var name_panel := status.get_node("NamePlate") as Control
 	name_panel.hide()
-	if status.get_node_or_null("MapButton") != null:
-		return
+
+	_moon_material = ShaderMaterial.new()
+	_moon_material.shader = MOON_PHASE_SHADER
+	_moon_icon = TextureRect.new()
+	_moon_icon.name = "MoonIcon"
+	_moon_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_moon_icon.texture = SEA_MOON_TEXTURE
+	_moon_icon.material = _moon_material
+	_moon_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_moon_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_moon_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_moon_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_frame.add_child(_moon_icon)
+
+	_moon_phase_label = _make_label("新月", 17, TEXT_LIGHT)
+	_moon_phase_label.name = "MoonPhaseName"
+	_moon_phase_label.position = Vector2(0, 156)
+	_moon_phase_label.size = Vector2(195, 25)
+	_moon_phase_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_moon_phase_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	status.add_child(_moon_phase_label)
+
+	_build_sea_map_button()
+
+
+func _build_sea_map_button() -> void:
+	_sea_map_status = Control.new()
+	_sea_map_status.name = "SeaMapStatus"
+	_sea_map_status.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_sea_map_status.offset_left = -156.0
+	_sea_map_status.offset_top = -156.0
+	_sea_map_status.offset_right = -20.0
+	_sea_map_status.offset_bottom = -20.0
+	_sea_map_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_sea_map_status)
+
+	var map_frame := TextureRect.new()
+	map_frame.name = "GeneratedMapFrame"
+	map_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	map_frame.texture = EXPLORATION_FUNCTION_BUTTON
+	map_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	map_frame.stretch_mode = TextureRect.STRETCH_SCALE
+	map_frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	map_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_sea_map_status.add_child(map_frame)
 
 	_map_icon = TextureRect.new()
 	_map_icon.name = "MapIcon"
-	_map_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_map_icon.position = Vector2(25, 25)
+	_map_icon.size = Vector2(86, 86)
 	_map_icon.texture = HUD_ICON_MAP
 	_map_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_map_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_map_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_map_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait_frame.add_child(_map_icon)
+	_sea_map_status.add_child(_map_icon)
 
 	var map_button := Button.new()
 	map_button.name = "MapButton"
@@ -259,7 +321,12 @@ func _enable_sea_map_status() -> void:
 	map_button.mouse_entered.connect(_set_map_icon_highlight.bind(true))
 	map_button.mouse_exited.connect(_set_map_icon_highlight.bind(false))
 	map_button.pressed.connect(_open_map_screen)
-	status.add_child(map_button)
+	_sea_map_status.add_child(map_button)
+
+
+func _lunar_phase_name(normalized_phase: float) -> String:
+	var phase_index := posmod(roundi(normalized_phase * 8.0), 8)
+	return ["新月", "蛾眉月", "上弦月", "盈凸月", "满月", "亏凸月", "下弦月", "残月"][phase_index]
 
 
 func _set_map_icon_highlight(highlighted: bool) -> void:

@@ -8,6 +8,8 @@ const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
 const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
 const SOUTH_SEA_HARBOR_SPAWN := Vector2(1230, 900)
+const LUNAR_DAY_META := "sea_overworld_lunar_day"
+const SECONDS_PER_LUNAR_DAY := 2.0
 
 const PAPER := Color(0.95, 0.9, 0.75, 1.0)
 
@@ -27,6 +29,7 @@ var _exploration_stage := 0
 var _entered_from_scene_two := false
 var _transitioning := false
 var _loading_transition: SceneLoadingTransition
+var _lunar_day := 0.0
 
 
 func _ready() -> void:
@@ -34,10 +37,13 @@ func _ready() -> void:
 	_build_world_collisions()
 	_build_locations()
 	_build_auto_triggers()
+	player.connect("sailed", _on_player_sailed)
 	enter_button.pressed.connect(_enter_active_location)
 	exploration_hud.connect("menu_visibility_changed", _on_hud_menu_visibility_changed)
 	exploration_hud.call("set_quest_context", &"sea_overworld")
 	_configure_sea_map_hud()
+	_lunar_day = float(get_tree().root.get_meta(LUNAR_DAY_META, 0.0))
+	exploration_hud.call("set_lunar_day", _lunar_day)
 	_refresh_exploration_task()
 	exploration_hud.call("set_exploration_visible", true)
 	interaction_prompt.hide()
@@ -49,13 +55,21 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _exploration_stage == 0 and player.velocity.length_squared() > 0.01:
-		_advance_exploration_stage(1)
 	_float_elapsed += delta
 	for index in range(_floating_visuals.size()):
 		var visual := _floating_visuals[index]
 		if is_instance_valid(visual):
 			visual.position.y = sin(_float_elapsed * 2.1 + index * 0.9) * 2.0
+
+
+func _on_player_sailed(delta: float) -> void:
+	if _transitioning or not player.controls_enabled or bool(exploration_hud.call("is_menu_open")):
+		return
+	if _exploration_stage == 0:
+		_advance_exploration_stage(1)
+	_lunar_day += delta / SECONDS_PER_LUNAR_DAY
+	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
+	exploration_hud.call("set_lunar_day", _lunar_day)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

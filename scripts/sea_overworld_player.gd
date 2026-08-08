@@ -1,6 +1,8 @@
 class_name SeaOverworldPlayer
 extends CharacterBody2D
 
+signal sailed(delta: float)
+
 const PLAYER_SHIP_ATLAS := preload("res://assets/sprites/sea_overworld/player_ship_4dir_states_v1.png")
 const PROTAGONIST_ATLAS := preload("res://assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png")
 const WAKE_ATLAS := preload("res://assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png")
@@ -44,8 +46,11 @@ func _physics_process(delta: float) -> void:
 	if is_moving:
 		_update_facing(input_direction)
 	velocity = input_direction * move_speed
+	var position_before_move := global_position
 	move_and_slide()
 	global_position = global_position.clamp(movement_bounds.position, movement_bounds.end)
+	if global_position.distance_squared_to(position_before_move) > 0.01:
+		sailed.emit(delta)
 	_update_motion_visuals(delta, is_moving)
 
 

@@ -19,8 +19,9 @@
 | 水墨像素交互按钮（按下态） | `assets/ui/sea_overworld/interaction_button_ink_active_v1.png` | 720×176 | 同轮廓亮色反馈；场景内以360×88显示 |
 | 水墨像素海图图标 | `assets/ui/icons/hud_map_v1.png` | 128×128 | 透明PNG；放置于原人物头像的菱形框中 |
 | 岭南海域双向加载图 | `assets/ui/loading/lingnan_sea_loading_v1.png` | 1536×1024 | 3:2全屏背景；文字由 Godot 叠加，可复用于进入大地图与返回南海军港 |
+| 水墨像素月面 | `assets/ui/sea_overworld/moon_clock_moon.png` | 256×256 | 透明PNG；作为左上月相时钟的着色器纹理，不包含外框或文字 |
 
-除地图底图外，其余素材均已去除洋红色键控背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
+除地图底图和全屏加载图外，其余素材均已去除对应色键背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
 
 ## 2. 图集顺序
 
@@ -192,6 +193,23 @@ Style/medium: polished hand-painted pixel art with Chinese ink-wash influence, c
 Composition/framing: 3:2 landscape full-screen image; coastal harbor on the left-middle distance, open sea and small islands to the right, one command junk traveling along a subtle wake through the central third; keep a quiet darkened text-safe band across the lower center for engine-rendered loading text.
 Lighting/mood: late-afternoon coastal light, contemplative departure and return, readable silhouettes.
 Constraints: no words, no Chinese characters, no letters, no numbers, no UI, no logos, no loading bar, no player portrait, no multiple ships, no combat, no storm, no fog wall, no watermark. Fill the entire rectangular canvas with artwork; no transparency and no chroma-key background.
+```
+
+### 4.10 水墨像素月面
+
+内置生图模式：图像生成。`function_button.png` 与 `player_status_frame.png` 仅作为视觉风格参考；生成图使用绿色键控去底并以最近邻方式缩小到 256×256 透明 PNG。月相明暗由 Godot 着色器连续绘制。
+
+```text
+Use case: stylized-concept
+Asset type: game UI icon texture, intended for a lunar-phase clock inside the project's existing diamond HUD frame
+Input images: Image 1 and Image 2 are style references only; match their ink-wash pixel-art rendering, dry brush texture, dark blue-black ink, aged parchment cream, and restrained antique-gold accents; do not copy their shapes or frame
+Primary request: one centered full moon disc, perfectly circular, with subtle hand-painted lunar mottling and sparse Chinese ink-brush texture
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for local background removal
+Style/medium: ancient Chinese ink-wash pixel art UI asset, crisp nearest-neighbor pixel edges, readable at 96x96 pixels, solemn and elegant
+Composition/framing: single moon disc centered, fills about 72% of the square canvas, generous even padding, no frame, no clouds
+Color palette: warm parchment-white moon, muted gray ink mottling, thin dark ink outer contour; no bright white, no neon
+Constraints: one moon only; background must be one uniform #00ff00 with no shadows, gradients, texture, reflections, floor plane, or lighting variation; crisp silhouette; no cast shadow; no glow outside the disc; do not use #00ff00 anywhere in the moon; no text, no face, no rabbit, no buildings, no stars, no clouds, no border, no logo, no watermark
+Avoid: photorealism, smooth vector art, modern UI, ornate frame, extra objects
 ```
 
 ## 5. 当前使用边界

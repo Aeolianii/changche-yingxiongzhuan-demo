@@ -5,6 +5,7 @@ const SCREENSHOT_PATH := "res://.godot/sea_overworld_preview.png"
 const MOVEMENT_SCREENSHOT_PATH := "res://.godot/sea_overworld_movement_preview.png"
 const QUEST_SCREENSHOT_PATH := "res://.godot/sea_overworld_quest_preview.png"
 const MAP_SCREENSHOT_PATH := "res://.godot/sea_overworld_map_preview.png"
+const FULL_MOON_SCREENSHOT_PATH := "res://.godot/sea_overworld_lunar_full_preview.png"
 
 var failures: Array[String] = []
 
@@ -46,9 +47,15 @@ func _verify_assets() -> void:
 		"res://assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png",
 		"res://assets/ui/sea_overworld/interaction_button_ink_v1.png",
 		"res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png",
+		"res://assets/ui/sea_overworld/moon_clock_moon.png",
 	]:
 		var texture := load(asset_path) as Texture2D
 		_expect(texture != null and texture.get_width() > 0, "%s could not be loaded." % asset_path)
+	var moon_texture := load("res://assets/ui/sea_overworld/moon_clock_moon.png") as Texture2D
+	var moon_image := moon_texture.get_image() if moon_texture != null else null
+	_expect(moon_texture != null and moon_texture.get_size() == Vector2(256, 256), "Generated moon texture must use the compact 256x256 project size.")
+	_expect(moon_image != null and moon_image.get_pixel(0, 0).a == 0.0 and moon_image.get_pixel(255, 255).a == 0.0, "Generated moon texture must retain transparent outer corners.")
+	_expect(load("res://shaders/moon_phase.gdshader") is Shader, "Moon phase shader could not be loaded.")
 	var hd_map := load("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png") as Texture2D
 	_expect(hd_map != null and hd_map.get_width() >= 3000, "Sea overworld map must use the high-resolution source texture.")
 	var background := current_scene.get_node("World/Background") as Sprite2D
@@ -85,17 +92,36 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	await process_frame
 	_expect(not quest_screen.visible, "Returning from the sea-map quest screen must restore exploration.")
 
-	var map_status := hud.get_node("PlayerStatus") as Control
-	var map_frame := map_status.get_node("GeneratedStatusFrame") as TextureRect
-	var map_icon := map_status.get_node("PortraitFrame/MapIcon") as TextureRect
+	var moon_status := hud.get_node("PlayerStatus") as Control
+	var moon_frame := moon_status.get_node("GeneratedStatusFrame") as TextureRect
+	var moon_icon := moon_status.get_node("PortraitFrame/MoonIcon") as TextureRect
+	var moon_phase_name := moon_status.get_node("MoonPhaseName") as Label
+	var moon_material := moon_icon.material as ShaderMaterial
+	var map_status := hud.get_node("SeaMapStatus") as Control
+	var map_frame := map_status.get_node("GeneratedMapFrame") as TextureRect
+	var map_icon := map_status.get_node("MapIcon") as TextureRect
 	var map_button := map_status.get_node("MapButton") as Button
 	var quest_tracker := hud.get_node("QuestTracker") as Control
-	_expect(not map_status.get_node("NamePlate").visible, "Sea-map HUD must remove the player information plate.")
-	_expect(not map_status.get_node("PortraitFrame/ProtagonistPortrait").visible, "Sea-map HUD must replace the protagonist portrait.")
+	_expect(not moon_status.get_node("NamePlate").visible, "Sea-map HUD must remove the player information plate.")
+	_expect(not moon_status.get_node("PortraitFrame/ProtagonistPortrait").visible, "Sea-map HUD must replace the protagonist portrait.")
+	_expect(moon_frame.texture.resource_path.ends_with("function_button.png"), "Lunar clock must retain the standalone diamond frame.")
+	_expect(moon_icon.texture.resource_path.ends_with("moon_clock_moon.png") and moon_icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Lunar clock must use the generated nearest-filtered moon texture.")
+	_expect(moon_phase_name.text == "新月", "Sea-map lunar clock must begin at the new moon.")
+	hud.call("set_lunar_day", 7.375)
+	_expect(moon_phase_name.text == "上弦月" and is_equal_approx(float(moon_material.get_shader_parameter("phase")), 0.25), "Quarter-cycle lunar day must display the first-quarter moon.")
+	hud.call("set_lunar_day", 14.75)
+	_expect(moon_phase_name.text == "满月" and is_equal_approx(float(moon_material.get_shader_parameter("phase")), 0.5), "Half-cycle lunar day must display the full moon.")
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		var full_moon_screenshot_error := root.get_texture().get_image().save_png(FULL_MOON_SCREENSHOT_PATH)
+		_expect(full_moon_screenshot_error == OK, "Full-moon HUD preview screenshot could not be saved.")
+	hud.call("set_lunar_day", float(root.get_meta("sea_overworld_lunar_day", 0.0)))
+	_expect(moon_status.size.is_equal_approx(Vector2(195.0, 195.0)), "Lunar clock must keep the large top-left diamond footprint.")
+	_expect(moon_status.position.x > quest_tracker.position.x and moon_status.position.y + moon_status.size.y < quest_tracker.position.y, "Lunar clock must sit directly above and to the right of the task tracker origin.")
 	_expect(map_frame.texture.resource_path.ends_with("function_button.png"), "Sea-map entry must retain the standalone diamond frame.")
 	_expect(map_icon.texture.resource_path.ends_with("hud_map_v1.png"), "Sea-map entry must use the generated ink-wash map icon.")
-	_expect(map_status.size.is_equal_approx(Vector2(195.0, 195.0)), "Sea-map diamond and icon must be enlarged by 30 percent.")
-	_expect(map_status.position.x > quest_tracker.position.x and map_status.position.y + map_status.size.y < quest_tracker.position.y, "Sea-map diamond must sit directly above and to the right of the task tracker origin.")
+	_expect(map_status.size.is_equal_approx(Vector2(136.0, 136.0)), "Sea-map diamond must use the compact bottom-right footprint.")
+	_expect(is_equal_approx(map_status.anchor_left, 1.0) and is_equal_approx(map_status.anchor_top, 1.0), "Sea-map diamond must stay anchored to the bottom-right corner.")
 
 	map_button.pressed.emit()
 	await process_frame
@@ -106,6 +132,12 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	var player_name := map_screen.get_node("MapPanel/MapViewport/PlayerMarker/PlayerName") as Label
 	_expect(map_screen.visible, "Clicking the sea-map diamond must open the full map screen.")
 	_expect(not player.controls_enabled, "Opening the full map must pause sea-map movement.")
+	var paused_lunar_day := float(root.get_meta("sea_overworld_lunar_day", 0.0))
+	Input.action_press("move_right")
+	for _frame in range(3):
+		await physics_frame
+	Input.action_release("move_right")
+	_expect(is_equal_approx(float(root.get_meta("sea_overworld_lunar_day", 0.0)), paused_lunar_day), "Opening the full map must pause lunar time progression.")
 	_expect(map_texture.texture.resource_path.ends_with("guangdong_sea_map_v2_hd.png"), "Full map screen must show the complete sea-overworld map texture.")
 	_expect(location_layer.get_child_count() == 4, "Full map must show exactly the four enterable island labels.")
 	var location_names: Array[String] = []
@@ -130,12 +162,14 @@ func _verify_keyboard_movement(scene: Node) -> void:
 	var wake := player.get_node("WakeSprite") as Sprite2D
 	var hero := player.get_node("VisualRoot/HeroSprite") as Sprite2D
 	var starting_position := player.position
+	var starting_lunar_day := float(root.get_meta("sea_overworld_lunar_day", 0.0))
 	Input.action_press("move_right")
 	for _frame in range(4):
 		await physics_frame
 	var moving_hero_y := hero.position.y
 	_expect(player.position.x > starting_position.x, "WASD/direction input did not move the sea-map ship.")
 	_expect(wake.visible, "Moving ship must show the animated wake layer.")
+	_expect(float(root.get_meta("sea_overworld_lunar_day", 0.0)) > starting_lunar_day, "Sailing must advance lunar time.")
 	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
 	_expect("靠近任意岛屿" in task_objective.text, "First map-exploration step must advance after sailing.")
 	if DisplayServer.get_name() != "headless":
@@ -147,6 +181,10 @@ func _verify_keyboard_movement(scene: Node) -> void:
 	await physics_frame
 	_expect(not wake.visible, "Ship wake must hide after movement stops.")
 	_expect(is_equal_approx(hero.position.y, moving_hero_y), "The protagonist must stay attached to the same ship-deck anchor when movement stops.")
+	var stopped_lunar_day := float(root.get_meta("sea_overworld_lunar_day", 0.0))
+	for _frame in range(3):
+		await physics_frame
+	_expect(is_equal_approx(float(root.get_meta("sea_overworld_lunar_day", 0.0)), stopped_lunar_day), "Lunar time must stop when the ship is not sailing.")
 
 
 func _verify_location_interaction(scene: Node) -> void:

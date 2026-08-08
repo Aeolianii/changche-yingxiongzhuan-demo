@@ -60,6 +60,9 @@
 | 对话人物站位 | 分别查看主角、内侍、皇帝、士兵、军官和县令对白 | 观察立绘与姓名 | 主角紧邻底板左侧，NPC 紧邻底板右侧；姓名显示在对应人物下方水墨笔触上 | passed / ink dialogue render 1 |
 | 旁白显隐 | 查看急报、圣旨和完成旁白 | 推进文本 | 只显示水墨正文底板，不残留上一位人物立绘或姓名 | passed / Scene1 portrait runtime |
 | 对话操作精简 | 查看所有对话状态 | 检查界面控件 | 保留继续与剧情选项，不出现自动播放或长按跳过 | passed / ink dialogue static + runtime 1 |
+| 海上月相时钟 | 进入海上大地图 | 静止后持续航行，观察左上月面 | 静止时相位不变；航行时从新月连续经过上弦至满月，阶段名同步更新 | passed / sea overworld lunar runtime + render 1 |
+| 月相暂停与恢复 | 海上航行中 | 分别打开任务、完整海图或系统菜单再关闭 | 阻断界面打开时月相暂停，关闭后继续从原相位推进 | passed / sea overworld lunar runtime 1 |
+| 右下海图入口 | 进入海上大地图 | 点击右下缩小的菱形海图按钮并关闭完整海图 | 完整海图正常打开关闭，左上月相与左侧任务栏不被替换或遮挡 | passed / sea overworld lunar runtime + render 1 |
 
 ## 手动觐见与任务指引验收
 

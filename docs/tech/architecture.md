@@ -15,7 +15,7 @@
 
 `SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用单张放大的广东海岸原型背景、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；水师操练完成后可由场景二的广州县令对话进入，并可从南海军港返回场景二。
 
-`ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。宫城、水师驻地和海上大地图各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、任务界面、系统菜单、短时提示和退出请求；海上大地图通过独立的 `sea_overworld` 任务上下文覆盖任务栏与任务流程，不改变前两章任务数据。菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
+`ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。宫城、水师驻地和海上大地图各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、任务界面、系统菜单、短时提示和退出请求；海上大地图通过独立的 `sea_overworld` 任务上下文覆盖任务栏与任务流程，并把左上状态区切换为月相时钟、把海图入口锚定在右下角，不改变前两章任务数据。菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
 
 Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容器，但其 `panel` 样式改为拉伸共享的生成式像素水墨对话底板；姓名容器使用共享姓名笔触。Scene1 直接引用同一资源。两处保留各自既有状态机，只统一底板、人物左右站位和正文安全边距。
 
@@ -26,6 +26,8 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 输入动作进入 Player，Player 更新速度与动画。场景脚本以显式剧情状态机驱动旁白、太监自身移动、距离触发交互按钮、任务指引、觐见对白和圣旨收尾。主帅位置只由玩家输入和物理碰撞决定，不由剧情脚本写入。无持久化数据。
 
 海上大地图继续复用 `move_up/down/left/right`，但地点进入不复用同时包含空格和回车的通用 `interact` 动作，而是只接收物理键E或鼠标点击“进入”按钮。船只进入地点 `Area2D` 后显示地点名称和底部操作条，不绘制岛屿轮廓；进入海上事件或事件船只的 `Area2D` 时自动显示一次占位提示。
+
+海上大地图脚本只在船只具有实际速度且 HUD 未打开阻断界面时累计航行日，每 2 秒对应 1 个游戏日，并通过 `set_lunar_day(float)` 把 29.5 天周期归一化后投射到共享 HUD。HUD 的 `shaders/moon_phase.gdshader` 根据归一化相位连续遮出明暗月面并切换八段月相名称；当前航行日写入场景树根节点元数据，仅用于本次运行中往返场景二时恢复，不属于正式存档。
 
 `interact` 动作同时绑定空格和 E。场景脚本只在按键按下的单帧根据 UI 状态分发：对话框可见时推进文本，交互按钮可见时触发当前交互，避免同一次按键连续跨越两个剧情状态。
 
@@ -72,6 +74,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 - 章节入口标记必须是一次性的运行时元数据：Scene2 读取后立即删除，场景加载失败时也必须清理，不能污染再次进入。
 - Scene2 的士兵汇报必须按角色标识去重；军官复命和县令操练入口必须由任务阶段约束，不能只依赖玩家点击某个通用选项。
 - 探索 HUD 使用全屏锚点和角落容器适配窗口；底部中央交互区和底部对话区必须保持无遮挡。
+- 海上大地图月相时钟固定在左上，右下海图入口使用右下锚点；二者只在 `sea_overworld` 任务上下文启用，不能改变宫城和水师驻地的角色状态区。
 
 ## Persistence
 

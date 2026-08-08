@@ -17,6 +17,7 @@
 | 船尾航迹与侧浪 | `assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 | 水墨像素交互按钮（普通态） | `assets/ui/sea_overworld/interaction_button_ink_v1.png` | 720×176 | 无文字透明PNG；场景内以360×88显示 |
 | 水墨像素交互按钮（按下态） | `assets/ui/sea_overworld/interaction_button_ink_active_v1.png` | 720×176 | 同轮廓亮色反馈；场景内以360×88显示 |
+| 水墨像素海图图标 | `assets/ui/icons/hud_map_v1.png` | 128×128 | 透明PNG；放置于原人物头像的菱形框中 |
 
 除地图底图外，其余素材均已去除洋红色键控背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
 
@@ -161,6 +162,20 @@ Primary request: preserve the exact normal-state silhouette, proportions, orname
 State change: make the dark-jade center subtly lighter, brighten the antique-gold inner line and add a restrained inward highlight while retaining the dark ink-wash mood.
 Scene/backdrop: perfectly flat solid #ff00ff chroma-key background.
 Constraints: no redesign, reshape, crop, rotation, movement, text, symbols, icons, extra UI or watermark.
+```
+
+### 4.8 水墨像素海图图标
+
+内置生图模式：图像生成。生成后使用洋红键控去底，裁切并等比缩放到128×128透明PNG。
+
+```text
+Use case: stylized-concept
+Asset type: production game UI icon for a Chinese wuxia sea-overworld map button
+Primary request: create exactly one isolated folded maritime parchment chart with a simplified curving Guangdong-like coastline and one tiny restrained compass-point mark; it will sit inside an existing diamond frame.
+Style/medium: crisp hand-painted pixel art with Chinese ink-wash influence and stair-stepped edges, readable at 72 pixels.
+Color palette: aged ivory parchment, near-black ink coastline, muted antique gold bindings and restrained desaturated teal sea marks.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background.
+Constraints: no text, labels, outer frame, diamond, scenery, characters, boats, UI panel, watermark or outside drop shadow.
 ```
 
 ## 5. 当前使用边界

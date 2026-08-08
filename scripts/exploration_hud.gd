@@ -10,6 +10,7 @@ const HUD_ICON_CHARACTER := preload("res://assets/ui/icons/hud_character.png")
 const HUD_ICON_INVENTORY := preload("res://assets/ui/icons/hud_inventory.png")
 const HUD_ICON_SHIP := preload("res://assets/ui/icons/hud_ship.png")
 const HUD_ICON_MENU := preload("res://assets/ui/icons/hud_menu.png")
+const HUD_ICON_MAP := preload("res://assets/ui/icons/hud_map_v1.png")
 const MENU_ICON_CONTINUE := preload("res://assets/ui/icons/menu_continue.png")
 const MENU_ICON_SAVE := preload("res://assets/ui/icons/menu_save.png")
 const MENU_ICON_LOAD := preload("res://assets/ui/icons/menu_load.png")
@@ -25,6 +26,7 @@ const SETTINGS_RETURN_BUTTON := preload("res://assets/ui/system_menu/settings_re
 const VOLUME_SLIDER_TRACK := preload("res://assets/ui/system_menu/volume_slider_track.png")
 const VOLUME_SLIDER_KNOB := preload("res://assets/ui/system_menu/volume_slider_knob.png")
 const QUEST_SCREEN_SCENE := preload("res://scenes/ui/quest_screen.tscn")
+const SEA_MAP_SCREEN_SCENE := preload("res://scenes/ui/sea_map_screen.tscn")
 
 const INK := Color(0.055, 0.073, 0.075, 0.96)
 const PAPER := Color(0.83, 0.77, 0.61, 0.96)
@@ -47,6 +49,8 @@ var _menu_overlay: Control
 var _system_panel: Control
 var _settings_panel: Control
 var _quest_screen: Control
+var _map_screen: Control
+var _map_icon: TextureRect
 
 signal menu_visibility_changed(is_open: bool)
 
@@ -58,6 +62,7 @@ func _ready() -> void:
 	_build_task_tracker()
 	_build_function_buttons()
 	_build_quest_screen()
+	_build_map_screen()
 	_build_system_menu()
 	_build_settings_panel()
 	_build_toast()
@@ -66,6 +71,9 @@ func _ready() -> void:
 
 func set_exploration_visible(value: bool) -> void:
 	if not value:
+		if is_map_screen_open():
+			_map_screen.hide()
+			_set_function_buttons_visible(true)
 		if is_quest_screen_open():
 			_close_quest_screen()
 		if _is_system_menu_open():
@@ -94,6 +102,7 @@ func set_main_task_progress(task_title: String, objective: String, progress_stag
 func set_quest_context(context_id: StringName) -> void:
 	if context_id != &"sea_overworld":
 		return
+	_enable_sea_map_status()
 	if is_instance_valid(_main_task_label):
 		_main_task_label.text = "探索大地图"
 	if is_instance_valid(_main_objective_label):
@@ -108,6 +117,11 @@ func set_quest_context(context_id: StringName) -> void:
 		_quest_screen.call("set_quest_context", context_id)
 
 
+func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array, player_name: String) -> void:
+	if is_instance_valid(_map_screen):
+		_map_screen.call("configure", player_node, world_size, locations, player_name)
+
+
 func show_toast(message: String) -> void:
 	if not is_instance_valid(_toast_panel):
 		return
@@ -118,7 +132,7 @@ func show_toast(message: String) -> void:
 
 
 func is_menu_open() -> bool:
-	return _is_system_menu_open() or is_quest_screen_open()
+	return _is_system_menu_open() or is_quest_screen_open() or is_map_screen_open()
 
 
 func is_quest_screen_open() -> bool:
@@ -127,6 +141,10 @@ func is_quest_screen_open() -> bool:
 
 func is_settings_open() -> bool:
 	return is_instance_valid(_settings_panel) and _settings_panel.visible
+
+
+func is_map_screen_open() -> bool:
+	return is_instance_valid(_map_screen) and _map_screen.visible
 
 
 func _is_system_menu_open() -> bool:
@@ -197,6 +215,56 @@ func _build_status_panel() -> void:
 	subtitle.size = Vector2(278, 28)
 	subtitle.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
 	name_panel.add_child(subtitle)
+
+
+func _enable_sea_map_status() -> void:
+	var status := get_node_or_null("PlayerStatus") as Control
+	if status == null:
+		return
+	status.position = Vector2(92, 54)
+	status.size = Vector2(150, 150)
+	var generated_frame := status.get_node("GeneratedStatusFrame") as TextureRect
+	generated_frame.texture = EXPLORATION_FUNCTION_BUTTON
+	var portrait_frame := status.get_node("PortraitFrame") as Control
+	portrait_frame.position = Vector2(31, 31)
+	portrait_frame.size = Vector2(88, 88)
+	portrait_frame.clip_contents = false
+	var portrait := portrait_frame.get_node("ProtagonistPortrait") as CanvasItem
+	portrait.hide()
+	var name_panel := status.get_node("NamePlate") as Control
+	name_panel.hide()
+	if status.get_node_or_null("MapButton") != null:
+		return
+
+	_map_icon = TextureRect.new()
+	_map_icon.name = "MapIcon"
+	_map_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_map_icon.texture = HUD_ICON_MAP
+	_map_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_map_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_map_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_map_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_frame.add_child(_map_icon)
+
+	var map_button := Button.new()
+	map_button.name = "MapButton"
+	map_button.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	map_button.flat = true
+	map_button.focus_mode = Control.FOCUS_NONE
+	map_button.tooltip_text = "查看岭南海图"
+	map_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	map_button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	map_button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	map_button.add_theme_stylebox_override("pressed", _panel_style(Color(0.84, 0.67, 0.31, 0.18), Color(0, 0, 0, 0), 0, 70))
+	map_button.mouse_entered.connect(_set_map_icon_highlight.bind(true))
+	map_button.mouse_exited.connect(_set_map_icon_highlight.bind(false))
+	map_button.pressed.connect(_open_map_screen)
+	status.add_child(map_button)
+
+
+func _set_map_icon_highlight(highlighted: bool) -> void:
+	if is_instance_valid(_map_icon):
+		_map_icon.modulate = Color(1.12, 1.08, 0.9, 1.0) if highlighted else Color.WHITE
 
 
 func _build_task_tracker() -> void:
@@ -393,6 +461,13 @@ func _build_quest_screen() -> void:
 	_quest_screen.name = "QuestScreen"
 	_quest_screen.connect("close_requested", _close_quest_screen)
 	add_child(_quest_screen)
+
+
+func _build_map_screen() -> void:
+	_map_screen = SEA_MAP_SCREEN_SCENE.instantiate() as Control
+	_map_screen.name = "SeaMapScreen"
+	_map_screen.connect("close_requested", _close_map_screen)
+	add_child(_map_screen)
 
 
 func _build_system_menu() -> void:
@@ -841,6 +916,23 @@ func _open_quest_screen() -> void:
 	_set_function_buttons_visible(false)
 	_quest_screen.call("show_screen")
 	menu_visibility_changed.emit(true)
+
+
+func _open_map_screen() -> void:
+	if not visible or is_menu_open() or not is_instance_valid(_map_screen):
+		return
+	_toast_panel.hide()
+	_set_function_buttons_visible(false)
+	_map_screen.call("show_screen")
+	menu_visibility_changed.emit(true)
+
+
+func _close_map_screen() -> void:
+	if not is_map_screen_open():
+		return
+	_map_screen.hide()
+	_set_function_buttons_visible(true)
+	menu_visibility_changed.emit(false)
 
 
 func _close_quest_screen() -> void:

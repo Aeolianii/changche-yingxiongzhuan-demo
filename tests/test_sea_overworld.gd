@@ -4,6 +4,7 @@ const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SCREENSHOT_PATH := "res://.godot/sea_overworld_preview.png"
 const MOVEMENT_SCREENSHOT_PATH := "res://.godot/sea_overworld_movement_preview.png"
 const QUEST_SCREENSHOT_PATH := "res://.godot/sea_overworld_quest_preview.png"
+const MAP_SCREENSHOT_PATH := "res://.godot/sea_overworld_map_preview.png"
 
 var failures: Array[String] = []
 
@@ -56,6 +57,7 @@ func _verify_assets() -> void:
 
 func _verify_shared_exploration_hud(scene: Node) -> void:
 	var hud := scene.get_node("UI/ExplorationHUD") as Control
+	var player := scene.get_node("World/Player") as CharacterBody2D
 	var main_task := hud.get_node("QuestTracker/MainQuest/TaskName") as Label
 	var main_objective := hud.get_node("QuestTracker/MainQuest/Objective") as Label
 	var side_task := hud.get_node("QuestTracker/SideQuest/TaskName") as Label
@@ -82,6 +84,44 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	return_button.pressed.emit()
 	await process_frame
 	_expect(not quest_screen.visible, "Returning from the sea-map quest screen must restore exploration.")
+
+	var map_status := hud.get_node("PlayerStatus") as Control
+	var map_frame := map_status.get_node("GeneratedStatusFrame") as TextureRect
+	var map_icon := map_status.get_node("PortraitFrame/MapIcon") as TextureRect
+	var map_button := map_status.get_node("MapButton") as Button
+	var quest_tracker := hud.get_node("QuestTracker") as Control
+	_expect(not map_status.get_node("NamePlate").visible, "Sea-map HUD must remove the player information plate.")
+	_expect(not map_status.get_node("PortraitFrame/ProtagonistPortrait").visible, "Sea-map HUD must replace the protagonist portrait.")
+	_expect(map_frame.texture.resource_path.ends_with("function_button.png"), "Sea-map entry must retain the standalone diamond frame.")
+	_expect(map_icon.texture.resource_path.ends_with("hud_map_v1.png"), "Sea-map entry must use the generated ink-wash map icon.")
+	_expect(map_status.position.x > quest_tracker.position.x and map_status.position.y + map_status.size.y < quest_tracker.position.y, "Sea-map diamond must sit directly above and to the right of the task tracker origin.")
+
+	map_button.pressed.emit()
+	await process_frame
+	await process_frame
+	var map_screen := hud.get_node("SeaMapScreen") as Control
+	var map_texture := map_screen.get_node("MapPanel/MapViewport/MapTexture") as TextureRect
+	var location_layer := map_screen.get_node("MapPanel/MapViewport/MapLocationLayer") as Control
+	var player_name := map_screen.get_node("MapPanel/MapViewport/PlayerMarker/PlayerName") as Label
+	_expect(map_screen.visible, "Clicking the sea-map diamond must open the full map screen.")
+	_expect(not player.controls_enabled, "Opening the full map must pause sea-map movement.")
+	_expect(map_texture.texture.resource_path.ends_with("guangdong_sea_map_v2_hd.png"), "Full map screen must show the complete sea-overworld map texture.")
+	_expect(location_layer.get_child_count() == 4, "Full map must show exactly the four enterable island labels.")
+	var location_names: Array[String] = []
+	for location_label in location_layer.get_children():
+		location_names.append((location_label as Label).text)
+	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境"]:
+		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
+	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
+		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
+	_expect("水师元帅" in player_name.text and "当前位置" in player_name.text, "Full map must label the current player position and name.")
+	if DisplayServer.get_name() != "headless":
+		var map_screenshot_error := root.get_texture().get_image().save_png(MAP_SCREENSHOT_PATH)
+		_expect(map_screenshot_error == OK, "Sea overworld full-map preview screenshot could not be saved.")
+	var map_close_button := map_screen.get_node("MapPanel/CloseButton") as Button
+	map_close_button.pressed.emit()
+	await process_frame
+	_expect(not map_screen.visible and player.controls_enabled, "Closing the full map must restore sea-map movement.")
 
 
 func _verify_keyboard_movement(scene: Node) -> void:

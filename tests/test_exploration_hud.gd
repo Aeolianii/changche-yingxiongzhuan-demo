@@ -43,6 +43,7 @@ func _verify_generated_assets() -> void:
 		"res://assets/ui/exploration_hud/player_status_frame.png",
 		"res://assets/ui/exploration_hud/function_button.png",
 		"res://assets/ui/exploration_hud/function_buttons_brushstroke.png",
+		"res://assets/ui/icons/hud_map_v1.png",
 	]:
 		var texture := load(asset_path) as Texture2D
 		var image := texture.get_image() if texture != null else null

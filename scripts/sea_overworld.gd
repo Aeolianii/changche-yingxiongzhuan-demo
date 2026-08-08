@@ -30,6 +30,7 @@ func _ready() -> void:
 	enter_button.pressed.connect(_enter_active_location)
 	exploration_hud.connect("menu_visibility_changed", _on_hud_menu_visibility_changed)
 	exploration_hud.call("set_quest_context", &"sea_overworld")
+	_configure_sea_map_hud()
 	_refresh_exploration_task()
 	exploration_hud.call("set_exploration_visible", true)
 	interaction_prompt.hide()
@@ -89,6 +90,18 @@ func _build_auto_triggers() -> void:
 	_build_ship_trigger("近海渔船", Vector2(940, 1040), 0)
 	_build_ship_trigger("岭南商船", Vector2(1700, 930), 1)
 	_build_event_trigger("漂流木箱", Vector2(820, 810))
+
+
+func _configure_sea_map_hud() -> void:
+	var map_locations: Array[Dictionary] = []
+	for location_node in world_markers.get_children():
+		if not location_node.has_meta("location_name"):
+			continue
+		map_locations.append({
+			"name": str(location_node.get_meta("location_name", "未知地点")),
+			"position": (location_node as Node2D).position,
+		})
+	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations, "水师元帅")
 
 
 func _build_location(

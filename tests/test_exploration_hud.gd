@@ -136,8 +136,11 @@ func _verify_component_contract() -> void:
 		_expect((entry.get_node("Objective") as Label).position.x <= 19.0, "%s objective must align with the task name." % entry_path)
 	var main_quest_entry := hud.get_node("QuestTracker/MainQuest") as Panel
 	var side_quest_entry := hud.get_node("QuestTracker/SideQuest") as Panel
-	_expect(main_quest_entry.position.y <= 56.0 and side_quest_entry.position.y <= 156.0, "Both quest entries must move upward within the tracker.")
-	_expect(is_equal_approx(side_quest_entry.position.y - main_quest_entry.position.y, 100.0), "Quest entry spacing must remain unchanged after the upward shift.")
+	_expect(main_quest_entry.position.y <= 48.0 and side_quest_entry.position.y <= 156.0, "Main quest must move upward within the tracker.")
+	var main_objective := main_quest_entry.get_node("Objective") as Label
+	_expect(main_objective.max_lines_visible == 2, "Main quest objective must be limited to two lines.")
+	_expect(main_objective.clip_text and main_objective.text_overrun_behavior == TextServer.OVERRUN_TRIM_ELLIPSIS, "Overflowing main quest text must be clipped with an ellipsis.")
+	_expect(main_objective.position.y + main_objective.size.y <= main_quest_entry.size.y, "Main quest objective must remain above its divider.")
 	_expect((main_quest_entry.get_node("Accent") as ColorRect).position == Vector2.ZERO and (side_quest_entry.get_node("Accent") as ColorRect).position == Vector2.ZERO, "Quest accent bars must move together with their task wording.")
 	var main_entry_style := (hud.get_node("QuestTracker/MainQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat
 	var side_entry_style := (hud.get_node("QuestTracker/SideQuest") as Panel).get_theme_stylebox("panel") as StyleBoxFlat

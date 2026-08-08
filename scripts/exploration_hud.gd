@@ -208,7 +208,7 @@ func _build_task_tracker() -> void:
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_ribbon.add_child(title)
 
-	_build_quest_entry(tracker, "MainQuest", Vector2(28, 56), "主线", true)
+	_build_quest_entry(tracker, "MainQuest", Vector2(28, 48), "主线", true)
 	_build_quest_entry(tracker, "SideQuest", Vector2(28, 156), "支线", false)
 
 
@@ -251,9 +251,12 @@ func _build_quest_entry(parent: Control, node_name: String, at: Vector2, section
 
 	var objective := _make_label("前往标记地点推进剧情" if is_main else "与船匠交谈（效果占位）", 13, TEXT_MUTED)
 	objective.name = "Objective"
-	objective.position = Vector2(19, 54)
-	objective.size = Vector2(198, 28)
+	objective.position = Vector2(19, 52)
+	objective.size = Vector2(198, 32)
 	objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	objective.max_lines_visible = 2
+	objective.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	objective.clip_text = true
 	entry.add_child(objective)
 	if is_main:
 		_main_objective_label = objective

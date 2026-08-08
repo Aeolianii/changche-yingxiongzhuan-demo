@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/sea_overworld.gd" id="1_world"]
 [ext_resource type="Script" path="res://scripts/sea_overworld_player.gd" id="2_player"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/sea_overworld/guangdong_sea_map_v1.png" id="3_map"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png" id="3_map"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 23.0
@@ -17,7 +17,7 @@ z_index = -100
 texture_filter = 1
 texture = ExtResource("3_map")
 centered = false
-scale = Vector2(1.5, 1.5)
+scale = Vector2(0.75, 0.75)
 
 [node name="WorldCollision" type="StaticBody2D" parent="World"]
 collision_layer = 1

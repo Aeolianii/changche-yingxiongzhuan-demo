@@ -36,7 +36,7 @@ func _run() -> void:
 
 func _verify_assets() -> void:
 	for asset_path in [
-		"res://assets/backgrounds/sea_overworld/guangdong_sea_map_v1.png",
+		"res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png",
 		"res://assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png",
 		"res://assets/sprites/sea_overworld/player_ship_4dir_states_v1.png",
 		"res://assets/sprites/sea_overworld/event_ships_atlas_v2.png",
@@ -44,6 +44,10 @@ func _verify_assets() -> void:
 	]:
 		var texture := load(asset_path) as Texture2D
 		_expect(texture != null and texture.get_width() > 0, "%s could not be loaded." % asset_path)
+	var hd_map := load("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png") as Texture2D
+	_expect(hd_map != null and hd_map.get_width() >= 3000, "Sea overworld map must use the high-resolution source texture.")
+	var background := current_scene.get_node("World/Background") as Sprite2D
+	_expect(background.scale.is_equal_approx(Vector2(0.75, 0.75)), "High-resolution map must retain the existing world footprint.")
 
 
 func _verify_keyboard_movement(scene: Node) -> void:

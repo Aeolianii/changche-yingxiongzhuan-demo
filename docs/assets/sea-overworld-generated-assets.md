@@ -9,7 +9,7 @@
 
 | 素材 | 文件 | 尺寸 | 布局 |
 |---|---|---:|---|
-| 广东海岸原型海上地图 | `assets/backgrounds/sea_overworld/guangdong_sea_map_v1.png` | 1672×941 | 单张16:9背景 |
+| 广东海岸原型海上地图（高清版） | `assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png` | 3344×1882 | 单张16:9背景；场景内以0.75倍显示，地图范围不变 |
 | 主角Q版四方向 | `assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png` | 1776×887 | 4列×1行，每格444×887 |
 | 玩家船只方向与状态 | `assets/sprites/sea_overworld/player_ship_4dir_states_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 | 可复用岛屿 | `assets/sprites/sea_overworld/island_locations_atlas_v1.png` | 1920×820 | 4列×1行，每格480×820 |
@@ -63,6 +63,19 @@ Scene/backdrop: calm blue-green coastal sea with a broad west-to-east coast, sev
 Style/medium: crisp hand-painted pixel art, classic Chinese wuxia RPG overworld, top-down with slight front-facing elevation, nearest-neighbor-looking edges and restrained ink-wash influence.
 Composition/framing: 16:9 landscape, at least 65 percent navigable water, broad central route and looping side routes.
 Constraints: no text, labels, UI, icons, player, ships, people, title, border, watermark, wind arrows, fog, storms, currents, hazard reefs, route lines, grids or modern map symbols.
+```
+
+#### 高清化编辑
+
+内置生图模式：图像编辑。以原地图为编辑目标，生成后等比高清化到3344×1882并进行轻度锐化。
+
+```text
+Use case: precise-object-edit
+Asset type: high-resolution production background for the existing Godot sea overworld
+Primary request: upscale and refine the supplied sea map into a much sharper high-resolution version suitable for camera zoom. Increase pixel/detail density and crispness while preserving the exact existing map layout.
+Style/medium: polished high-resolution pixel art; retain the same Chinese wuxia RPG overworld look, palette, top-down perspective, lighting and calm sea.
+Composition/framing: preserve the exact 16:9 framing and every landmass position and silhouette, including all four main locations, docks, rocks, island groups, straits and open-water routes.
+Constraints: change only resolution, sharpness and fine texture detail. No moving, adding, removing, resizing or redesigning locations or landforms. No text, labels, UI, icons, player, ships, characters, routes, grid, border, watermark, blur, haze or crop.
 ```
 
 ### 4.2 主角Q版

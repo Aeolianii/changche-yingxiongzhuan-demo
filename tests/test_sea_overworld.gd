@@ -56,7 +56,7 @@ func _verify_assets() -> void:
 	for asset_path in [
 		"res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png",
 		"res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png",
-		"res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v1.png",
+		"res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v2.png",
 		"res://assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png",
 		"res://assets/sprites/sea_overworld/player_ship_4dir_states_v1.png",
 		"res://assets/sprites/sea_overworld/event_ships_atlas_v2.png",
@@ -87,7 +87,7 @@ func _verify_assets() -> void:
 		if world_child is Sprite2D and (world_child as Sprite2D).texture == east_map:
 			east_texture_node_count += 1
 	_expect(east_texture_node_count == 1, "Serialized east map chunk must not be duplicated at runtime.")
-	var c_map := load("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v1.png") as Texture2D
+	var c_map := load("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v2.png") as Texture2D
 	_expect(c_map != null and c_map.get_size() == hd_map.get_size(), "C map chunk must match the base map source dimensions.")
 	var c_background := current_scene.get_node("World/CBackground") as Sprite2D
 	_expect(c_background.texture == c_map and c_background.position.is_equal_approx(Vector2(0, 1292)), "C map chunk must overlap below A at the configured north seam.")
@@ -186,7 +186,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	_expect(map_texture.texture.resource_path.ends_with("guangdong_sea_map_v2_hd.png"), "Full map screen must show the complete sea-overworld map texture.")
 	_expect(east_map_texture.texture.resource_path.ends_with("guangdong_east_sea_expansion_v1.png"), "Full map screen must show the eastern expansion texture.")
 	_expect(east_map_texture.material is ShaderMaterial, "Full map eastern texture must retain seam blending.")
-	_expect(c_map_texture.texture.resource_path.ends_with("guangdong_sea_zone_c_v1.png"), "Full map screen must show the C-zone expansion texture.")
+	_expect(c_map_texture.texture.resource_path.ends_with("guangdong_sea_zone_c_v2.png"), "Full map screen must show the C-zone expansion texture.")
 	_expect(c_map_texture.material is ShaderMaterial, "Full map C-zone texture must retain seam blending.")
 	_expect(bool((c_map_texture.material as ShaderMaterial).get_shader_parameter("fade_from_top")), "Full map C-zone texture must fade from its north edge.")
 	_expect(location_layer.get_child_count() == 11, "Full map must show exactly the eleven enterable island labels.")
@@ -378,6 +378,14 @@ func _verify_c_expansion(scene: Node) -> void:
 		c_locations.append(location)
 		_expect(location.position.y > 1412.0, "%s must be positioned south of A." % expected_name)
 		_expect(str(location.get_meta("entry_message", "")) == "该岛屿即将开放", "%s must use the island coming-soon message." % expected_name)
+	var lighthouse := _find_location(locations, "澄海灯岛")
+	var fishing_village := _find_location(locations, "白沙渔岛")
+	var sea_gate := _find_location(locations, "龙门海寨")
+	var ancient_island := _find_location(locations, "玄潮古屿")
+	if lighthouse != null and fishing_village != null and sea_gate != null and ancient_island != null:
+		_expect(lighthouse.position.x < 600.0 and fishing_village.position.x < 600.0, "C-zone left island pair must remain close to the west side.")
+		_expect(sea_gate.position.x > 1400.0 and ancient_island.position.x > 1400.0, "C-zone right island pair must remain separated from the left pair.")
+		_expect(minf(sea_gate.position.x, ancient_island.position.x) - maxf(lighthouse.position.x, fishing_village.position.x) > 900.0, "C-zone left and right island pairs must retain a broad vertical sea corridor.")
 
 	var island_distances: Array[float] = []
 	for first_index in range(c_locations.size()):
@@ -406,6 +414,7 @@ func _verify_c_expansion(scene: Node) -> void:
 	if not c_locations.is_empty() and DisplayServer.get_name() != "headless":
 		var preview_location: Area2D = c_locations.back() as Area2D
 		player.global_position = preview_location.global_position + Vector2(0, float(preview_location.get_meta("trigger_radius")) - 35.0)
+		(player.get_node("Camera2D") as Camera2D).reset_smoothing()
 		for _frame in range(3):
 			await physics_frame
 		var screenshot_error := root.get_texture().get_image().save_png(C_ZONE_SCREENSHOT_PATH)

@@ -8,7 +8,7 @@
 [ext_resource type="Texture2D" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="6_button_active"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png" id="7_east_map"]
 [ext_resource type="Shader" path="res://shaders/map_chunk_blend.gdshader" id="8_chunk_blend"]
-[ext_resource type="Texture2D" uid="uid://gxwxx0qa74ua" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v1.png" id="9_c_map"]
+[ext_resource type="Texture2D" uid="uid://bl4sc5x7xbvp5" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v2.png" id="9_c_map"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_east_blend"]
 shader = ExtResource("8_chunk_blend")

@@ -1,0 +1,205 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/sea_overworld.gd" id="1_world"]
+[ext_resource type="Script" path="res://scripts/sea_overworld_player.gd" id="2_player"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/sea_overworld/guangdong_sea_map_v1.png" id="3_map"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 23.0
+
+[node name="SeaOverworld" type="Node2D"]
+script = ExtResource("1_world")
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="Background" type="Sprite2D" parent="World"]
+z_index = -100
+texture_filter = 1
+texture = ExtResource("3_map")
+centered = false
+scale = Vector2(1.5, 1.5)
+
+[node name="WorldCollision" type="StaticBody2D" parent="World"]
+collision_layer = 1
+collision_mask = 1
+
+[node name="WorldMarkers" type="Node2D" parent="World"]
+
+[node name="Player" type="CharacterBody2D" parent="World"]
+z_index = 50
+position = Vector2(1240, 1120)
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("2_player")
+
+[node name="WakeSprite" type="Sprite2D" parent="World/Player"]
+z_index = -2
+texture_filter = 1
+scale = Vector2(0.34, 0.34)
+
+[node name="SideSplashSprite" type="Sprite2D" parent="World/Player"]
+z_index = -1
+texture_filter = 1
+scale = Vector2(0.34, 0.34)
+
+[node name="VisualRoot" type="Node2D" parent="World/Player"]
+
+[node name="ShipSprite" type="Sprite2D" parent="World/Player/VisualRoot"]
+z_index = 1
+texture_filter = 1
+scale = Vector2(0.34, 0.34)
+
+[node name="HeroSprite" type="Sprite2D" parent="World/Player/VisualRoot"]
+z_index = 2
+texture_filter = 1
+scale = Vector2(0.105, 0.105)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player"]
+shape = SubResource("CircleShape2D_player")
+
+[node name="Camera2D" type="Camera2D" parent="World/Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 7.0
+limit_left = 0
+limit_top = 0
+limit_right = 2508
+limit_bottom = 1412
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Root" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TitlePanel" type="PanelContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -184.0
+offset_top = 18.0
+offset_right = 184.0
+offset_bottom = 70.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="UI/Root/TitlePanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.88, 0.62, 1)
+theme_override_colors/font_outline_color = Color(0.01, 0.025, 0.028, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 24
+text = "岭南海域 · 初版原型"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HelpPanel" type="PanelContainer" parent="UI/Root"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 24.0
+offset_top = 18.0
+offset_right = 454.0
+offset_bottom = 70.0
+mouse_filter = 2
+
+[node name="HelpLabel" type="Label" parent="UI/Root/HelpPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.9, 0.77, 1)
+theme_override_colors/font_outline_color = Color(0.01, 0.025, 0.028, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 17
+text = "WASD / 方向键航行    点击进入或按 E"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InteractionPrompt" type="PanelContainer" parent="UI/Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -304.0
+offset_top = -122.0
+offset_right = 304.0
+offset_bottom = -52.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="PromptMargin" type="MarginContainer" parent="UI/Root/InteractionPrompt"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 8
+
+[node name="PromptRow" type="HBoxContainer" parent="UI/Root/InteractionPrompt/PromptMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LocationName" type="Label" parent="UI/Root/InteractionPrompt/PromptMargin/PromptRow"]
+custom_minimum_size = Vector2(330, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.86, 0.48, 1)
+theme_override_colors/font_outline_color = Color(0.01, 0.025, 0.028, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 23
+text = "【地点名称】"
+vertical_alignment = 1
+
+[node name="KeyHint" type="Label" parent="UI/Root/InteractionPrompt/PromptMargin/PromptRow"]
+custom_minimum_size = Vector2(64, 42)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83, 0.78, 0.66, 1)
+theme_override_font_sizes/font_size = 17
+text = "按 E"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="EnterButton" type="Button" parent="UI/Root/InteractionPrompt/PromptMargin/PromptRow"]
+custom_minimum_size = Vector2(118, 42)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 19
+text = "进入"
+
+[node name="ToastPanel" type="PanelContainer" parent="UI/Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -275.0
+offset_top = 88.0
+offset_right = 275.0
+offset_bottom = 150.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="ToastMargin" type="MarginContainer" parent="UI/Root/ToastPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="ToastLabel" type="Label" parent="UI/Root/ToastPanel/ToastMargin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.91, 0.78, 1)
+theme_override_colors/font_outline_color = Color(0.01, 0.025, 0.028, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 20
+text = "内容开发中"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ToastTimer" type="Timer" parent="."]
+wait_time = 2.0
+one_shot = true

@@ -79,10 +79,13 @@ $requiredFiles = @(
     'project.godot',
     'scenes\palace\palace_demo.tscn',
     'scenes\Scene2.tscn',
+    'scenes\sea_overworld\sea_overworld.tscn',
     'scenes\ui\exploration_hud.tscn',
     'scenes\ui\chapter_transition.tscn',
     'scripts\palace_demo.gd',
     'scripts\scene_2.gd',
+    'scripts\sea_overworld.gd',
+    'scripts\sea_overworld_player.gd',
     'scripts\exploration_hud.gd',
     'scripts\ui\chapter_transition.gd',
     'shaders\menu_blur.gdshader',
@@ -107,6 +110,7 @@ $requiredFiles = @(
     'tests\test_system_menu_exit.gd',
     'tests\test_chapter_transition_visual.gd',
     'tests\test_scene_two_dialogue_patrol.gd',
+    'tests\test_sea_overworld.gd',
     'assets\characters\soldier\picture.png',
     'assets\characters\protagonist\picture.png',
     'assets\characters\magistrate\standard\idle\down\1.png',
@@ -242,6 +246,7 @@ Test-SceneResourceReferences 'scenes\palace\palace_demo.tscn'
 Test-SceneResourceReferences 'scenes\characters\player.tscn'
 Test-SceneResourceReferences 'scenes\characters\npc.tscn'
 Test-SceneResourceReferences 'scenes\Scene2.tscn'
+Test-SceneResourceReferences 'scenes\sea_overworld\sea_overworld.tscn'
 Test-SceneResourceReferences 'scenes\ui\exploration_hud.tscn'
 Test-SceneResourceReferences 'scenes\ui\chapter_transition.tscn'
 

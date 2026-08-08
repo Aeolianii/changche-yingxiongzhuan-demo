@@ -13,6 +13,8 @@
 
 `Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操练覆盖层。
 
+`SeaOverworld` 是独立运行的海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用单张放大的广东海岸原型背景、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；当前不接入正式章节切换。
+
 `ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。两个主场景各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、系统菜单、短时提示和退出请求；菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
 
 Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容器，但其 `panel` 样式改为拉伸共享的生成式像素水墨对话底板；姓名容器使用共享姓名笔触。Scene1 直接引用同一资源。两处保留各自既有状态机，只统一底板、人物左右站位和正文安全边距。
@@ -22,6 +24,8 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 ## Data flow
 
 输入动作进入 Player，Player 更新速度与动画。场景脚本以显式剧情状态机驱动旁白、太监自身移动、距离触发交互按钮、任务指引、觐见对白和圣旨收尾。主帅位置只由玩家输入和物理碰撞决定，不由剧情脚本写入。无持久化数据。
+
+海上大地图继续复用 `move_up/down/left/right`，但地点进入不复用同时包含空格和回车的通用 `interact` 动作，而是只接收物理键E或鼠标点击“进入”按钮。船只进入地点 `Area2D` 后显示世界高亮和底部操作条；进入海上事件或事件船只的 `Area2D` 时自动显示一次占位提示。
 
 `interact` 动作同时绑定空格和 E。场景脚本只在按键按下的单帧根据 UI 状态分发：对话框可见时推进文本，交互按钮可见时触发当前交互，避免同一次按键连续跨越两个剧情状态。
 
@@ -43,6 +47,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 | `assets/characters/` | 首版角色帧、元数据与授权 |
 | `scenes/characters/` | Player 和 NPC 可复用场景 |
 | `scenes/palace/` | 皇宫可玩场景和手工碰撞 |
+| `scenes/sea_overworld/` | 海上大地图场景、地点触发与船只原型 |
 | `scripts/` | 移动、动画、交互与 UI 行为 |
 | `assets/` | 统一管理背景、角色、UI 与场景素材 |
 | `shaders/` | 场景二水面等视觉效果着色器 |

@@ -12,6 +12,7 @@
 - [MVP](product/mvp.md)
 - [Project plan](product/project-plan.md)
 - [Core loop](design/core-loop.md)
+- [Game design V1](design/game-design-v1.md)
 - [Palace scene](design/palace-scene.md)
 - [Scene flow](design/scene-flow.md)
 - [Art direction](design/art-direction.md)

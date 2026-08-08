@@ -9,7 +9,6 @@ const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
 const SOUTH_SEA_HARBOR_SPAWN := Vector2(1230, 900)
 
-const GOLD_BRIGHT := Color(1.0, 0.86, 0.48, 1.0)
 const PAPER := Color(0.95, 0.9, 0.75, 1.0)
 
 @onready var player: CharacterBody2D = $World/Player
@@ -22,7 +21,6 @@ const PAPER := Color(0.95, 0.9, 0.75, 1.0)
 
 var _active_location_name := ""
 var _active_location_area: Area2D
-var _active_location_label: Label
 var _floating_visuals: Array[CanvasItem] = []
 var _float_elapsed := 0.0
 var _exploration_stage := 0
@@ -125,8 +123,7 @@ func _activate_south_sea_harbor_spawn() -> void:
 		if str(location_node.get_meta("location_name", "")) != "南海军港":
 			continue
 		var area := location_node as Area2D
-		var label := area.get_node("HighlightedName") as Label
-		_on_location_body_entered(player, area, label)
+		_on_location_body_entered(player, area)
 		return
 
 
@@ -162,24 +159,8 @@ func _build_location(
 		shape_node.shape = radial_shape
 	area.add_child(shape_node)
 
-	var label := Label.new()
-	label.name = "HighlightedName"
-	label.text = "【%s】" % location_name
-	label.position = Vector2(-150, -34)
-	label.size = Vector2(300, 48)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 24)
-	label.add_theme_color_override("font_color", GOLD_BRIGHT)
-	label.add_theme_color_override("font_outline_color", Color(0.01, 0.025, 0.028, 0.98))
-	label.add_theme_constant_override("outline_size", 7)
-	label.z_index = 32
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.hide()
-	area.add_child(label)
-
-	area.body_entered.connect(_on_location_body_entered.bind(area, label))
-	area.body_exited.connect(_on_location_body_exited.bind(area, label))
+	area.body_entered.connect(_on_location_body_entered.bind(area))
+	area.body_exited.connect(_on_location_body_exited.bind(area))
 
 
 func _build_ship_trigger(ship_name: String, at: Vector2, atlas_column: int) -> void:
@@ -244,27 +225,22 @@ func _make_auto_trigger(node_name: String, at: Vector2, display_name: String, tr
 	return area
 
 
-func _on_location_body_entered(body: Node2D, area: Area2D, label: Label) -> void:
+func _on_location_body_entered(body: Node2D, area: Area2D) -> void:
 	if body != player:
 		return
-	_clear_active_location_visuals()
 	_active_location_area = area
-	_active_location_label = label
 	_active_location_name = str(area.get_meta("location_name", ""))
-	label.show()
 	location_name_label.text = "【%s】" % _active_location_name
 	if not bool(exploration_hud.call("is_menu_open")):
 		interaction_prompt.show()
 	_advance_exploration_stage(2)
 
 
-func _on_location_body_exited(body: Node2D, area: Area2D, label: Label) -> void:
+func _on_location_body_exited(body: Node2D, area: Area2D) -> void:
 	if body != player:
 		return
-	label.hide()
 	if _active_location_area == area:
 		_active_location_area = null
-		_active_location_label = null
 		_active_location_name = ""
 		interaction_prompt.hide()
 
@@ -348,11 +324,6 @@ func _refresh_exploration_task() -> void:
 func _on_hud_menu_visibility_changed(is_open: bool) -> void:
 	player.controls_enabled = not is_open
 	interaction_prompt.visible = not is_open and not _active_location_name.is_empty()
-
-
-func _clear_active_location_visuals() -> void:
-	if is_instance_valid(_active_location_label):
-		_active_location_label.hide()
 
 
 func _add_circle_blocker(at: Vector2, radius: float) -> void:

@@ -171,11 +171,13 @@ func _verify_location_interaction(scene: Node) -> void:
 		return
 	_expect(location.get_node_or_null("IslandOutline") == null, "Location proximity must not draw a yellow island outline.")
 	_expect(location.get_node_or_null("HighlightRing") == null, "Location highlight must not use a circular ring.")
+	_expect(location.get_node_or_null("HighlightedName") == null, "Location names must not be drawn over islands; the bottom prompt is sufficient.")
 	var radius := float(location.get_meta("trigger_radius"))
 	player.global_position = location.global_position + Vector2(radius - 30.0, 0)
 	await physics_frame
 	await physics_frame
 	_expect(prompt.visible, "Approaching a location must show the highlighted interaction prompt.")
+	_expect("川山渔村" in location_label.text, "The bottom interaction prompt must retain the active location name.")
 	_expect("点击进入按钮" in task_objective.text, "Approaching an island must advance the explore-map task flow.")
 	var position_before_prompt := player.position
 	await physics_frame

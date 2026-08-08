@@ -43,6 +43,8 @@ func _verify_assets() -> void:
 		"res://assets/sprites/sea_overworld/player_ship_4dir_states_v1.png",
 		"res://assets/sprites/sea_overworld/event_ships_atlas_v2.png",
 		"res://assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png",
+		"res://assets/ui/sea_overworld/interaction_button_ink_v1.png",
+		"res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png",
 	]:
 		var texture := load(asset_path) as Texture2D
 		_expect(texture != null and texture.get_width() > 0, "%s could not be loaded." % asset_path)
@@ -110,12 +112,16 @@ func _verify_location_interaction(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
 	var enter_button := scene.get_node("UI/Root/InteractionPrompt/EnterButton") as BaseButton
+	var texture_button := enter_button as TextureButton
 	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
 	var toast := scene.get_node("UI/ExplorationHUD/ComingSoonToast") as Control
 	var toast_label := scene.get_node("UI/ExplorationHUD/ComingSoonToast/Message") as Label
 	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
 	var locations := get_nodes_in_group("sea_location")
 	_expect(not locations.is_empty(), "Sea overworld must provide at least one location trigger.")
+	_expect(texture_button.texture_normal.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_v1.png", "Location interaction must use the ink-wash normal button asset.")
+	_expect(texture_button.texture_pressed.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png", "Location interaction must use the ink-wash pressed button asset.")
+	_expect(prompt.size.is_equal_approx(Vector2(360.0, 88.0)), "Ink-wash interaction prompt must keep its intended 2x asset scale.")
 	if locations.is_empty():
 		return
 	var location := locations[0] as Area2D

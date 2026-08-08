@@ -15,6 +15,8 @@
 | 可复用岛屿 | `assets/sprites/sea_overworld/island_locations_atlas_v1.png` | 1920×820 | 4列×1行，每格480×820 |
 | 海上事件船只（清理版） | `assets/sprites/sea_overworld/event_ships_atlas_v2.png` | 1560×1008 | 4列×1行，每格390×1008；已移除商船右侧残留线条 |
 | 船尾航迹与侧浪 | `assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
+| 水墨像素交互按钮（普通态） | `assets/ui/sea_overworld/interaction_button_ink_v1.png` | 720×176 | 无文字透明PNG；场景内以360×88显示 |
+| 水墨像素交互按钮（按下态） | `assets/ui/sea_overworld/interaction_button_ink_active_v1.png` | 720×176 | 同轮廓亮色反馈；场景内以360×88显示 |
 
 除地图底图外，其余素材均已去除洋红色键控背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
 
@@ -134,6 +136,33 @@ Constraints: no ships, islands, grid lines, labels, text, UI or watermark; no re
 Precisely edit this four-ship pixel-art atlas. Preserve the four ship designs, their order, scale, top-down perspective, crisp pixel-art rendering, spacing, and all legitimate masts, rigging, flags, sails, hull details, and cargo. In the second cell (merchant junk), remove only the isolated thin vertical stray line floating to the right of the ship; it is a cutout artifact and is not connected to the ship. Clean every ship silhouette so there are no detached accidental pixels or remnant marks outside the intended art. Use a perfectly uniform #ff00ff chroma-key background across the full canvas. No grid, labels, text, UI, shadows, ocean, extra objects, watermark, or redesign.
 ```
 
+### 4.7 水墨像素交互按钮
+
+内置生图模式：图像生成（普通态）与图像编辑（按下态）。两态生成后使用洋红键控去底，裁切并统一为720×176透明PNG；地点名和“进入 · E”继续由Godot文字层绘制。
+
+普通态：
+
+```text
+Use case: stylized-concept
+Asset type: production game UI interaction button, normal/idle state
+Primary request: create exactly one isolated wide horizontal interaction-button frame for a Chinese wuxia sea-overworld game's enter-location prompt.
+Style/medium: crisp water-ink pixel art matching the existing exploration HUD; dark black-green ink wash, muted jade center, restrained weathered antique-gold double-line outlines and stair-stepped pixel edges.
+Composition: one centered symmetrical banner with a broad unobstructed text-safe area and subtle ink-brush tails at both ends.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background.
+Constraints: no text, letters, Chinese characters, numbers, symbols, icons, characters, boats, scenery, extra UI, watermark or outside cast shadow; avoid vivid green.
+```
+
+按下态：
+
+```text
+Use case: precise-object-edit
+Asset type: production game UI interaction button, pressed/active state
+Primary request: preserve the exact normal-state silhouette, proportions, ornament positions and framing; change only the interaction state.
+State change: make the dark-jade center subtly lighter, brighten the antique-gold inner line and add a restrained inward highlight while retaining the dark ink-wash mood.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background.
+Constraints: no redesign, reshape, crop, rotation, movement, text, symbols, icons, extra UI or watermark.
+```
+
 ## 5. 当前使用边界
 
-这些素材服务于初版移动、地点高亮和占位触发验证。当前不要求真实进入岛屿、播放海战或实现拟真航海环境；地图文字、地点高亮、“进入”按钮和“开发中”提示继续由Godot界面控件绘制，不烘焙进图片。
+这些素材服务于初版移动、地点提示和占位触发验证。当前不要求真实进入岛屿、播放海战或实现拟真航海环境；地图文字、地点名称、“进入 · E”和“开发中”提示继续由Godot界面控件绘制，不烘焙进图片。

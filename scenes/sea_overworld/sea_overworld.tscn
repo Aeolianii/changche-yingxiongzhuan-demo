@@ -4,8 +4,8 @@
 [ext_resource type="Script" path="res://scripts/sea_overworld_player.gd" id="2_player"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png" id="3_map"]
 [ext_resource type="PackedScene" path="res://scenes/ui/exploration_hud.tscn" id="4_hud"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_medium_green.png" id="5_button"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_medium_green_active.png" id="6_button_active"]
+[ext_resource type="Texture2D" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="5_button"]
+[ext_resource type="Texture2D" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="6_button_active"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 23.0
@@ -89,9 +89,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -150.0
+offset_left = -180.0
 offset_top = -112.0
-offset_right = 150.0
+offset_right = 180.0
 offset_bottom = -24.0
 grow_horizontal = 2
 grow_vertical = 0

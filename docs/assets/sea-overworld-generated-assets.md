@@ -18,6 +18,7 @@
 | 水墨像素交互按钮（普通态） | `assets/ui/sea_overworld/interaction_button_ink_v1.png` | 720×176 | 无文字透明PNG；场景内以360×88显示 |
 | 水墨像素交互按钮（按下态） | `assets/ui/sea_overworld/interaction_button_ink_active_v1.png` | 720×176 | 同轮廓亮色反馈；场景内以360×88显示 |
 | 水墨像素海图图标 | `assets/ui/icons/hud_map_v1.png` | 128×128 | 透明PNG；放置于原人物头像的菱形框中 |
+| 岭南海域双向加载图 | `assets/ui/loading/lingnan_sea_loading_v1.png` | 1536×1024 | 3:2全屏背景；文字由 Godot 叠加，可复用于进入大地图与返回南海军港 |
 
 除地图底图外，其余素材均已去除洋红色键控背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
 
@@ -176,6 +177,21 @@ Style/medium: crisp hand-painted pixel art with Chinese ink-wash influence and s
 Color palette: aged ivory parchment, near-black ink coastline, muted antique gold bindings and restrained desaturated teal sea marks.
 Scene/backdrop: perfectly flat solid #ff00ff chroma-key background.
 Constraints: no text, labels, outer frame, diamond, scenery, characters, boats, UI panel, watermark or outside drop shadow.
+```
+
+### 4.9 岭南海域双向加载图
+
+内置生图模式：图像生成。画面本身不烘焙文字，加载说明由 Godot 根据切换方向显示“正在进入大地图”或“正在进入南海军港”。
+
+```text
+Use case: stylized-concept
+Asset type: production full-screen loading background for a Chinese wuxia pixel-art RPG.
+Primary request: Create one atmospheric maritime journey loading illustration showing a single small ancient Chinese command junk sailing between a fortified coastal harbor and open island-dotted sea, representing travel between South Sea Harbor and the Lingnan sea overworld.
+Input images: southbound_journey.png is the project's chapter-transition style reference for dense black ink-brush borders, antique parchment mood, and crisp pixel treatment; guangdong_sea_map_v2_hd.png is the subject and palette reference for the Lingnan coast, blue-green sea, islands, ancient harbor architecture, and ship scale. Do not copy the exact map layout.
+Style/medium: polished hand-painted pixel art with Chinese ink-wash influence, crisp stair-stepped edges, dark ink feathering around the frame, antique gold accents, muted blue-jade water, slightly dramatic but calm.
+Composition/framing: 3:2 landscape full-screen image; coastal harbor on the left-middle distance, open sea and small islands to the right, one command junk traveling along a subtle wake through the central third; keep a quiet darkened text-safe band across the lower center for engine-rendered loading text.
+Lighting/mood: late-afternoon coastal light, contemplative departure and return, readable silhouettes.
+Constraints: no words, no Chinese characters, no letters, no numbers, no UI, no logos, no loading bar, no player portrait, no multiple ships, no combat, no storm, no fog wall, no watermark. Fill the entire rectangular canvas with artwork; no transparency and no chroma-key background.
 ```
 
 ## 5. 当前使用边界

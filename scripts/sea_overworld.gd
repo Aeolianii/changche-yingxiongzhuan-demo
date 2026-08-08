@@ -1,8 +1,13 @@
 extends Node2D
 
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
+const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const MAP_SIZE := Vector2(2508, 1412)
 const PLAYER_LAYER := 1
+const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
+const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
+const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
+const SOUTH_SEA_HARBOR_SPAWN := Vector2(1230, 900)
 
 const GOLD_BRIGHT := Color(1.0, 0.86, 0.48, 1.0)
 const PAPER := Color(0.95, 0.9, 0.75, 1.0)
@@ -21,9 +26,13 @@ var _active_location_label: Label
 var _floating_visuals: Array[CanvasItem] = []
 var _float_elapsed := 0.0
 var _exploration_stage := 0
+var _entered_from_scene_two := false
+var _transitioning := false
+var _loading_transition: SceneLoadingTransition
 
 
 func _ready() -> void:
+	_entered_from_scene_two = _consume_scene_two_entry_flag()
 	_build_world_collisions()
 	_build_locations()
 	_build_auto_triggers()
@@ -34,6 +43,11 @@ func _ready() -> void:
 	_refresh_exploration_task()
 	exploration_hud.call("set_exploration_visible", true)
 	interaction_prompt.hide()
+	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
+	$UI.add_child(_loading_transition)
+	if _entered_from_scene_two:
+		player.global_position = SOUTH_SEA_HARBOR_SPAWN
+		_activate_south_sea_harbor_spawn()
 
 
 func _process(delta: float) -> void:
@@ -47,6 +61,8 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if _transitioning:
+		return
 	if bool(exploration_hud.call("is_menu_open")):
 		return
 	if not (event is InputEventKey):
@@ -102,6 +118,16 @@ func _configure_sea_map_hud() -> void:
 			"position": (location_node as Node2D).position,
 		})
 	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations)
+
+
+func _activate_south_sea_harbor_spawn() -> void:
+	for location_node in world_markers.get_children():
+		if str(location_node.get_meta("location_name", "")) != "南海军港":
+			continue
+		var area := location_node as Area2D
+		var label := area.get_node("HighlightedName") as Label
+		_on_location_body_entered(player, area, label)
+		return
 
 
 func _build_location(
@@ -258,8 +284,40 @@ func _on_auto_trigger_body_entered(body: Node2D, area: Area2D) -> void:
 func _enter_active_location() -> void:
 	if _active_location_name.is_empty():
 		return
+	if _active_location_name == "南海军港" and _entered_from_scene_two:
+		_return_to_scene_two()
+		return
 	_show_toast("%s · 该地点即将开放" % _active_location_name)
 	_advance_exploration_stage(3)
+
+
+func _return_to_scene_two() -> void:
+	if _transitioning:
+		return
+	_transitioning = true
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	exploration_hud.call("set_exploration_visible", false)
+	var root := get_tree().root
+	root.set_meta(RETURN_TO_SCENE_TWO_META, true)
+	await _loading_transition.play_loading("正在进入南海军港")
+	var change_error := get_tree().change_scene_to_file(SCENE_TWO_PATH)
+	if change_error == OK:
+		return
+	root.remove_meta(RETURN_TO_SCENE_TWO_META)
+	_loading_transition.reset_loading()
+	_transitioning = false
+	player.controls_enabled = true
+	exploration_hud.call("set_exploration_visible", true)
+	interaction_prompt.visible = not _active_location_name.is_empty()
+
+
+func _consume_scene_two_entry_flag() -> bool:
+	var root := get_tree().root
+	if not root.has_meta(SCENE_TWO_ENTRY_META):
+		return false
+	root.remove_meta(SCENE_TWO_ENTRY_META)
+	return true
 
 
 func _show_toast(message: String) -> void:

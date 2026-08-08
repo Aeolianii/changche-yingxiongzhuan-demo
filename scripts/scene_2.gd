@@ -5,6 +5,7 @@ enum PatrolTaskStage {
 	REPORT_TO_OFFICER = 2,
 	MEET_MAGISTRATE = 3,
 	DRILL_UNLOCKED = 4,
+	EXPLORE_LINGNAN = 5,
 }
 
 const PLAYER_SPEED := 210.0
@@ -12,6 +13,10 @@ const ASSET_ROOT := "res://assets/characters"
 const DIALOGUE_BACKGROUND_PATH := "res://assets/ui/dialogue/ink_dialogue_backdrop.png"
 const DIALOGUE_NAMEPLATE_PATH := "res://assets/ui/dialogue/ink_speaker_nameplate.png"
 const CHAPTER_ENTRY_META := "chapter_transition_from_scene_one"
+const RETURN_FROM_SEA_META := "scene_two_return_from_sea_overworld"
+const SEA_OVERWORLD_ENTRY_META := "sea_overworld_from_scene_two"
+const SEA_OVERWORLD_SCENE := "res://scenes/sea_overworld/sea_overworld.tscn"
+const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const LEFT_SOLDIER_ROLE := "patrol_soldier_left"
 const RIGHT_SOLDIER_ROLE := "patrol_soldier_right"
 const OFFICER_ROLE := "patrol_officer"
@@ -34,6 +39,7 @@ var _option_box: VBoxContainer
 var _next_dialogue_button: Button
 var _drill_button: Button
 var _drill_overlay: Control
+var _loading_transition: SceneLoadingTransition
 
 var _patrol_guards: Array[Dictionary] = []
 var _interactable_npcs: Array[Dictionary] = []
@@ -42,6 +48,8 @@ var _heard_soldier_reports: Dictionary = {}
 
 var _arrival_dialogue_active := false
 var _should_play_arrival_dialogue := false
+var _returning_from_sea := false
+var _transitioning := false
 var _arrival_dialogue_index := 0
 var _dialogue_index := 0
 var _patrol_task_stage: PatrolTaskStage = PatrolTaskStage.TALK_TO_SOLDIERS
@@ -64,7 +72,9 @@ var _arrival_dialogues: Array = [
 
 
 func _ready() -> void:
-	_should_play_arrival_dialogue = _consume_chapter_entry_flag()
+	_returning_from_sea = _consume_scene_entry_flag(RETURN_FROM_SEA_META)
+	var entered_from_chapter_one := _consume_scene_entry_flag(CHAPTER_ENTRY_META)
+	_should_play_arrival_dialogue = not _returning_from_sea and entered_from_chapter_one
 	_build_scene()
 	_build_ui()
 
@@ -73,7 +83,7 @@ func _physics_process(delta: float) -> void:
 	_update_ambient_background(delta)
 	_refresh_exploration_hud()
 
-	if _dialogue_panel.visible or _drill_overlay.visible or _is_menu_open():
+	if _transitioning or _dialogue_panel.visible or _drill_overlay.visible or _is_menu_open():
 		_player.velocity = Vector2.ZERO
 		_player_sprite.play("idle_%s" % _last_direction)
 		_update_patrol_guards(delta)
@@ -90,6 +100,7 @@ func _physics_process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if (
 		event.is_action_pressed("interact")
+		and not _transitioning
 		and _current_target != null
 		and not _dialogue_panel.visible
 		and not _drill_overlay.visible
@@ -544,8 +555,13 @@ func _build_ui() -> void:
 	_initialize_dialogue_panel()
 	_drill_overlay = _create_drill_overlay()
 	canvas.add_child(_drill_overlay)
+	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
+	canvas.add_child(_loading_transition)
 
-	if _should_play_arrival_dialogue:
+	if _returning_from_sea:
+		_restore_post_drill_state()
+		_refresh_exploration_hud()
+	elif _should_play_arrival_dialogue:
 		_start_arrival_dialogue()
 	else:
 		_activate_arrival_task()
@@ -661,6 +677,7 @@ func _create_drill_overlay() -> Control:
 	_add_drill_ship(root, Vector2(934, 500), 9)
 
 	var close_button := Button.new()
+	close_button.name = "ReturnButton"
 	close_button.text = "返回甲板"
 	close_button.position = Vector2(572, 760)
 	close_button.size = Vector2(200, 52)
@@ -762,6 +779,12 @@ func _configure_magistrate_dialogue() -> void:
 		_add_dialogue_option("稍后再议。", _close_npc_dialogue)
 		return
 
+	if _patrol_task_stage == PatrolTaskStage.EXPLORE_LINGNAN:
+		_dialogue_label.text = "将军是否要巡视一下岭南海域？"
+		_add_dialogue_option("立即出发", _depart_to_sea_overworld)
+		_add_dialogue_option("稍后再说", _close_npc_dialogue)
+		return
+
 	_dialogue_label.text = "地方所需粮草与工匠，下官会依议定之数按期送至军港。"
 	_add_dialogue_option("有劳县令。", _close_npc_dialogue)
 
@@ -846,6 +869,24 @@ func _close_npc_dialogue() -> void:
 	_dialogue_panel.hide()
 	_active_npc = null
 	_clear_option_buttons()
+	_refresh_exploration_hud()
+
+
+func _depart_to_sea_overworld() -> void:
+	if _transitioning or _patrol_task_stage != PatrolTaskStage.EXPLORE_LINGNAN:
+		return
+	_transitioning = true
+	_close_npc_dialogue()
+	_exploration_hud.call("set_exploration_visible", false)
+	var root := get_tree().root
+	root.set_meta(SEA_OVERWORLD_ENTRY_META, true)
+	await _loading_transition.play_loading("正在进入大地图")
+	var change_error := get_tree().change_scene_to_file(SEA_OVERWORLD_SCENE)
+	if change_error == OK:
+		return
+	root.remove_meta(SEA_OVERWORLD_ENTRY_META)
+	_loading_transition.reset_loading()
+	_transitioning = false
 	_refresh_exploration_hud()
 
 
@@ -934,11 +975,11 @@ func _show_dialogue_line() -> void:
 	_next_dialogue_button.text = "结束" if _dialogue_index == _active_scripted_dialogues.size() - 1 else "继续"
 
 
-func _consume_chapter_entry_flag() -> bool:
+func _consume_scene_entry_flag(meta_name: StringName) -> bool:
 	var root := get_tree().root
-	if not root.has_meta(CHAPTER_ENTRY_META):
+	if not root.has_meta(meta_name):
 		return false
-	root.remove_meta(CHAPTER_ENTRY_META)
+	root.remove_meta(meta_name)
 	return true
 
 
@@ -985,6 +1026,13 @@ func _activate_arrival_task() -> void:
 	_update_task_hud()
 
 
+func _restore_post_drill_state() -> void:
+	_heard_soldier_reports[LEFT_SOLDIER_ROLE] = true
+	_heard_soldier_reports[RIGHT_SOLDIER_ROLE] = true
+	_patrol_task_stage = PatrolTaskStage.EXPLORE_LINGNAN
+	_update_task_hud()
+
+
 func _complete_soldier_report(soldier_role: String) -> void:
 	if _patrol_task_stage != PatrolTaskStage.TALK_TO_SOLDIERS or _heard_soldier_reports.has(soldier_role):
 		return
@@ -1026,9 +1074,13 @@ func _update_task_hud() -> void:
 			task_title = "筹备水师操练"
 			objective = "与广州县令交谈"
 			progress_stage = _patrol_task_stage
-		_:
+		PatrolTaskStage.DRILL_UNLOCKED:
 			task_title = "参加水师操练"
 			objective = "检阅水师操练"
+			progress_stage = _patrol_task_stage
+		_:
+			task_title = "和县令对话探索岭南海域"
+			objective = "与广州县令交谈，选择是否立即出发"
 			progress_stage = _patrol_task_stage
 	_exploration_hud.call("set_main_task_progress", task_title, objective, progress_stage)
 
@@ -1041,6 +1093,9 @@ func _show_drill() -> void:
 
 func _close_drill_overlay() -> void:
 	_drill_overlay.hide()
+	if _patrol_task_stage == PatrolTaskStage.DRILL_UNLOCKED:
+		_patrol_task_stage = PatrolTaskStage.EXPLORE_LINGNAN
+		_update_task_hud()
 	_refresh_exploration_hud()
 
 

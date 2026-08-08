@@ -577,6 +577,37 @@ func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dict
 				},
 			],
 		}
+	if task_title == "和县令对话探索岭南海域":
+		return {
+			"type": "主线",
+			"title": task_title,
+			"objective": "与广州县令交谈，选择是否立即出发",
+			"description": "驻地巡视与水师操演均已完成。再次与广州县令交谈，决定是否从南海军港启程巡视岭南海域。",
+			"keywords": ["驻地巡视", "水师操演", "广州县令", "南海军港", "岭南海域"],
+			"steps": [
+				{
+					"title": "完成驻地巡视",
+					"description": "两舷士兵汇报及中军军官复命均已完成。",
+					"keywords": ["两舷士兵", "中军军官", "已完成"],
+					"completed": true,
+					"expanded": false,
+				},
+				{
+					"title": "完成水师操演",
+					"description": "与广州县令完成军需会谈，并检阅水师操演。",
+					"keywords": ["广州县令", "军需会谈", "水师操演"],
+					"completed": true,
+					"expanded": false,
+				},
+				{
+					"title": "启程巡视岭南海域",
+					"description": "再次与广州县令交谈，选择“立即出发”进入海上大地图。",
+					"keywords": ["广州县令", "立即出发", "海上大地图"],
+					"completed": false,
+					"expanded": true,
+				},
+			],
+		}
 	return {
 		"type": "主线",
 		"title": task_title,
@@ -680,6 +711,7 @@ func _make_completed_quests(task_title: String) -> Array[Dictionary]:
 		"巡视水师驻地": "奉诏入殿",
 		"筹备水师操练": "巡视水师驻地",
 		"参加水师操练": "筹备水师操练",
+		"和县令对话探索岭南海域": "参加水师操练",
 	}
 	var completed_quests: Array[Dictionary] = []
 	if not previous_by_current.has(task_title):

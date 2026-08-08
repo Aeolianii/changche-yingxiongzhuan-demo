@@ -13,7 +13,7 @@
 
 `Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操练覆盖层。
 
-`SeaOverworld` 是独立运行的海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用单张放大的广东海岸原型背景、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；当前不接入正式章节切换。
+`SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用单张放大的广东海岸原型背景、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；水师操练完成后可由场景二的广州县令对话进入，并可从南海军港返回场景二。
 
 `ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。宫城、水师驻地和海上大地图各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、任务界面、系统菜单、短时提示和退出请求；海上大地图通过独立的 `sea_overworld` 任务上下文覆盖任务栏与任务流程，不改变前两章任务数据。菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
 
@@ -38,6 +38,8 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 `Scene2` 只在检测到该入口标记时消费并删除它，随后复用既有对话框播放水师副将迎接对白。对白期间移动、交互和探索 HUD 均锁定；对白结束后才调用共享 HUD 的 `set_main_task("巡视水师驻地")` 并恢复自由探索。直接运行 `Scene2.tscn` 时不触发入口对白，便于独立调试。
 
 第二章巡视使用场景内轻量任务状态机，不通过环境节点触发：两名值守士兵以稳定角色标识分别登记一次汇报，收齐后开放中军军官复命；军官复命完成后开放广州县令会谈，县令会谈完成回调既有操练覆盖层。共享 HUD 接收任务标题、当前目标和步骤阶段，只负责投影，不反向控制 Scene2 剧情。
+
+操练界面关闭后，Scene2 进入稳定的“探索岭南海域”阶段。县令的“立即出发”选项先写入一次性大地图入口标记，再通过共享 `SceneLoadingTransition` 显示至少一秒的加载图并切换场景。SeaOverworld 消费入口标记后把玩家放置到南海军港正前方；玩家进入军港时写入返回标记并播放同款加载界面。Scene2 消费返回标记后直接恢复巡视与操练均已完成的阶段，从而避免重复对白和任务回退。场景切换失败时清理对应标记并恢复当前场景输入。
 
 ## Directory ownership
 

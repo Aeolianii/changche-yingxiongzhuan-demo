@@ -66,6 +66,22 @@ func _run() -> void:
 	_expect(drill_overlay.visible, "Completing the magistrate briefing must open the drill.")
 	_expect(task_name.text == "参加水师操练", "Opening the drill must update the main task.")
 
+	var drill_return := drill_overlay.get_node("ReturnButton") as Button
+	drill_return.pressed.emit()
+	await process_frame
+	_expect(task_name.text == "和县令对话探索岭南海域", "Completing the drill must unlock the Lingnan sea exploration task.")
+	_expect(objective.text == "与广州县令交谈，选择是否立即出发", "Post-drill task must direct the player back to the magistrate.")
+
+	await _interact_with("World/Actors/Npcs/GuangzhouCountyMagistrate")
+	_expect(_speaker_text() == "广州县令", "Sea-departure dialogue must still use the magistrate identity.")
+	_expect((scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text == "将军是否要巡视一下岭南海域？", "Magistrate must ask whether the player wants to inspect Lingnan waters.")
+	_expect(option_box.get_child_count() == 2, "Sea-departure dialogue must provide exactly two choices.")
+	if option_box.get_child_count() == 2:
+		_expect((option_box.get_child(0) as Button).text == "立即出发", "First sea-departure choice must be 立即出发.")
+		_expect((option_box.get_child(1) as Button).text == "稍后再说", "Second sea-departure choice must be 稍后再说.")
+	await _press_option(1)
+	_expect(not dialogue_panel.visible and task_name.text == "和县令对话探索岭南海域", "Choosing 稍后再说 must keep the post-drill exploration task available.")
+
 	if failures.is_empty():
 		print("Scene2 dialogue patrol runtime verification passed.")
 		quit(0)

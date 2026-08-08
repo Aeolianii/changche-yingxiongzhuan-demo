@@ -165,7 +165,10 @@ func _verify_location_interaction(scene: Node) -> void:
 	_expect(prompt.size.is_equal_approx(Vector2(360.0, 88.0)), "Ink-wash interaction prompt must keep its intended 2x asset scale.")
 	if locations.is_empty():
 		return
-	var location := locations[0] as Area2D
+	var location := _find_location(locations, "川山渔村")
+	_expect(location != null, "A non-harbor location is required for the coming-soon interaction check.")
+	if location == null:
+		return
 	_expect(location.get_node_or_null("IslandOutline") == null, "Location proximity must not draw a yellow island outline.")
 	_expect(location.get_node_or_null("HighlightRing") == null, "Location highlight must not use a circular ring.")
 	var radius := float(location.get_meta("trigger_radius"))
@@ -252,7 +255,9 @@ func _capture_preview(scene: Node) -> void:
 	var locations := get_nodes_in_group("sea_location")
 	if locations.is_empty():
 		return
-	var location := locations[0] as Area2D
+	var location := _find_location(locations, "川山渔村")
+	if location == null:
+		return
 	var radius := float(location.get_meta("trigger_radius"))
 	player.global_position = location.global_position + Vector2(radius - 32.0, 0)
 	for _frame in range(4):
@@ -265,6 +270,13 @@ func _capture_preview(scene: Node) -> void:
 		return
 	var screenshot_error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
 	_expect(screenshot_error == OK, "Sea overworld preview screenshot could not be saved.")
+
+
+func _find_location(locations: Array, location_name: String) -> Area2D:
+	for location_node in locations:
+		if str(location_node.get_meta("location_name", "")) == location_name:
+			return location_node as Area2D
+	return null
 
 
 func _expect(condition: bool, message: String) -> void:

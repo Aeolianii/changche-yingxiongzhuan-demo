@@ -69,13 +69,14 @@ func _verify_keyboard_movement(scene: Node) -> void:
 	await physics_frame
 	await physics_frame
 	_expect(not wake.visible, "Ship wake must hide after movement stops.")
-	_expect(hero.position.y <= -38.0 and hero.position.y < moving_hero_y, "The stopped protagonist must stand visibly above the ship deck.")
+	_expect(is_equal_approx(hero.position.y, moving_hero_y), "The protagonist must stay attached to the same ship-deck anchor when movement stops.")
 
 
 func _verify_location_interaction(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
 	var enter_button := scene.get_node("UI/Root/InteractionPrompt/PromptMargin/PromptRow/EnterButton") as Button
+	var location_label := scene.get_node("UI/Root/InteractionPrompt/PromptMargin/PromptRow/LocationName") as Label
 	var toast := scene.get_node("UI/Root/ToastPanel") as Control
 	var toast_label := scene.get_node("UI/Root/ToastPanel/ToastMargin/ToastLabel") as Label
 	var locations := get_nodes_in_group("sea_location")
@@ -83,8 +84,7 @@ func _verify_location_interaction(scene: Node) -> void:
 	if locations.is_empty():
 		return
 	var location := locations[0] as Area2D
-	var outline := location.get_node_or_null("IslandOutline") as Line2D
-	_expect(outline != null and outline.closed and outline.width <= 2.0, "Location highlight must be a thin closed island-edge outline.")
+	_expect(location.get_node_or_null("IslandOutline") == null, "Location proximity must not draw a yellow island outline.")
 	_expect(location.get_node_or_null("HighlightRing") == null, "Location highlight must not use a circular ring.")
 	var radius := float(location.get_meta("trigger_radius"))
 	player.global_position = location.global_position + Vector2(radius - 30.0, 0)
@@ -102,6 +102,18 @@ func _verify_location_interaction(scene: Node) -> void:
 		await physics_frame
 	await process_frame
 	_expect(not prompt.visible, "Leaving a location range must hide its interaction prompt.")
+
+	var east_bay: Area2D
+	for location_node in locations:
+		if str(location_node.get_meta("location_name", "")) == "东湾水寨":
+			east_bay = location_node as Area2D
+			break
+	_expect(east_bay != null and float(east_bay.get_meta("trigger_radius", 0.0)) >= 225.0, "East Bay stronghold must use the expanded entry range.")
+	if east_bay != null:
+		player.global_position = east_bay.global_position + Vector2(240.0, 0.0)
+		for _frame in range(3):
+			await physics_frame
+		_expect(prompt.visible and "东湾水寨" in location_label.text, "Expanded East Bay range must expose its entry prompt near the outer shore.")
 
 
 func _verify_auto_triggers(scene: Node) -> void:

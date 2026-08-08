@@ -1,6 +1,6 @@
 extends Node2D
 
-const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v1.png")
+const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
 const MAP_SIZE := Vector2(2508, 1412)
 const PLAYER_LAYER := 1
 
@@ -26,7 +26,7 @@ const JADE := Color(0.12, 0.35, 0.34, 1.0)
 var _active_location_name := ""
 var _active_location_area: Area2D
 var _active_location_label: Label
-var _active_location_ring: Line2D
+var _active_location_outline: Line2D
 var _floating_visuals: Array[CanvasItem] = []
 var _float_elapsed := 0.0
 
@@ -96,10 +96,40 @@ func _build_world_collisions() -> void:
 
 
 func _build_locations() -> void:
-	_build_location("南海军港", Vector2(1230, 682), 238.0)
-	_build_location("川山渔村", Vector2(518, 982), 205.0)
-	_build_location("东湾水寨", Vector2(2050, 322), 210.0)
-	_build_location("青屿秘境", Vector2(1995, 742), 232.0)
+	_build_location("南海军港", Vector2(1230, 682), 238.0, PackedVector2Array([
+		Vector2(-246, -10), Vector2(-226, -70), Vector2(-190, -112), Vector2(-132, -143),
+		Vector2(-70, -160), Vector2(0, -166), Vector2(75, -156), Vector2(136, -136),
+		Vector2(190, -104), Vector2(226, -61), Vector2(252, -15), Vector2(241, 27),
+		Vector2(216, 56), Vector2(193, 71), Vector2(205, 96), Vector2(170, 112),
+		Vector2(133, 101), Vector2(104, 123), Vector2(73, 120), Vector2(56, 146),
+		Vector2(24, 133), Vector2(-4, 149), Vector2(-34, 132), Vector2(-72, 139),
+		Vector2(-92, 117), Vector2(-129, 121), Vector2(-149, 97), Vector2(-184, 96),
+		Vector2(-201, 70), Vector2(-232, 55)
+	]))
+	_build_location("川山渔村", Vector2(518, 982), 205.0, PackedVector2Array([
+		Vector2(-180, -25), Vector2(-161, -77), Vector2(-119, -114), Vector2(-66, -132),
+		Vector2(-8, -139), Vector2(52, -128), Vector2(106, -102), Vector2(149, -66),
+		Vector2(171, -20), Vector2(163, 25), Vector2(140, 55), Vector2(151, 78),
+		Vector2(113, 94), Vector2(75, 91), Vector2(48, 111), Vector2(8, 102),
+		Vector2(-24, 114), Vector2(-56, 98), Vector2(-102, 100), Vector2(-123, 74),
+		Vector2(-157, 61), Vector2(-170, 24)
+	]))
+	_build_location("东湾水寨", Vector2(2050, 322), 210.0, PackedVector2Array([
+		Vector2(-181, -28), Vector2(-159, -82), Vector2(-113, -119), Vector2(-58, -139),
+		Vector2(4, -145), Vector2(66, -134), Vector2(120, -108), Vector2(158, -72),
+		Vector2(178, -28), Vector2(169, 20), Vector2(146, 54), Vector2(155, 76),
+		Vector2(119, 92), Vector2(77, 89), Vector2(47, 108), Vector2(6, 101),
+		Vector2(-30, 111), Vector2(-63, 96), Vector2(-108, 98), Vector2(-130, 72),
+		Vector2(-164, 58), Vector2(-174, 20)
+	]))
+	_build_location("青屿秘境", Vector2(1995, 742), 232.0, PackedVector2Array([
+		Vector2(-210, -18), Vector2(-189, -78), Vector2(-146, -119), Vector2(-89, -145),
+		Vector2(-27, -154), Vector2(40, -147), Vector2(101, -126), Vector2(151, -91),
+		Vector2(188, -50), Vector2(205, 3), Vector2(194, 53), Vector2(166, 82),
+		Vector2(176, 105), Vector2(136, 121), Vector2(95, 112), Vector2(62, 136),
+		Vector2(21, 128), Vector2(-15, 142), Vector2(-50, 125), Vector2(-95, 130),
+		Vector2(-119, 102), Vector2(-161, 98), Vector2(-180, 68), Vector2(-201, 43)
+	]))
 
 
 func _build_auto_triggers() -> void:
@@ -108,7 +138,7 @@ func _build_auto_triggers() -> void:
 	_build_event_trigger("漂流木箱", Vector2(820, 810))
 
 
-func _build_location(location_name: String, at: Vector2, trigger_radius: float) -> void:
+func _build_location(location_name: String, at: Vector2, trigger_radius: float, island_outline: PackedVector2Array) -> void:
 	var area := Area2D.new()
 	area.name = "Location%d" % world_markers.get_child_count()
 	area.position = at
@@ -125,15 +155,18 @@ func _build_location(location_name: String, at: Vector2, trigger_radius: float) 
 	shape_node.shape = shape
 	area.add_child(shape_node)
 
-	var ring := Line2D.new()
-	ring.name = "HighlightRing"
-	ring.points = _circle_points(trigger_radius - 12.0, 48)
-	ring.closed = true
-	ring.width = 3.0
-	ring.default_color = Color(GOLD_BRIGHT.r, GOLD_BRIGHT.g, GOLD_BRIGHT.b, 0.88)
-	ring.z_index = 30
-	ring.hide()
-	area.add_child(ring)
+	var outline := Line2D.new()
+	outline.name = "IslandOutline"
+	outline.points = island_outline
+	outline.closed = true
+	outline.width = 2.0
+	outline.default_color = Color(GOLD_BRIGHT.r, GOLD_BRIGHT.g, GOLD_BRIGHT.b, 0.92)
+	outline.joint_mode = Line2D.LINE_JOINT_ROUND
+	outline.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	outline.end_cap_mode = Line2D.LINE_CAP_ROUND
+	outline.z_index = 30
+	outline.hide()
+	area.add_child(outline)
 
 	var label := Label.new()
 	label.name = "HighlightedName"
@@ -151,8 +184,8 @@ func _build_location(location_name: String, at: Vector2, trigger_radius: float) 
 	label.hide()
 	area.add_child(label)
 
-	area.body_entered.connect(_on_location_body_entered.bind(area, label, ring))
-	area.body_exited.connect(_on_location_body_exited.bind(area, label, ring))
+	area.body_entered.connect(_on_location_body_entered.bind(area, label, outline))
+	area.body_exited.connect(_on_location_body_exited.bind(area, label, outline))
 
 
 func _build_ship_trigger(ship_name: String, at: Vector2, atlas_column: int) -> void:
@@ -217,29 +250,29 @@ func _make_auto_trigger(node_name: String, at: Vector2, display_name: String, tr
 	return area
 
 
-func _on_location_body_entered(body: Node2D, area: Area2D, label: Label, ring: Line2D) -> void:
+func _on_location_body_entered(body: Node2D, area: Area2D, label: Label, outline: Line2D) -> void:
 	if body != player:
 		return
 	_clear_active_location_visuals()
 	_active_location_area = area
 	_active_location_label = label
-	_active_location_ring = ring
+	_active_location_outline = outline
 	_active_location_name = str(area.get_meta("location_name", ""))
 	label.show()
-	ring.show()
+	outline.show()
 	location_name_label.text = "【%s】" % _active_location_name
 	interaction_prompt.show()
 
 
-func _on_location_body_exited(body: Node2D, area: Area2D, label: Label, ring: Line2D) -> void:
+func _on_location_body_exited(body: Node2D, area: Area2D, label: Label, outline: Line2D) -> void:
 	if body != player:
 		return
 	label.hide()
-	ring.hide()
+	outline.hide()
 	if _active_location_area == area:
 		_active_location_area = null
 		_active_location_label = null
-		_active_location_ring = null
+		_active_location_outline = null
 		_active_location_name = ""
 		interaction_prompt.hide()
 
@@ -270,8 +303,8 @@ func _show_toast(message: String) -> void:
 func _clear_active_location_visuals() -> void:
 	if is_instance_valid(_active_location_label):
 		_active_location_label.hide()
-	if is_instance_valid(_active_location_ring):
-		_active_location_ring.hide()
+	if is_instance_valid(_active_location_outline):
+		_active_location_outline.hide()
 
 
 func _add_circle_blocker(at: Vector2, radius: float) -> void:
@@ -281,14 +314,6 @@ func _add_circle_blocker(at: Vector2, radius: float) -> void:
 	shape.radius = radius
 	shape_node.shape = shape
 	world_collision.add_child(shape_node)
-
-
-func _circle_points(radius: float, segments: int) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for index in range(segments):
-		var angle := TAU * index / float(segments)
-		points.append(Vector2(cos(angle), sin(angle)) * radius)
-	return points
 
 
 func _atlas_region(texture: Texture2D, columns: int, rows: int, column: int, row: int) -> AtlasTexture:

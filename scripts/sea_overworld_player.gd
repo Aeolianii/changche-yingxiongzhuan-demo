@@ -7,7 +7,8 @@ const WAKE_ATLAS := preload("res://assets/sprites/sea_overworld/ship_wake_fx_atl
 
 const DIRECTION_VECTORS := [Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2.UP]
 const DIRECTION_ROTATIONS := [0.0, PI * 0.5, -PI * 0.5, PI]
-const HERO_OFFSETS := [Vector2(0, -19), Vector2(-4, -18), Vector2(4, -18), Vector2(0, -20)]
+const HERO_IDLE_OFFSETS := [Vector2(0, -42), Vector2(-2, -38), Vector2(2, -38), Vector2(0, -40)]
+const HERO_MOVING_OFFSETS := [Vector2(0, -19), Vector2(-4, -18), Vector2(4, -18), Vector2(0, -20)]
 const WAKE_OFFSET := 76.0
 const WAKE_FRAME_TIME := 0.11
 
@@ -93,7 +94,8 @@ func _update_direction_textures(is_moving: bool) -> void:
 	_last_ship_direction = _facing_index
 	ship_sprite.texture = _atlas_region(PLAYER_SHIP_ATLAS, 4, 2, _facing_index, ship_state)
 	hero_sprite.texture = _atlas_region(PROTAGONIST_ATLAS, 4, 1, _facing_index, 0)
-	hero_sprite.position = HERO_OFFSETS[_facing_index]
+	var hero_offsets := HERO_MOVING_OFFSETS if is_moving else HERO_IDLE_OFFSETS
+	hero_sprite.position = hero_offsets[_facing_index]
 
 
 func _atlas_region(texture: Texture2D, columns: int, rows: int, column: int, row: int) -> AtlasTexture:

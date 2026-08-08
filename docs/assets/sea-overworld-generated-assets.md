@@ -13,7 +13,7 @@
 | 主角Q版四方向 | `assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png` | 1776×887 | 4列×1行，每格444×887 |
 | 玩家船只方向与状态 | `assets/sprites/sea_overworld/player_ship_4dir_states_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 | 可复用岛屿 | `assets/sprites/sea_overworld/island_locations_atlas_v1.png` | 1920×820 | 4列×1行，每格480×820 |
-| 海上事件船只 | `assets/sprites/sea_overworld/event_ships_atlas_v1.png` | 1560×1008 | 4列×1行，每格390×1008 |
+| 海上事件船只（清理版） | `assets/sprites/sea_overworld/event_ships_atlas_v2.png` | 1560×1008 | 4列×1行，每格390×1008；已移除商船右侧残留线条 |
 | 船尾航迹与侧浪 | `assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 
 除地图底图外，其余素材均已去除洋红色键控背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
@@ -111,6 +111,14 @@ Style/medium: crisp opaque pixel clusters using white, pale cyan and medium blue
 Composition/framing: top row four stern-wake frames; bottom row four side-splash frames; equal cells and consistent alignment.
 Scene/backdrop: perfectly flat #ff00ff chroma-key background.
 Constraints: no ships, islands, grid lines, labels, text, UI or watermark; no realistic translucency or blur.
+```
+
+### 4.6 商船素材清理
+
+内置生图模式：图像编辑（以原事件船只图集和问题截图为参考），生成后进行洋红键控去底，并按 Alpha 连通区域移除商船右侧孤立竖线。
+
+```text
+Precisely edit this four-ship pixel-art atlas. Preserve the four ship designs, their order, scale, top-down perspective, crisp pixel-art rendering, spacing, and all legitimate masts, rigging, flags, sails, hull details, and cargo. In the second cell (merchant junk), remove only the isolated thin vertical stray line floating to the right of the ship; it is a cutout artifact and is not connected to the ship. Clean every ship silhouette so there are no detached accidental pixels or remnant marks outside the intended art. Use a perfectly uniform #ff00ff chroma-key background across the full canvas. No grid, labels, text, UI, shadows, ocean, extra objects, watermark, or redesign.
 ```
 
 ## 5. 当前使用边界

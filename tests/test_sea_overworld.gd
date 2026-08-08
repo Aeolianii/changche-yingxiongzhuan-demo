@@ -39,7 +39,7 @@ func _verify_assets() -> void:
 		"res://assets/backgrounds/sea_overworld/guangdong_sea_map_v1.png",
 		"res://assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png",
 		"res://assets/sprites/sea_overworld/player_ship_4dir_states_v1.png",
-		"res://assets/sprites/sea_overworld/event_ships_atlas_v1.png",
+		"res://assets/sprites/sea_overworld/event_ships_atlas_v2.png",
 		"res://assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png",
 	]:
 		var texture := load(asset_path) as Texture2D
@@ -49,10 +49,12 @@ func _verify_assets() -> void:
 func _verify_keyboard_movement(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var wake := player.get_node("WakeSprite") as Sprite2D
+	var hero := player.get_node("VisualRoot/HeroSprite") as Sprite2D
 	var starting_position := player.position
 	Input.action_press("move_right")
 	for _frame in range(4):
 		await physics_frame
+	var moving_hero_y := hero.position.y
 	_expect(player.position.x > starting_position.x, "WASD/direction input did not move the sea-map ship.")
 	_expect(wake.visible, "Moving ship must show the animated wake layer.")
 	if DisplayServer.get_name() != "headless":
@@ -63,6 +65,7 @@ func _verify_keyboard_movement(scene: Node) -> void:
 	await physics_frame
 	await physics_frame
 	_expect(not wake.visible, "Ship wake must hide after movement stops.")
+	_expect(hero.position.y <= -38.0 and hero.position.y < moving_hero_y, "The stopped protagonist must stand visibly above the ship deck.")
 
 
 func _verify_location_interaction(scene: Node) -> void:
@@ -76,6 +79,9 @@ func _verify_location_interaction(scene: Node) -> void:
 	if locations.is_empty():
 		return
 	var location := locations[0] as Area2D
+	var outline := location.get_node_or_null("IslandOutline") as Line2D
+	_expect(outline != null and outline.closed and outline.width <= 2.0, "Location highlight must be a thin closed island-edge outline.")
+	_expect(location.get_node_or_null("HighlightRing") == null, "Location highlight must not use a circular ring.")
 	var radius := float(location.get_meta("trigger_radius"))
 	player.global_position = location.global_position + Vector2(radius - 30.0, 0)
 	await physics_frame

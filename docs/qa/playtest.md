@@ -43,9 +43,8 @@
 | 退出游戏 | 系统菜单已打开 | 点击“退出游戏” | 调用场景树退出并结束应用 | passed / isolated exit runtime 1 |
 | 生成式菜单组件 | 自由移动阶段 | 打开系统菜单并检查框体、按钮和关闭钮 | 三类生成组件透明边缘干净、风格统一、无生成文字；引擎中文清晰且点击区域对齐 | passed / generated menu render 1 |
 | 菜单按钮高度与悬浮 | 系统菜单已打开 | 观察六个按钮并逐个悬浮 | 按钮纵向舒展、文字字号保持 21；悬浮时背景和字体颜色不变化 | passed / system menu button render 3 |
-| 第一章完结题签 | 圣旨收尾完成 | 等待 2.5 秒或点击“立即启程” | 墨色覆盖皇宫，仅播放一次“第一章·奉诏入殿 / 完” | passed / chapter transition runtime 1 |
-| 南下行程过场 | 第一章题签结束 | 继续观看 | 像素水墨行程图淡入并依次显示两段南下旁白 | passed / chapter transition render 1 |
-| 第二章开篇 | 南下行程结束 | 继续观看 | 显示“第二章·南疆水师”，随后切入楼船甲板 | passed / chapter transition runtime 1 |
+| 南下行程过场 | 圣旨收尾完成 | 等待 2.5 秒或点击“立即启程” | 直接淡入像素水墨行程图并依次显示两段南下旁白，不显示章节黑屏题签 | passed / chapter transition render 1 |
+| 抵达南疆 | 南下行程结束 | 继续观看 | 行程图淡出后直接切入楼船甲板 | passed / chapter transition runtime 1 |
 | 水师副将迎接 | 从第一章进入第二章 | 推进迎接对白 | 对白期间不能移动且 HUD 隐藏；结束后 HUD 恢复 | passed / chapter transition runtime 1 |
 | 第二章任务激活 | 水师副将迎接结束 | 查看任务栏 | 主线为“巡视水师驻地”，目标显示与甲板值守士兵交谈（0/2） | passed / chapter transition runtime 1 |
 | 任务布局对齐 | 查看探索任务栏并打开任务界面 | 对比主支线任务项与详情摘要 | 主线、支线文字及左侧色条整体上移且间距不变；总任务标题和描述同步右移并保持完整可读 | passed / quest layout render 1 |

@@ -7,8 +7,7 @@ const WAKE_ATLAS := preload("res://assets/sprites/sea_overworld/ship_wake_fx_atl
 
 const DIRECTION_VECTORS := [Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2.UP]
 const DIRECTION_ROTATIONS := [0.0, PI * 0.5, -PI * 0.5, PI]
-const HERO_OFFSETS := [Vector2(0, 10), Vector2(12, 4), Vector2(-12, 4), Vector2(0, 16)]
-const SHIP_FOREGROUND_START_Y := [0.55, 0.58, 0.58, 0.55]
+const HERO_OFFSETS := [Vector2(0, -19), Vector2(-4, -18), Vector2(4, -18), Vector2(0, -20)]
 const WAKE_OFFSET := 76.0
 const WAKE_FRAME_TIME := 0.11
 
@@ -19,7 +18,6 @@ const WAKE_FRAME_TIME := 0.11
 @onready var visual_root: Node2D = $VisualRoot
 @onready var ship_sprite: Sprite2D = $VisualRoot/ShipSprite
 @onready var hero_sprite: Sprite2D = $VisualRoot/HeroSprite
-@onready var ship_foreground_sprite: Sprite2D = $VisualRoot/ShipForegroundSprite
 @onready var wake_sprite: Sprite2D = $WakeSprite
 @onready var side_splash_sprite: Sprite2D = $SideSplashSprite
 
@@ -94,9 +92,6 @@ func _update_direction_textures(is_moving: bool) -> void:
 	_last_ship_state = ship_state
 	_last_ship_direction = _facing_index
 	ship_sprite.texture = _atlas_region(PLAYER_SHIP_ATLAS, 4, 2, _facing_index, ship_state)
-	var foreground_start_y: float = SHIP_FOREGROUND_START_Y[_facing_index]
-	ship_foreground_sprite.texture = _atlas_partial_region(PLAYER_SHIP_ATLAS, 4, 2, _facing_index, ship_state, foreground_start_y)
-	ship_foreground_sprite.position.y = PLAYER_SHIP_ATLAS.get_height() / 2.0 * foreground_start_y * 0.5 * ship_foreground_sprite.scale.y
 	hero_sprite.texture = _atlas_region(PROTAGONIST_ATLAS, 4, 1, _facing_index, 0)
 	hero_sprite.position = HERO_OFFSETS[_facing_index]
 
@@ -106,14 +101,4 @@ func _atlas_region(texture: Texture2D, columns: int, rows: int, column: int, row
 	var atlas_texture := AtlasTexture.new()
 	atlas_texture.atlas = texture
 	atlas_texture.region = Rect2(Vector2(column, row) * frame_size, frame_size)
-	return atlas_texture
-
-
-func _atlas_partial_region(texture: Texture2D, columns: int, rows: int, column: int, row: int, start_y_ratio: float) -> AtlasTexture:
-	var frame_size := Vector2(texture.get_width() / float(columns), texture.get_height() / float(rows))
-	var region_position := Vector2(column * frame_size.x, (row + start_y_ratio) * frame_size.y)
-	var region_size := Vector2(frame_size.x, frame_size.y * (1.0 - start_y_ratio))
-	var atlas_texture := AtlasTexture.new()
-	atlas_texture.atlas = texture
-	atlas_texture.region = Rect2(region_position, region_size)
 	return atlas_texture

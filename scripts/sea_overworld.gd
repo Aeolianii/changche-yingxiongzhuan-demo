@@ -81,8 +81,8 @@ func _build_world_collisions() -> void:
 func _build_locations() -> void:
 	_build_location("南海军港", Vector2(1230, 682), 238.0)
 	_build_location("川山渔村", Vector2(518, 982), 205.0)
-	_build_location("东湾水寨", Vector2(2050, 322), 225.0)
-	_build_location("青屿秘境", Vector2(1995, 742), 232.0)
+	_build_location("东湾水寨", Vector2(2050, 322), 225.0, Vector2(680, 170), Vector2(0, 210))
+	_build_location("青屿秘境", Vector2(1995, 742), 232.0, Vector2(480, 160), Vector2(0, 215))
 
 
 func _build_auto_triggers() -> void:
@@ -91,7 +91,13 @@ func _build_auto_triggers() -> void:
 	_build_event_trigger("漂流木箱", Vector2(820, 810))
 
 
-func _build_location(location_name: String, at: Vector2, trigger_radius: float) -> void:
+func _build_location(
+	location_name: String,
+	at: Vector2,
+	trigger_radius: float,
+	front_trigger_size: Vector2 = Vector2.ZERO,
+	front_trigger_offset: Vector2 = Vector2.ZERO
+) -> void:
 	var area := Area2D.new()
 	area.name = "Location%d" % world_markers.get_child_count()
 	area.position = at
@@ -99,13 +105,22 @@ func _build_location(location_name: String, at: Vector2, trigger_radius: float) 
 	area.collision_mask = PLAYER_LAYER
 	area.set_meta("location_name", location_name)
 	area.set_meta("trigger_radius", trigger_radius)
+	area.set_meta("front_trigger_size", front_trigger_size)
+	area.set_meta("front_trigger_offset", front_trigger_offset)
 	area.add_to_group("sea_location")
 	world_markers.add_child(area)
 
 	var shape_node := CollisionShape2D.new()
-	var shape := CircleShape2D.new()
-	shape.radius = trigger_radius
-	shape_node.shape = shape
+	shape_node.name = "EntryTriggerShape"
+	if front_trigger_size != Vector2.ZERO:
+		var front_shape := RectangleShape2D.new()
+		front_shape.size = front_trigger_size
+		shape_node.position = front_trigger_offset
+		shape_node.shape = front_shape
+	else:
+		var radial_shape := CircleShape2D.new()
+		radial_shape.radius = trigger_radius
+		shape_node.shape = radial_shape
 	area.add_child(shape_node)
 
 	var label := Label.new()

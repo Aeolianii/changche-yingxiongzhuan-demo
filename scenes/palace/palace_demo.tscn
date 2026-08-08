@@ -5,8 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://cwdko3gfnx6h3" path="res://scenes/characters/player.tscn" id="3_uqvjv"]
 [ext_resource type="PackedScene" uid="uid://dxwj2y08144al" path="res://scenes/characters/npc.tscn" id="4_x75u6"]
 [ext_resource type="Texture2D" path="res://assets/ui/dialogue/ink_dialogue_backdrop.png" id="5_ntdlv"]
-[ext_resource type="Texture2D" uid="uid://casbaiubyku7e" path="res://assets/ui/button_medium_green.png" id="6_re2s4"]
-[ext_resource type="Texture2D" uid="uid://dgtwn3k7s2ykh" path="res://assets/ui/button_medium_green_active.png" id="7_xi4kr"]
+[ext_resource type="Texture2D" uid="uid://d4fe3kc37c3kx" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="6_re2s4"]
+[ext_resource type="Texture2D" uid="uid://d2w4jmas4pnol" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="7_xi4kr"]
 [ext_resource type="PackedScene" path="res://scenes/ui/exploration_hud.tscn" id="8_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/chapter_transition.tscn" id="9_chapter"]
 [ext_resource type="Texture2D" path="res://assets/ui/dialogue/ink_speaker_nameplate.png" id="10_nameplate"]
@@ -245,10 +245,11 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -110.0
+offset_left = -150.0
 offset_top = -96.0
-offset_right = 110.0
+offset_right = 150.0
 offset_bottom = -22.0
+texture_filter = 1
 texture_normal = ExtResource("6_re2s4")
 texture_pressed = ExtResource("7_xi4kr")
 ignore_texture_size = true

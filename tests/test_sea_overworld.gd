@@ -147,16 +147,38 @@ func _verify_location_interaction(scene: Node) -> void:
 	_expect(not prompt.visible, "Leaving a location range must hide its interaction prompt.")
 
 	var east_bay: Area2D
+	var qingyu: Area2D
 	for location_node in locations:
 		if str(location_node.get_meta("location_name", "")) == "东湾水寨":
 			east_bay = location_node as Area2D
-			break
-	_expect(east_bay != null and float(east_bay.get_meta("trigger_radius", 0.0)) >= 225.0, "East Bay stronghold must use the expanded entry range.")
+		elif str(location_node.get_meta("location_name", "")) == "青屿秘境":
+			qingyu = location_node as Area2D
+	_expect(east_bay != null, "East Bay stronghold trigger is missing.")
 	if east_bay != null:
-		player.global_position = east_bay.global_position + Vector2(240.0, 0.0)
+		var east_bay_shape_node := east_bay.get_node("EntryTriggerShape") as CollisionShape2D
+		var east_bay_shape := east_bay_shape_node.shape as RectangleShape2D
+		_expect(east_bay_shape != null and east_bay_shape.size.x >= 680.0, "East Bay front entry range must be widened horizontally.")
+		_expect(east_bay_shape_node.position.y > 0.0, "East Bay entry range must stay on the island's front side.")
+		player.global_position = east_bay.global_position + Vector2(290.0, 210.0)
 		for _frame in range(3):
 			await physics_frame
 		_expect(prompt.visible and "东湾水寨" in location_label.text, "Expanded East Bay range must expose its entry prompt near the outer shore.")
+	player.global_position = Vector2(1180, 1320)
+	for _frame in range(3):
+		await physics_frame
+	_expect(qingyu != null, "Qingyu secret realm trigger is missing.")
+	if qingyu != null:
+		var qingyu_shape_node := qingyu.get_node("EntryTriggerShape") as CollisionShape2D
+		var qingyu_shape := qingyu_shape_node.shape as RectangleShape2D
+		_expect(qingyu_shape != null and qingyu_shape_node.position.y > 0.0, "Qingyu secret realm must use a front-only entry range.")
+		player.global_position = qingyu.global_position + Vector2(0.0, -240.0)
+		await physics_frame
+		await physics_frame
+		_expect(not prompt.visible or "青屿秘境" not in location_label.text, "Qingyu secret realm must not trigger from behind the island.")
+		player.global_position = qingyu.global_position + Vector2(0.0, 270.0)
+		await physics_frame
+		await physics_frame
+		_expect(prompt.visible and "青屿秘境" in location_label.text, "Qingyu secret realm must still trigger from its front shore.")
 
 
 func _verify_auto_triggers(scene: Node) -> void:

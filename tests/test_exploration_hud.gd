@@ -368,7 +368,11 @@ func _verify_palace_visibility() -> void:
 	var hud := palace.get_node("UI/ExplorationHUD") as Control
 	var dialogue := palace.get_node("UI/Overlay/DialoguePanel") as Control
 	var player := palace.get_node("YSortedCharacters/Player")
+	var interaction_button := palace.get_node("UI/Overlay/InteractionButton") as TextureButton
 	_expect(not hud.visible, "Palace opening dialogue must hide the exploration HUD.")
+	_expect(interaction_button.texture_normal.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_v1.png", "Scene one interaction must use the ink-wash normal button asset.")
+	_expect(interaction_button.texture_pressed.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png", "Scene one interaction must use the ink-wash pressed button asset.")
+	_expect(interaction_button.size.is_equal_approx(Vector2(300.0, 74.0)), "Scene one ink-wash interaction button must preserve its source aspect ratio.")
 
 	palace.set("story_state", 2)
 	dialogue.hide()

@@ -101,7 +101,7 @@ func _configure_sea_map_hud() -> void:
 			"name": str(location_node.get_meta("location_name", "未知地点")),
 			"position": (location_node as Node2D).position,
 		})
-	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations, "水师元帅")
+	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations)
 
 
 func _build_location(

@@ -117,9 +117,9 @@ func set_quest_context(context_id: StringName) -> void:
 		_quest_screen.call("set_quest_context", context_id)
 
 
-func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array, player_name: String) -> void:
+func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array) -> void:
 	if is_instance_valid(_map_screen):
-		_map_screen.call("configure", player_node, world_size, locations, player_name)
+		_map_screen.call("configure", player_node, world_size, locations)
 
 
 func show_toast(message: String) -> void:
@@ -221,13 +221,13 @@ func _enable_sea_map_status() -> void:
 	var status := get_node_or_null("PlayerStatus") as Control
 	if status == null:
 		return
-	status.position = Vector2(92, 54)
-	status.size = Vector2(150, 150)
+	status.position = Vector2(69.5, 20)
+	status.size = Vector2(195, 195)
 	var generated_frame := status.get_node("GeneratedStatusFrame") as TextureRect
 	generated_frame.texture = EXPLORATION_FUNCTION_BUTTON
 	var portrait_frame := status.get_node("PortraitFrame") as Control
-	portrait_frame.position = Vector2(31, 31)
-	portrait_frame.size = Vector2(88, 88)
+	portrait_frame.position = Vector2(40.5, 40.5)
+	portrait_frame.size = Vector2(114, 114)
 	portrait_frame.clip_contents = false
 	var portrait := portrait_frame.get_node("ProtagonistPortrait") as CanvasItem
 	portrait.hide()

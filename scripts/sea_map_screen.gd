@@ -12,7 +12,6 @@ const MAP_VIEW_SIZE := Vector2(1020, 574)
 
 var _player: Node2D
 var _world_size := Vector2.ONE
-var _player_name := "水师元帅"
 var _map_viewport: Control
 var _location_layer: Control
 var _player_marker: Control
@@ -26,10 +25,9 @@ func _ready() -> void:
 	hide()
 
 
-func configure(player_node: Node2D, world_size: Vector2, locations: Array, player_name: String) -> void:
+func configure(player_node: Node2D, world_size: Vector2, locations: Array) -> void:
 	_player = player_node
 	_world_size = Vector2(maxf(world_size.x, 1.0), maxf(world_size.y, 1.0))
-	_player_name = player_name
 	for child in _location_layer.get_children():
 		child.free()
 	for location_data in locations:
@@ -42,7 +40,7 @@ func configure(player_node: Node2D, world_size: Vector2, locations: Array, playe
 		location_label.add_theme_constant_override("outline_size", 5)
 		location_label.set_meta("world_position", location_data.get("position", Vector2.ZERO))
 		_location_layer.add_child(location_label)
-	_player_name_label.text = "%s（当前位置）" % _player_name
+	_player_name_label.text = "当前位置"
 	_refresh_markers()
 
 
@@ -143,7 +141,7 @@ func _build_interface() -> void:
 	marker_glyph.add_theme_constant_override("outline_size", 3)
 	_player_marker.add_child(marker_glyph)
 
-	_player_name_label = _make_label("水师元帅（当前位置）", 17, TEXT_LIGHT)
+	_player_name_label = _make_label("当前位置", 17, TEXT_LIGHT)
 	_player_name_label.name = "PlayerName"
 	_player_name_label.position = Vector2(18, -13)
 	_player_name_label.size = Vector2(190, 30)

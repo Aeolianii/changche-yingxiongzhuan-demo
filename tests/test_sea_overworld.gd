@@ -94,6 +94,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	_expect(not map_status.get_node("PortraitFrame/ProtagonistPortrait").visible, "Sea-map HUD must replace the protagonist portrait.")
 	_expect(map_frame.texture.resource_path.ends_with("function_button.png"), "Sea-map entry must retain the standalone diamond frame.")
 	_expect(map_icon.texture.resource_path.ends_with("hud_map_v1.png"), "Sea-map entry must use the generated ink-wash map icon.")
+	_expect(map_status.size.is_equal_approx(Vector2(195.0, 195.0)), "Sea-map diamond and icon must be enlarged by 30 percent.")
 	_expect(map_status.position.x > quest_tracker.position.x and map_status.position.y + map_status.size.y < quest_tracker.position.y, "Sea-map diamond must sit directly above and to the right of the task tracker origin.")
 
 	map_button.pressed.emit()
@@ -114,7 +115,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
 	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
-	_expect("水师元帅" in player_name.text and "当前位置" in player_name.text, "Full map must label the current player position and name.")
+	_expect(player_name.text == "当前位置", "Full map player marker must display only the current-position label.")
 	if DisplayServer.get_name() != "headless":
 		var map_screenshot_error := root.get_texture().get_image().save_png(MAP_SCREENSHOT_PATH)
 		_expect(map_screenshot_error == OK, "Sea overworld full-map preview screenshot could not be saved.")

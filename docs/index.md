@@ -20,6 +20,7 @@
 - [Art asset requirements (Word)](assets/厂东英雄传-美术素材需求书.docx)
 - [Character assets](assets/character-assets.md)
 - [Generated backgrounds](assets/generated-backgrounds.md)
+- [Sea overworld generated assets](assets/sea-overworld-generated-assets.md)
 - [Architecture](tech/architecture.md)
 - [Backlog](production/backlog.md)
 - [Playtest](qa/playtest.md)

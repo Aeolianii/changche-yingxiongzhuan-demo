@@ -12,7 +12,7 @@
 | 广东海岸原型海上地图（高清版） | `assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png` | 3344×1882 | 单张16:9背景；场景内以0.75倍显示，地图范围不变 |
 | B 区东部海域扩展 | `assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png` | 3344×1882 | 三个大型地标岛；西侧纯海水衔接；场景内以0.75倍显示 |
 | C 区南部海域扩展（左侧疏散版） | `assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v2.png` | 3344×1882 | 四个大型地标岛分为左右两组；组间保留宽海峡；顶部衔接 A，最右侧预留 D；场景内以0.75倍显示 |
-| D 区东南海域扩展 | `assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v1.png` | 3344×1882 | 五个可进入主岛复合体与小型障碍礁群；顶部衔接 B、左侧衔接 C；场景内以0.75倍显示 |
+| D 区东南海域扩展（海色匹配版） | `assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v2.png` | 3344×1882 | 海水匹配 B/C 色域；五个主岛复合体与障碍礁群颜色保持原图；场景内以0.75倍显示 |
 | 主角Q版四方向 | `assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png` | 1776×887 | 4列×1行，每格444×887 |
 | 玩家船只方向与状态 | `assets/sprites/sea_overworld/player_ship_4dir_states_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 | 可复用岛屿 | `assets/sprites/sea_overworld/island_locations_atlas_v1.png` | 1920×820 | 4列×1行，每格480×820 |
@@ -276,6 +276,20 @@ Seam invariants: the entire LEFTMOST 17% and TOP 16% remain completely uninterru
 Replacement: erase the two old positions and all residual pixels, replacing them with continuous matching water.
 Preserve: exactly five playable major island complexes; current broad central corridor; irregular unequal spacing; non-round silhouettes; crisp high-detail Chinese wuxia pixel art; camera, palette, water texture, and lighting.
 Constraints: do not add, remove, resize, redesign, or restyle any island or obstacle. No mainland, text, labels, routes, compass, border, UI, ships, people, monsters, logos, watermark, crop, blur, or transparency.
+```
+
+### 4.15 D 区海水颜色匹配
+
+内置生图模式：精确图像编辑。使用 D 区为目标图，以 C/B 区为海水色彩与纹理参考；生成结果用于确认目标色域。为严格保护岛屿，最终生产图从 D 区原图建立仅覆盖海水候选像素的受限蒙版，将海水均值从约 RGB `(1, 181, 244)` 校正为约 RGB `(6, 171, 222)`，蒙版外像素逐字节保持不变。最终提示词如下：
+
+```text
+Use case: precise object-preserving raster edit for a production Godot world-map tile.
+Input roles: Image 1 is the D-zone target. Images 2 and 3 are water palette and texture references only.
+Primary request: change ONLY the open-ocean water color and brightness in Image 1 so it matches the deeper blue-cyan sea of Images 2 and 3, approximately RGB (5, 172, 222). Retain Image 1's existing subtle wave texture and exact pixel-art/watercolor texture.
+Strict invariant: every pixel belonging to islands, land, vegetation, buildings, docks, beaches, rocks, reefs, satellite islets, obstacle clusters, surf foam, and mist must remain visually unchanged. Do not move, resize, redraw, recolor, add, or remove any land feature.
+Preserve the exact canvas, composition, five island complexes, two non-landable reef obstacle clusters, spacing, scale, and seamless tile edges.
+No text, labels, UI, ships, compass, border, frame, new islands, or new objects.
+Output should be a faithful water-only color correction, not a reimagining.
 ```
 
 ## 5. 当前使用边界

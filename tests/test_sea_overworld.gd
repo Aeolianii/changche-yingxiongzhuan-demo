@@ -63,7 +63,7 @@ func _verify_assets() -> void:
 		"res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png",
 		"res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png",
 		"res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v2.png",
-		"res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v1.png",
+		"res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v2.png",
 		"res://assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png",
 		"res://assets/sprites/sea_overworld/player_ship_4dir_states_v1.png",
 		"res://assets/sprites/sea_overworld/event_ships_atlas_v2.png",
@@ -106,8 +106,16 @@ func _verify_assets() -> void:
 		if world_child is Sprite2D and (world_child as Sprite2D).texture == c_map:
 			c_texture_node_count += 1
 	_expect(c_texture_node_count == 1, "Serialized C map chunk must not be duplicated at runtime.")
-	var d_map := load("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v1.png") as Texture2D
+	var d_map := load("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v2.png") as Texture2D
 	_expect(d_map != null and d_map.get_size() == hd_map.get_size(), "D map chunk must match the other map source dimensions.")
+	var original_d_map := load("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v1.png") as Texture2D
+	var original_d_image := original_d_map.get_image()
+	var matched_d_image := d_map.get_image()
+	for protected_pixel in [Vector2i(1120, 500), Vector2i(1180, 960), Vector2i(2380, 540), Vector2i(2520, 1140), Vector2i(1640, 1520), Vector2i(3020, 700)]:
+		_expect(matched_d_image.get_pixelv(protected_pixel) == original_d_image.get_pixelv(protected_pixel), "D-zone island and reef colors must remain unchanged at %s." % protected_pixel)
+	var original_water := original_d_image.get_pixel(200, 1500)
+	var matched_water := matched_d_image.get_pixel(200, 1500)
+	_expect(matched_water.g < original_water.g and matched_water.b < original_water.b, "D-zone open water must be darkened to match the B/C palette.")
 	var d_background := current_scene.get_node("World/DBackground") as Sprite2D
 	_expect(d_background.texture == d_map and d_background.position.is_equal_approx(Vector2(2388, 1292)), "D map chunk must overlap below B and east of C at the configured seams.")
 	_expect(d_background.material is ShaderMaterial, "D map chunk must use alpha seam blending.")
@@ -210,7 +218,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	_expect(c_map_texture.texture.resource_path.ends_with("guangdong_sea_zone_c_v2.png"), "Full map screen must show the C-zone expansion texture.")
 	_expect(c_map_texture.material is ShaderMaterial, "Full map C-zone texture must retain seam blending.")
 	_expect(bool((c_map_texture.material as ShaderMaterial).get_shader_parameter("fade_from_top")), "Full map C-zone texture must fade from its north edge.")
-	_expect(d_map_texture.texture.resource_path.ends_with("guangdong_sea_zone_d_v1.png"), "Full map screen must show the D-zone expansion texture.")
+	_expect(d_map_texture.texture.resource_path.ends_with("guangdong_sea_zone_d_v2.png"), "Full map screen must show the color-matched D-zone expansion texture.")
 	_expect(d_map_texture.material is ShaderMaterial, "Full map D-zone texture must retain seam blending.")
 	_expect(bool((d_map_texture.material as ShaderMaterial).get_shader_parameter("fade_from_left")), "Full map D-zone texture must fade from its west edge.")
 	_expect(bool((d_map_texture.material as ShaderMaterial).get_shader_parameter("fade_from_top")), "Full map D-zone texture must fade from its north edge.")

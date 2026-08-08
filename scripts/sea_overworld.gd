@@ -2,7 +2,13 @@ extends Node2D
 
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
-const MAP_SIZE := Vector2(2508, 1412)
+const BASE_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png")
+const EAST_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png")
+const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
+const MAP_CHUNK_SIZE := Vector2(2508, 1412)
+const MAP_CHUNK_OVERLAP := 120.0
+const EAST_MAP_ORIGIN := Vector2(MAP_CHUNK_SIZE.x - MAP_CHUNK_OVERLAP, 0)
+const MAP_SIZE := Vector2(EAST_MAP_ORIGIN.x + MAP_CHUNK_SIZE.x, MAP_CHUNK_SIZE.y)
 const PLAYER_LAYER := 1
 const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
 const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
@@ -14,6 +20,7 @@ const SECONDS_PER_LUNAR_DAY := 2.0
 const PAPER := Color(0.95, 0.9, 0.75, 1.0)
 
 @onready var player: CharacterBody2D = $World/Player
+@onready var camera: Camera2D = $World/Player/Camera2D
 @onready var world_collision: StaticBody2D = $World/WorldCollision
 @onready var world_markers: Node2D = $World/WorldMarkers
 @onready var exploration_hud: Control = $UI/ExplorationHUD
@@ -22,6 +29,7 @@ const PAPER := Color(0.95, 0.9, 0.75, 1.0)
 @onready var enter_button: BaseButton = $UI/Root/InteractionPrompt/EnterButton
 
 var _active_location_name := ""
+var _active_location_message := "该地点即将开放"
 var _active_location_area: Area2D
 var _floating_visuals: Array[CanvasItem] = []
 var _float_elapsed := 0.0
@@ -34,6 +42,8 @@ var _lunar_day := 0.0
 
 func _ready() -> void:
 	_entered_from_scene_two = _consume_scene_two_entry_flag()
+	_build_background_chunks()
+	_configure_world_bounds()
 	_build_world_collisions()
 	_build_locations()
 	_build_auto_triggers()
@@ -96,6 +106,13 @@ func _build_world_collisions() -> void:
 	_add_circle_blocker(Vector2(1515, 1195), 70.0)
 	_add_circle_blocker(Vector2(1875, 1195), 72.0)
 	_add_circle_blocker(Vector2(2180, 1195), 70.0)
+	_add_circle_blocker(Vector2(3245, 414), 190.0)
+	_add_circle_blocker(Vector2(4328, 345), 285.0)
+	_add_circle_blocker(Vector2(4115, 345), 155.0)
+	_add_circle_blocker(Vector2(4540, 345), 155.0)
+	_add_circle_blocker(Vector2(4417, 1078), 270.0)
+	_add_circle_blocker(Vector2(4235, 1078), 150.0)
+	_add_circle_blocker(Vector2(4595, 1078), 150.0)
 
 	var coast := CollisionPolygon2D.new()
 	coast.name = "NorthwestCoast"
@@ -112,6 +129,9 @@ func _build_locations() -> void:
 	_build_location("川山渔村", Vector2(518, 982), 205.0)
 	_build_location("东湾水寨", Vector2(2050, 322), 225.0, Vector2(680, 170), Vector2(0, 210))
 	_build_location("青屿秘境", Vector2(1995, 742), 232.0, Vector2(480, 160), Vector2(0, 215))
+	_build_location("红湾卫所", Vector2(3245, 414), 270.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("南澳商港", Vector2(4328, 345), 380.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("东极秘岛", Vector2(4417, 1078), 340.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
 
 
 func _build_auto_triggers() -> void:
@@ -129,7 +149,34 @@ func _configure_sea_map_hud() -> void:
 			"name": str(location_node.get_meta("location_name", "未知地点")),
 			"position": (location_node as Node2D).position,
 		})
-	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations)
+	var map_chunks: Array[Dictionary] = [
+		{"texture": BASE_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, MAP_CHUNK_SIZE)},
+		{"texture": EAST_MAP_TEXTURE, "world_rect": Rect2(EAST_MAP_ORIGIN, MAP_CHUNK_SIZE)},
+	]
+	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations, map_chunks)
+
+
+func _build_background_chunks() -> void:
+	var east_background := Sprite2D.new()
+	east_background.name = "EastBackground"
+	east_background.position = EAST_MAP_ORIGIN
+	east_background.z_index = -99
+	east_background.centered = false
+	east_background.texture = EAST_MAP_TEXTURE
+	east_background.scale = Vector2(0.75, 0.75)
+	east_background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var blend_material := ShaderMaterial.new()
+	blend_material.shader = MAP_CHUNK_BLEND_SHADER
+	east_background.material = blend_material
+	$World.add_child(east_background)
+
+
+func _configure_world_bounds() -> void:
+	player.movement_bounds = Rect2(Vector2(34, 34), MAP_SIZE - Vector2(68, 68))
+	camera.limit_left = 0
+	camera.limit_top = 0
+	camera.limit_right = roundi(MAP_SIZE.x)
+	camera.limit_bottom = roundi(MAP_SIZE.y)
 
 
 func _activate_south_sea_harbor_spawn() -> void:
@@ -146,7 +193,8 @@ func _build_location(
 	at: Vector2,
 	trigger_radius: float,
 	front_trigger_size: Vector2 = Vector2.ZERO,
-	front_trigger_offset: Vector2 = Vector2.ZERO
+	front_trigger_offset: Vector2 = Vector2.ZERO,
+	entry_message: String = "该地点即将开放"
 ) -> void:
 	var area := Area2D.new()
 	area.name = "Location%d" % world_markers.get_child_count()
@@ -157,6 +205,7 @@ func _build_location(
 	area.set_meta("trigger_radius", trigger_radius)
 	area.set_meta("front_trigger_size", front_trigger_size)
 	area.set_meta("front_trigger_offset", front_trigger_offset)
+	area.set_meta("entry_message", entry_message)
 	area.add_to_group("sea_location")
 	world_markers.add_child(area)
 
@@ -244,6 +293,7 @@ func _on_location_body_entered(body: Node2D, area: Area2D) -> void:
 		return
 	_active_location_area = area
 	_active_location_name = str(area.get_meta("location_name", ""))
+	_active_location_message = str(area.get_meta("entry_message", "该地点即将开放"))
 	location_name_label.text = "【%s】" % _active_location_name
 	if not bool(exploration_hud.call("is_menu_open")):
 		interaction_prompt.show()
@@ -256,6 +306,7 @@ func _on_location_body_exited(body: Node2D, area: Area2D) -> void:
 	if _active_location_area == area:
 		_active_location_area = null
 		_active_location_name = ""
+		_active_location_message = "该地点即将开放"
 		interaction_prompt.hide()
 
 
@@ -277,7 +328,7 @@ func _enter_active_location() -> void:
 	if _active_location_name == "南海军港" and _entered_from_scene_two:
 		_return_to_scene_two()
 		return
-	_show_toast("%s · 该地点即将开放" % _active_location_name)
+	_show_toast("%s · %s" % [_active_location_name, _active_location_message])
 	_advance_exploration_stage(3)
 
 

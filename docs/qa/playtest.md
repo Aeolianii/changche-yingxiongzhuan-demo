@@ -63,6 +63,9 @@
 | 海上月相时钟 | 进入海上大地图 | 静止后持续航行，观察左上月面 | 静止时相位不变；航行时从新月连续经过上弦至满月，阶段名同步更新 | passed / sea overworld lunar runtime + render 1 |
 | 月相暂停与恢复 | 海上航行中 | 分别打开任务、完整海图或系统菜单再关闭 | 阻断界面打开时月相暂停，关闭后继续从原相位推进 | passed / sea overworld lunar runtime 1 |
 | 右下海图入口 | 进入海上大地图 | 点击右下缩小的菱形海图按钮并关闭完整海图 | 完整海图正常打开关闭，左上月相与左侧任务栏不被替换或遮挡 | passed / sea overworld lunar runtime + render 1 |
+| 东部海域连续航行 | 从旧海图中央向东航行 | 穿过原图右缘并继续移动 | 画面无空白或明显硬接缝，船只、相机和月相继续正常运行 | passed / sea overworld runtime + combined map render 1 |
+| 东部地点进入占位 | 依次靠近三个东部地点 | 查看名称并点击进入或按 E | 提示对应地点“该岛屿即将开放”，不切换场景；驶离后入口隐藏 | passed / three east locations runtime + render 1 |
+| 双分块完整海图 | 打开右下海图入口 | 查看地图、七个地点和玩家位置 | 基础图与东部扩展同时显示，七个地点位置正确，玩家标记可移动到东半区 | passed / combined full-map runtime + render 1 |
 
 ## 手动觐见与任务指引验收
 

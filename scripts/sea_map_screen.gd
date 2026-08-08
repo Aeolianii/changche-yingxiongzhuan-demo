@@ -3,6 +3,7 @@ extends Control
 signal close_requested
 
 const SEA_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png")
+const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 
 const INK := Color(0.035, 0.052, 0.052, 0.98)
 const GOLD := Color(0.73, 0.59, 0.32, 1.0)
@@ -13,9 +14,11 @@ const MAP_VIEW_SIZE := Vector2(1020, 574)
 var _player: Node2D
 var _world_size := Vector2.ONE
 var _map_viewport: Control
+var _map_texture_layer: Control
 var _location_layer: Control
 var _player_marker: Control
 var _player_name_label: Label
+var _map_content_rect := Rect2(Vector2.ZERO, MAP_VIEW_SIZE)
 
 
 func _ready() -> void:
@@ -25,9 +28,11 @@ func _ready() -> void:
 	hide()
 
 
-func configure(player_node: Node2D, world_size: Vector2, locations: Array) -> void:
+func configure(player_node: Node2D, world_size: Vector2, locations: Array, map_chunks: Array = []) -> void:
 	_player = player_node
 	_world_size = Vector2(maxf(world_size.x, 1.0), maxf(world_size.y, 1.0))
+	_refresh_map_content_rect()
+	_rebuild_map_chunks(map_chunks)
 	for child in _location_layer.get_children():
 		child.free()
 	for location_data in locations:
@@ -102,15 +107,11 @@ func _build_interface() -> void:
 	_map_viewport.add_theme_stylebox_override("panel", _panel_style(Color(0.02, 0.035, 0.035, 1.0), GOLD, 2, 2))
 	panel.add_child(_map_viewport)
 
-	var map_texture := TextureRect.new()
-	map_texture.name = "MapTexture"
-	map_texture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	map_texture.texture = SEA_MAP_TEXTURE
-	map_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	map_texture.stretch_mode = TextureRect.STRETCH_SCALE
-	map_texture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	map_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_map_viewport.add_child(map_texture)
+	_map_texture_layer = Control.new()
+	_map_texture_layer.name = "MapTextureLayer"
+	_map_texture_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_map_texture_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_map_viewport.add_child(_map_texture_layer)
 
 	var wash := ColorRect.new()
 	wash.name = "InkWash"
@@ -174,10 +175,46 @@ func _refresh_markers() -> void:
 
 
 func _map_position(world_position: Vector2) -> Vector2:
-	return Vector2(
-		clampf(world_position.x / _world_size.x, 0.0, 1.0) * MAP_VIEW_SIZE.x,
-		clampf(world_position.y / _world_size.y, 0.0, 1.0) * MAP_VIEW_SIZE.y
+	var normalized := Vector2(
+		clampf(world_position.x / _world_size.x, 0.0, 1.0),
+		clampf(world_position.y / _world_size.y, 0.0, 1.0)
 	)
+	return _map_content_rect.position + normalized * _map_content_rect.size
+
+
+func _refresh_map_content_rect() -> void:
+	var content_scale := minf(MAP_VIEW_SIZE.x / _world_size.x, MAP_VIEW_SIZE.y / _world_size.y)
+	var content_size := _world_size * content_scale
+	_map_content_rect = Rect2((MAP_VIEW_SIZE - content_size) * 0.5, content_size)
+
+
+func _rebuild_map_chunks(map_chunks: Array) -> void:
+	for child in _map_texture_layer.get_children():
+		child.free()
+	var chunks := map_chunks
+	if chunks.is_empty():
+		chunks = [{"texture": SEA_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, _world_size)}]
+	var content_scale := _map_content_rect.size.x / _world_size.x
+	for index in range(chunks.size()):
+		var chunk_data: Dictionary = chunks[index]
+		var chunk_texture := chunk_data.get("texture") as Texture2D
+		var chunk_rect: Rect2 = chunk_data.get("world_rect", Rect2(Vector2.ZERO, _world_size))
+		if chunk_texture == null:
+			continue
+		var map_texture := TextureRect.new()
+		map_texture.name = "MapTexture" if index == 0 else "MapTexture%d" % (index + 1)
+		map_texture.position = _map_content_rect.position + chunk_rect.position * content_scale
+		map_texture.size = chunk_rect.size * content_scale
+		map_texture.texture = chunk_texture
+		map_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		map_texture.stretch_mode = TextureRect.STRETCH_SCALE
+		map_texture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		map_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if index > 0:
+			var blend_material := ShaderMaterial.new()
+			blend_material.shader = MAP_CHUNK_BLEND_SHADER
+			map_texture.material = blend_material
+		_map_texture_layer.add_child(map_texture)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

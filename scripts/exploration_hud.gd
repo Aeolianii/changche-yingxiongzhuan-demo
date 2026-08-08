@@ -125,9 +125,9 @@ func set_quest_context(context_id: StringName) -> void:
 		_quest_screen.call("set_quest_context", context_id)
 
 
-func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array) -> void:
+func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array, map_chunks: Array = []) -> void:
 	if is_instance_valid(_map_screen):
-		_map_screen.call("configure", player_node, world_size, locations)
+		_map_screen.call("configure", player_node, world_size, locations, map_chunks)
 
 
 func set_lunar_day(total_days: float) -> void:

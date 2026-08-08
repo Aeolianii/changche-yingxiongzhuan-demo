@@ -6,6 +6,7 @@ const MOVEMENT_SCREENSHOT_PATH := "res://.godot/sea_overworld_movement_preview.p
 const QUEST_SCREENSHOT_PATH := "res://.godot/sea_overworld_quest_preview.png"
 const MAP_SCREENSHOT_PATH := "res://.godot/sea_overworld_map_preview.png"
 const FULL_MOON_SCREENSHOT_PATH := "res://.godot/sea_overworld_lunar_full_preview.png"
+const EAST_SCREENSHOT_PATH := "res://.godot/sea_overworld_east_preview.png"
 
 var failures: Array[String] = []
 
@@ -25,6 +26,7 @@ func _run() -> void:
 	await _verify_shared_exploration_hud(scene)
 	await _verify_keyboard_movement(scene)
 	await _verify_location_interaction(scene)
+	await _verify_east_expansion(scene)
 	await _verify_auto_triggers(scene)
 	await _capture_preview(scene)
 
@@ -41,6 +43,7 @@ func _run() -> void:
 func _verify_assets() -> void:
 	for asset_path in [
 		"res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png",
+		"res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png",
 		"res://assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png",
 		"res://assets/sprites/sea_overworld/player_ship_4dir_states_v1.png",
 		"res://assets/sprites/sea_overworld/event_ships_atlas_v2.png",
@@ -56,10 +59,20 @@ func _verify_assets() -> void:
 	_expect(moon_texture != null and moon_texture.get_size() == Vector2(256, 256), "Generated moon texture must use the compact 256x256 project size.")
 	_expect(moon_image != null and moon_image.get_pixel(0, 0).a == 0.0 and moon_image.get_pixel(255, 255).a == 0.0, "Generated moon texture must retain transparent outer corners.")
 	_expect(load("res://shaders/moon_phase.gdshader") is Shader, "Moon phase shader could not be loaded.")
+	_expect(load("res://shaders/map_chunk_blend.gdshader") is Shader, "Map chunk blend shader could not be loaded.")
 	var hd_map := load("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png") as Texture2D
 	_expect(hd_map != null and hd_map.get_width() >= 3000, "Sea overworld map must use the high-resolution source texture.")
 	var background := current_scene.get_node("World/Background") as Sprite2D
 	_expect(background.scale.is_equal_approx(Vector2(0.75, 0.75)), "High-resolution map must retain the existing world footprint.")
+	var east_map := load("res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png") as Texture2D
+	_expect(east_map != null and east_map.get_size() == hd_map.get_size(), "East map chunk must match the base map source dimensions.")
+	var east_background := current_scene.get_node("World/EastBackground") as Sprite2D
+	_expect(east_background.texture == east_map and east_background.position.is_equal_approx(Vector2(2388, 0)), "East map chunk must overlap the base map at the configured seam.")
+	_expect(east_background.material is ShaderMaterial, "East map chunk must use alpha seam blending.")
+	var player := current_scene.get_node("World/Player") as CharacterBody2D
+	var camera := player.get_node("Camera2D") as Camera2D
+	_expect(camera.limit_right == 4896 and camera.limit_bottom == 1412, "Camera limits must cover both map chunks.")
+	_expect((player.get("movement_bounds") as Rect2).end.is_equal_approx(Vector2(4862, 1378)), "Player movement bounds must cover the expanded sea world.")
 
 
 func _verify_shared_exploration_hud(scene: Node) -> void:
@@ -127,7 +140,9 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	await process_frame
 	await process_frame
 	var map_screen := hud.get_node("SeaMapScreen") as Control
-	var map_texture := map_screen.get_node("MapPanel/MapViewport/MapTexture") as TextureRect
+	var map_texture_layer := map_screen.get_node("MapPanel/MapViewport/MapTextureLayer") as Control
+	var map_texture := map_texture_layer.get_node("MapTexture") as TextureRect
+	var east_map_texture := map_texture_layer.get_node("MapTexture2") as TextureRect
 	var location_layer := map_screen.get_node("MapPanel/MapViewport/MapLocationLayer") as Control
 	var player_name := map_screen.get_node("MapPanel/MapViewport/PlayerMarker/PlayerName") as Label
 	_expect(map_screen.visible, "Clicking the sea-map diamond must open the full map screen.")
@@ -139,11 +154,13 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	Input.action_release("move_right")
 	_expect(is_equal_approx(float(root.get_meta("sea_overworld_lunar_day", 0.0)), paused_lunar_day), "Opening the full map must pause lunar time progression.")
 	_expect(map_texture.texture.resource_path.ends_with("guangdong_sea_map_v2_hd.png"), "Full map screen must show the complete sea-overworld map texture.")
-	_expect(location_layer.get_child_count() == 4, "Full map must show exactly the four enterable island labels.")
+	_expect(east_map_texture.texture.resource_path.ends_with("guangdong_east_sea_expansion_v1.png"), "Full map screen must show the eastern expansion texture.")
+	_expect(east_map_texture.material is ShaderMaterial, "Full map eastern texture must retain seam blending.")
+	_expect(location_layer.get_child_count() == 7, "Full map must show exactly the seven enterable island labels.")
 	var location_names: Array[String] = []
 	for location_label in location_layer.get_children():
 		location_names.append((location_label as Label).text)
-	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境"]:
+	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "东极秘岛"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
 	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
@@ -263,6 +280,53 @@ func _verify_location_interaction(scene: Node) -> void:
 		await physics_frame
 		await physics_frame
 		_expect(prompt.visible and "青屿秘境" in location_label.text, "Qingyu secret realm must still trigger from its front shore.")
+
+
+func _verify_east_expansion(scene: Node) -> void:
+	var player := scene.get_node("World/Player") as CharacterBody2D
+	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
+	var enter_button := scene.get_node("UI/Root/InteractionPrompt/EnterButton") as BaseButton
+	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
+	var toast_label := scene.get_node("UI/ExplorationHUD/ComingSoonToast/Message") as Label
+	var locations := get_nodes_in_group("sea_location")
+	var east_locations: Array[Area2D] = []
+	for expected_name in ["红湾卫所", "南澳商港", "东极秘岛"]:
+		var location := _find_location(locations, expected_name)
+		_expect(location != null, "East expansion location %s is missing." % expected_name)
+		if location == null:
+			continue
+		east_locations.append(location)
+		_expect(str(location.get_meta("entry_message", "")) == "该岛屿即将开放", "%s must use the island coming-soon message." % expected_name)
+
+	for first_index in range(east_locations.size()):
+		for second_index in range(first_index + 1, east_locations.size()):
+			_expect(east_locations[first_index].position.distance_to(east_locations[second_index].position) > 700.0, "East expansion islands must remain widely separated by navigable water.")
+
+	for location in east_locations:
+		player.global_position = Vector2(2800, 700)
+		for _frame in range(3):
+			await physics_frame
+		var radius := float(location.get_meta("trigger_radius", 0.0))
+		player.global_position = location.global_position + Vector2(0, radius - 35.0)
+		for _frame in range(3):
+			await physics_frame
+		var location_name := str(location.get_meta("location_name", ""))
+		_expect(prompt.visible and location_name in location_label.text, "%s must expose its entry prompt from open water." % location_name)
+		enter_button.pressed.emit()
+		await process_frame
+		_expect(location_name in toast_label.text and "该岛屿即将开放" in toast_label.text, "%s must show the island coming-soon toast." % location_name)
+
+	if not east_locations.is_empty() and DisplayServer.get_name() != "headless":
+		var preview_location: Area2D = east_locations.back() as Area2D
+		player.global_position = preview_location.global_position + Vector2(0, float(preview_location.get_meta("trigger_radius")) - 35.0)
+		for _frame in range(3):
+			await physics_frame
+		var screenshot_error := root.get_texture().get_image().save_png(EAST_SCREENSHOT_PATH)
+		_expect(screenshot_error == OK, "East expansion preview screenshot could not be saved.")
+
+	player.global_position = Vector2(2800, 700)
+	for _frame in range(3):
+		await physics_frame
 
 
 func _verify_auto_triggers(scene: Node) -> void:

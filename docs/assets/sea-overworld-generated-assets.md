@@ -10,6 +10,7 @@
 | 素材 | 文件 | 尺寸 | 布局 |
 |---|---|---:|---|
 | 广东海岸原型海上地图（高清版） | `assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png` | 3344×1882 | 单张16:9背景；场景内以0.75倍显示，地图范围不变 |
+| B 区东部海域扩展 | `assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png` | 3344×1882 | 三个大型地标岛；西侧纯海水衔接；场景内以0.75倍显示 |
 | 主角Q版四方向 | `assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png` | 1776×887 | 4列×1行，每格444×887 |
 | 玩家船只方向与状态 | `assets/sprites/sea_overworld/player_ship_4dir_states_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 | 可复用岛屿 | `assets/sprites/sea_overworld/island_locations_atlas_v1.png` | 1920×820 | 4列×1行，每格480×820 |
@@ -210,6 +211,20 @@ Composition/framing: single moon disc centered, fills about 72% of the square ca
 Color palette: warm parchment-white moon, muted gray ink mottling, thin dark ink outer contour; no bright white, no neon
 Constraints: one moon only; background must be one uniform #00ff00 with no shadows, gradients, texture, reflections, floor plane, or lighting variation; crisp silhouette; no cast shadow; no glow outside the disc; do not use #00ff00 anywhere in the moon; no text, no face, no rabbit, no buildings, no stars, no clouds, no border, no logo, no watermark
 Avoid: photorealism, smooth vector art, modern UI, ornate frame, extra objects
+```
+
+### 4.11 B 区东部海域扩展
+
+内置生图模式：图像编辑。第一张输入为五岛东部扩展初稿，第二张输入为项目现有高清海图的风格和接缝参考。生成后以最近邻采样统一为 3344×1882 PNG。
+
+```text
+Use case: precise-object-edit for a production-ready 2D game world-map background tile
+Input images: Image 1 is the edit target (the generated B East Sea expansion). Image 2 is a strict visual/style and western-edge water seam reference.
+Primary request: simplify Image 1 into a sparse eastern sea zone containing exactly THREE playable islands total. Keep only: (1) the upper-left fortified island outpost, (2) the upper-right large merchant-port island, and (3) the lower-right mysterious forest/cave island. Remove the central pearl-farming island, remove the lower-left fishing-village island, and remove every other detached decorative rock, reef, tiny islet, island, or landmark throughout the ocean.
+Replacement: replace every removed object and all its surf/wake/shadow traces with continuous clean cyan ocean that matches surrounding water perfectly. The result must feel spacious and sparse, with very broad uninterrupted sailing routes and long sea distances between the three remaining islands.
+Seam invariant: the western 15% of the entire canvas must be completely uninterrupted open water matching Image 2's right-edge water—no land, rocks, reef, surf rings, shadows, objects, color bands, borders, or gradients.
+Preserve: keep the same 16:9 framing, exact crisp pixel-art scale, top-down isometric-oblique camera, lighting, water hue and texture, three remaining island designs and their approximate positions. Keep all three islands fully inside safe margins and clearly separated.
+Constraints: exactly three island landmasses in the whole image; shoreline rocks physically attached to those three landmasses are allowed, but no detached rocks/islets. No text, labels, borders, UI, compass, ships, people, monsters, logos, or watermark. No painterly blur and no photorealism.
 ```
 
 ## 5. 当前使用边界

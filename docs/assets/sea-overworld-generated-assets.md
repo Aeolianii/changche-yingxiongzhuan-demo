@@ -25,8 +25,9 @@
 | 岭南海域双向加载图 | `assets/ui/loading/lingnan_sea_loading_v1.png` | 1536×1024 | 3:2全屏背景；文字由 Godot 叠加，可复用于进入大地图与返回南海军港 |
 | 水墨像素月面 | `assets/ui/sea_overworld/moon_clock_moon.png` | 256×256 | 透明PNG；作为左上月相时钟的着色器纹理，不包含外框或文字 |
 | 大地图阶段一构图灰模 v1 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png` | 1672×941 | 历史构图；B 为敌方核心、D 为群岛水战区，不接入游戏 |
-| 大地图阶段一构图灰模 v2 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` | 1672×941 | 当前构图；B 右上为群岛水战区、D 右下为敌方核心海域，不接入游戏 |
-| 大地图阶段一构图灰模 v3 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png` | 1672×941 | 当前构图；强化北部港贸、南部蛮荒军事和四类功能岛差异，不接入游戏 |
+| 大地图阶段一构图灰模 v2 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` | 1672×941 | 历史构图；B 右上为群岛水战区、D 右下为敌方核心海域，不接入游戏 |
+| 大地图阶段一构图灰模 v3 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png` | 1672×941 | 历史构图；强化北部港贸、南部蛮荒军事和四类功能岛差异，不接入游戏 |
+| 大地图阶段一构图灰模 v4 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v4.png` | 1672×941 | 当前构图；将 B 区海防堡垒迁入中央偏右，缓解中央留白与右上地标竞争，不接入游戏 |
 
 除地图底图和全屏加载图外，其余素材均已去除对应色键背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
 
@@ -375,6 +376,46 @@ Primary request: restore B's missing fifth functional location by converting ONE
 Location invariant after this edit: A remains four functional location groups; B must clearly read as exactly five groups—angular fortress, crescent merchant harbor, tiny fishing village, long inhabited trade island, tall natural cave island; C remains four; D remains three. Do not add, remove, merge, resize, move or redesign any other major group.
 Strict preservation: keep the mainland city, A crescent port, A sandbar village, A shrine island, all B groups, all southern islands, central 3 to 5 tiny reefs and the single shipwreck, dense -> sparse -> open -> dense rhythm, broad clean B shipping corridor, north/south contrast, bottom-right core citadel, composition, framing, camera, palette and rough graybox style unchanged.
 Constraints: change only that one small reef group into the tiny fishing village. No other edits. No text, labels, route lines, arrows, UI, moving ships, characters, border, logo or watermark. Do not create extra rocks or islands. Do not clutter B.
+```
+
+### 4.19 大地图阶段一中央留白与地标层级灰模 v4
+
+内置生图模式：精确图像编辑。以 v3 为唯一编辑目标，只迁移 B 区棱角型海防堡垒，其他地点、中央沉船与礁石均锁定。
+
+#### 4.19.1 堡垒迁移
+
+```text
+Use case: precise-object-edit
+Asset type: revised low-fidelity game world-map composition graybox v4 for preproduction, not final art
+Input image: Image 1 is the approved v3 stitched world-map graybox and the edit target.
+
+Primary request: make exactly ONE object relocation. Move the existing angular naval checkpoint fortress in the upper-right B sea—the medium bare-rock rectangular fort with geometric stone walls and one long wooden military pier, currently above-left of the crescent merchant harbor—diagonally down-left into the central-right open sea. Place its center at approximately 56% of canvas width and 43% of canvas height, still above the horizontal map midpoint and still belonging to B. Preserve the fortress's existing size, silhouette, orientation, architecture, rock base, pier, palette, camera and detail level.
+
+Old location cleanup: completely remove the fortress from its old upper-right position and reconstruct that footprint as seamless clean cyan sea matching the surrounding water. Do not leave rocks, foundations, shadows or duplicate fragments there.
+
+Composition intent: the relocated fortress becomes a gateway landmark at the northeast edge of the central navigable water, reducing the oversized central void. Keep at least roughly one-and-a-half fortress widths of open water around it. Maintain clear continuous east-west and north-south passages between it, the central shipwreck, the tall cave mountain to its right/lower-right, and nearby islands. It must not overlap or visually merge with the central shipwreck, tiny reefs, fishing village or natural mountain island.
+
+Upper-right hierarchy after the move: the crescent merchant harbor is the primary upper-right architectural landmark; the long inhabited trade island is the secondary landmark. The tiny fishing village and tall natural cave island remain subdued. The old fortress position becomes open water, so the upper-right no longer presents three equal competing architectural landmarks.
+
+Strict invariants: change only the fortress position and the water at its old footprint. Preserve every other pixel-level composition decision as closely as possible: all other 15 major location groups, A4/B5/C4/D3 distribution, mainland city, crescent ports, fishing villages, shrine island, long trade island, all southern islands, bottom-right enemy core citadel, central single shipwreck and 3 to 5 tiny reefs, north/south visual contrast, dense-to-sparse-to-open-to-dense rhythm, broad B shipping corridor, 16:9 framing, cyan sea, top-down oblique camera and rough painted pixel-art graybox style.
+
+Constraints: do not add, delete, duplicate, resize or redesign any other island, reef, building, dock, shipwreck or landmark. Do not invent new objects. No text, labels, letters, numbers, UI, legend, grid, quadrant lines, arrows, route lines, compass, moving ships, characters, combat, weather, fog, border, logo or watermark. No final-art refinement.
+```
+
+#### 4.19.2 月环商港朝向修订
+
+```text
+Use case: precise-object-edit
+Asset type: localized orientation correction for the stage-one world-map graybox v4
+Input image: Image 1 is the current v4 edit target.
+
+Primary request: change ONLY the orientation of the large crescent-shaped merchant harbor in the upper-right corner. It is the populated C-shaped architectural island near the top-right, above the long inhabited trade island. Horizontally mirror/turn the complete crescent harbor landmark in place so its enclosed bay opening faces LEFT toward the map center, and its long primary pier/harbor entrance also extends toward the LEFT. Keep the landmark's center at exactly the same position. Preserve its overall footprint, scale, crescent silhouette, buildings, quay density, palette, camera angle, shadows and rough painted pixel-art graybox detail.
+
+Localized reconstruction: rebuild only the water immediately around the mirrored crescent edges and piers so it blends seamlessly. The result must clearly read as the same merchant harbor facing left, not a redesigned island and not a rotated camera view.
+
+Strict invariants: preserve the relocated angular naval fortress in the central-right sea exactly where it is. Preserve every other island, reef, building, dock, coastline, central shipwreck, tiny reef, sea texture, spacing and composition unchanged. Preserve A4/B5/C4/D3, the reduced central void, clear east-west and north-south passages, the long inhabited trade island as the secondary upper-right landmark, northern trade character, southern dangerous military character, 16:9 framing, top-down oblique camera and rough graybox style.
+
+Constraints: no new objects; no deletions or duplicates; do not move or resize the crescent landmark; do not change the central fortress; do not alter the long trade island; no text, labels, UI, arrows, route lines, compass, characters, moving ships, weather, border, logo or watermark. No final-art refinement.
 ```
 
 ## 5. 当前使用边界

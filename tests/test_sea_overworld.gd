@@ -26,13 +26,12 @@ const EXPECTED_LOCATIONS := {
 	"白沙渔岛": Vector2(1460, 2460),
 	"玄潮古屿": Vector2(2100, 2240),
 	"红湾卫所": Vector2(2980, 1760),
-	"东极秘岛": Vector2(3730, 2110),
 	"南澳商港": Vector2(4380, 2460),
 }
 const A_LOCATIONS := ["南海军港", "川山渔村", "东湾水寨", "青屿秘境"]
 const B_LOCATIONS := ["沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]
 const C_LOCATIONS := ["澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿"]
-const D_LOCATIONS := ["红湾卫所", "东极秘岛", "南澳商港"]
+const D_LOCATIONS := ["红湾卫所", "南澳商港"]
 const NAVIGATION_ROUTES := {
 	"A_TO_B": [Vector2(1500, 800), Vector2(2100, 800), Vector2(2388, 800), Vector2(2700, 800), Vector2(3050, 800)],
 	"A_TO_C": [Vector2(1700, 1050), Vector2(1700, 1292), Vector2(1700, 1500), Vector2(1550, 1750), Vector2(1400, 1950)],
@@ -174,7 +173,7 @@ func _verify_assets() -> void:
 
 func _verify_location_layout(scene: Node) -> void:
 	var locations := get_nodes_in_group("sea_location")
-	_expect(locations.size() == 16, "Production map must expose exactly sixteen enterable locations.")
+	_expect(locations.size() == 15, "Production map must expose exactly fifteen enterable locations.")
 	var region_names := {
 		"A": A_LOCATIONS,
 		"B": B_LOCATIONS,
@@ -198,7 +197,7 @@ func _verify_location_layout(scene: Node) -> void:
 	for location_name in region_names["D"]:
 		var location := _find_location(locations, location_name)
 		_expect(location != null and location.position.x > 2388.0 and location.position.y > 1292.0, "%s must remain in D southeast of the seams." % location_name)
-	_expect(A_LOCATIONS.size() == 4 and B_LOCATIONS.size() == 5 and C_LOCATIONS.size() == 4 and D_LOCATIONS.size() == 3, "Region responsibility must remain A4/B5/C4/D3.")
+	_expect(A_LOCATIONS.size() == 4 and B_LOCATIONS.size() == 5 and C_LOCATIONS.size() == 4 and D_LOCATIONS.size() == 2, "Region responsibility must remain A4/B5/C4/D2.")
 	var moon_harbor := _find_location(locations, "月环商港")
 	if moon_harbor != null:
 		var moon_shape_node := moon_harbor.get_node("EntryTriggerShape") as CollisionShape2D
@@ -315,7 +314,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	_expect(d_map_texture.material is ShaderMaterial, "Full map D-zone texture must retain seam blending.")
 	_expect(bool((d_map_texture.material as ShaderMaterial).get_shader_parameter("fade_from_left")), "Full map D-zone texture must fade from its west edge.")
 	_expect(bool((d_map_texture.material as ShaderMaterial).get_shader_parameter("fade_from_top")), "Full map D-zone texture must fade from its north edge.")
-	_expect(location_layer.get_child_count() == 16, "Full map must show exactly the sixteen enterable island labels.")
+	_expect(location_layer.get_child_count() == 15, "Full map must show exactly the fifteen enterable island labels.")
 	var location_names: Array[String] = []
 	var east_bay_map_label: Label
 	var qingyu_map_label: Label
@@ -326,7 +325,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 			east_bay_map_label = label
 		elif "青屿秘境" in label.text:
 			qingyu_map_label = label
-	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "东极秘岛", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
+	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
 	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
@@ -469,7 +468,7 @@ func _verify_c_expansion(scene: Node) -> void:
 
 func _verify_d_expansion(scene: Node) -> void:
 	var d_locations := _collect_region_locations(D_LOCATIONS, "D")
-	_expect(d_locations.size() == 3, "D must contain three lower-right enemy-core locations.")
+	_expect(d_locations.size() == 2, "D must contain two lower-right enemy-core locations matching the two visible islands.")
 	await _verify_region_interactions(scene, d_locations, "南澳商港", D_ZONE_SCREENSHOT_PATH)
 
 

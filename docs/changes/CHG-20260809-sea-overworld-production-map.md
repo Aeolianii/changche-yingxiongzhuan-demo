@@ -8,14 +8,14 @@
 
 ## Goal and player/project outcome
 
-以 `sea_overworld_stage1_graybox_v4.png` 为唯一构图依据，制作并接入可运行的 A/B/C/D 四分块海上大地图，使生产底图、16 个地点、碰撞、入口触发、完整海图和现有航行交互保持一致。
+以 `sea_overworld_stage1_graybox_v4.png` 为唯一构图依据，制作并接入可运行的 A/B/C/D 四分块海上大地图，使生产底图、15 个地点、碰撞、入口触发、完整海图和现有航行交互保持一致。
 
 ## Scope
 
 - 制作一张 `6528×3604` 生产母图，并裁为四张 `3344×1882` 运行时 PNG。
 - 沿用当前每块 `2508×1412` 世界单位、`120` 世界单位重叠带和混合 shader。
-- 固定 A4、B5、C4、D3：B 为右上群岛水战区，D 为右下敌方核心海域。
-- 按批准坐标重排 16 个地点，并将入口触发对准可见码头或登陆口。
+- 固定 A4、B5、C4、D2：B 为右上群岛水战区，D 为右下敌方核心海域。
+- 按批准坐标重排 15 个地点，并将入口触发对准可见码头或登陆口。
 - 按生产底图重做海岸与岛屿碰撞，保留 A→B、A→C、B→D、C→D 和中央十字水门。
 - 更新完整海图资源、针对性测试、视觉截图检查与相关设计、资产、QA 文档。
 - 接入时适度缩小玩家 Q 版人物、船体和航行特效，并同步收紧玩家碰撞与视觉锚点，强化大地图的开阔感。
@@ -23,7 +23,7 @@
 
 ## Non-goals
 
-- 不新增、删除或改名现有 16 个地点。
+- 除用户批准删除没有独立岛体的东极秘岛外，不新增、删除或改名其余 15 个地点。
 - 不增加天气、风向、洋流、潮汐、暗礁伤害或航海模拟系统。
 - 不制作实际登岛小地图、剧情、对话、海战切换或快速移动。
 - 不重绘玩家船只，也不改月相 HUD、任务 HUD、存档或场景二主流程；本次只调整船只与人物显示比例及配套锚点、碰撞。
@@ -34,7 +34,7 @@
 - [x] v4 构图、B/D 职责、四分块尺寸和接缝规格已写入规范文档。
 - [x] 四张生产分块均为 `3344×1882`，四组重叠带逐像素一致；游戏内接缝留待 Task 3 接入后验收。
 - [x] 运行时和完整海图均使用同一套 A/B/C/D v3 生产分块。
-- [x] 16 个地点保持 A4、B5、C4、D3，中心坐标相对批准草案偏差不超过 `±80` 世界单位。
+- [x] 15 个地点保持 A4、B5、C4、D2，中心坐标相对批准草案偏差不超过 `±80` 世界单位。
 - [x] 所有入口触发对准可见码头或登陆口，月环商港入口位于左侧。
 - [x] 玩家船体、尾流和侧浪缩至 `0.28`，Q 版人物缩至 `0.088`，碰撞半径缩至 `19`；人物甲板站位与尾流方向保持稳定。
 - [x] 主要岛屿不可穿越，四条跨区路线和中央十字水门均可航行。
@@ -78,14 +78,15 @@
 - Local production render: `D:\厂车英雄传DEMO\artwork\sea_overworld\sea_overworld_production_render_v1.png`.
 - Local production master: `D:\厂车英雄传DEMO\artwork\sea_overworld\sea_overworld_master_v1.png`, RGB `6528×3604`, SHA-256 `1F12163B60C790D77FB3017256DCEA1F9D86F07C5D05FAD703ACDD302E7E8E04`.
 - Runtime chunk SHA-256: A `ACBB0B091D5F1D9B75EB712C5F048D96DF60A7CC39D520D5AEF98F8049CF03D6`; B `BDA3BD4A2749A39C611F85C48F60358F3DB118DE7257CE6AB4364B35668468D8`; C `04974B2D0FCF139DA6E52C5D62CEE239F2DED9AB98F38265E32786E14EFFC64C`; D `780A6024EE560850D43A31B579751058B93734D980AFA6C841480F1CA95D84A4`.
-- Task 3 runtime landing: A/B/C/D v3 textures are serialized and preloaded consistently; all 16 approved coordinates are exact; moon-harbor entry offset is left-facing; compact player visual/collision values follow the player scale contract. Task 4 moves `SOUTH_SEA_HARBOR_SPAWN` to the newly verified clear-water point `Vector2(1300, 850)` while retaining overlap with the harbor entry trigger.
+- Task 3 runtime landing: A/B/C/D v3 textures are serialized and preloaded consistently; all 15 active coordinates are exact; moon-harbor entry offset is left-facing; compact player visual/collision values follow the player scale contract. Task 4 moves `SOUTH_SEA_HARBOR_SPAWN` to the newly verified clear-water point `Vector2(1300, 850)` while retaining overlap with the harbor entry trigger.
+- Post-acceptance D2 reconciliation: the production art contains only two distinct D-region landmasses, so the user approved removing 东极秘岛. Its location trigger and full-map label were deleted; the existing `DongjiWestWall` blocker was retained as part of 南澳商港 and renamed `NanaoWestWall`.
 
 ## Verification evidence
 
-- Automated: Task 1 文档检查通过。Task 2 的裁图工具通过 `py_compile`；A/B/C/D 均为 RGB `3344×1882`；四组 `160` 像素重叠带逐像素一致；四块重组后与 `6528×3604` 母图逐像素一致；边缘黑像素比例均为 `0.000%`；Godot 4.7.1 headless editor 成功导入四张 PNG，生成的 `.import` 均使用无损压缩模式。Task 3 通过 Godot 4.7.1 headless 编辑器加载和 8 帧场景 smoke test；临时运行时探针验证四张 v3 纹理、16 个精确坐标、月环商港左侧矩形入口、玩家显示比例和 `19` 碰撞半径。
-- Automated: Task 4 导航探针使用半径 `19` 的玩家船体逐段查询并实际驱动 `CharacterBody2D` 通过 A→B、A→C、B→D、C→D 及中央堡垒上、下、左、右共 8 条走廊；同时验证 16 个陆地探针均受阻、16 个地点入口均保留可达水面，出生点、两艘事件船、漂流事件、中央沉船与南澳港外水面均无静态碰撞。Godot 4.7.1 编辑器加载和 8 帧场景 smoke test 均通过。
+- Automated: Task 1 文档检查通过。Task 2 的裁图工具通过 `py_compile`；A/B/C/D 均为 RGB `3344×1882`；四组 `160` 像素重叠带逐像素一致；四块重组后与 `6528×3604` 母图逐像素一致；边缘黑像素比例均为 `0.000%`；Godot 4.7.1 headless editor 成功导入四张 PNG，生成的 `.import` 均使用无损压缩模式。Task 3 通过 Godot 4.7.1 headless 编辑器加载和 8 帧场景 smoke test；临时运行时探针验证四张 v3 纹理、15 个精确坐标、月环商港左侧矩形入口、玩家显示比例和 `19` 碰撞半径。
+- Automated: Task 4 导航探针使用半径 `19` 的玩家船体逐段查询并实际驱动 `CharacterBody2D` 通过 A→B、A→C、B→D、C→D 及中央堡垒上、下、左、右共 8 条走廊；同时验证 16 个陆地探针均受阻、15 个地点入口均保留可达水面，出生点、两艘事件船、漂流事件、中央沉船与南澳港外水面均无静态碰撞。Godot 4.7.1 编辑器加载和 8 帧场景 smoke test 均通过。
 - Automated: Task 5 的 `tests/test_sea_overworld.gd` 在 Godot 4.7.1 headless 与有窗口 OpenGL Compatibility 两种模式均退出 `0` 并输出 `Sea overworld runtime verification passed.`；`tests/test_main_flow_save.gd` 和 `tests/test_scene_two_sea_link.gd` 分别通过存档恢复与场景二往返回归。
-- Manual/in-engine: 已检查 1344×896 的 A 区航行/静止、B、C、D、中央四块交点、完整海图、任务与月相截图。四块无明显硬接缝；16 个标签齐全且没有 B/D 旧职责残留；月环商港朝左，右上地标主次清楚；中央水门与南澳港外水面开阔；缩小后的玩家船体和 Q 版人物不遮挡航道。截图位于 `.godot/sea_overworld_*_preview.png`。
+- Manual/in-engine: 已检查 1344×896 的 A 区航行/静止、B、C、D、中央四块交点、完整海图、任务与月相截图。四块无明显硬接缝；15 个标签齐全且没有 B/D 旧职责残留；D 区只显示红湾卫所与南澳商港；月环商港朝左，右上地标主次清楚；中央水门与南澳港外水面开阔；缩小后的玩家船体和 Q 版人物不遮挡航道。截图位于 `.godot/sea_overworld_*_preview.png`。
 
 ## Final reconciliation
 

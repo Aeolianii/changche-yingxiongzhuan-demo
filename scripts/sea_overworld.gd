@@ -191,7 +191,7 @@ func _build_world_collisions() -> void:
 		Vector2(2820, 1800), Vector2(2990, 1710), Vector2(3170, 1780), Vector2(3370, 1970),
 		Vector2(3310, 2160), Vector2(3140, 2240), Vector2(2920, 2190), Vector2(2740, 2040),
 	]))
-	_add_polygon_blocker("DongjiWestWall", PackedVector2Array([
+	_add_polygon_blocker("NanaoWestWall", PackedVector2Array([
 		Vector2(3510, 2260), Vector2(3680, 2140), Vector2(3790, 2280), Vector2(3650, 2410),
 		Vector2(3510, 2440),
 	]))
@@ -225,7 +225,6 @@ func _build_locations() -> void:
 	_build_location("玄潮古屿", Vector2(2100, 2240), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
 
 	_build_location("红湾卫所", Vector2(2980, 1760), 190.0, Vector2(360, 120), Vector2(-160, 170), "该岛屿即将开放")
-	_build_location("东极秘岛", Vector2(3730, 2110), 190.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
 	_build_location("南澳商港", Vector2(4380, 2460), 280.0, Vector2(560, 150), Vector2(-100, 180), "该岛屿即将开放")
 
 

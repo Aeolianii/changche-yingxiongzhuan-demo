@@ -71,7 +71,7 @@
 | 三分块完整海图 | 打开右下海图入口 | 查看三张地图、十一个地点和玩家位置 | A/B 在上、C 在 A 下方组成 L 形，十一个地点位置正确，玩家标记可进入 C 区 | passed / combined full-map runtime + render 1 |
 | D 区连续航行 | 从 B 向南或从 C 向东航行 | 穿过 B/D、C/D 接缝并绕过礁群 | 无空白或明显硬接缝，主航道可通过，障碍礁群不可穿越 | passed / D-zone runtime + render 1 |
 | D 区五岛进入 | 依次靠近五个 D 区地点 | 查看名称并点击进入或按 E | 提示对应地点“该岛屿即将开放”，障碍礁群不显示入口 | passed / five D locations runtime 1 |
-| 四分块完整海图 | 打开右下海图入口 | 查看四张地图、十六个地点和玩家位置 | A/B/C/D 组成完整二乘二海图，十六个地点位置正确，障碍礁群无标签 | passed / combined full-map runtime + render 1 |
+| 四分块完整海图 | 打开右下海图入口 | 查看四张地图、十五个地点和玩家位置 | A/B/C/D 组成完整二乘二海图，十五个地点位置正确，障碍礁群无标签 | passed / combined full-map runtime + render 1 |
 | 正式主流程保存 | 在皇宫、水师驻地或海上大地图自由探索时打开系统菜单 | 点击“保存进度” | 单槽存档写入成功，当前场景、稳定任务阶段和角色位置被记录 | passed / main-flow save runtime 1 |
 | 正式主流程读取 | 改变位置或重启后打开系统菜单 | 点击“读取进度” | 切换或重载到存档场景，并恢复对应任务阶段、角色位置及海图月相 | passed / main-flow save runtime 1 |
 | 无效存档保护 | 存档缺失、损坏或版本不兼容 | 点击“读取进度” | 留在当前场景，显示明确错误且不改变当前进度 | passed / main-flow save runtime 1 |
@@ -91,12 +91,13 @@
 | v4 南线通航 | 从 A 区南部沿 A→C 进入危险外海，再由 C→D 驶向红湾卫所 | 依次通过大陆南侧水门、C 区宽航道及 C/D 接缝 | 全程连续可航，山岛与破碎礁群不形成隐形墙 | passed / Task 4 route probe + Task 5 runtime |
 | v4 中央通航 | 从中央堡垒上、下、左、右四个方向接近四区交点 | 驾驶半径 19 的玩家船体穿越中央十字水门 | 四个方向均可绕行；沉船无碰撞，连续水域宽度满足设计约束 | passed / Task 4 body drive + Task 5 central render |
 | 中央堡垒四向绕行 | 分别从堡垒上、下、左、右驶过 | 使用玩家 `CharacterBody2D` 完成四条走廊 | 四向路线均可驶通，中央水门未被大碰撞封死 | passed / Task 4 navigation query + body drive |
-| v4 岛屿与入口碰撞 | 检查 16 组主要陆地和 16 个地点入口 | 陆地探针与入口水面探针交叉验证 | 主要岩岸均阻挡船只，每个入口至少保留一个可达水面采样点 | passed / Task 4 collision probe |
-| v4 十六地点交互 | 依次驶近 A4、B5、C4、D3 共 16 个入口 | 从无碰撞水面触发地点名称并点击进入或按 E | 16 个地点均显示正确名称；南海军港可返港，其余地点显示对应开放提示 | passed / Task 5 location interaction regression |
+| v4 岛屿与入口碰撞 | 检查 16 组主要陆地和 15 个地点入口 | 陆地探针与入口水面探针交叉验证 | 主要岩岸均阻挡船只，每个入口至少保留一个可达水面采样点 | passed / Task 4 collision probe |
+| v4 十五地点交互 | 依次驶近 A4、B5、C4、D2 共 15 个入口 | 从无碰撞水面触发地点名称并点击进入或按 E | 15 个地点均显示正确名称；南海军港可返港，其余地点显示对应开放提示 | passed / location interaction regression |
 | 青屿秘境宝塔岛迁移 | 从东湾水寨向东驶近 A/B 接缝西侧宝塔岛 | 从宝塔岛南侧水面触发青屿秘境，并打开完整海图 | 入口位于可航水面；标签位于宝塔岛右上角且不与相邻地点文字重叠 | passed / Qingyu migration runtime + full-map render |
 | 海上事件与沉船留白 | 检查出生点、两艘事件船、漂流物、中央沉船和南澳港外 | 查询半径 19 船体碰撞 | 全部位于可航水面；中央沉船不产生阻挡或伤害 | passed / Task 4 collision probe |
-| v4 海图专项回归 | 运行 `tests/test_sea_overworld.gd` | 检查资源、A4/B5/C4/D3、16 坐标、入口、航路、HUD、月相和事件 | headless 与 OpenGL Compatibility 均退出 0 | passed / Task 5 runtime 2 modes |
-| v4 完整海图检查 | 打开右下海图并查看完整二乘二区域 | 核对 A/B/C/D 分块、16 个标签、玩家标记及四区接缝 | 四张 v3 生产分块无明显硬接缝；标签齐全且 B/D 职责正确，玩家标记位置同步 | passed / Task 5 full-map render + runtime |
+| v4 海图专项回归 | 运行 `tests/test_sea_overworld.gd` | 检查资源、A4/B5/C4/D2、15 坐标、入口、航路、HUD、月相和事件 | headless 与 OpenGL Compatibility 均退出 0 | passed / runtime 2 modes |
+| v4 完整海图检查 | 打开右下海图并查看完整二乘二区域 | 核对 A/B/C/D 分块、15 个标签、玩家标记及四区接缝 | 四张 v3 生产分块无明显硬接缝；标签齐全且 B/D 职责正确，玩家标记位置同步 | passed / full-map render + runtime |
+| D 区双地点简化 | 查看右下敌方核心海域并打开完整海图 | 核对红湾卫所、南澳商港及原东极秘岛位置 | D 区只显示两个地点；东极秘岛标签和入口已删除，南澳城塞碰撞仍完整 | passed / D2 runtime + full-map render |
 | 水墨像素展开海图 UI | 打开右下完整海图 | 检查卷轴背景、中央地图、标题、返回按钮与底部区域 | 透明卷轴框完整显示；详细地图落在中央内框；引擎文字清晰；底部旧说明已删除 | passed / headless assertion + OpenGL render |
 | v4 原始分辨率截图 | 查看 A/B/C/D、中央接缝和完整海图 1344×896 截图 | 检查接缝、标签、入口、船只可达性和视觉层级 | 无明显硬接缝；标签齐全；月环港朝左；中央和南澳港外水面开阔 | passed / Task 5 visual review |
 | v4 存档与场景二往返 | 运行主流程存档与 Scene2 海图往返测试 | 恢复海图位置/月相并完成出海、返港 | 清水位置恢复准确；返港提示和任务状态正确 | passed / Task 5 save + round-trip regression |
@@ -169,6 +170,7 @@
 | 2026-08-10 / sea overworld collision run 1 | Codex | v4 生产底图的大陆、岛屿、山岭和必要礁石已改用 32 个贴岸阻挡；港池、码头前水面、四区接缝与中央水门保持可航 | Godot 4.7.1 场景 smoke、8 条真实船体航路、16 组陆地及 16 个入口探针 | Task 5 原始分辨率截图与完整回归 |
 | 2026-08-10 / sea overworld production QA 1 | Codex | A/B/C/D v3 底图、16 地点、缩小船只、入口和碰撞完成双模式回归与原始分辨率视觉验收 | 地图专项 headless/OpenGL、存档、Scene2 往返、A/B/C/D/中央/完整海图截图 | 生产落图完成 |
 | 2026-08-10 / sea map scroll UI render 1 | Codex | 完整海图替换为生成式水墨像素展开海图框，详细地图嵌入中央，删除底部说明 | PNG Alpha/尺寸检查、地图专项 headless/OpenGL、1344×896 完整海图截图 | 交付用户试玩 |
+| 2026-08-10 / sea overworld D2 simplification 1 | Codex | 删除无独立岛体的东极秘岛，D 区改为红湾卫所与南澳商港两层结构 | 15 地点专项 headless/OpenGL、完整海图与 D 区截图 | 交付用户试玩 |
 
 ## Known issues
 

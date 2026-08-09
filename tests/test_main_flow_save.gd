@@ -114,7 +114,7 @@ func _verify_scene_two_restore() -> void:
 
 func _verify_sea_restore() -> void:
 	var snapshot := {
-		"player_position": [3020.0, 1780.0],
+		"player_position": [2450.0, 1400.0],
 		"facing_index": 2,
 		"exploration_stage": 3,
 		"lunar_day": 14.75,
@@ -127,7 +127,7 @@ func _verify_sea_restore() -> void:
 	await process_frame
 	await physics_frame
 	var player := scene.get_node("World/Player") as Node2D
-	_expect(player.global_position.is_equal_approx(Vector2(3020, 1780)), "Sea overworld must restore the player position.")
+	_expect(player.global_position.is_equal_approx(Vector2(2450, 1400)), "Sea overworld must restore the player position on clear production-map water.")
 	_expect(int(player.call("save_facing_index")) == 2, "Sea overworld must restore the ship facing direction.")
 	_expect(int(scene.get("_exploration_stage")) == 3, "Sea overworld must restore its exploration stage.")
 	_expect(is_equal_approx(float(scene.get("_lunar_day")), 14.75), "Sea overworld must restore lunar progress.")

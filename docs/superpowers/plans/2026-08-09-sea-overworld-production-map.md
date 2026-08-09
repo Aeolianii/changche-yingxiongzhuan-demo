@@ -100,12 +100,12 @@
 
 ## Task 5：更新针对性测试和视觉验收
 
-- [ ] 修改 `tests/test_sea_overworld.gd` 的资源断言，要求四张 v3 分块存在、尺寸正确，并继续验证 A/B/C/D 背景节点序列化完整。
-- [ ] 将旧 `_verify_east_expansion()` 与 `_verify_d_expansion()` 的职责改为新布局：B 断言 5 个右上地点且 `y < 1292`，D 断言 3 个右下地点且 `y > 1292`；C 仍为 4 个，A 仍为 4 个。
-- [ ] 增加 16 个地点名称、批准坐标容差 `±80`、月环商港左侧入口、南海军港出生点不碰撞的断言。
-- [ ] 增加水路探针：四条接缝入口、中央十字水门、B 区宽航道和 D 区终局港外水面必须无静态碰撞；所有主要岛中心必须有静态碰撞。
-- [ ] 保留地点主动进入、事件自动触发、海图、月相、存档恢复和场景二往返的现有回归断言。
-- [ ] 运行针对性测试：
+- [x] 修改 `tests/test_sea_overworld.gd` 的资源断言，要求四张 v3 分块存在、尺寸正确，并继续验证 A/B/C/D 背景节点序列化完整。
+- [x] 将旧 `_verify_east_expansion()` 与 `_verify_d_expansion()` 的职责改为新布局：B 断言 5 个右上地点且 `y < 1292`，D 断言 3 个右下地点且 `y > 1292`；C 仍为 4 个，A 仍为 4 个。
+- [x] 增加 16 个地点名称、批准坐标容差 `±80`、月环商港左侧入口、南海军港出生点不碰撞的断言。
+- [x] 增加水路探针：四条接缝入口、中央十字水门、B 区宽航道和 D 区终局港外水面必须无静态碰撞；所有主要岛中心必须有静态碰撞。
+- [x] 保留地点主动进入、事件自动触发、海图、月相、存档恢复和场景二往返的现有回归断言。
+- [x] 运行针对性测试：
 
   ```powershell
   & 'D:\Programs\Godot-4.7.1-dotnet\Godot_v4.7.1-stable_mono_win64\Godot_v4.7.1-stable_mono_win64_console.exe' --headless --path . --script res://tests/test_sea_overworld.gd
@@ -113,8 +113,8 @@
 
   预期：退出码 `0`，输出 `Sea overworld runtime verification passed.`。
 
-- [ ] 运行一次有窗口 OpenGL Compatibility 测试，生成 A、B、C、D、中央接缝和完整海图截图；逐张检查接缝、地点标签、入口方向、船只可达性和视觉层级。
-- [ ] 提交运行时与测试：`feat(sea-map): integrate v4 production layout`。
+- [x] 运行一次有窗口 OpenGL Compatibility 测试，生成 A、B、C、D、中央接缝和完整海图截图；逐张检查接缝、地点标签、入口方向、船只可达性和视觉层级。
+- [x] 提交测试与验收：`test(sea-map): verify v4 production rollout`。
 
 ## Task 6：文档收口与最终提交
 

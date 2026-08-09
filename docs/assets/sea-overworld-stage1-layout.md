@@ -1,6 +1,6 @@
 # 海上大地图阶段一构图灰模
 
-- 状态：v3 生产分块、地点与碰撞已接入，等待最终视觉验收
+- 状态：v3 生产分块、地点、碰撞与视觉验收已完成，等待文档收口
 - 日期：2026-08-10
 - 当前灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v4.png`
 - 历史灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png`、`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png`、`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png`
@@ -13,7 +13,7 @@
 - 生产母图：`6528×3604`，保存在仓库外的 `D:\厂车英雄传DEMO\artwork\sea_overworld\`，不提交或推送。
 - 运行时分块：A/B/C/D 各 `3344×1882` 源像素；相邻分块共享 `160` 源像素，即 `120` 世界单位重叠带。
 - 运行时原点：A `(0,0)`、B `(2388,0)`、C `(0,1292)`、D `(2388,1292)`；现有二乘二结构与混合 shader 不变。
-- 生产 PNG、场景纹理、16 个地点、入口、完整海图和新岛屿碰撞已完成接入；玩家船体及航行特效缩至 `0.28`、Q 版人物缩至 `0.088`，碰撞半径同步缩至 `19`，以维持开阔海域观感。8 条航路已通过真实船体驱动验证，最终截图与完整回归留待 Task 5。
+- 生产 PNG、场景纹理、16 个地点、入口、完整海图和新岛屿碰撞已完成接入；玩家船体及航行特效缩至 `0.28`、Q 版人物缩至 `0.088`，碰撞半径同步缩至 `19`，以维持开阔海域观感。8 条航路、完整回归和 A/B/C/D、中央接缝、完整海图截图检查均已通过。
 
 ## 1. 构图结论
 

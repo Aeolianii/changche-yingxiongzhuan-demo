@@ -49,7 +49,7 @@ func _run() -> void:
 		_finish()
 		return
 	var sea_player := sea_scene.get_node("World/Player") as CharacterBody2D
-	_expect(sea_player.global_position.is_equal_approx(Vector2(1230, 900)), "Sea-overworld entry must spawn directly in front of South Sea Harbor.")
+	_expect(sea_player.global_position.is_equal_approx(Vector2(1300, 850)), "Sea-overworld entry must spawn on the collision-free water in front of South Sea Harbor.")
 	await physics_frame
 	await physics_frame
 	var prompt := sea_scene.get_node("UI/Root/InteractionPrompt") as Control

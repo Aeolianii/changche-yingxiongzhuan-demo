@@ -15,7 +15,7 @@ const EXPECTED_LOCATIONS := {
 	"南海军港": Vector2(1080, 650),
 	"川山渔村": Vector2(480, 1040),
 	"东湾水寨": Vector2(2040, 520),
-	"青屿秘境": Vector2(1760, 950),
+	"青屿秘境": Vector2(2380, 540),
 	"沧门礁堡": Vector2(2780, 1080),
 	"月环商港": Vector2(3650, 360),
 	"雾岚群岛": Vector2(3070, 850),
@@ -203,6 +203,13 @@ func _verify_location_layout(scene: Node) -> void:
 	if moon_harbor != null:
 		var moon_shape_node := moon_harbor.get_node("EntryTriggerShape") as CollisionShape2D
 		_expect(moon_shape_node.shape is RectangleShape2D and moon_shape_node.position.x < 0.0, "Moon harbor must retain its left-facing rectangular entry.")
+	var qingyu := _find_location(locations, "青屿秘境")
+	if qingyu != null:
+		var qingyu_shape_node := qingyu.get_node("EntryTriggerShape") as CollisionShape2D
+		_expect(not _is_water_clear(qingyu.position, 2.0), "Qingyu location center must sit on the visible pagoda island.")
+		_expect(qingyu_shape_node.shape is RectangleShape2D and qingyu_shape_node.position.y > 0.0, "Qingyu must use its south-side water entry.")
+		_expect(_is_water_clear(_find_clear_entry_point(qingyu), 19.0), "Qingyu south-side entry must remain reachable open water.")
+		_expect((qingyu.get_meta("map_label_offset", Vector2.ZERO) as Vector2).y > 0.0, "Qingyu full-map label must be offset below the pagoda island.")
 	var script_constants := (scene.get_script() as Script).get_script_constant_map()
 	var spawn := script_constants.get("SOUTH_SEA_HARBOR_SPAWN", Vector2.ZERO) as Vector2
 	var south_harbor := _find_location(locations, "南海军港")
@@ -302,12 +309,24 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	_expect(bool((d_map_texture.material as ShaderMaterial).get_shader_parameter("fade_from_top")), "Full map D-zone texture must fade from its north edge.")
 	_expect(location_layer.get_child_count() == 16, "Full map must show exactly the sixteen enterable island labels.")
 	var location_names: Array[String] = []
+	var east_bay_map_label: Label
+	var qingyu_map_label: Label
 	for location_label in location_layer.get_children():
-		location_names.append((location_label as Label).text)
+		var label := location_label as Label
+		location_names.append(label.text)
+		if "东湾水寨" in label.text:
+			east_bay_map_label = label
+		elif "青屿秘境" in label.text:
+			qingyu_map_label = label
 	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "东极秘岛", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
 	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
+	_expect(qingyu_map_label != null and (qingyu_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2380, 720)), "Qingyu full-map label must align below the pagoda island.")
+	if east_bay_map_label != null and qingyu_map_label != null:
+		var east_bay_label_rect := Rect2(east_bay_map_label.position, east_bay_map_label.size)
+		var qingyu_label_rect := Rect2(qingyu_map_label.position, qingyu_map_label.size)
+		_expect(not east_bay_label_rect.intersects(qingyu_label_rect), "Qingyu and East Bay labels must not overlap on the full map.")
 	_expect(player_name.text == "当前位置", "Full map player marker must display only the current-position label.")
 	if DisplayServer.get_name() != "headless":
 		var map_screenshot_error := root.get_texture().get_image().save_png(MAP_SCREENSHOT_PATH)
@@ -421,7 +440,7 @@ func _verify_location_interaction(scene: Node) -> void:
 	_expect(qingyu != null, "Qingyu secret realm trigger is missing.")
 	if qingyu != null:
 		var qingyu_shape_node := qingyu.get_node("EntryTriggerShape") as CollisionShape2D
-		_expect(qingyu_shape_node.shape is CircleShape2D, "Qingyu natural-island entry must use a compact circular trigger.")
+		_expect(qingyu_shape_node.shape is RectangleShape2D and qingyu_shape_node.position.y > 0.0, "Qingyu pagoda-island entry must use a south-side rectangular trigger.")
 		player.global_position = _find_clear_entry_point(qingyu)
 		await physics_frame
 		await physics_frame

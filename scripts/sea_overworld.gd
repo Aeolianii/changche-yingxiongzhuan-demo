@@ -211,7 +211,7 @@ func _build_locations() -> void:
 	_build_location("南海军港", Vector2(1080, 650), 238.0, Vector2(480, 130), Vector2(0, 250))
 	_build_location("川山渔村", Vector2(480, 1040), 170.0, Vector2(320, 110), Vector2(0, 160))
 	_build_location("东湾水寨", Vector2(2040, 520), 225.0, Vector2(440, 120), Vector2(0, 180))
-	_build_location("青屿秘境", Vector2(1760, 950), 145.0)
+	_build_location("青屿秘境", Vector2(2380, 540), 145.0, Vector2(260, 100), Vector2(0, 170), "该地点即将开放", Vector2(0, 180))
 
 	_build_location("沧门礁堡", Vector2(2780, 1080), 190.0, Vector2(320, 120), Vector2(-360, 140), "该岛屿即将开放")
 	_build_location("月环商港", Vector2(3650, 360), 250.0, Vector2(480, 150), Vector2(-300, 80), "该岛屿即将开放")
@@ -240,9 +240,10 @@ func _configure_sea_map_hud() -> void:
 	for location_node in world_markers.get_children():
 		if not location_node.has_meta("location_name"):
 			continue
+		var map_label_offset: Vector2 = location_node.get_meta("map_label_offset", Vector2.ZERO)
 		map_locations.append({
 			"name": str(location_node.get_meta("location_name", "未知地点")),
-			"position": (location_node as Node2D).position,
+			"position": (location_node as Node2D).position + map_label_offset,
 		})
 	var map_chunks: Array[Dictionary] = [
 		{"texture": A_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, MAP_CHUNK_SIZE)},
@@ -303,7 +304,8 @@ func _build_location(
 	trigger_radius: float,
 	front_trigger_size: Vector2 = Vector2.ZERO,
 	front_trigger_offset: Vector2 = Vector2.ZERO,
-	entry_message: String = "该地点即将开放"
+	entry_message: String = "该地点即将开放",
+	map_label_offset: Vector2 = Vector2.ZERO
 ) -> void:
 	var area := Area2D.new()
 	area.name = "Location%d" % world_markers.get_child_count()
@@ -315,6 +317,7 @@ func _build_location(
 	area.set_meta("front_trigger_size", front_trigger_size)
 	area.set_meta("front_trigger_offset", front_trigger_offset)
 	area.set_meta("entry_message", entry_message)
+	area.set_meta("map_label_offset", map_label_offset)
 	area.add_to_group("sea_location")
 	world_markers.add_child(area)
 

@@ -24,6 +24,7 @@
 | 水墨像素海图图标 | `assets/ui/icons/hud_map_v1.png` | 128×128 | 透明PNG；放置于原人物头像的菱形框中 |
 | 岭南海域双向加载图 | `assets/ui/loading/lingnan_sea_loading_v1.png` | 1536×1024 | 3:2全屏背景；文字由 Godot 叠加，可复用于进入大地图与返回南海军港 |
 | 水墨像素月面 | `assets/ui/sea_overworld/moon_clock_moon.png` | 256×256 | 透明PNG；作为左上月相时钟的着色器纹理，不包含外框或文字 |
+| 水墨像素展开海图框 | `assets/ui/sea_overworld/sea_map_scroll_frame_v1.png` | 1536×1024 | 透明PNG；完整海图使用 `1280×853` 卷轴框，中央 `870×510` 安全区承载运行时地图；SHA-256 `DAF01DAE53DB4503A37DF6F07E76124554587908D27ADF5D0DB9DE4CDA2BBC74` |
 | 大地图阶段一构图灰模 v1 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png` | 1672×941 | 历史构图；B 为敌方核心、D 为群岛水战区，不接入游戏 |
 | 大地图阶段一构图灰模 v2 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` | 1672×941 | 历史构图；B 右上为群岛水战区、D 右下为敌方核心海域，不接入游戏 |
 | 大地图阶段一构图灰模 v3 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png` | 1672×941 | 历史构图；强化北部港贸、南部蛮荒军事和四类功能岛差异，不接入游戏 |
@@ -427,6 +428,20 @@ Localized reconstruction: rebuild only the water immediately around the mirrored
 Strict invariants: preserve the relocated angular naval fortress in the central-right sea exactly where it is. Preserve every other island, reef, building, dock, coastline, central shipwreck, tiny reef, sea texture, spacing and composition unchanged. Preserve A4/B5/C4/D3, the reduced central void, clear east-west and north-south passages, the long inhabited trade island as the secondary upper-right landmark, northern trade character, southern dangerous military character, 16:9 framing, top-down oblique camera and rough graybox style.
 
 Constraints: no new objects; no deletions or duplicates; do not move or resize the crescent landmark; do not change the central fortress; do not alter the long trade island; no text, labels, UI, arrows, route lines, compass, characters, moving ships, weather, border, logo or watermark. No final-art refinement.
+```
+
+### 4.20 水墨像素展开海图框
+
+内置生图模式：图像生成。`system_menu_frame.png` 与 `quest_tracker_frame.png` 作为项目水墨像素风格参考，现有完整海图截图仅作为布局参考。生成时使用纯洋红键控背景，随后通过 imagegen 技能附带的色键工具生成透明 PNG；标题、返回按钮、详细地图和地点文字继续由 Godot 绘制。
+
+```text
+Use case: stylized-concept
+Asset type: production game UI background/frame for the Godot full sea-map screen
+Primary request: create one large unfolded ancient Chinese maritime chart scroll behind an engine-rendered detailed map, with restrained rolled parchment edges, an irregular ink-brush silhouette, an integrated top-center title plaque and a large clean rectangular central safe area.
+Style/medium: polished hand-painted pixel art with Chinese ink-wash influence, matching the project's dark jade-black surfaces, aged bronze-gold linework, dry-brush texture and crisp stair-stepped pixel edges.
+Composition/framing: 3:2 landscape; one centered scroll filling about 94% of the canvas; quiet header band for the engine title and upper-right return button; no footer caption area.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background for local background removal.
+Constraints: no text, characters, letters, numbers, labels, icons, compass rose, ships, islands or map content in the central safe area; no watermark; no Western fantasy ornament; do not use #ff00ff in the scroll.
 ```
 
 ## 5. 当前使用边界

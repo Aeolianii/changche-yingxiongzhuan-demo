@@ -4,12 +4,12 @@ signal close_requested
 
 const SEA_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
+const SEA_MAP_SCROLL_FRAME := preload("res://assets/ui/sea_overworld/sea_map_scroll_frame_v1.png")
 
-const INK := Color(0.035, 0.052, 0.052, 0.98)
 const GOLD := Color(0.73, 0.59, 0.32, 1.0)
 const GOLD_BRIGHT := Color(0.96, 0.83, 0.52, 1.0)
 const TEXT_LIGHT := Color(0.96, 0.91, 0.78, 1.0)
-const MAP_VIEW_SIZE := Vector2(1020, 574)
+const MAP_VIEW_SIZE := Vector2(870, 510)
 
 var _player: Node2D
 var _world_size := Vector2.ONE
@@ -65,18 +65,28 @@ func _build_interface() -> void:
 	var panel := Panel.new()
 	panel.name = "MapPanel"
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -570.0
-	panel.offset_top = -365.0
-	panel.offset_right = 570.0
-	panel.offset_bottom = 365.0
+	panel.offset_left = -640.0
+	panel.offset_top = -426.5
+	panel.offset_right = 640.0
+	panel.offset_bottom = 426.5
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.add_theme_stylebox_override("panel", _panel_style(INK, GOLD, 3, 7))
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(panel)
+
+	var scroll_frame := TextureRect.new()
+	scroll_frame.name = "GeneratedScrollFrame"
+	scroll_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll_frame.texture = SEA_MAP_SCROLL_FRAME
+	scroll_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	scroll_frame.stretch_mode = TextureRect.STRETCH_SCALE
+	scroll_frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	scroll_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(scroll_frame)
 
 	var title := _make_label("岭 南 海 图", 27, TEXT_LIGHT)
 	title.name = "Title"
-	title.position = Vector2(390, 16)
-	title.size = Vector2(360, 48)
+	title.position = Vector2(460, 82)
+	title.size = Vector2(360, 60)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.02, 1.0))
@@ -85,8 +95,8 @@ func _build_interface() -> void:
 
 	var close_button := Button.new()
 	close_button.name = "CloseButton"
-	close_button.position = Vector2(1012, 18)
-	close_button.size = Vector2(92, 44)
+	close_button.position = Vector2(1080, 84)
+	close_button.size = Vector2(100, 48)
 	close_button.text = "返回"
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -100,7 +110,7 @@ func _build_interface() -> void:
 
 	_map_viewport = Panel.new()
 	_map_viewport.name = "MapViewport"
-	_map_viewport.position = Vector2(60, 82)
+	_map_viewport.position = Vector2(205, 175)
 	_map_viewport.size = MAP_VIEW_SIZE
 	_map_viewport.clip_contents = true
 	_map_viewport.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -150,15 +160,6 @@ func _build_interface() -> void:
 	_player_name_label.add_theme_color_override("font_outline_color", Color(0.015, 0.02, 0.018, 1.0))
 	_player_name_label.add_theme_constant_override("outline_size", 5)
 	_player_marker.add_child(_player_name_label)
-
-	var hint := _make_label("仅显示可进入地点与玩家当前位置", 15, Color(0.72, 0.71, 0.64, 1.0))
-	hint.name = "Hint"
-	hint.position = Vector2(350, 672)
-	hint.size = Vector2(440, 32)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	panel.add_child(hint)
-
 
 func _refresh_markers() -> void:
 	if not is_instance_valid(_location_layer):

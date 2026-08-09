@@ -283,6 +283,9 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	await process_frame
 	await process_frame
 	var map_screen := hud.get_node("SeaMapScreen") as Control
+	var map_panel := map_screen.get_node("MapPanel") as Panel
+	var generated_scroll_frame := map_panel.get_node("GeneratedScrollFrame") as TextureRect
+	var map_viewport := map_panel.get_node("MapViewport") as Control
 	var map_texture_layer := map_screen.get_node("MapPanel/MapViewport/MapTextureLayer") as Control
 	var map_texture := map_texture_layer.get_node("MapTexture") as TextureRect
 	var east_map_texture := map_texture_layer.get_node("MapTexture2") as TextureRect
@@ -291,6 +294,10 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	var location_layer := map_screen.get_node("MapPanel/MapViewport/MapLocationLayer") as Control
 	var player_name := map_screen.get_node("MapPanel/MapViewport/PlayerMarker/PlayerName") as Label
 	_expect(map_screen.visible, "Clicking the sea-map diamond must open the full map screen.")
+	_expect(map_panel.size.is_equal_approx(Vector2(1280, 853)), "Full sea map must use the large unfolded-chart footprint.")
+	_expect(generated_scroll_frame.texture.resource_path.ends_with("sea_map_scroll_frame_v1.png"), "Full sea map must use the generated ink-pixel chart scroll frame.")
+	_expect(map_viewport.size.is_equal_approx(Vector2(870, 510)), "Detailed map content must sit inside the scroll's central safe area.")
+	_expect(map_panel.get_node_or_null("Hint") == null, "Full sea map must not retain the old bottom explanatory caption.")
 	_expect(not player.controls_enabled, "Opening the full map must pause sea-map movement.")
 	var paused_lunar_day := float(root.get_meta("sea_overworld_lunar_day", 0.0))
 	Input.action_press("move_right")

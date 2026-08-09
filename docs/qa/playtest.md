@@ -97,6 +97,7 @@
 | 海上事件与沉船留白 | 检查出生点、两艘事件船、漂流物、中央沉船和南澳港外 | 查询半径 19 船体碰撞 | 全部位于可航水面；中央沉船不产生阻挡或伤害 | passed / Task 4 collision probe |
 | v4 海图专项回归 | 运行 `tests/test_sea_overworld.gd` | 检查资源、A4/B5/C4/D3、16 坐标、入口、航路、HUD、月相和事件 | headless 与 OpenGL Compatibility 均退出 0 | passed / Task 5 runtime 2 modes |
 | v4 完整海图检查 | 打开右下海图并查看完整二乘二区域 | 核对 A/B/C/D 分块、16 个标签、玩家标记及四区接缝 | 四张 v3 生产分块无明显硬接缝；标签齐全且 B/D 职责正确，玩家标记位置同步 | passed / Task 5 full-map render + runtime |
+| 水墨像素展开海图 UI | 打开右下完整海图 | 检查卷轴背景、中央地图、标题、返回按钮与底部区域 | 透明卷轴框完整显示；详细地图落在中央内框；引擎文字清晰；底部旧说明已删除 | passed / headless assertion + OpenGL render |
 | v4 原始分辨率截图 | 查看 A/B/C/D、中央接缝和完整海图 1344×896 截图 | 检查接缝、标签、入口、船只可达性和视觉层级 | 无明显硬接缝；标签齐全；月环港朝左；中央和南澳港外水面开阔 | passed / Task 5 visual review |
 | v4 存档与场景二往返 | 运行主流程存档与 Scene2 海图往返测试 | 恢复海图位置/月相并完成出海、返港 | 清水位置恢复准确；返港提示和任务状态正确 | passed / Task 5 save + round-trip regression |
 
@@ -167,6 +168,7 @@
 | 2026-08-07 / quest layout render 1 | Codex | 探索任务栏的主支线文字与左侧色条整体上移；任务详情的总标题和描述同步右移 | 1344×896 OpenGL 截图、HUD 布局断言及 headless 回归 | 交付用户试玩 |
 | 2026-08-10 / sea overworld collision run 1 | Codex | v4 生产底图的大陆、岛屿、山岭和必要礁石已改用 32 个贴岸阻挡；港池、码头前水面、四区接缝与中央水门保持可航 | Godot 4.7.1 场景 smoke、8 条真实船体航路、16 组陆地及 16 个入口探针 | Task 5 原始分辨率截图与完整回归 |
 | 2026-08-10 / sea overworld production QA 1 | Codex | A/B/C/D v3 底图、16 地点、缩小船只、入口和碰撞完成双模式回归与原始分辨率视觉验收 | 地图专项 headless/OpenGL、存档、Scene2 往返、A/B/C/D/中央/完整海图截图 | 生产落图完成 |
+| 2026-08-10 / sea map scroll UI render 1 | Codex | 完整海图替换为生成式水墨像素展开海图框，详细地图嵌入中央，删除底部说明 | PNG Alpha/尺寸检查、地图专项 headless/OpenGL、1344×896 完整海图截图 | 交付用户试玩 |
 
 ## Known issues
 

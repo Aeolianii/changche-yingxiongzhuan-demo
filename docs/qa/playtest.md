@@ -87,10 +87,15 @@
 | 标题设置与退出 | 位于标题界面 | 调节音乐/音效，返回，再点击退出 | Audio Bus 即时更新；返回主菜单；退出正常结束应用 | passed / title runtime + exit runtime |
 | 探索返回标题 | 皇宫、水师驻地、海上大地图自由探索 | 打开系统菜单并点击“返回标题” | 返回标题界面并显示可继续存档，磁盘存档不改变 | passed / title runtime + static routes |
 | v4 海图四区航路 | 从 A→B、A→C、B→D、C→D 四条接缝航行 | 使用半径 19 的玩家船体逐段驶过 | 四条跨区路线均无隐形墙、穿岛或死路 | passed / Task 4 navigation query + body drive |
+| v4 北线通航 | 从南海军港外沿 A→B 进入群岛水战区，再由 B→D 驶向敌方核心海域 | 依次通过 A/B 北线水门、沧门礁堡外侧及 B/D 接缝 | 全程连续可航，堡垒、群岛与珊湾渔链不形成封口 | passed / Task 4 route probe + Task 5 runtime |
+| v4 南线通航 | 从 A 区南部沿 A→C 进入危险外海，再由 C→D 驶向红湾卫所 | 依次通过大陆南侧水门、C 区宽航道及 C/D 接缝 | 全程连续可航，山岛与破碎礁群不形成隐形墙 | passed / Task 4 route probe + Task 5 runtime |
+| v4 中央通航 | 从中央堡垒上、下、左、右四个方向接近四区交点 | 驾驶半径 19 的玩家船体穿越中央十字水门 | 四个方向均可绕行；沉船无碰撞，连续水域宽度满足设计约束 | passed / Task 4 body drive + Task 5 central render |
 | 中央堡垒四向绕行 | 分别从堡垒上、下、左、右驶过 | 使用玩家 `CharacterBody2D` 完成四条走廊 | 四向路线均可驶通，中央水门未被大碰撞封死 | passed / Task 4 navigation query + body drive |
 | v4 岛屿与入口碰撞 | 检查 16 组主要陆地和 16 个地点入口 | 陆地探针与入口水面探针交叉验证 | 主要岩岸均阻挡船只，每个入口至少保留一个可达水面采样点 | passed / Task 4 collision probe |
+| v4 十六地点交互 | 依次驶近 A4、B5、C4、D3 共 16 个入口 | 从无碰撞水面触发地点名称并点击进入或按 E | 16 个地点均显示正确名称；南海军港可返港，其余地点显示对应开放提示 | passed / Task 5 location interaction regression |
 | 海上事件与沉船留白 | 检查出生点、两艘事件船、漂流物、中央沉船和南澳港外 | 查询半径 19 船体碰撞 | 全部位于可航水面；中央沉船不产生阻挡或伤害 | passed / Task 4 collision probe |
 | v4 海图专项回归 | 运行 `tests/test_sea_overworld.gd` | 检查资源、A4/B5/C4/D3、16 坐标、入口、航路、HUD、月相和事件 | headless 与 OpenGL Compatibility 均退出 0 | passed / Task 5 runtime 2 modes |
+| v4 完整海图检查 | 打开右下海图并查看完整二乘二区域 | 核对 A/B/C/D 分块、16 个标签、玩家标记及四区接缝 | 四张 v3 生产分块无明显硬接缝；标签齐全且 B/D 职责正确，玩家标记位置同步 | passed / Task 5 full-map render + runtime |
 | v4 原始分辨率截图 | 查看 A/B/C/D、中央接缝和完整海图 1344×896 截图 | 检查接缝、标签、入口、船只可达性和视觉层级 | 无明显硬接缝；标签齐全；月环港朝左；中央和南澳港外水面开阔 | passed / Task 5 visual review |
 | v4 存档与场景二往返 | 运行主流程存档与 Scene2 海图往返测试 | 恢复海图位置/月相并完成出海、返港 | 清水位置恢复准确；返港提示和任务状态正确 | passed / Task 5 save + round-trip regression |
 
@@ -160,7 +165,7 @@
 | 2026-08-07 / option highlight runtime 1 | Codex | 剧情选项悬浮、按下与焦点状态统一为透明底，仅文字变为暖黄色 | 聚焦态 OpenGL 截图、五种按钮状态透明度断言、第二章完整对话推进、C# 构建 | 交付用户试玩 |
 | 2026-08-07 / quest layout render 1 | Codex | 探索任务栏的主支线文字与左侧色条整体上移；任务详情的总标题和描述同步右移 | 1344×896 OpenGL 截图、HUD 布局断言及 headless 回归 | 交付用户试玩 |
 | 2026-08-10 / sea overworld collision run 1 | Codex | v4 生产底图的大陆、岛屿、山岭和必要礁石已改用 32 个贴岸阻挡；港池、码头前水面、四区接缝与中央水门保持可航 | Godot 4.7.1 场景 smoke、8 条真实船体航路、16 组陆地及 16 个入口探针 | Task 5 原始分辨率截图与完整回归 |
-| 2026-08-10 / sea overworld production QA 1 | Codex | A/B/C/D v3 底图、16 地点、缩小船只、入口和碰撞完成双模式回归与原始分辨率视觉验收 | 地图专项 headless/OpenGL、存档、Scene2 往返、A/B/C/D/中央/完整海图截图 | Task 6 文档收口 |
+| 2026-08-10 / sea overworld production QA 1 | Codex | A/B/C/D v3 底图、16 地点、缩小船只、入口和碰撞完成双模式回归与原始分辨率视觉验收 | 地图专项 headless/OpenGL、存档、Scene2 往返、A/B/C/D/中央/完整海图截图 | 生产落图完成 |
 
 ## Known issues
 

@@ -1,9 +1,10 @@
 # CHG-20260809-sea-overworld-production-map: v4 海上大地图生产落地
 
-- Status: in-progress
+- Status: done
 - Type: content
 - Owner: Codex
 - Created: 2026-08-09
+- Completed: 2026-08-10
 
 ## Goal and player/project outcome
 
@@ -88,5 +89,10 @@
 
 ## Final reconciliation
 
-- Files changed: pending until implementation is complete.
-- Documented limitations/follow-ups: v4 locks macro composition, not exact decorative reef collision; production landing points will be calibrated against the final art.
+- Production assets: `assets/backgrounds/sea_overworld/guangdong_sea_zone_[a-d]_v3.png` and their four Godot `.import` files.
+- Runtime and tooling: `tools/slice_sea_overworld_map.py`, `scripts/sea_overworld.gd`, `scripts/sea_overworld_player.gd`, `scenes/sea_overworld/sea_overworld.tscn`.
+- Regression coverage: `tests/test_sea_overworld.gd`, `tests/test_main_flow_save.gd`, `tests/test_scene_two_sea_link.gd`.
+- Documentation: `docs/design/sea-overworld-design.md`, `docs/assets/sea-overworld-stage1-layout.md`, `docs/assets/sea-overworld-generated-assets.md`, `docs/qa/playtest.md`, this change record and the implementation plan.
+- Automated result: Godot 4.7.1 headless production-map, main-flow save and Scene2 round-trip tests all exit `0`; the map test also passes in windowed OpenGL Compatibility mode.
+- Screenshot result: A/B/C/D, central seam and full-map `1344×896` captures show no hard seams or missing labels; Moon Harbor faces left, B/D responsibilities are correct, and the central and Nanao Harbor approaches remain open.
+- Documented limitations/follow-ups: the local production master and generation intermediates remain outside the repository; decorative micro-reefs are not all collidable, and the central wreck remains visual-only. Weather, currents, reef damage, landing sub-scenes and naval-combat transitions remain explicitly out of scope.

@@ -1,10 +1,10 @@
 # 海上大地图生成素材清单
 
 - 生成方式：Codex 内置生图工具
-- 用途：海上大地图初版原型
+- 用途：海上大地图原型、生产分块与配套运行时素材
 - 风格基准：项目现有俯视像素风、主角立绘、LPC角色比例及现有舰船素材
 - 初次生成日期：2026-08-08
-- 最近更新：2026-08-09
+- 最近更新：2026-08-10
 
 ## 1. 素材文件
 
@@ -28,6 +28,17 @@
 | 大地图阶段一构图灰模 v2 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` | 1672×941 | 历史构图；B 右上为群岛水战区、D 右下为敌方核心海域，不接入游戏 |
 | 大地图阶段一构图灰模 v3 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png` | 1672×941 | 历史构图；强化北部港贸、南部蛮荒军事和四类功能岛差异，不接入游戏 |
 | 大地图阶段一构图灰模 v4 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v4.png` | 1672×941 | 当前构图；将 B 区海防堡垒迁入中央偏右，缓解中央留白与右上地标竞争，不接入游戏 |
+
+### 1.1 v4 生产运行时分块
+
+四张分块以 v4 灰模为唯一构图参考，通过内置生图工具的 `sketch-to-render` 模式生成统一生产画面，再合成为仓库外的 `6528×3604` RGB 母图，并由 `tools/slice_sea_overworld_map.py` 按 `160` 源像素重叠带确定性裁切。母图与生成中间稿保存在 `D:\厂车英雄传DEMO\artwork\sea_overworld\`，不提交仓库。
+
+| 分块 | 文件 | 尺寸 | 用途 | 生成方式 | SHA-256 |
+|---|---|---:|---|---|---|
+| A | `assets/backgrounds/sea_overworld/guangdong_sea_zone_a_v3.png` | 3344×1882 | 左上繁华海岸、南海军港与出征起点 | v4 生图母图裁切 `(0,0,3344,1882)` | `ACBB0B091D5F1D9B75EB712C5F048D96DF60A7CC39D520D5AEF98F8049CF03D6` |
+| B | `assets/backgrounds/sea_overworld/guangdong_sea_zone_b_v3.png` | 3344×1882 | 右上群岛水战区与北线航道 | v4 生图母图裁切 `(3184,0,3344,1882)` | `BDA3BD4A2749A39C611F85C48F60358F3DB118DE7257CE6AB4364B35668468D8` |
+| C | `assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v3.png` | 3344×1882 | 左下蛮荒危险海域与南线航道 | v4 生图母图裁切 `(0,1722,3344,1882)` | `04974B2D0FCF139DA6E52C5D62CEE239F2DED9AB98F38265E32786E14EFFC64C` |
+| D | `assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v3.png` | 3344×1882 | 右下敌方核心海域与终局商港 | v4 生图母图裁切 `(3184,1722,3344,1882)` | `780A6024EE560850D43A31B579751058B93734D980AFA6C841480F1CA95D84A4` |
 
 除地图底图和全屏加载图外，其余素材均已去除对应色键背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
 

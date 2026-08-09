@@ -118,12 +118,12 @@
 
 ## Task 6：文档收口与最终提交
 
-- [ ] 在 `docs/assets/sea-overworld-generated-assets.md` 登记四张生产分块的尺寸、用途、生成方式和 SHA-256。
-- [ ] 将 `docs/assets/sea-overworld-stage1-layout.md` 状态改为“生产落图完成”，记录最终地点坐标、入口方向和碰撞校准差异。
-- [ ] 更新 `docs/qa/playtest.md`，加入北线、南线、中央通航、16 个地点交互和完整海图检查项。
-- [ ] 在变更记录中填写实际文件、自动测试结果、截图检查结果和已知限制，所有验收项通过后将状态改为 `done`。
-- [ ] 运行 `git diff --check`，确认只暂存本计划列出的文件，并提交：`docs(sea-map): finalize production map rollout`。
-- [ ] 不推送远端；等待用户明确授权后再处理 GitHub。
+- [x] 在 `docs/assets/sea-overworld-generated-assets.md` 登记四张生产分块的尺寸、用途、生成方式和 SHA-256。
+- [x] 将 `docs/assets/sea-overworld-stage1-layout.md` 状态改为“生产落图完成”，记录最终地点坐标、入口方向和碰撞校准差异。
+- [x] 更新 `docs/qa/playtest.md`，加入北线、南线、中央通航、16 个地点交互和完整海图检查项。
+- [x] 在变更记录中填写实际文件、自动测试结果、截图检查结果和已知限制，所有验收项通过后将状态改为 `done`。
+- [x] 运行 `git diff --check`，确认只暂存本计划列出的文件，并提交：`docs(sea-map): finalize production map rollout`。
+- [x] 不推送远端；等待用户明确授权后再处理 GitHub。
 
 ## 完成标准
 

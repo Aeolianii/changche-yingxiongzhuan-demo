@@ -64,10 +64,12 @@ func _verify_transition(skip_wait: bool, wait_seconds: float, label: String) -> 
 	if exploration_hud.visible:
 		failures.append("Exploration HUD was visible during the deputy greeting after the %s transition." % label)
 
-	var next_button := current_scene.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/NextDialogueButton") as Button
-	next_button.pressed.emit()
+	var space_event := InputEventKey.new()
+	space_event.physical_keycode = KEY_SPACE
+	space_event.pressed = true
+	current_scene.call("_unhandled_input", space_event)
 	await process_frame
-	next_button.pressed.emit()
+	current_scene.call("_unhandled_input", space_event)
 	await process_frame
 
 	var main_task := exploration_hud.get_node("QuestTracker/MainQuest/TaskName") as Label

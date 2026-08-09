@@ -61,6 +61,9 @@ var _sea_map_status: Control
 var _sea_map_mode := false
 
 signal menu_visibility_changed(is_open: bool)
+signal save_requested
+signal load_requested
+signal return_title_requested
 
 
 func _ready() -> void:
@@ -848,12 +851,21 @@ func _build_system_menu_entry(parent: VBoxContainer, action_name: String, icon_t
 	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 	button.mouse_entered.connect(hover_highlight.show)
 	button.mouse_exited.connect(hover_highlight.hide)
-	if node_name == "ExitGameButton":
-		button.pressed.connect(_exit_game)
-	elif node_name == "SettingsButton":
-		button.pressed.connect(_open_settings_panel)
-	else:
-		button.pressed.connect(_show_menu_placeholder.bind(action_name))
+	match node_name:
+		"ContinueGameButton":
+			button.pressed.connect(_close_system_menu)
+		"SaveGameButton":
+			button.pressed.connect(_request_save_game)
+		"LoadGameButton":
+			button.pressed.connect(_request_load_game)
+		"SettingsButton":
+			button.pressed.connect(_open_settings_panel)
+		"ReturnTitleButton":
+			button.pressed.connect(_request_return_title)
+		"ExitGameButton":
+			button.pressed.connect(_exit_game)
+		_:
+			button.pressed.connect(_show_menu_placeholder.bind(action_name))
 	slot.add_child(button)
 
 
@@ -898,6 +910,18 @@ func _show_menu_placeholder(action_name: String) -> void:
 	_toast_label.text = "%s · 该功能即将实现" % action_name
 	_toast_panel.show()
 	_toast_timer.start()
+
+
+func _request_save_game() -> void:
+	save_requested.emit()
+
+
+func _request_load_game() -> void:
+	load_requested.emit()
+
+
+func _request_return_title() -> void:
+	return_title_requested.emit()
 
 
 func _position_toast(menu_mode: bool) -> void:

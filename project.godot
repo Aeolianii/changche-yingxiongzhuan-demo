@@ -11,8 +11,12 @@ config_version=5
 [application]
 
 config/name="厂车英雄传：序章至南疆"
-run/main_scene="res://scenes/palace/palace_demo.tscn"
+run/main_scene="res://scenes/ui/title_screen.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
+
+[autoload]
+
+GameState="*res://scripts/core/game_state.gd"
 
 [display]
 

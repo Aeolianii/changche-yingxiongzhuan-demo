@@ -341,16 +341,21 @@ func _verify_component_contract() -> void:
 
 		var toast := hud.get_node("ComingSoonToast") as Control
 		var message := hud.get_node("ComingSoonToast/Message") as Label
-		for unfinished_entry in [
-			["ContinueGameButton", "继续游戏"],
-			["SaveGameButton", "保存进度"],
-			["LoadGameButton", "读取进度"],
-			["ReturnTitleButton", "返回标题"],
-		]:
-			var unfinished_button := hud.find_child(unfinished_entry[0], true, false) as Button
-			unfinished_button.pressed.emit()
-			_expect(toast.visible, "Clicking %s must show a placeholder message." % unfinished_entry[0])
-			_expect(unfinished_entry[1] in message.text and "该功能即将实现" in message.text, "%s uses the wrong placeholder message." % unfinished_entry[0])
+		var signal_counts := {"save": 0, "load": 0, "return_title": 0}
+		hud.connect("save_requested", func() -> void: signal_counts["save"] += 1)
+		hud.connect("load_requested", func() -> void: signal_counts["load"] += 1)
+		hud.connect("return_title_requested", func() -> void: signal_counts["return_title"] += 1)
+		(hud.find_child("SaveGameButton", true, false) as Button).pressed.emit()
+		(hud.find_child("LoadGameButton", true, false) as Button).pressed.emit()
+		_expect(signal_counts["save"] == 1, "SaveGameButton must emit save_requested exactly once.")
+		_expect(signal_counts["load"] == 1, "LoadGameButton must emit load_requested exactly once.")
+		var return_title_button := hud.find_child("ReturnTitleButton", true, false) as Button
+		return_title_button.pressed.emit()
+		_expect(signal_counts["return_title"] == 1, "ReturnTitleButton must emit return_title_requested exactly once.")
+		continue_button.pressed.emit()
+		_expect(not system_menu.visible, "ContinueGameButton must close the system menu.")
+		menu_button.pressed.emit()
+		_expect(system_menu.visible, "The system menu must reopen after continuing the game.")
 		var close_button := hud.find_child("CloseMenuButton", true, false) as Button
 		_expect(close_button.get_theme_stylebox("hover") is StyleBoxEmpty, "System menu close button must not add a hover highlight.")
 		close_button.pressed.emit()

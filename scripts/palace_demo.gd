@@ -28,6 +28,8 @@ const ATTENDANT_OUTSIDE_TARGET := Vector2(710.0, 832.0)
 const ATTENDANT_INSIDE_TARGET := Vector2(690.0, 350.0)
 const SCRIPTED_SPEED := 155.0
 const INTERACTION_DISTANCE := 105.0
+const SCENE_PATH := "res://scenes/palace/palace_demo.tscn"
+const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 const NEXT_SCENE_PATH := "res://scenes/Scene2.tscn"
 const CHAPTER_ENTRY_META := &"chapter_transition_from_scene_one"
 const SCENE_TRANSITION_DELAY := 2.5
@@ -60,13 +62,20 @@ func _ready() -> void:
 	continue_button.pressed.connect(_on_continue_pressed)
 	interaction_button.pressed.connect(_on_interaction_pressed)
 	exploration_hud.connect("menu_visibility_changed", _on_menu_visibility_changed)
+	exploration_hud.connect("save_requested", _on_save_requested)
+	exploration_hud.connect("load_requested", _on_load_requested)
+	exploration_hud.connect("return_title_requested", _on_return_title_requested)
 	transition_timer.timeout.connect(_start_scene_transition)
 	chapter_transition.connect("transition_finished", _change_to_scene_two)
 	transition_timer.wait_time = SCENE_TRANSITION_DELAY
 	interaction_button.hide()
 	player.controls_enabled = true
-	_set_task("阅看岭南急报")
-	_show_dialogue(OPENING_REPORTS[opening_index])
+	var restored_state := _consume_saved_scene_state()
+	if restored_state.is_empty():
+		_set_task("阅看岭南急报")
+		_show_dialogue(OPENING_REPORTS[opening_index])
+	else:
+		_restore_saved_scene_state(restored_state)
 
 
 func _process(delta: float) -> void:
@@ -273,6 +282,95 @@ func _on_menu_visibility_changed(is_open: bool) -> void:
 	if is_open:
 		interaction_button.hide()
 	_refresh_exploration_hud()
+
+
+func _on_save_requested() -> void:
+	if not _is_free_story_state() or transition_started or dialogue_panel.visible:
+		_show_save_message(false, "unstable_scene")
+		return
+	var game_state := _game_state()
+	if game_state == null:
+		_show_save_message(false, "write_failed")
+		return
+	var snapshot := {
+		"story_state": story_state,
+		"player_position": _vector_to_save(player.global_position),
+		"attendant_position": _vector_to_save(attendant.global_position),
+	}
+	var result: Dictionary = game_state.call("save_game", SCENE_PATH, snapshot)
+	_show_save_message(bool(result.get("ok", false)), str(result.get("reason", "")))
+
+
+func _on_load_requested() -> void:
+	var game_state := _game_state()
+	if game_state == null:
+		_show_save_message(false, "read_failed")
+		return
+	var result: Dictionary = game_state.call("load_game")
+	if not result.get("ok", false):
+		_show_save_message(false, str(result.get("reason", "read_failed")))
+		return
+	var change_error := get_tree().change_scene_to_file(str(result["scene_path"]))
+	if change_error != OK:
+		game_state.call("clear_pending_scene_state")
+		_show_save_message(false, "scene_change_failed")
+
+
+func _on_return_title_requested() -> void:
+	var game_state := _game_state()
+	if game_state != null:
+		game_state.call("clear_pending_scene_state")
+	var change_error := get_tree().change_scene_to_file(TITLE_SCENE_PATH)
+	if change_error != OK:
+		_show_save_message(false, "scene_change_failed")
+
+
+func _consume_saved_scene_state() -> Dictionary:
+	var game_state := _game_state()
+	if game_state == null:
+		return {}
+	return game_state.call("consume_pending_scene_state", SCENE_PATH) as Dictionary
+
+
+func _restore_saved_scene_state(snapshot: Dictionary) -> void:
+	var restored_story_state := int(snapshot.get("story_state", StoryState.WAIT_TALK))
+	if restored_story_state not in [StoryState.WAIT_TALK, StoryState.GO_TO_EMPEROR]:
+		restored_story_state = StoryState.WAIT_TALK
+	story_state = restored_story_state
+	player.global_position = _vector_from_save(snapshot.get("player_position"), player.global_position)
+	attendant.global_position = _vector_from_save(snapshot.get("attendant_position"), attendant.global_position)
+	attendant.set_move_direction(Vector2.ZERO)
+	transition_started = false
+	transition_timer.stop()
+	_hide_dialogue()
+	interaction_button.hide()
+	player.controls_enabled = true
+	_set_task("听取内侍传召" if story_state == StoryState.WAIT_TALK else "奉诏入殿")
+	_refresh_exploration_hud()
+
+
+func _show_save_message(success: bool, reason: String) -> void:
+	if success:
+		exploration_hud.call("show_toast", "进度已保存")
+		return
+	var game_state := _game_state()
+	var message := "存档操作失败。" if game_state == null else str(game_state.call("error_message", reason))
+	exploration_hud.call("show_toast", message)
+
+
+func _game_state() -> Node:
+	return get_node_or_null("/root/GameState")
+
+
+func _vector_to_save(value: Vector2) -> Array:
+	return [value.x, value.y]
+
+
+func _vector_from_save(value: Variant, fallback: Vector2) -> Vector2:
+	if not value is Array or value.size() != 2:
+		return fallback
+	var restored := Vector2(float(value[0]), float(value[1]))
+	return restored if is_finite(restored.x) and is_finite(restored.y) else fallback
 
 
 func _start_scene_transition() -> void:

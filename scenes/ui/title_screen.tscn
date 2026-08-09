@@ -1,0 +1,252 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/title_screen/lingnan_command_dawn_v1.png" id="1_background"]
+[ext_resource type="Script" path="res://scripts/ui/title_screen.gd" id="2_script"]
+[ext_resource type="Texture2D" path="res://assets/ui/title_screen/title_calligraphy_v1.png" id="3_title"]
+
+[sub_resource type="Gradient" id="Gradient_left_shade"]
+offsets = PackedFloat32Array(0, 0.7, 1)
+colors = PackedColorArray(0.012, 0.02, 0.021, 0.28, 0.012, 0.02, 0.021, 0.18, 0.012, 0.02, 0.021, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture_left_shade"]
+gradient = SubResource("Gradient_left_shade")
+width = 512
+height = 1
+fill_from = Vector2(0, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[node name="TitleScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_script")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("1_background")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="LeftWash" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.018, 0.026, 0.027, 0.18)
+
+[node name="LeftShade" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 0.62
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture_left_shade")
+expand_mode = 1
+
+[node name="MainContent" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 0.5
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 72
+theme_override_constants/margin_top = 112
+theme_override_constants/margin_right = 74
+theme_override_constants/margin_bottom = 82
+
+[node name="MainStack" type="VBoxContainer" parent="MainContent"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TitleArtwork" type="TextureRect" parent="MainContent/MainStack"]
+custom_minimum_size = Vector2(520, 152)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_title")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TitleSpacer" type="Control" parent="MainContent/MainStack"]
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+
+[node name="SaveStatus" type="Label" parent="MainContent/MainStack"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.7, 1)
+theme_override_colors/font_shadow_color = Color(0.02, 0.03, 0.03, 0.9)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 17
+text = ""
+
+[node name="MenuBlock" type="VBoxContainer" parent="MainContent/MainStack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ContinueButton" type="Button" parent="MainContent/MainStack/MenuBlock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(470, 68)
+layout_mode = 2
+focus_neighbor_bottom = NodePath("../NewGameButton")
+text = "继续游戏"
+alignment = 0
+
+[node name="NewGameButton" type="Button" parent="MainContent/MainStack/MenuBlock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(470, 68)
+layout_mode = 2
+focus_neighbor_top = NodePath("../ContinueButton")
+focus_neighbor_bottom = NodePath("../SettingsButton")
+text = "开始新游戏"
+alignment = 0
+
+[node name="SettingsButton" type="Button" parent="MainContent/MainStack/MenuBlock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(470, 68)
+layout_mode = 2
+focus_neighbor_top = NodePath("../NewGameButton")
+focus_neighbor_bottom = NodePath("../ExitButton")
+text = "游戏设置"
+alignment = 0
+
+[node name="ExitButton" type="Button" parent="MainContent/MainStack/MenuBlock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(470, 68)
+layout_mode = 2
+focus_neighbor_top = NodePath("../SettingsButton")
+text = "退出游戏"
+alignment = 0
+
+[node name="SettingsPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -220.0
+offset_right = 260.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsMargin" type="MarginContainer" parent="SettingsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 42
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 38
+
+[node name="SettingsStack" type="VBoxContainer" parent="SettingsPanel/SettingsMargin"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="SettingsTitle" type="Label" parent="SettingsPanel/SettingsMargin/SettingsStack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.84, 0.66, 1)
+theme_override_font_sizes/font_size = 34
+text = "游戏设置"
+horizontal_alignment = 1
+
+[node name="SettingsRule" type="HSeparator" parent="SettingsPanel/SettingsMargin/SettingsStack"]
+layout_mode = 2
+
+[node name="MusicLabel" type="Label" parent="SettingsPanel/SettingsMargin/SettingsStack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 20
+text = "音乐音量"
+
+[node name="MusicRow" type="HBoxContainer" parent="SettingsPanel/SettingsMargin/SettingsStack"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="MusicSlider" type="HSlider" parent="SettingsPanel/SettingsMargin/SettingsStack/MusicRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(330, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+value = 80.0
+
+[node name="MusicValue" type="Label" parent="SettingsPanel/SettingsMargin/SettingsStack/MusicRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(58, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.58, 0.31, 1)
+theme_override_font_sizes/font_size = 18
+text = "80%"
+horizontal_alignment = 2
+
+[node name="SfxLabel" type="Label" parent="SettingsPanel/SettingsMargin/SettingsStack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.84, 0.75, 1)
+theme_override_font_sizes/font_size = 20
+text = "音效音量"
+
+[node name="SfxRow" type="HBoxContainer" parent="SettingsPanel/SettingsMargin/SettingsStack"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="SfxSlider" type="HSlider" parent="SettingsPanel/SettingsMargin/SettingsStack/SfxRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(330, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+value = 80.0
+
+[node name="SfxValue" type="Label" parent="SettingsPanel/SettingsMargin/SettingsStack/SfxRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(58, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.58, 0.31, 1)
+theme_override_font_sizes/font_size = 18
+text = "80%"
+horizontal_alignment = 2
+
+[node name="SettingsSpacer" type="Control" parent="SettingsPanel/SettingsMargin/SettingsStack"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SettingsReturnButton" type="Button" parent="SettingsPanel/SettingsMargin/SettingsStack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "返回主菜单"
+
+[node name="Fade" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.008, 0.012, 0.013, 1)

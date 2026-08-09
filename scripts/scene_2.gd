@@ -9,6 +9,11 @@ enum PatrolTaskStage {
 }
 
 const PLAYER_SPEED := 210.0
+const CLICK_STOP_DISTANCE := 6.0
+const CLICK_STUCK_TIMEOUT := 0.5
+const CLICK_PROGRESS_EPSILON := 0.2
+const SCENE_PATH := "res://scenes/Scene2.tscn"
+const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 const ASSET_ROOT := "res://assets/characters"
 const DIALOGUE_BACKGROUND_PATH := "res://assets/ui/dialogue/ink_dialogue_backdrop.png"
 const DIALOGUE_NAMEPLATE_PATH := "res://assets/ui/dialogue/ink_speaker_nameplate.png"
@@ -56,8 +61,12 @@ var _patrol_task_stage: PatrolTaskStage = PatrolTaskStage.TALK_TO_SOLDIERS
 var _active_scripted_dialogues: Array = []
 var _scripted_dialogue_completion := Callable()
 var _last_direction := "down"
+var _has_move_target := false
+var _move_target := Vector2.ZERO
+var _click_stuck_elapsed := 0.0
 var _current_target: Variant = null
 var _active_npc: Variant = null
+var _saved_scene_state: Dictionary = {}
 
 var _magistrate_dialogues: Array = [
 	["广州县令", "下官参见伏波大将军！岭南官民苦海乱久矣，听闻将军奉旨南下建水师、镇海疆，万民皆盼将军到来，扫平海患、重安山海！"],
@@ -72,9 +81,11 @@ var _arrival_dialogues: Array = [
 
 
 func _ready() -> void:
-	_returning_from_sea = _consume_scene_entry_flag(RETURN_FROM_SEA_META)
-	var entered_from_chapter_one := _consume_scene_entry_flag(CHAPTER_ENTRY_META)
-	_should_play_arrival_dialogue = not _returning_from_sea and entered_from_chapter_one
+	_saved_scene_state = _consume_saved_scene_state()
+	if _saved_scene_state.is_empty():
+		_returning_from_sea = _consume_scene_entry_flag(RETURN_FROM_SEA_META)
+		var entered_from_chapter_one := _consume_scene_entry_flag(CHAPTER_ENTRY_META)
+		_should_play_arrival_dialogue = not _returning_from_sea and entered_from_chapter_one
 	_build_scene()
 	_build_ui()
 
@@ -84,20 +95,58 @@ func _physics_process(delta: float) -> void:
 	_refresh_exploration_hud()
 
 	if _transitioning or _dialogue_panel.visible or _drill_overlay.visible or _is_menu_open():
+		cancel_player_move_target()
 		_player.velocity = Vector2.ZERO
 		_player_sprite.play("idle_%s" % _last_direction)
 		_update_patrol_guards(delta)
 		return
 
 	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if input_vector.length_squared() > 0.01:
+		cancel_player_move_target()
+	elif _has_move_target:
+		if _player.global_position.distance_to(_move_target) <= CLICK_STOP_DISTANCE:
+			cancel_player_move_target()
+		else:
+			input_vector = _player.global_position.direction_to(_move_target)
 	_player.velocity = input_vector * PLAYER_SPEED
+	var distance_before_move := _player.global_position.distance_to(_move_target) if _has_move_target else 0.0
 	_player.move_and_slide()
+	_update_click_move_progress(distance_before_move, delta)
+	if input_vector.length_squared() > 0.01 and not _has_move_target and _player.velocity.is_zero_approx():
+		input_vector = Vector2.ZERO
 	_update_player_animation(input_vector)
 	_update_patrol_guards(delta)
 	_update_interaction_target()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if (
+		event is InputEventMouseButton
+		and (event as InputEventMouseButton).pressed
+		and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT
+		and not _transitioning
+		and not _dialogue_panel.visible
+		and not _drill_overlay.visible
+		and not _is_menu_open()
+	):
+		var mouse_event := event as InputEventMouseButton
+		var world_position := get_viewport().get_canvas_transform().affine_inverse() * mouse_event.position
+		request_player_move_to(world_position)
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("interact"):
+		if event is InputEventKey and (event as InputEventKey).echo:
+			return
+		if (
+			_dialogue_panel.visible
+			and _next_dialogue_button.visible
+			and not _transitioning
+			and not _drill_overlay.visible
+		):
+			get_viewport().set_input_as_handled()
+			_advance_dialogue()
+			return
 	if (
 		event.is_action_pressed("interact")
 		and not _transitioning
@@ -107,6 +156,42 @@ func _unhandled_input(event: InputEvent) -> void:
 		and not _is_menu_open()
 	):
 		_open_npc_dialogue(_current_target)
+
+
+func request_player_move_to(world_position: Vector2) -> void:
+	_move_target = world_position
+	_has_move_target = _player != null and _player.global_position.distance_to(_move_target) > CLICK_STOP_DISTANCE
+	_click_stuck_elapsed = 0.0
+
+
+func cancel_player_move_target() -> void:
+	_has_move_target = false
+	_click_stuck_elapsed = 0.0
+
+
+func has_player_move_target() -> bool:
+	return _has_move_target
+
+
+func player_move_target() -> Vector2:
+	return _move_target
+
+
+func _update_click_move_progress(distance_before_move: float, delta: float) -> void:
+	if not _has_move_target:
+		return
+	var distance_after_move := _player.global_position.distance_to(_move_target)
+	if distance_after_move <= CLICK_STOP_DISTANCE:
+		cancel_player_move_target()
+		_player.velocity = Vector2.ZERO
+		return
+	if distance_before_move - distance_after_move > CLICK_PROGRESS_EPSILON:
+		_click_stuck_elapsed = 0.0
+		return
+	_click_stuck_elapsed += delta
+	if _click_stuck_elapsed >= CLICK_STUCK_TIMEOUT:
+		cancel_player_move_target()
+		_player.velocity = Vector2.ZERO
 
 
 func _build_scene() -> void:
@@ -557,8 +642,14 @@ func _build_ui() -> void:
 	canvas.add_child(_drill_overlay)
 	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
 	canvas.add_child(_loading_transition)
+	_exploration_hud.connect("save_requested", _on_save_requested)
+	_exploration_hud.connect("load_requested", _on_load_requested)
+	_exploration_hud.connect("return_title_requested", _on_return_title_requested)
 
-	if _returning_from_sea:
+	if not _saved_scene_state.is_empty():
+		_restore_saved_scene_state(_saved_scene_state)
+		_saved_scene_state.clear()
+	elif _returning_from_sea:
 		_restore_post_drill_state()
 		_refresh_exploration_hud()
 	elif _should_play_arrival_dialogue:
@@ -1108,3 +1199,113 @@ func _refresh_exploration_hud() -> void:
 
 func _is_menu_open() -> bool:
 	return _exploration_hud != null and bool(_exploration_hud.call("is_menu_open"))
+
+
+func _on_save_requested() -> void:
+	if _transitioning or _dialogue_panel.visible or _drill_overlay.visible:
+		_show_save_message(false, "unstable_scene")
+		return
+	var game_state := _game_state()
+	if game_state == null:
+		_show_save_message(false, "write_failed")
+		return
+	var heard_roles: Array[String] = []
+	for role in _heard_soldier_reports:
+		if bool(_heard_soldier_reports[role]):
+			heard_roles.append(str(role))
+	heard_roles.sort()
+	var snapshot := {
+		"patrol_task_stage": int(_patrol_task_stage),
+		"heard_soldier_roles": heard_roles,
+		"player_position": _vector_to_save(_player.global_position),
+		"last_direction": _last_direction,
+	}
+	var result: Dictionary = game_state.call("save_game", SCENE_PATH, snapshot)
+	_show_save_message(bool(result.get("ok", false)), str(result.get("reason", "")))
+
+
+func _on_load_requested() -> void:
+	var game_state := _game_state()
+	if game_state == null:
+		_show_save_message(false, "read_failed")
+		return
+	var result: Dictionary = game_state.call("load_game")
+	if not result.get("ok", false):
+		_show_save_message(false, str(result.get("reason", "read_failed")))
+		return
+	var change_error := get_tree().change_scene_to_file(str(result["scene_path"]))
+	if change_error != OK:
+		game_state.call("clear_pending_scene_state")
+		_show_save_message(false, "scene_change_failed")
+
+
+func _on_return_title_requested() -> void:
+	var game_state := _game_state()
+	if game_state != null:
+		game_state.call("clear_pending_scene_state")
+	var change_error := get_tree().change_scene_to_file(TITLE_SCENE_PATH)
+	if change_error != OK:
+		_show_save_message(false, "scene_change_failed")
+
+
+func _consume_saved_scene_state() -> Dictionary:
+	var game_state := _game_state()
+	if game_state == null:
+		return {}
+	return game_state.call("consume_pending_scene_state", SCENE_PATH) as Dictionary
+
+
+func _restore_saved_scene_state(snapshot: Dictionary) -> void:
+	var restored_stage := int(snapshot.get("patrol_task_stage", PatrolTaskStage.TALK_TO_SOLDIERS))
+	if restored_stage not in [
+		PatrolTaskStage.TALK_TO_SOLDIERS,
+		PatrolTaskStage.REPORT_TO_OFFICER,
+		PatrolTaskStage.MEET_MAGISTRATE,
+		PatrolTaskStage.DRILL_UNLOCKED,
+		PatrolTaskStage.EXPLORE_LINGNAN,
+	]:
+		restored_stage = PatrolTaskStage.TALK_TO_SOLDIERS
+	if restored_stage == PatrolTaskStage.DRILL_UNLOCKED:
+		restored_stage = PatrolTaskStage.EXPLORE_LINGNAN
+	_patrol_task_stage = restored_stage
+	_heard_soldier_reports.clear()
+	var heard_roles = snapshot.get("heard_soldier_roles", [])
+	if heard_roles is Array:
+		for role_value in heard_roles:
+			var role := str(role_value)
+			if role in [LEFT_SOLDIER_ROLE, RIGHT_SOLDIER_ROLE]:
+				_heard_soldier_reports[role] = true
+	_last_direction = str(snapshot.get("last_direction", "down"))
+	if _last_direction not in ["up", "down", "left", "right"]:
+		_last_direction = "down"
+	_player.global_position = _vector_from_save(snapshot.get("player_position"), _player.global_position)
+	_player_sprite.play("idle_%s" % _last_direction)
+	_dialogue_panel.hide()
+	_drill_overlay.hide()
+	_interaction_panel.hide()
+	_update_task_hud()
+	_refresh_exploration_hud()
+
+
+func _show_save_message(success: bool, reason: String) -> void:
+	if success:
+		_exploration_hud.call("show_toast", "进度已保存")
+		return
+	var game_state := _game_state()
+	var message := "存档操作失败。" if game_state == null else str(game_state.call("error_message", reason))
+	_exploration_hud.call("show_toast", message)
+
+
+func _game_state() -> Node:
+	return get_node_or_null("/root/GameState")
+
+
+func _vector_to_save(value: Vector2) -> Array:
+	return [value.x, value.y]
+
+
+func _vector_from_save(value: Variant, fallback: Vector2) -> Vector2:
+	if not value is Array or value.size() != 2:
+		return fallback
+	var restored := Vector2(float(value[0]), float(value[1]))
+	return restored if is_finite(restored.x) and is_finite(restored.y) else fallback

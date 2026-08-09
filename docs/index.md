@@ -3,7 +3,7 @@
 ## Current focus
 
 - Milestone: 场景一至场景二连续可玩原型
-- Current playable goal: 从场景一“皇帝召见水师主帅”开始，完成圣旨收尾后自动进入场景二“南疆水师”。
+- Current playable goal: 从标题界面开始，可继续正式存档或开始新游戏；新游戏从场景一“皇帝召见水师主帅”开始，完成圣旨收尾后自动进入场景二“南疆水师”。
 - Top risk: 两个原型合并后必须在 Godot 4.7.1 中持续通过资源加载、GDScript 解析和场景切换验证。
 
 ## Source of truth

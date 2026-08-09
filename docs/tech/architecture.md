@@ -7,7 +7,9 @@
 
 ## Runtime map
 
-项目入口 `PalaceDemo` 与第二场景 `Scene2` 均使用 GDScript，标准版与 .NET 版 Godot 均可运行。
+项目入口 `TitleScreen`、`PalaceDemo` 与第二场景 `Scene2` 均使用 GDScript，标准版与 .NET 版 Godot 均可运行。
+
+`TitleScreen` 位于 `scenes/ui/title_screen.tscn`。它只负责启动主视觉、主菜单、基础音频设置和进入游戏的场景路由：继续游戏委托 `GameState` 校验并建立一次性恢复快照；新游戏只清理内存快照并进入皇宫，不删除正式单槽文件。标题背景、准确中文标题和按钮保持分层，背景纹理不承担交互语义。
 
 `PalaceDemo` 包含 Background、WorldCollisions、YSortedCharacters、InteractionPoints、Camera2D 和 UI。
 
@@ -23,7 +25,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 ## Data flow
 
-输入动作进入 Player，Player 更新速度与动画。场景脚本以显式剧情状态机驱动旁白、太监自身移动、距离触发交互按钮、任务指引、觐见对白和圣旨收尾。主帅位置只由玩家输入和物理碰撞决定，不由剧情脚本写入。无持久化数据。
+输入动作进入 Player，Player 更新速度与动画。皇宫与水师驻地的陆地玩家同时接受鼠标左键点击目标：屏幕坐标经当前 `CanvasTransform` 反算为世界坐标，角色沿直线通过既有 `move_and_slide()` 碰撞向目标移动；抵达、持续受阻、输入锁定或出现键盘方向输入时取消目标。键盘输入优先于点击移动。场景脚本以显式剧情状态机驱动旁白、太监自身移动、距离触发交互按钮、任务指引、觐见对白和圣旨收尾。主帅位置只由玩家输入和物理碰撞决定，不由剧情脚本写入。
 
 海上大地图继续复用 `move_up/down/left/right`，但地点进入不复用同时包含空格和回车的通用 `interact` 动作，而是只接收物理键E或鼠标点击“进入”按钮。船只进入地点 `Area2D` 后显示地点名称和底部操作条，不绘制岛屿轮廓；进入海上事件或事件船只的 `Area2D` 时自动显示一次占位提示。
 
@@ -40,6 +42,8 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 场景一完成后由本场景脚本启动一次性计时器，并调用独立的 `ChapterTransition` Canvas UI 播放南下行程。过场完成时在场景树根节点写入一次性入口标记，再调用 `SceneTree.change_scene_to_file()` 切换到 `res://scenes/Scene2.tscn`。切换失败时移除标记、关闭过场并恢复完成态 UI，允许玩家重试。
 
 `Scene2` 只在检测到该入口标记时消费并删除它，随后复用既有对话框播放水师副将迎接对白。对白期间移动、交互和探索 HUD 均锁定；对白结束后才调用共享 HUD 的 `set_main_task("巡视水师驻地")` 并恢复自由探索。直接运行 `Scene2.tscn` 时不触发入口对白，便于独立调试。
+
+第二幕把统一 `interact` 动作分成两级：线性对白推进按钮可见时优先推进当前对白；否则仅在自由探索且存在邻近 NPC 时打开交互。键盘 echo 事件必须忽略，选项式对话不允许通过空格默认选择，避免误跳剧情分支。
 
 第二章巡视使用场景内轻量任务状态机，不通过环境节点触发：两名值守士兵以稳定角色标识分别登记一次汇报，收齐后开放中军军官复命；军官复命完成后开放广州县令会谈，县令会谈完成回调既有操练覆盖层。共享 HUD 接收任务标题、当前目标和步骤阶段，只负责投影，不反向控制 Scene2 剧情。
 
@@ -80,11 +84,24 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 ## Persistence
 
-首版无存档。
+正式主流程使用常驻 `GameState` Autoload 管理一个版本化 JSON 存档，默认路径为 `user://main_flow_save.json`。写入时先生成同目录临时文件，刷新并关闭后再替换正式文件，避免中途退出留下半份存档。
+
+项目进程重启不会删除正式存档；启动后由标题界面显式提供继续入口，不自动读档。自动化测试必须通过 `save_path_override` 使用独立测试文件，并在结束时清理测试文件，禁止触碰 `user://main_flow_save.json`。
+
+存档顶层只包含格式版本、目标场景路径和该场景的稳定快照。首版支持 `PalaceDemo`、`Scene2` 与 `SeaOverworld`：
+
+- 皇宫只允许在 `WAIT_TALK` 与 `GO_TO_EMPEROR` 两个自由探索状态保存，记录剧情状态、玩家位置和内侍位置。
+- 水师驻地记录巡视任务阶段、已登记的士兵角色标识、玩家位置和最后朝向。
+- 海上大地图记录玩家位置与朝向、探索引导阶段和月相日数。
+
+正在播放的对白、选项、章节过场、加载过场和操练覆盖层不做逐帧持久化；这些界面本身不会显示系统菜单，因此玩家只能在稳定探索边界保存。读取成功后 `GameState` 暂存一次性场景快照并切换或重载目标场景，目标场景读取后立即消费快照，避免后续普通切换重复恢复。
+
+系统菜单通过 `save_requested` 与 `load_requested` 信号把意图交给当前场景；共享 HUD 只显示反馈，不读取场景私有变量。战斗状态、舰船战斗数值、装备和经济平衡不属于本次存档格式，待对应模块接口统一后再通过格式版本升级接入。
 
 ## Audio settings
 
 - `ExplorationHUD` 在共享系统菜单覆盖层内管理 `SystemPanel` 与 `SettingsPanel` 两个互斥子面板；进入设置不改变覆盖层可见性，因此场景一和场景二继续使用既有 `menu_visibility_changed(bool)` 暂停契约。
+- `ExplorationHUD` 通过 `return_title_requested` 向当前探索场景发送返回意图；场景负责清理内存待恢复快照并切换 `TitleScreen`，HUD 不直接控制场景树，磁盘存档不受影响。
 - `default_bus_layout.tres` 声明 `Music` 与 `SFX` 音频总线，父级均为 `Master`；`ExplorationHUD` 仍在运行时检查并补齐缺失总线。设置界面的两条滑动条将 0–100 线性值实时转换为对应总线的分贝值，0 映射为静音下限。
 - 背景音乐播放器应使用 `Music`，交互与战斗音效播放器应使用 `SFX`；当前海战演出音效迁移到 `SFX`。
 - 首版不持久化音量，重新启动游戏后使用项目或运行时默认值。

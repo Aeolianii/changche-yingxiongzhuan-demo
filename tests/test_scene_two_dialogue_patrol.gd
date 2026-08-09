@@ -37,6 +37,8 @@ func _run() -> void:
 
 	await _interact_with("World/Actors/Npcs/GuangzhouCountyMagistrate")
 	_expect(not drill_overlay.visible, "Magistrate must not open the drill before the patrol report.")
+	await _press_space()
+	_expect(dialogue_panel.visible and option_box.get_child_count() > 0, "Space must not auto-select an option dialogue.")
 	await _press_option(0)
 
 	await _interact_with("World/Actors/Npcs/FleetCommander")
@@ -108,6 +110,10 @@ func _interact_with(actor_path: String) -> void:
 func _complete_soldier_report(actor_path: String) -> void:
 	await _interact_with(actor_path)
 	await _press_option(0)
+	var line_before_echo := (scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text
+	await _press_space(true)
+	var line_after_echo := (scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text
+	_expect(line_after_echo == line_before_echo, "A held-space echo must not skip a Scene2 dialogue line.")
 	await _advance_scripted_dialogue(2)
 
 
@@ -121,8 +127,16 @@ func _press_option(index: int) -> void:
 
 func _advance_scripted_dialogue(line_count: int) -> void:
 	for _index in range(line_count):
-		next_button.pressed.emit()
-		await process_frame
+		await _press_space()
+
+
+func _press_space(is_echo := false) -> void:
+	var event := InputEventKey.new()
+	event.physical_keycode = KEY_SPACE
+	event.pressed = true
+	event.echo = is_echo
+	scene_two._unhandled_input(event)
+	await process_frame
 
 
 func _speaker_text() -> String:

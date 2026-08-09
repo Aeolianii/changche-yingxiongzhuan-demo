@@ -1,0 +1,160 @@
+extends Node
+
+const SAVE_VERSION := 1
+const DEFAULT_SAVE_PATH := "user://main_flow_save.json"
+const ALLOWED_SCENES := [
+	"res://scenes/palace/palace_demo.tscn",
+	"res://scenes/Scene2.tscn",
+	"res://scenes/sea_overworld/sea_overworld.tscn",
+]
+
+var save_path_override := ""
+var _pending_scene_path := ""
+var _pending_scene_state: Dictionary = {}
+
+
+func save_game(scene_path: String, scene_state: Dictionary) -> Dictionary:
+	if scene_path not in ALLOWED_SCENES:
+		return _reject("unsupported_scene")
+	var data := {
+		"version": SAVE_VERSION,
+		"saved_at_unix": int(Time.get_unix_time_from_system()),
+		"scene_path": scene_path,
+		"scene_state": scene_state.duplicate(true),
+	}
+	var validation := _validate_save_data(data)
+	if not validation.get("ok", false):
+		return validation
+	var write_result := _write_save_data(data)
+	if not write_result.get("ok", false):
+		return write_result
+	return {
+		"ok": true,
+		"scene_path": scene_path,
+		"saved_at_unix": data["saved_at_unix"],
+	}
+
+
+func load_game() -> Dictionary:
+	clear_pending_scene_state()
+	var save_path := _effective_save_path()
+	if not FileAccess.file_exists(save_path):
+		return _reject("missing_save")
+	var file := FileAccess.open(save_path, FileAccess.READ)
+	if file == null:
+		return _reject("read_failed")
+	var json := JSON.new()
+	var parse_error := json.parse(file.get_as_text())
+	file.close()
+	if parse_error != OK:
+		return _reject("invalid_json")
+	var parsed = json.data
+	if not parsed is Dictionary:
+		return _reject("invalid_json")
+	var validation := _validate_save_data(parsed)
+	if not validation.get("ok", false):
+		return validation
+	_pending_scene_path = str(parsed["scene_path"])
+	_pending_scene_state = (parsed["scene_state"] as Dictionary).duplicate(true)
+	return {
+		"ok": true,
+		"scene_path": _pending_scene_path,
+		"scene_state": _pending_scene_state.duplicate(true),
+	}
+
+
+func consume_pending_scene_state(scene_path: String) -> Dictionary:
+	if scene_path != _pending_scene_path:
+		return {}
+	var restored := _pending_scene_state.duplicate(true)
+	_pending_scene_path = ""
+	_pending_scene_state.clear()
+	return restored
+
+
+func clear_pending_scene_state() -> void:
+	_pending_scene_path = ""
+	_pending_scene_state.clear()
+
+
+func has_save() -> bool:
+	return FileAccess.file_exists(_effective_save_path())
+
+
+func error_message(reason: String) -> String:
+	return {
+		"missing_save": "尚未找到可读取的存档。",
+		"read_failed": "无法读取存档文件。",
+		"invalid_json": "存档内容已损坏。",
+		"missing_field": "存档缺少必要数据。",
+		"unsupported_version": "存档版本与当前游戏不兼容。",
+		"invalid_timestamp": "存档时间数据无效。",
+		"unsupported_scene": "存档记录了当前版本不支持的场景。",
+		"invalid_scene_state": "存档中的场景进度无效。",
+		"write_failed": "无法写入存档文件。",
+		"replace_failed": "无法替换旧存档，请稍后重试。",
+		"unstable_scene": "当前剧情状态不能保存，请先结束对白或过场。",
+		"scene_change_failed": "存档已读取，但目标场景加载失败。",
+	}.get(reason, "存档操作失败。")
+
+
+func _write_save_data(data: Dictionary) -> Dictionary:
+	var save_path := _effective_save_path()
+	var temp_path := save_path + ".tmp"
+	var backup_path := save_path + ".bak"
+	var file := FileAccess.open(temp_path, FileAccess.WRITE)
+	if file == null:
+		return _reject("write_failed")
+	file.store_string(JSON.stringify(data, "\t"))
+	file.flush()
+	file.close()
+
+	var temp_absolute := ProjectSettings.globalize_path(temp_path)
+	var save_absolute := ProjectSettings.globalize_path(save_path)
+	var backup_absolute := ProjectSettings.globalize_path(backup_path)
+	if FileAccess.file_exists(backup_path):
+		DirAccess.remove_absolute(backup_absolute)
+	if FileAccess.file_exists(save_path):
+		var backup_error := DirAccess.rename_absolute(save_absolute, backup_absolute)
+		if backup_error != OK:
+			DirAccess.remove_absolute(temp_absolute)
+			return _reject("replace_failed")
+	var replace_error := DirAccess.rename_absolute(temp_absolute, save_absolute)
+	if replace_error != OK:
+		if FileAccess.file_exists(backup_path):
+			DirAccess.rename_absolute(backup_absolute, save_absolute)
+		if FileAccess.file_exists(temp_path):
+			DirAccess.remove_absolute(temp_absolute)
+		return _reject("replace_failed")
+	if FileAccess.file_exists(backup_path):
+		DirAccess.remove_absolute(backup_absolute)
+	return {"ok": true}
+
+
+func _validate_save_data(data: Dictionary) -> Dictionary:
+	for key in ["version", "saved_at_unix", "scene_path", "scene_state"]:
+		if not data.has(key):
+			return _reject("missing_field")
+	if not _is_whole_number(data["version"]) or int(data["version"]) != SAVE_VERSION:
+		return _reject("unsupported_version")
+	if not _is_whole_number(data["saved_at_unix"]) or int(data["saved_at_unix"]) < 0:
+		return _reject("invalid_timestamp")
+	if typeof(data["scene_path"]) != TYPE_STRING or str(data["scene_path"]) not in ALLOWED_SCENES:
+		return _reject("unsupported_scene")
+	if not data["scene_state"] is Dictionary:
+		return _reject("invalid_scene_state")
+	return {"ok": true}
+
+
+func _effective_save_path() -> String:
+	return save_path_override if not save_path_override.is_empty() else DEFAULT_SAVE_PATH
+
+
+func _is_whole_number(value: Variant) -> bool:
+	if typeof(value) not in [TYPE_INT, TYPE_FLOAT]:
+		return false
+	return is_finite(float(value)) and is_equal_approx(float(value), round(float(value)))
+
+
+func _reject(reason: String) -> Dictionary:
+	return {"ok": false, "reason": reason}

@@ -80,14 +80,16 @@ $requiredFiles = @(
     'scenes\palace\palace_demo.tscn',
     'scenes\Scene2.tscn',
     'scenes\sea_overworld\sea_overworld.tscn',
-    'scenes\ui\exploration_hud.tscn',
+	'scenes\ui\exploration_hud.tscn',
+	'scenes\ui\title_screen.tscn',
     'scenes\ui\chapter_transition.tscn',
     'scripts\palace_demo.gd',
     'scripts\scene_2.gd',
     'scripts\sea_overworld.gd',
     'scripts\sea_overworld_player.gd',
     'scripts\exploration_hud.gd',
-    'scripts\ui\chapter_transition.gd',
+	'scripts\ui\chapter_transition.gd',
+	'scripts\ui\title_screen.gd',
     'shaders\menu_blur.gdshader',
     'assets\ui\system_menu\system_menu_frame.png',
     'assets\ui\system_menu\menu_button.png',
@@ -95,7 +97,10 @@ $requiredFiles = @(
     'assets\ui\exploration_hud\player_status_frame.png',
     'assets\ui\exploration_hud\quest_tracker_frame.png',
     'assets\ui\exploration_hud\function_button.png',
-    'assets\ui\chapter_transition\southbound_journey.png',
+	'assets\ui\chapter_transition\southbound_journey.png',
+	'assets\ui\title_screen\lingnan_command_dawn_v1.png',
+	'assets\ui\title_screen\title_calligraphy_v1.png',
+	'assets\ui\title_screen\menu_button_ink_v1.png',
     'assets\ui\icons\hud_quest.png',
     'assets\ui\icons\hud_character.png',
     'assets\ui\icons\hud_inventory.png',
@@ -138,7 +143,7 @@ if ($staleImportFiles) {
 $projectFile = Join-Path $projectRoot 'project.godot'
 if (Test-Path -LiteralPath $projectFile -PathType Leaf) {
     $projectContent = [System.IO.File]::ReadAllText($projectFile)
-    Assert-Contains $projectContent 'run/main_scene="res://scenes/palace/palace_demo\.tscn"' 'Project must start from Scene1.'
+	Assert-Contains $projectContent 'run/main_scene="res://scenes/ui/title_screen\.tscn"' 'Project must start from the title screen.'
     if ($projectContent -match '"C#"|\[dotnet\]|project/assembly_name') {
         Add-Failure 'Project must not retain obsolete C# or .NET configuration.'
     }
@@ -167,7 +172,8 @@ if (Test-Path -LiteralPath $sceneOneScript -PathType Leaf) {
     Assert-Contains $sceneOneContent 'func _show_dialogue\([^\)]*\)[\s\S]*?_hide_portrait\(\)[\s\S]*?dialogue_panel\.show\(\)' 'Narration must hide any previous character portrait.'
     Assert-Contains $sceneOneContent 'StoryState\.WAIT_TALK[\s\S]*StoryState\.GO_TO_EMPEROR' 'Scene1 must restrict the exploration HUD to free-movement story states.'
     Assert-Contains $sceneOneContent 'set_exploration_visible' 'Scene1 must synchronize exploration HUD visibility.'
-    Assert-Contains $sceneOneContent 'menu_visibility_changed' 'Scene1 must pause and resume player controls from the shared menu signal.'
+	Assert-Contains $sceneOneContent 'menu_visibility_changed' 'Scene1 must pause and resume player controls from the shared menu signal.'
+	Assert-Contains $sceneOneContent 'return_title_requested' 'Scene1 must route the shared return-title request.'
 }
 
 $sceneTwoScript = Join-Path $projectRoot 'scripts\scene_2.gd'
@@ -180,7 +186,7 @@ if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
     Assert-Contains $sceneTwoContent 'StyleBoxTexture\.new\(\)' 'Scene2 must render its dialogue background through a texture style.'
     Assert-Contains $sceneTwoContent 'set_exploration_visible' 'Scene2 must synchronize exploration HUD visibility.'
     Assert-Contains $sceneTwoContent '_is_menu_open\(\)' 'Scene2 must block movement and interaction while the shared menu is open.'
-    Assert-Contains $sceneTwoContent '_consume_chapter_entry_flag\(\)' 'Scene2 must consume the one-shot chapter entry flag.'
+    Assert-Contains $sceneTwoContent '_consume_scene_entry_flag\(CHAPTER_ENTRY_META\)' 'Scene2 must consume the one-shot chapter entry flag.'
     Assert-Contains $sceneTwoContent '_start_arrival_dialogue\(\)' 'Scene2 must show the deputy greeting after the chapter transition.'
     Assert-Contains $sceneTwoContent '_activate_arrival_task\(\)' 'Scene2 must activate the patrol task after the deputy greeting.'
     Assert-Contains $sceneTwoContent 'LEFT_SOLDIER_ROLE\s*:=\s*"patrol_soldier_left"' 'Scene2 must identify the left patrol soldier independently.'
@@ -189,7 +195,8 @@ if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
     Assert-Contains $sceneTwoContent '_heard_soldier_reports\[soldier_role\]\s*=\s*true' 'Scene2 must deduplicate soldier reports by role.'
     Assert-Contains $sceneTwoContent '_complete_officer_report\(\)' 'Scene2 must complete patrol through the officer report.'
     Assert-Contains $sceneTwoContent '_complete_magistrate_briefing\(\)' 'Scene2 must unlock the drill through the magistrate briefing.'
-    Assert-Contains $sceneTwoContent 'set_main_task_progress' 'Scene2 must project patrol progress into the shared HUD.'
+	Assert-Contains $sceneTwoContent 'set_main_task_progress' 'Scene2 must project patrol progress into the shared HUD.'
+	Assert-Contains $sceneTwoContent 'return_title_requested' 'Scene2 must route the shared return-title request.'
     if ([regex]::IsMatch($sceneTwoContent, 'bg_color\s*=\s*Color\(0\.9,\s*0\.85,\s*0\.67')) {
         Add-Failure 'Scene2 must not retain the old beige dialogue background style.'
     }
@@ -218,13 +225,61 @@ if (Test-Path -LiteralPath $hudScript -PathType Leaf) {
     Assert-Contains $hudContent 'assets/ui/system_menu/close_button\.png' 'System menu must load the generated close-button texture.'
     Assert-Contains $hudContent 'get_tree\(\)\.quit\(\)' 'ExitGameButton must quit the running game.'
     Assert-Contains $hudContent 'func set_main_task_progress\(' 'Exploration HUD must expose task title, objective and stage updates.'
+    Assert-Contains $hudContent 'signal save_requested' 'SaveGameButton must expose a save request signal.'
+	Assert-Contains $hudContent 'signal load_requested' 'LoadGameButton must expose a load request signal.'
+	Assert-Contains $hudContent 'signal return_title_requested' 'ReturnTitleButton must expose a return-title request signal.'
     Assert-Contains $hudContent '\u8BE5\u529F\u80FD\u5373\u5C06\u5B9E\u73B0' 'Unfinished system menu entries must show the documented placeholder message.'
+}
+
+$titleScreenScript = Join-Path $projectRoot 'scripts\ui\title_screen.gd'
+if (Test-Path -LiteralPath $titleScreenScript -PathType Leaf) {
+	$titleScreenContent = [System.IO.File]::ReadAllText($titleScreenScript)
+	Assert-Contains $titleScreenContent 'game_state\.call\("load_game"\)' 'Title continue must use the formal GameState load contract.'
+	Assert-Contains $titleScreenContent 'game_state\.call\("clear_pending_scene_state"\)' 'Title new game must clear only the pending in-memory snapshot.'
+	Assert-Contains $titleScreenContent 'res://scenes/palace/palace_demo\.tscn' 'Title new game must enter the palace opening.'
+	Assert-Contains $titleScreenContent 'AudioServer\.set_bus_volume_db' 'Title settings must update project audio buses.'
+	Assert-Contains $titleScreenContent 'assets/ui/title_screen/menu_button_ink_v1\.png' 'Title options must use the generated ink button asset.'
+	Assert-Contains $titleScreenContent 'StyleBoxTexture\.new\(\)' 'Title options must render their generated backing through texture styles.'
+}
+
+$seaOverworldScript = Join-Path $projectRoot 'scripts\sea_overworld.gd'
+if (Test-Path -LiteralPath $seaOverworldScript -PathType Leaf) {
+	$seaOverworldContent = [System.IO.File]::ReadAllText($seaOverworldScript)
+	Assert-Contains $seaOverworldContent 'return_title_requested' 'SeaOverworld must route the shared return-title request.'
+}
+
+$gameStateScript = Join-Path $projectRoot 'scripts\core\game_state.gd'
+if (Test-Path -LiteralPath $gameStateScript -PathType Leaf) {
+    $gameStateContent = [System.IO.File]::ReadAllText($gameStateScript)
+    Assert-Contains $gameStateContent 'SAVE_VERSION\s*:=\s*1' 'Main-flow saves must declare a version.'
+    Assert-Contains $gameStateContent 'user://main_flow_save\.json' 'Main-flow saves must use the documented single-slot path.'
+    Assert-Contains $gameStateContent 'func consume_pending_scene_state\(' 'Loaded scene snapshots must be consumed once.'
+} else {
+    Add-Failure "Missing GameState script: $gameStateScript"
 }
 
 $characterActorScript = Join-Path $projectRoot 'scripts\character_actor.gd'
 if (Test-Path -LiteralPath $characterActorScript -PathType Leaf) {
     $characterActorContent = [System.IO.File]::ReadAllText($characterActorScript)
     Assert-Contains $characterActorContent 'res://assets/characters/%s/standard/%s/%s' 'Scene1 characters must load idle and walk frames from each complete standard asset set.'
+}
+
+$playerScript = Join-Path $projectRoot 'scripts\player.gd'
+if (Test-Path -LiteralPath $playerScript -PathType Leaf) {
+    $playerContent = [System.IO.File]::ReadAllText($playerScript)
+    Assert-Contains $playerContent 'InputEventMouseButton' 'The palace player must accept mouse click movement.'
+    Assert-Contains $playerContent 'func request_move_to\(' 'The palace player must expose a click movement target contract.'
+    Assert-Contains $playerContent 'cancel_move_target\(\)' 'Keyboard or input locks must be able to cancel palace click movement.'
+}
+
+$sceneTwoScript = Join-Path $projectRoot 'scripts\scene_2.gd'
+if (Test-Path -LiteralPath $sceneTwoScript -PathType Leaf) {
+    $sceneTwoContent = [System.IO.File]::ReadAllText($sceneTwoScript)
+    Assert-Contains $sceneTwoContent 'InputEventMouseButton' 'Scene2 must accept mouse click movement.'
+    Assert-Contains $sceneTwoContent 'func request_player_move_to\(' 'Scene2 must expose a click movement target contract.'
+	Assert-Contains $sceneTwoContent 'cancel_player_move_target\(\)' 'Scene2 overlays and keyboard input must cancel click movement.'
+	Assert-Contains $sceneTwoContent '_next_dialogue_button\.visible' 'Scene2 interact input must only advance linear dialogue when its continue button is visible.'
+	Assert-Contains $sceneTwoContent 'InputEventKey.*echo' 'Scene2 dialogue input must ignore held-key echo events.'
 }
 
 $sceneOneFile = Join-Path $projectRoot 'scenes\palace\palace_demo.tscn'
@@ -249,6 +304,7 @@ Test-SceneResourceReferences 'scenes\Scene2.tscn'
 Test-SceneResourceReferences 'scenes\sea_overworld\sea_overworld.tscn'
 Test-SceneResourceReferences 'scenes\ui\exploration_hud.tscn'
 Test-SceneResourceReferences 'scenes\ui\chapter_transition.tscn'
+Test-SceneResourceReferences 'scenes\ui\title_screen.tscn'
 
 if ($failures.Count -gt 0) {
     Write-Host "Merged project verification failed with $($failures.Count) issue(s):" -ForegroundColor Red

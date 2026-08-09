@@ -36,7 +36,7 @@
 | 未开放功能提示 | 自由移动阶段 | 分别点击物品栏、船只、人物 | 每个按钮都出现“功能即将开放”提示，提示自动消失且不阻断移动 | passed / exploration HUD runtime 1 |
 | 系统菜单布局 | 自由移动阶段 | 点击右上“菜单” | 世界画面和角落 HUD 模糊压暗，中央显示除“新手教程”外的六个指定条目及关闭按钮 | passed / system menu runtime + render 1 |
 | 系统菜单暂停 | 系统菜单已打开 | 持续输入移动与交互按键 | 主角保持静止，不触发 NPC 对话；关闭后恢复探索 | passed / Scene1 + Scene2 runtime 1 |
-| 系统菜单占位功能 | 系统菜单已打开 | 点击继续、保存、读取、返回标题 | 分别显示该功能即将实现，不切换场景或写入数据 | passed / system menu runtime 1 |
+| 系统菜单基础功能 | 系统菜单已打开 | 点击继续、保存、读取、返回标题 | 继续关闭菜单；保存/读取执行单槽存档；返回标题仍显示占位提示 | passed / exploration HUD + main-flow save runtime |
 | 游戏设置入口与返回 | 系统菜单已打开 | 点击“游戏设置”，再点击“返回” | 进入古风像素设置子面板；返回后恢复系统菜单，覆盖层和暂停状态不中断 | passed / settings runtime + render 1 |
 | 音乐与音效音量 | 游戏设置界面已打开 | 分别拖动两条滑动条至不同百分比 | 百分比实时更新；`Music` 与 `SFX` 总线音量分别变化且互不影响 | passed / settings runtime + render 1 |
 | 生图设置控件 | 游戏设置界面已打开 | 检查返回按钮并拖动两条滑杆 | 返回圆章、轨道和菱形滑块均使用透明生图素材，像素边缘清晰；返回按钮下方无重复提示 | passed / generated settings controls render 1 |
@@ -72,6 +72,20 @@
 | D 区连续航行 | 从 B 向南或从 C 向东航行 | 穿过 B/D、C/D 接缝并绕过礁群 | 无空白或明显硬接缝，主航道可通过，障碍礁群不可穿越 | passed / D-zone runtime + render 1 |
 | D 区五岛进入 | 依次靠近五个 D 区地点 | 查看名称并点击进入或按 E | 提示对应地点“该岛屿即将开放”，障碍礁群不显示入口 | passed / five D locations runtime 1 |
 | 四分块完整海图 | 打开右下海图入口 | 查看四张地图、十六个地点和玩家位置 | A/B/C/D 组成完整二乘二海图，十六个地点位置正确，障碍礁群无标签 | passed / combined full-map runtime + render 1 |
+| 正式主流程保存 | 在皇宫、水师驻地或海上大地图自由探索时打开系统菜单 | 点击“保存进度” | 单槽存档写入成功，当前场景、稳定任务阶段和角色位置被记录 | passed / main-flow save runtime 1 |
+| 正式主流程读取 | 改变位置或重启后打开系统菜单 | 点击“读取进度” | 切换或重载到存档场景，并恢复对应任务阶段、角色位置及海图月相 | passed / main-flow save runtime 1 |
+| 无效存档保护 | 存档缺失、损坏或版本不兼容 | 点击“读取进度” | 留在当前场景，显示明确错误且不改变当前进度 | passed / main-flow save runtime 1 |
+| 皇宫点击移动 | 皇宫进入可控制状态 | 左键点击主角附近的可行走地面，再按方向键 | 主角先自动走向点击位置；方向键输入立即接管 | passed / click-to-move runtime 1 |
+| 水师驻地点击移动 | 水师驻地进入自由探索 | 左键点击甲板可行走位置，再打开系统菜单 | 主角自动走向点击位置；菜单打开后立即停止且关闭后不自行续走 | passed / click-to-move runtime 1 |
+| 点击移动碰撞保护 | 在墙体或大型障碍另一侧点击 | 等待角色接触障碍 | 角色不穿透现有碰撞，持续受阻后停止移动 | passed / click-to-move runtime 1 |
+| 第二幕空格推进线性对白 | 触发章节迎接、士兵汇报、军官复命或县令商议 | 每句按一次空格，末句再次按空格 | 每次只推进一句；末句正常结束并触发对应任务回调 | passed / scene transition + dialogue patrol runtime |
+| 第二幕选项保护 | 打开带多个选项的 NPC 对话 | 按空格 | 不自动选择任何选项，剧情状态不改变 | passed / dialogue patrol runtime 1 |
+| 正式存档重启保护 | 已存在 `main_flow_save.json` | 执行自动测试并重启项目 | 文件哈希与修改时间保持不变；标题继续或探索菜单均可读取 | passed / SHA-256 before-after verification |
+| 标题界面启动 | 启动项目 | 观察主视觉、书法标题和四项菜单 | 画面无黑边；生成式书法标题与按钮底板清晰；除四项菜单外无无意义小字；背景无水印 | passed / Vulkan revision render + title runtime |
+| 标题继续游戏 | 正式单槽存档存在 | 点击“继续游戏” | 读取并进入存档记录场景，任务阶段和人物位置正确恢复 | passed / title runtime 1 |
+| 标题新游戏保护 | 正式单槽存档存在 | 点击“开始新游戏”并进入皇宫 | 从开场开始，正式存档文件未删除或改写 | passed / title runtime 1 |
+| 标题设置与退出 | 位于标题界面 | 调节音乐/音效，返回，再点击退出 | Audio Bus 即时更新；返回主菜单；退出正常结束应用 | passed / title runtime + exit runtime |
+| 探索返回标题 | 皇宫、水师驻地、海上大地图自由探索 | 打开系统菜单并点击“返回标题” | 返回标题界面并显示可继续存档，磁盘存档不改变 | passed / title runtime + static routes |
 
 ## 手动觐见与任务指引验收
 

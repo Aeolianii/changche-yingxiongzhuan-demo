@@ -38,6 +38,17 @@ func _ready() -> void:
 	side_splash_sprite.hide()
 
 
+func save_facing_index() -> int:
+	return _facing_index
+
+
+func restore_facing_index(value: int) -> void:
+	_facing_index = clampi(value, 0, DIRECTION_VECTORS.size() - 1)
+	_last_ship_state = -1
+	_last_ship_direction = -1
+	_update_direction_textures(false)
+
+
 func _physics_process(delta: float) -> void:
 	var input_direction := Vector2.ZERO
 	if controls_enabled:

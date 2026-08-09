@@ -93,7 +93,7 @@
 | 中央堡垒四向绕行 | 分别从堡垒上、下、左、右驶过 | 使用玩家 `CharacterBody2D` 完成四条走廊 | 四向路线均可驶通，中央水门未被大碰撞封死 | passed / Task 4 navigation query + body drive |
 | v4 岛屿与入口碰撞 | 检查 16 组主要陆地和 16 个地点入口 | 陆地探针与入口水面探针交叉验证 | 主要岩岸均阻挡船只，每个入口至少保留一个可达水面采样点 | passed / Task 4 collision probe |
 | v4 十六地点交互 | 依次驶近 A4、B5、C4、D3 共 16 个入口 | 从无碰撞水面触发地点名称并点击进入或按 E | 16 个地点均显示正确名称；南海军港可返港，其余地点显示对应开放提示 | passed / Task 5 location interaction regression |
-| 青屿秘境宝塔岛迁移 | 从东湾水寨向东驶近 A/B 接缝西侧宝塔岛 | 从宝塔岛南侧水面触发青屿秘境，并打开完整海图 | 入口位于可航水面；标签对应可见宝塔岛且不与东湾水寨文字重叠 | passed / Qingyu migration runtime + full-map render |
+| 青屿秘境宝塔岛迁移 | 从东湾水寨向东驶近 A/B 接缝西侧宝塔岛 | 从宝塔岛南侧水面触发青屿秘境，并打开完整海图 | 入口位于可航水面；标签位于宝塔岛右上角且不与相邻地点文字重叠 | passed / Qingyu migration runtime + full-map render |
 | 海上事件与沉船留白 | 检查出生点、两艘事件船、漂流物、中央沉船和南澳港外 | 查询半径 19 船体碰撞 | 全部位于可航水面；中央沉船不产生阻挡或伤害 | passed / Task 4 collision probe |
 | v4 海图专项回归 | 运行 `tests/test_sea_overworld.gd` | 检查资源、A4/B5/C4/D3、16 坐标、入口、航路、HUD、月相和事件 | headless 与 OpenGL Compatibility 均退出 0 | passed / Task 5 runtime 2 modes |
 | v4 完整海图检查 | 打开右下海图并查看完整二乘二区域 | 核对 A/B/C/D 分块、16 个标签、玩家标记及四区接缝 | 四张 v3 生产分块无明显硬接缝；标签齐全且 B/D 职责正确，玩家标记位置同步 | passed / Task 5 full-map render + runtime |

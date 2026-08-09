@@ -211,7 +211,7 @@ func _build_locations() -> void:
 	_build_location("南海军港", Vector2(1080, 650), 238.0, Vector2(480, 130), Vector2(0, 250))
 	_build_location("川山渔村", Vector2(480, 1040), 170.0, Vector2(320, 110), Vector2(0, 160))
 	_build_location("东湾水寨", Vector2(2040, 520), 225.0, Vector2(440, 120), Vector2(0, 180))
-	_build_location("青屿秘境", Vector2(2380, 540), 145.0, Vector2(260, 100), Vector2(0, 170), "该地点即将开放", Vector2(0, 180))
+	_build_location("青屿秘境", Vector2(2380, 540), 145.0, Vector2(260, 100), Vector2(0, 170), "该地点即将开放", Vector2(420, -140))
 
 	_build_location("沧门礁堡", Vector2(2780, 1080), 190.0, Vector2(320, 120), Vector2(-360, 140), "该岛屿即将开放")
 	_build_location("月环商港", Vector2(3650, 360), 250.0, Vector2(480, 150), Vector2(-300, 80), "该岛屿即将开放")

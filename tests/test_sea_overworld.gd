@@ -209,7 +209,8 @@ func _verify_location_layout(scene: Node) -> void:
 		_expect(not _is_water_clear(qingyu.position, 2.0), "Qingyu location center must sit on the visible pagoda island.")
 		_expect(qingyu_shape_node.shape is RectangleShape2D and qingyu_shape_node.position.y > 0.0, "Qingyu must use its south-side water entry.")
 		_expect(_is_water_clear(_find_clear_entry_point(qingyu), 19.0), "Qingyu south-side entry must remain reachable open water.")
-		_expect((qingyu.get_meta("map_label_offset", Vector2.ZERO) as Vector2).y > 0.0, "Qingyu full-map label must be offset below the pagoda island.")
+		var qingyu_map_offset := qingyu.get_meta("map_label_offset", Vector2.ZERO) as Vector2
+		_expect(qingyu_map_offset.x > 0.0 and qingyu_map_offset.y < 0.0, "Qingyu full-map label must be offset to the pagoda island's upper-right.")
 	var script_constants := (scene.get_script() as Script).get_script_constant_map()
 	var spawn := script_constants.get("SOUTH_SEA_HARBOR_SPAWN", Vector2.ZERO) as Vector2
 	var south_harbor := _find_location(locations, "南海军港")
@@ -322,11 +323,11 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
 	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
-	_expect(qingyu_map_label != null and (qingyu_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2380, 720)), "Qingyu full-map label must align below the pagoda island.")
+	_expect(qingyu_map_label != null and (qingyu_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2800, 400)), "Qingyu full-map label must align to the pagoda island's upper-right.")
 	if east_bay_map_label != null and qingyu_map_label != null:
-		var east_bay_label_rect := Rect2(east_bay_map_label.position, east_bay_map_label.size)
-		var qingyu_label_rect := Rect2(qingyu_map_label.position, qingyu_map_label.size)
-		_expect(not east_bay_label_rect.intersects(qingyu_label_rect), "Qingyu and East Bay labels must not overlap on the full map.")
+		var east_bay_label_center := east_bay_map_label.position + east_bay_map_label.size * 0.5
+		var qingyu_label_center := qingyu_map_label.position + qingyu_map_label.size * 0.5
+		_expect(absf(qingyu_label_center.x - east_bay_label_center.x) >= 120.0, "Qingyu and East Bay label text must retain clear horizontal separation on the full map.")
 	_expect(player_name.text == "当前位置", "Full map player marker must display only the current-position label.")
 	if DisplayServer.get_name() != "headless":
 		var map_screenshot_error := root.get_texture().get_image().save_png(MAP_SCREENSHOT_PATH)

@@ -10,6 +10,7 @@ const WAKE_ATLAS := preload("res://assets/sprites/sea_overworld/ship_wake_fx_atl
 const DIRECTION_VECTORS := [Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2.UP]
 const DIRECTION_ROTATIONS := [0.0, PI * 0.5, -PI * 0.5, PI]
 const HERO_OFFSETS := [Vector2(0, -19), Vector2(-4, -18), Vector2(4, -18), Vector2(0, -20)]
+const SHIP_FRAME_Y_OFFSETS := [-98.0, 0.0]
 const WAKE_OFFSET := 76.0
 const WAKE_FRAME_TIME := 0.11
 
@@ -97,6 +98,9 @@ func _update_direction_textures(is_moving: bool) -> void:
 	_last_ship_state = ship_state
 	_last_ship_direction = _facing_index
 	ship_sprite.texture = _atlas_region(PLAYER_SHIP_ATLAS, 4, 2, _facing_index, ship_state)
+	# The sailing row shifts the ship art 98 source pixels upward to make room for its wake.
+	# Align the stopped row to that deck anchor without moving the protagonist.
+	ship_sprite.position = Vector2(0.0, SHIP_FRAME_Y_OFFSETS[ship_state] * ship_sprite.scale.y)
 	hero_sprite.texture = _atlas_region(PROTAGONIST_ATLAS, 4, 1, _facing_index, 0)
 	hero_sprite.position = HERO_OFFSETS[_facing_index]
 

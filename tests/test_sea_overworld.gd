@@ -3,6 +3,7 @@ extends SceneTree
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SCREENSHOT_PATH := "res://.godot/sea_overworld_preview.png"
 const MOVEMENT_SCREENSHOT_PATH := "res://.godot/sea_overworld_movement_preview.png"
+const STOPPED_SCREENSHOT_PATH := "res://.godot/sea_overworld_stopped_preview.png"
 const QUEST_SCREENSHOT_PATH := "res://.godot/sea_overworld_quest_preview.png"
 const MAP_SCREENSHOT_PATH := "res://.godot/sea_overworld_map_preview.png"
 const FULL_MOON_SCREENSHOT_PATH := "res://.godot/sea_overworld_lunar_full_preview.png"
@@ -243,12 +244,14 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 func _verify_keyboard_movement(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var wake := player.get_node("WakeSprite") as Sprite2D
+	var ship := player.get_node("VisualRoot/ShipSprite") as Sprite2D
 	var hero := player.get_node("VisualRoot/HeroSprite") as Sprite2D
 	var starting_position := player.position
 	var starting_lunar_day := float(root.get_meta("sea_overworld_lunar_day", 0.0))
 	Input.action_press("move_right")
 	for _frame in range(4):
 		await physics_frame
+	var moving_ship_y := ship.position.y
 	var moving_hero_y := hero.position.y
 	_expect(player.position.x > starting_position.x, "WASD/direction input did not move the sea-map ship.")
 	_expect(wake.visible, "Moving ship must show the animated wake layer.")
@@ -256,14 +259,20 @@ func _verify_keyboard_movement(scene: Node) -> void:
 	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
 	_expect("靠近任意岛屿" in task_objective.text, "First map-exploration step must advance after sailing.")
 	if DisplayServer.get_name() != "headless":
-		await process_frame
+		await RenderingServer.frame_post_draw
 		var screenshot_error := root.get_texture().get_image().save_png(MOVEMENT_SCREENSHOT_PATH)
 		_expect(screenshot_error == OK, "Sea overworld movement preview screenshot could not be saved.")
 	Input.action_release("move_right")
 	await physics_frame
 	await physics_frame
 	_expect(not wake.visible, "Ship wake must hide after movement stops.")
+	_expect(is_zero_approx(moving_ship_y), "The sailing ship frame must retain its approved visual position.")
+	_expect(is_equal_approx(ship.position.y, -98.0 * ship.scale.y), "The stopped ship frame must compensate its 98-pixel atlas deck-anchor offset.")
 	_expect(is_equal_approx(hero.position.y, moving_hero_y), "The protagonist must stay attached to the same ship-deck anchor when movement stops.")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		var stopped_screenshot_error := root.get_texture().get_image().save_png(STOPPED_SCREENSHOT_PATH)
+		_expect(stopped_screenshot_error == OK, "Sea overworld stopped-state preview screenshot could not be saved.")
 	var stopped_lunar_day := float(root.get_meta("sea_overworld_lunar_day", 0.0))
 	for _frame in range(3):
 		await physics_frame

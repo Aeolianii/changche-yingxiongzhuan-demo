@@ -26,6 +26,7 @@
 | 水墨像素月面 | `assets/ui/sea_overworld/moon_clock_moon.png` | 256×256 | 透明PNG；作为左上月相时钟的着色器纹理，不包含外框或文字 |
 | 大地图阶段一构图灰模 v1 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png` | 1672×941 | 历史构图；B 为敌方核心、D 为群岛水战区，不接入游戏 |
 | 大地图阶段一构图灰模 v2 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` | 1672×941 | 当前构图；B 右上为群岛水战区、D 右下为敌方核心海域，不接入游戏 |
+| 大地图阶段一构图灰模 v3 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png` | 1672×941 | 当前构图；强化北部港贸、南部蛮荒军事和四类功能岛差异，不接入游戏 |
 
 除地图底图和全屏加载图外，其余素材均已去除对应色键背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
 
@@ -327,6 +328,53 @@ Center and seams: keep the four-quadrant center connected by sparse diagonal isl
 Style/medium: deliberately rough preproduction blockout; simplified painted pixel-art silhouettes; flat muted green-gray land, tan shore, cyan water; minimal placeholder architecture blocks only for scale; low detail, no refinement.
 Invariants: preserve A upper-left as the dense mainland naval departure region. Preserve C lower-left as sparse dangerous outer sea with one lighthouse landmark, one pirate-fort landmark, a small sandbar group, and a broken ruin/reef chain. Do not move or redesign the left-half macro composition.
 Constraints: no text, labels, letters, numbers, UI, legend, grid, quadrant divider lines, arrows, route lines, compass, ships, characters, combat, weather, fog, decorative border, logo, or watermark. No photorealism, no final rendering, no empty center, no repeated round-island grid. Do not leave the dominant enemy city in upper-right B; it must be in lower-right D.
+```
+
+### 4.18 大地图阶段一功能差异化灰模 v3
+
+内置生图模式：精确图像编辑。以 v2 为编辑目标，先建立功能造型和南北海域差异，再通过两次局部编辑恢复 A4/B5/C4/D3 的地点分配。以下为最终提示词组。
+
+#### 4.18.1 主编辑
+
+```text
+Use case: precise-object-edit
+Asset type: revised low-fidelity game world-map composition graybox v3 for preproduction, not final art
+Input images: Image 1 is the approved v2 stitched graybox edit target. Preserve its 16:9 framing, cyan sea, top-down oblique camera, A/B/C/D quadrant roles, approximate main-location centers, and total count of major playable locations. Do not add any new major island or settlement.
+Primary request: redesign the existing islands so every functional type has a distinct silhouette and construction logic, while strengthening the contrast between prosperous northern seas and dangerous southern seas. Fix the repeated formula of round rock base + ring wall + Chinese buildings + wooden docks.
+Northern half A and B: portray a prosperous, populated trade-and-shipping sea. Use broad clean shipping lanes, fewer tiny islets, calm open water, active-looking harbors, warehouses, quays, sheltered bays, and more docks only where the function requires them. A mainland city must grow organically from the coastline rather than sit on a circular rock pedestal. A major merchant port should be low and wide around a crescent harbor basin, with stone quays, warehouses, market roofs, several piers, and no complete defensive wall. A small fishing village should be a flat sandbar or mangrove shore with stilt houses and one modest jetty, no wall. In upper-right B keep the same five major location groups but remove roughly half the decorative detached reef dots and eliminate clutter; create one unmistakable broad, clean shipping corridor through the quadrant. Differentiate B's five locations as an angular naval checkpoint, a low crescent merchant harbor, a modest fishing settlement, a long inhabited trade island, and one restrained natural landmark. Do not make all five urban or equally detailed.
+Southern half C and D: portray dangerous, wild, militarized and pirate-controlled waters. Use taller mountain islands, caves, bare rock, broken asymmetric coastlines, jagged reefs, narrow crooked passages and fewer cities or docks. The lighthouse island must be a steep narrow peak with only a lighthouse and tiny landing, no town or wall. The pirate stronghold must be an irregular cliff island with timber palisades, crude towers and one rough hidden jetty, not a formal ring-walled city. The low sandbar must remain almost flat and sparsely inhabited. The ruin island must be broken into natural rock shelves with ruins and no working dock. In D, the forward fortress must use angular stone breakwaters, exposed rock, heavy walls and a single military pier. The middle mysterious island must be a tall uninhabited mountain/cave island without a dock. The bottom-right enemy core must remain the largest final destination, but redesign it as a severe cliff citadel with geometric sea walls, fortified harbor mouth and military docks—not another lush circular city island.
+Island-chain rhythm: remove evenly spaced pearl-necklace chains and anything that looks like a drawn level path. Arrange small rocks in irregular clustered rhythm: dense group near a coast, then sparse pair, then a broad open-water interval, then another dense hazard cluster. The overall reading must be dense -> sparse -> open -> dense, with large uneven gaps and no continuous dotted line.
+Central sea: retain a broad navigable open-water area but relieve the empty-hole feeling with exactly 3 to 5 extremely small irregular reefs plus one partially submerged ancient shipwreck. Scatter them asymmetrically; do not align them, connect them into a route, or make them look enterable. Keep most of the center empty.
+Functional silhouette rules: merchant port = low crescent bay, stone quays, warehouses, multiple piers, no full wall; military fortress = angular artificial sea wall, bare rock, dominant fortifications, one military dock; fishing village = flat sandbar or mangrove, stilt huts, one small jetty, no wall; uninhabited mountain island = steep asymmetric peak, cave and broken shore, zero buildings or docks. Every major island must clearly choose one function and not share the same base silhouette.
+Style/medium: deliberately rough preproduction blockout; simplified painted pixel-art silhouettes; low detail; flat muted green-gray and tan land against cyan water; enough placeholder architecture to communicate function, no refinement.
+Invariants: preserve A upper-left as mainland departure region; B upper-right as northern archipelago shipping/battle zone; C lower-left as sparse dangerous outer sea; D lower-right as enemy core sea; preserve approximate main-landmark positions and existing major-location count; retain v2's bottom-right final destination hierarchy.
+Constraints: no text, labels, letters, numbers, UI, legend, grid, quadrant lines, arrows, route lines, compass, moving ships, characters, combat, weather, fog, border, logo, or watermark. The single broken shipwreck in the center is allowed. No photorealism, no final rendering, no extra major islands, no extra cities, no evenly spaced reef chains, no repeated circular green-rock city bases, and no cluttered upper-right.
+```
+
+#### 4.18.2 地点数量恢复
+
+```text
+Use case: precise-object-edit
+Asset type: corrected stage-one world-map graybox v3
+Input images: Image 1 is the v3 draft edit target whose functional differentiation, north/south contrast, clean B quadrant, central tiny reefs and single shipwreck must be preserved. Image 2 is the v2 location-count and approximate-placement reference only.
+Primary request: make only one correction: restore the THREE existing location groups that Image 1 accidentally merged or omitted, so the composition again represents A4, B5, C4 and D3 location groups. These are not new locations; they existed in Image 2. Keep every other improvement from Image 1 unchanged.
+Restore in A upper-left: besides the existing mainland port city and large crescent merchant harbor, restore exactly two modest secondary locations in the open water/nearshore area between A and the central seam. One must be a very small flat fishing-village sandbar with stilt huts and one short jetty, no wall. The other must be a small irregular natural secret-island/outpost with an asymmetric green-rock silhouette, sparse trees or one tiny shrine, and no city wall; it may have only a minimal landing. Keep both clearly smaller than the crescent merchant harbor. Do not clutter A or block its broad shipping lane.
+Restore in D lower-right: besides the existing central tall uninhabited cave mountain and the huge bottom-right enemy core citadel, restore exactly one medium forward military fortress near the upper-left edge of D, below the horizontal centerline and right of the vertical centerline. It must use angular bare-rock foundations, geometric breakwaters, dominant fort walls and exactly one military pier. It must not look like a merchant town, circular green city island, or another giant endpoint.
+Preserve strictly from Image 1: northern prosperous trade character; southern wild military character; differentiated merchant port, fortress, fishing village and uninhabited mountain silhouettes; reduced upper-right clutter and broad clean B shipping corridor; irregular dense -> sparse -> open -> dense rock rhythm; central area with only 3 to 5 extremely small reefs and one partially submerged shipwreck; bottom-right core citadel hierarchy; rough preproduction pixel-art graybox style, framing, camera and palette.
+Location distribution invariant: A upper-left must read as four functional location groups total including the mainland city; B upper-right remains five; C lower-left remains four; D lower-right becomes three. Do not delete, merge, duplicate, or add any other major location group.
+Constraints: no text, labels, grid, route lines, arrows, UI, compass, moving ships, characters, border, logo or watermark. Do not add any extra major island beyond the three restored existing groups. Do not recreate evenly spaced pearl-necklace reef chains. Do not change the central shipwreck. Do not redesign or move the existing B, C, D mountain or final citadel groups.
+```
+
+#### 4.18.3 B 区小渔村恢复
+
+```text
+Use case: precise-object-edit
+Asset type: final corrected stage-one world-map graybox v3
+Input images: Image 1 is the nearly final v3 edit target. Preserve the entire image exactly except for one small localized correction in upper-right B.
+Primary request: restore B's missing fifth functional location by converting ONE existing small decorative reef group in the upper-right B quadrant into a very small, low, modest fishing-village islet. Use the small reef group below and slightly right of B's angular fortress and left of the long inhabited trade island, near the upper-middle-right open water. Keep the same tiny footprint: flat sand or mangrove base, three to five simple stilt huts, fishing racks and exactly one short wooden jetty. No wall, no tower, no large temple, no multi-pier harbor, no tall rock pedestal. It must be much smaller and quieter than the crescent merchant harbor.
+Location invariant after this edit: A remains four functional location groups; B must clearly read as exactly five groups—angular fortress, crescent merchant harbor, tiny fishing village, long inhabited trade island, tall natural cave island; C remains four; D remains three. Do not add, remove, merge, resize, move or redesign any other major group.
+Strict preservation: keep the mainland city, A crescent port, A sandbar village, A shrine island, all B groups, all southern islands, central 3 to 5 tiny reefs and the single shipwreck, dense -> sparse -> open -> dense rhythm, broad clean B shipping corridor, north/south contrast, bottom-right core citadel, composition, framing, camera, palette and rough graybox style unchanged.
+Constraints: change only that one small reef group into the tiny fishing village. No other edits. No text, labels, route lines, arrows, UI, moving ships, characters, border, logo or watermark. Do not create extra rocks or islands. Do not clutter B.
 ```
 
 ## 5. 当前使用边界

@@ -1,9 +1,9 @@
 # 海上大地图阶段一构图灰模
 
-- 状态：阶段一 B/D 互换修订完成
+- 状态：阶段一 v3 功能差异化修订完成
 - 日期：2026-08-09
-- 当前灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png`
-- 历史灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png`
+- 当前灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png`
+- 历史灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png`、`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png`
 - 适用范围：只确认岛屿体量、位置、密度、航道留白和跨分块联系
 - 非生产资源：不得直接替换 A/B/C/D 当前背景
 
@@ -18,6 +18,8 @@
 - 全图中央十字区域使用两条斜向碎岛链建立视觉联系，但保留宽阔交叉水门，不放大型岛屿阻塞航行。
 
 目标密度为 A 8/10、B 6/10、C 4/10、D 7/10；中央连接区维持 3/10，以小岛和礁石提供信息而不是填满海面。
+
+v3 不调整 16 个地点的建议中心坐标，只改变岛屿轮廓、功能建筑、海岸破碎程度和装饰礁点分布。北部 A/B 使用贸易港口语汇，南部 C/D 使用蛮荒军事语汇；跨区岛链按“密—疏—空—密”组织，中央只放置少量微型礁石与沉船。
 
 ## 2. 地点层级与坐标草案
 

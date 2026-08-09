@@ -86,6 +86,10 @@
 | 标题新游戏保护 | 正式单槽存档存在 | 点击“开始新游戏”并进入皇宫 | 从开场开始，正式存档文件未删除或改写 | passed / title runtime 1 |
 | 标题设置与退出 | 位于标题界面 | 调节音乐/音效，返回，再点击退出 | Audio Bus 即时更新；返回主菜单；退出正常结束应用 | passed / title runtime + exit runtime |
 | 探索返回标题 | 皇宫、水师驻地、海上大地图自由探索 | 打开系统菜单并点击“返回标题” | 返回标题界面并显示可继续存档，磁盘存档不改变 | passed / title runtime + static routes |
+| v4 海图四区航路 | 从 A→B、A→C、B→D、C→D 四条接缝航行 | 使用半径 19 的玩家船体逐段驶过 | 四条跨区路线均无隐形墙、穿岛或死路 | passed / Task 4 navigation query + body drive |
+| 中央堡垒四向绕行 | 分别从堡垒上、下、左、右驶过 | 使用玩家 `CharacterBody2D` 完成四条走廊 | 四向路线均可驶通，中央水门未被大碰撞封死 | passed / Task 4 navigation query + body drive |
+| v4 岛屿与入口碰撞 | 检查 16 组主要陆地和 16 个地点入口 | 陆地探针与入口水面探针交叉验证 | 主要岩岸均阻挡船只，每个入口至少保留一个可达水面采样点 | passed / Task 4 collision probe |
+| 海上事件与沉船留白 | 检查出生点、两艘事件船、漂流物、中央沉船和南澳港外 | 查询半径 19 船体碰撞 | 全部位于可航水面；中央沉船不产生阻挡或伤害 | passed / Task 4 collision probe |
 
 ## 手动觐见与任务指引验收
 
@@ -152,6 +156,7 @@
 | 2026-08-07 / ink dialogue render 4 | Codex | 第二章对话框缩至第一章规格：1344×300、24px 正文、约 650px 行宽和 20px 选项 | 真实士兵双选项 OpenGL 截图、两幕布局断言、第二章完整对话推进、C# 构建 | 交付用户试玩 |
 | 2026-08-07 / option highlight runtime 1 | Codex | 剧情选项悬浮、按下与焦点状态统一为透明底，仅文字变为暖黄色 | 聚焦态 OpenGL 截图、五种按钮状态透明度断言、第二章完整对话推进、C# 构建 | 交付用户试玩 |
 | 2026-08-07 / quest layout render 1 | Codex | 探索任务栏的主支线文字与左侧色条整体上移；任务详情的总标题和描述同步右移 | 1344×896 OpenGL 截图、HUD 布局断言及 headless 回归 | 交付用户试玩 |
+| 2026-08-10 / sea overworld collision run 1 | Codex | v4 生产底图的大陆、岛屿、山岭和必要礁石已改用 32 个贴岸阻挡；港池、码头前水面、四区接缝与中央水门保持可航 | Godot 4.7.1 场景 smoke、8 条真实船体航路、16 组陆地及 16 个入口探针 | Task 5 原始分辨率截图与完整回归 |
 
 ## Known issues
 

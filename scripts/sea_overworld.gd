@@ -19,7 +19,7 @@ const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
 const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
-const SOUTH_SEA_HARBOR_SPAWN := Vector2(1080, 940)
+const SOUTH_SEA_HARBOR_SPAWN := Vector2(1300, 850)
 const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
 
@@ -114,59 +114,97 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func _build_world_collisions() -> void:
-	_add_circle_blocker(Vector2(1230, 682), 185.0)
-	_add_circle_blocker(Vector2(518, 982), 154.0)
-	_add_circle_blocker(Vector2(2050, 322), 160.0)
-	_add_circle_blocker(Vector2(1995, 742), 180.0)
-	_add_circle_blocker(Vector2(1300, 1240), 72.0)
-	_add_circle_blocker(Vector2(1515, 1195), 70.0)
-	_add_circle_blocker(Vector2(1875, 1195), 72.0)
-	_add_circle_blocker(Vector2(2180, 1195), 70.0)
-	_add_circle_blocker(Vector2(3245, 414), 190.0)
-	_add_circle_blocker(Vector2(4328, 345), 285.0)
-	_add_circle_blocker(Vector2(4115, 345), 155.0)
-	_add_circle_blocker(Vector2(4540, 345), 155.0)
-	_add_circle_blocker(Vector2(4417, 1078), 270.0)
-	_add_circle_blocker(Vector2(4235, 1078), 150.0)
-	_add_circle_blocker(Vector2(4595, 1078), 150.0)
-	_add_circle_blocker(Vector2(405, 1682), 170.0)
-	_add_circle_blocker(Vector2(295, 1682), 95.0)
-	_add_circle_blocker(Vector2(515, 1682), 95.0)
-	_add_circle_blocker(Vector2(1560, 1862), 200.0)
-	_add_circle_blocker(Vector2(1410, 1862), 110.0)
-	_add_circle_blocker(Vector2(1710, 1862), 110.0)
-	_add_circle_blocker(Vector2(428, 2267), 190.0)
-	_add_circle_blocker(Vector2(288, 2267), 100.0)
-	_add_circle_blocker(Vector2(568, 2267), 100.0)
-	_add_circle_blocker(Vector2(1605, 2432), 220.0)
-	_add_circle_blocker(Vector2(1435, 2432), 115.0)
-	_add_circle_blocker(Vector2(1775, 2432), 115.0)
-	_add_circle_blocker(Vector2(3258, 1682), 175.0)
-	_add_circle_blocker(Vector2(3143, 1682), 95.0)
-	_add_circle_blocker(Vector2(3373, 1682), 95.0)
-	_add_circle_blocker(Vector2(4173, 1697), 185.0)
-	_add_circle_blocker(Vector2(4038, 1697), 105.0)
-	_add_circle_blocker(Vector2(4308, 1697), 105.0)
-	_add_circle_blocker(Vector2(3213, 2057), 190.0)
-	_add_circle_blocker(Vector2(3058, 2082), 110.0)
-	_add_circle_blocker(Vector2(3368, 2032), 110.0)
-	_add_circle_blocker(Vector2(4278, 2140), 180.0)
-	_add_circle_blocker(Vector2(4118, 2105), 110.0)
-	_add_circle_blocker(Vector2(4438, 2175), 110.0)
-	_add_circle_blocker(Vector2(3633, 2432), 155.0)
-	_add_circle_blocker(Vector2(3408, 2397), 100.0)
-	_add_circle_blocker(Vector2(3858, 2467), 100.0)
-	_add_circle_blocker(Vector2(4661, 1817), 120.0)
-	_add_circle_blocker(Vector2(4766, 2057), 95.0)
+	# Northwest mainland follows the visible shoreline while leaving every dock approach in water.
+	_add_polygon_blocker("NorthwestCoast", PackedVector2Array([
+		Vector2(0, 0), Vector2(1810, 0), Vector2(1780, 100), Vector2(1650, 145),
+		Vector2(1530, 205), Vector2(1470, 310), Vector2(1510, 430), Vector2(1650, 520),
+		Vector2(1710, 610), Vector2(1600, 675), Vector2(1450, 650), Vector2(1320, 720),
+		Vector2(1180, 690), Vector2(1040, 735), Vector2(880, 725), Vector2(720, 770),
+		Vector2(570, 800), Vector2(470, 880), Vector2(445, 970), Vector2(330, 1040),
+		Vector2(180, 1030), Vector2(0, 1090),
+	]))
 
-	var coast := CollisionPolygon2D.new()
-	coast.name = "NorthwestCoast"
-	coast.polygon = PackedVector2Array([
-		Vector2(0, 0), Vector2(1120, 0), Vector2(1090, 170), Vector2(980, 245),
-		Vector2(950, 345), Vector2(820, 430), Vector2(675, 485), Vector2(540, 585),
-		Vector2(390, 665), Vector2(230, 735), Vector2(0, 760)
-	])
-	world_collision.add_child(coast)
+	# A-zone crescent village: short round segments preserve the open basin and southern landing water.
+	_add_circle_blocker("ChuanshanWestRock", Vector2(350, 1020), 105.0)
+	_add_circle_blocker("ChuanshanNorthwestWall", Vector2(500, 925), 120.0)
+	_add_circle_blocker("ChuanshanNorthWall", Vector2(700, 885), 115.0)
+	_add_circle_blocker("ChuanshanNortheastWall", Vector2(930, 900), 125.0)
+	_add_circle_blocker("ChuanshanEastWall", Vector2(1160, 985), 145.0)
+	_add_circle_blocker("ChuanshanEastRock", Vector2(1360, 1090), 115.0)
+
+	_add_polygon_blocker("EastBaySandbar", PackedVector2Array([
+		Vector2(1710, 620), Vector2(1830, 565), Vector2(2010, 590), Vector2(2135, 670),
+		Vector2(2040, 715), Vector2(1830, 705),
+	]))
+	_add_polygon_blocker("QingyuPagodaIsland", PackedVector2Array([
+		Vector2(2260, 495), Vector2(2380, 425), Vector2(2490, 475), Vector2(2515, 600),
+		Vector2(2420, 650), Vector2(2290, 610),
+	]))
+
+	# B-zone landmarks use separate hulls so the moon harbor and central water gate remain open.
+	_add_polygon_blocker("CangmenFortress", PackedVector2Array([
+		Vector2(2490, 1050), Vector2(2630, 950), Vector2(2860, 945), Vector2(2995, 1040),
+		Vector2(3010, 1195), Vector2(2900, 1280), Vector2(2660, 1280), Vector2(2500, 1190),
+	]))
+	_add_polygon_blocker("CangmenDock", PackedVector2Array([
+		Vector2(2370, 1165), Vector2(2525, 1095), Vector2(2580, 1160), Vector2(2450, 1230),
+	]))
+	_add_circle_blocker("MoonHarborNorthwest", Vector2(3380, 400), 120.0)
+	_add_circle_blocker("MoonHarborNorth", Vector2(3500, 300), 110.0)
+	_add_circle_blocker("MoonHarborCrown", Vector2(3650, 285), 120.0)
+	_add_circle_blocker("MoonHarborEast", Vector2(3780, 365), 130.0)
+	_add_circle_blocker("MoonHarborSoutheast", Vector2(3810, 510), 125.0)
+	_add_circle_blocker("MoonHarborSouth", Vector2(3690, 600), 105.0)
+	_add_polygon_blocker("WulanVillageIsland", PackedVector2Array([
+		Vector2(3185, 700), Vector2(3290, 650), Vector2(3430, 680), Vector2(3500, 760),
+		Vector2(3410, 825), Vector2(3240, 800),
+	]))
+	_add_polygon_blocker("FuboRidge", PackedVector2Array([
+		Vector2(3860, 735), Vector2(3970, 665), Vector2(4170, 700), Vector2(4390, 820),
+		Vector2(4710, 935), Vector2(4780, 1035), Vector2(4560, 1080), Vector2(4350, 1010),
+		Vector2(4140, 950), Vector2(3950, 895),
+	]))
+	_add_polygon_blocker("ShanwanMountain", PackedVector2Array([
+		Vector2(3260, 1040), Vector2(3440, 940), Vector2(3620, 1020), Vector2(3810, 1180),
+		Vector2(3700, 1330), Vector2(3440, 1390), Vector2(3230, 1290),
+	]))
+
+	# C-zone silhouettes are inset from foam and docks to keep landings reachable.
+	_add_polygon_blocker("ChenghaiLighthouse", PackedVector2Array([
+		Vector2(500, 1510), Vector2(640, 1460), Vector2(760, 1570), Vector2(785, 1790),
+		Vector2(680, 1880), Vector2(520, 1850), Vector2(440, 1700),
+	]))
+	_add_polygon_blocker("LongmenStronghold", PackedVector2Array([
+		Vector2(540, 2150), Vector2(720, 2070), Vector2(980, 2090), Vector2(1175, 2230),
+		Vector2(1120, 2390), Vector2(850, 2440), Vector2(580, 2340),
+	]))
+	_add_polygon_blocker("BaishaSandbar", PackedVector2Array([
+		Vector2(1360, 2370), Vector2(1550, 2270), Vector2(1810, 2260), Vector2(1990, 2375),
+		Vector2(1890, 2490), Vector2(1590, 2535), Vector2(1380, 2475),
+	]))
+	_add_circle_blocker("XuanchaoWestReef", Vector2(1980, 2395), 38.0)
+	_add_circle_blocker("XuanchaoMainReef", Vector2(2220, 2340), 58.0)
+	_add_circle_blocker("XuanchaoSouthReef", Vector2(2130, 2460), 34.0)
+
+	# D-zone keeps the western approach and south-facing final-port basin clear.
+	_add_polygon_blocker("RedBayMountain", PackedVector2Array([
+		Vector2(2820, 1800), Vector2(2990, 1710), Vector2(3170, 1780), Vector2(3370, 1970),
+		Vector2(3310, 2160), Vector2(3140, 2240), Vector2(2920, 2190), Vector2(2740, 2040),
+	]))
+	_add_polygon_blocker("DongjiWestWall", PackedVector2Array([
+		Vector2(3510, 2260), Vector2(3680, 2140), Vector2(3790, 2280), Vector2(3650, 2410),
+		Vector2(3510, 2440),
+	]))
+	_add_polygon_blocker("NanaoCitadel", PackedVector2Array([
+		Vector2(3690, 2080), Vector2(3860, 1920), Vector2(4250, 1820), Vector2(4540, 1940),
+		Vector2(4720, 2160), Vector2(4680, 2360), Vector2(4550, 2480), Vector2(4250, 2460),
+		Vector2(4130, 2350), Vector2(4000, 2350), Vector2(3900, 2270), Vector2(3730, 2300),
+	]))
+
+	# Only visually solid micro-reefs block movement; the central wreck is intentionally decorative.
+	_add_circle_blocker("CentralNorthReef", Vector2(1950, 1585), 38.0)
+	_add_circle_blocker("CentralEastReef", Vector2(2310, 1840), 34.0)
+	_add_circle_blocker("ShanwanOuterReef", Vector2(3970, 1240), 46.0)
 
 
 func _build_locations() -> void:
@@ -175,11 +213,11 @@ func _build_locations() -> void:
 	_build_location("东湾水寨", Vector2(2040, 520), 225.0, Vector2(440, 120), Vector2(0, 180))
 	_build_location("青屿秘境", Vector2(1760, 950), 145.0)
 
-	_build_location("沧门礁堡", Vector2(2780, 1080), 190.0, Vector2(320, 120), Vector2(-210, 80), "该岛屿即将开放")
+	_build_location("沧门礁堡", Vector2(2780, 1080), 190.0, Vector2(320, 120), Vector2(-360, 140), "该岛屿即将开放")
 	_build_location("月环商港", Vector2(3650, 360), 250.0, Vector2(480, 150), Vector2(-300, 80), "该岛屿即将开放")
 	_build_location("雾岚群岛", Vector2(3070, 850), 165.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
 	_build_location("伏波古岭", Vector2(4260, 780), 220.0, Vector2(440, 120), Vector2(0, 175), "该岛屿即将开放")
-	_build_location("珊湾渔链", Vector2(3670, 1150), 155.0, Vector2(260, 100), Vector2(-120, 115), "该岛屿即将开放")
+	_build_location("珊湾渔链", Vector2(3670, 1150), 155.0, Vector2(260, 100), Vector2(250, 160), "该岛屿即将开放")
 
 	_build_location("澄海灯岛", Vector2(480, 1680), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
 	_build_location("龙门海寨", Vector2(860, 2260), 210.0, Vector2(400, 120), Vector2(0, 190), "该岛屿即将开放")
@@ -192,9 +230,9 @@ func _build_locations() -> void:
 
 
 func _build_auto_triggers() -> void:
-	_build_ship_trigger("近海渔船", Vector2(940, 1040), 0)
-	_build_ship_trigger("岭南商船", Vector2(1700, 930), 1)
-	_build_event_trigger("漂流木箱", Vector2(820, 810))
+	_build_ship_trigger("近海渔船", Vector2(1650, 1170), 0)
+	_build_ship_trigger("岭南商船", Vector2(2600, 760), 1)
+	_build_event_trigger("漂流木箱", Vector2(1300, 1700))
 
 
 func _configure_sea_map_hud() -> void:
@@ -544,8 +582,16 @@ func _vector_from_save(value: Variant, fallback: Vector2) -> Vector2:
 	return restored if is_finite(restored.x) and is_finite(restored.y) else fallback
 
 
-func _add_circle_blocker(at: Vector2, radius: float) -> void:
+func _add_polygon_blocker(node_name: String, points: PackedVector2Array) -> void:
+	var shape_node := CollisionPolygon2D.new()
+	shape_node.name = node_name
+	shape_node.polygon = points
+	world_collision.add_child(shape_node)
+
+
+func _add_circle_blocker(node_name: String, at: Vector2, radius: float) -> void:
 	var shape_node := CollisionShape2D.new()
+	shape_node.name = node_name
 	shape_node.position = at
 	var shape := CircleShape2D.new()
 	shape.radius = radius

@@ -36,7 +36,7 @@
 - [x] 16 个地点保持 A4、B5、C4、D3，中心坐标相对批准草案偏差不超过 `±80` 世界单位。
 - [x] 所有入口触发对准可见码头或登陆口，月环商港入口位于左侧。
 - [x] 玩家船体、尾流和侧浪缩至 `0.28`，Q 版人物缩至 `0.088`，碰撞半径缩至 `19`；人物甲板站位与尾流方向保持稳定。
-- [ ] 主要岛屿不可穿越，四条跨区路线和中央十字水门均可航行。
+- [x] 主要岛屿不可穿越，四条跨区路线和中央十字水门均可航行。
 - [ ] 地点交互、事件船、漂流事件、海图、月相、存档和场景二往返没有回归。
 - [ ] `tests/test_sea_overworld.gd` 通过，并完成 A/B/C/D、中央接缝和完整海图截图检查。
 
@@ -68,17 +68,21 @@
 - Seam contract: `160` source pixels, corresponding to `120` world units.
 - Coordinate contract: approved centers may move at most `±80` world units during art alignment; a larger move requires updating the layout document before implementation.
 - Player scale contract: ship, wake and side splash use `0.28`; protagonist uses `0.088`; player collision radius uses `19`, with deck and wake offsets recalibrated proportionally.
+- Collision contract: use named coastline/island polygons plus short circle chains that follow visible rock bases without closing port basins; the decorative central wreck has no blocker. Keep sampled A→B, A→C, B→D and C→D corridors clear, and reserve at least one clear route above, below, left and right of the central fortress cluster.
+- Task 4 water probes: cross A/B near `y=800`, A/C near `x=1700`, B/D near `x=4200`, C/D near `y=1400`; the exact polyline may bend around visible islands but must remain collision-free for the `19`-radius player hull.
+- Task 4 collision landing: 14 named polygons and 18 named circle blockers replace the old oversized placeholders. `SOUTH_SEA_HARBOR_SPAWN = Vector2(1300, 850)`; auto triggers move to fishing boat `(1650,1170)`, merchant ship `(2600,760)` and drift event `(1300,1700)`. Cangmen and Shanwan entry rectangles were shifted to their remaining clear-water dock sides.
 - Primary risks: AI-generated chunk drift can break seams; old runtime data currently places the three D landmarks in the upper-right and five B landmarks in the lower-right; oversized collision shapes can close approved waterways; visual docks can diverge from interaction triggers.
 - Task 2 image mode: built-in image generation, `sketch-to-render`, with v4 as the sole edit target and all composition invariants locked.
 - Local production render: `D:\厂车英雄传DEMO\artwork\sea_overworld\sea_overworld_production_render_v1.png`.
 - Local production master: `D:\厂车英雄传DEMO\artwork\sea_overworld\sea_overworld_master_v1.png`, RGB `6528×3604`, SHA-256 `1F12163B60C790D77FB3017256DCEA1F9D86F07C5D05FAD703ACDD302E7E8E04`.
 - Runtime chunk SHA-256: A `ACBB0B091D5F1D9B75EB712C5F048D96DF60A7CC39D520D5AEF98F8049CF03D6`; B `BDA3BD4A2749A39C611F85C48F60358F3DB118DE7257CE6AB4364B35668468D8`; C `04974B2D0FCF139DA6E52C5D62CEE239F2DED9AB98F38265E32786E14EFFC64C`; D `780A6024EE560850D43A31B579751058B93734D980AFA6C841480F1CA95D84A4`.
-- Task 3 runtime landing: A/B/C/D v3 textures are serialized and preloaded consistently; all 16 approved coordinates are exact; `SOUTH_SEA_HARBOR_SPAWN = Vector2(1080, 940)`; moon-harbor entry offset is left-facing; compact player visual/collision values follow the player scale contract.
+- Task 3 runtime landing: A/B/C/D v3 textures are serialized and preloaded consistently; all 16 approved coordinates are exact; moon-harbor entry offset is left-facing; compact player visual/collision values follow the player scale contract. Task 4 moves `SOUTH_SEA_HARBOR_SPAWN` to the newly verified clear-water point `Vector2(1300, 850)` while retaining overlap with the harbor entry trigger.
 
 ## Verification evidence
 
 - Automated: Task 1 文档检查通过。Task 2 的裁图工具通过 `py_compile`；A/B/C/D 均为 RGB `3344×1882`；四组 `160` 像素重叠带逐像素一致；四块重组后与 `6528×3604` 母图逐像素一致；边缘黑像素比例均为 `0.000%`；Godot 4.7.1 headless editor 成功导入四张 PNG，生成的 `.import` 均使用无损压缩模式。Task 3 通过 Godot 4.7.1 headless 编辑器加载和 8 帧场景 smoke test；临时运行时探针验证四张 v3 纹理、16 个精确坐标、月环商港左侧矩形入口、玩家显示比例和 `19` 碰撞半径。
-- Manual/in-engine: 已按原始母图分辨率检查。生产图保持 v4 的岛屿体量、位置、中央堡垒、朝左月环商港、中央沉船、南北气质和开阔水门；海面、岸线、建筑层次、材质和光照完成度已统一。Task 3 已接入生产底图与交互地点；新岛屿碰撞、航路驾驶和原始分辨率游戏截图仍分别留待 Task 4、Task 5。
+- Automated: Task 4 导航探针使用半径 `19` 的玩家船体逐段查询并实际驱动 `CharacterBody2D` 通过 A→B、A→C、B→D、C→D 及中央堡垒上、下、左、右共 8 条走廊；同时验证 16 个陆地探针均受阻、16 个地点入口均保留可达水面，出生点、两艘事件船、漂流事件、中央沉船与南澳港外水面均无静态碰撞。Godot 4.7.1 编辑器加载和 8 帧场景 smoke test 均通过。
+- Manual/in-engine: 已按原始母图分辨率检查。生产图保持 v4 的岛屿体量、位置、中央堡垒、朝左月环商港、中央沉船、南北气质和开阔水门；海面、岸线、建筑层次、材质和光照完成度已统一。Task 4 已按可见岩岸完成碰撞并保留港池与码头前水面；原始分辨率游戏截图和完整回归留待 Task 5。
 
 ## Final reconciliation
 

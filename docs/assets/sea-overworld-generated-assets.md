@@ -3,7 +3,8 @@
 - 生成方式：Codex 内置生图工具
 - 用途：海上大地图初版原型
 - 风格基准：项目现有俯视像素风、主角立绘、LPC角色比例及现有舰船素材
-- 生成日期：2026-08-08
+- 初次生成日期：2026-08-08
+- 最近更新：2026-08-09
 
 ## 1. 素材文件
 
@@ -23,6 +24,7 @@
 | 水墨像素海图图标 | `assets/ui/icons/hud_map_v1.png` | 128×128 | 透明PNG；放置于原人物头像的菱形框中 |
 | 岭南海域双向加载图 | `assets/ui/loading/lingnan_sea_loading_v1.png` | 1536×1024 | 3:2全屏背景；文字由 Godot 叠加，可复用于进入大地图与返回南海军港 |
 | 水墨像素月面 | `assets/ui/sea_overworld/moon_clock_moon.png` | 256×256 | 透明PNG；作为左上月相时钟的着色器纹理，不包含外框或文字 |
+| 大地图阶段一构图灰模 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png` | 1672×941 | 四区拼接构图概念；只用于岛屿体量、位置、密度与航道关系，不接入游戏 |
 
 除地图底图和全屏加载图外，其余素材均已去除对应色键背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
 
@@ -290,6 +292,22 @@ Strict invariant: every pixel belonging to islands, land, vegetation, buildings,
 Preserve the exact canvas, composition, five island complexes, two non-landable reef obstacle clusters, spacing, scale, and seamless tile edges.
 No text, labels, UI, ships, compass, border, frame, new islands, or new objects.
 Output should be a faithful water-only color correction, not a reimagining.
+```
+
+### 4.16 大地图阶段一构图灰模
+
+内置生图模式：图像生成。A/B/C/D 四张现有生产背景仅作为风格、镜头、岛屿身份与尺度参考；输出是一张新的全图拼接构图概念，不替换生产底图。
+
+```text
+Use case: stylized-concept
+Asset type: low-fidelity game world-map composition graybox for preproduction, not final art
+Input images: Images 1-4 are style, camera, current island identity, and scale references for the existing A/B/C/D sea-map chunks. Create a new single stitched overview; do not reproduce their current disconnected placements.
+Primary request: design one coherent 16:9 maritime campaign-map graybox for a Chinese wuxia RPG. Show only island massing, approximate size hierarchy, placement, open-water corridors, and seam-spanning visual relationships. The eye must travel from a dense mainland naval departure area in the upper-left, through two branching sea routes, and finally to one dominant enemy core port landmark in the upper-right.
+Scene/backdrop: calm cyan sea covering the full canvas. Treat the canvas as four invisible equal A/B/C/D quadrants: A upper-left, B upper-right, C lower-left, D lower-right.
+Composition/framing: wide top-down oblique overworld view matching the reference camera. A: dense northwest mainland coast plus a large naval-port island, one smaller fishing settlement, two secondary islands, and a descending southeast chain of tiny islets aimed toward the center. B: three main islands arranged diagonally rather than horizontally—mid-left fortified outpost, mid-upper secondary port, and a clearly largest dominant core port near the upper-right—connected by sparse stepping-stone reefs with a readable open approach corridor. C: dangerous sparse outer sea with only two major landmarks, one tall lighthouse island and one pirate-fort island; two existing secondary locations become much smaller low sandbar and broken ruin/reef clusters; add scattered thin reef chains and shipwreck-scale marks, leaving broad navigable water. D: fragmented archipelago battle zone spread across the quadrant instead of packed at the right edge; include five distinguishable island complexes with crescent, long-ridge, broken-cluster, fortress, and chain silhouettes; shape three clear corridors: broad central passage, narrow reef channel, and longer safe southern route. Connect C to D and D upward into B using island-chain direction and water openings. Avoid a blank blue hole at the four-quadrant center.
+Style/medium: deliberately rough preproduction blockout; simplified painted pixel-art silhouettes; flat muted green-gray land, tan shore, cyan water; minimal placeholder architecture blocks only for scale; low detail, clear masses, no polish.
+Size hierarchy: 2-3 extra-large landmarks, 4-5 large islands, 6-8 medium locations, and many tiny islet/reef groups acting as visual glue. Preserve at least 60 percent navigable water.
+Constraints: no text, labels, letters, numbers, UI, legend, grid, quadrant divider lines, arrows, route lines, compass, ships, characters, combat, weather, fog, decorative border, logo, or watermark. No photorealism, no final rendering, no dense architectural detail, no four-corner grid placement, no repeated round green islands, and no empty center.
 ```
 
 ## 5. 当前使用边界

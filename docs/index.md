@@ -22,6 +22,7 @@
 - [Character assets](assets/character-assets.md)
 - [Generated backgrounds](assets/generated-backgrounds.md)
 - [Sea overworld generated assets](assets/sea-overworld-generated-assets.md)
+- [Sea overworld stage-one layout graybox](assets/sea-overworld-stage1-layout.md)
 - [Architecture](tech/architecture.md)
 - [Backlog](production/backlog.md)
 - [Playtest](qa/playtest.md)

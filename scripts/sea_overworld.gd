@@ -2,16 +2,16 @@ extends Node2D
 
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
-const BASE_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png")
-const EAST_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png")
-const C_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v2.png")
-const D_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v2.png")
+const A_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_a_v3.png")
+const B_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_b_v3.png")
+const C_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v3.png")
+const D_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v3.png")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 const MAP_CHUNK_SIZE := Vector2(2508, 1412)
 const MAP_CHUNK_OVERLAP := 120.0
-const EAST_MAP_ORIGIN := Vector2(MAP_CHUNK_SIZE.x - MAP_CHUNK_OVERLAP, 0)
+const B_MAP_ORIGIN := Vector2(MAP_CHUNK_SIZE.x - MAP_CHUNK_OVERLAP, 0)
 const C_MAP_ORIGIN := Vector2(0, MAP_CHUNK_SIZE.y - MAP_CHUNK_OVERLAP)
-const D_MAP_ORIGIN := Vector2(EAST_MAP_ORIGIN.x, C_MAP_ORIGIN.y)
+const D_MAP_ORIGIN := Vector2(B_MAP_ORIGIN.x, C_MAP_ORIGIN.y)
 const MAP_SIZE := D_MAP_ORIGIN + MAP_CHUNK_SIZE
 const PLAYER_LAYER := 1
 const SCENE_PATH := "res://scenes/sea_overworld/sea_overworld.tscn"
@@ -19,7 +19,7 @@ const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
 const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
-const SOUTH_SEA_HARBOR_SPAWN := Vector2(1230, 900)
+const SOUTH_SEA_HARBOR_SPAWN := Vector2(1080, 940)
 const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
 
@@ -170,22 +170,25 @@ func _build_world_collisions() -> void:
 
 
 func _build_locations() -> void:
-	_build_location("南海军港", Vector2(1230, 682), 238.0)
-	_build_location("川山渔村", Vector2(518, 982), 205.0)
-	_build_location("东湾水寨", Vector2(2050, 322), 225.0, Vector2(680, 170), Vector2(0, 210))
-	_build_location("青屿秘境", Vector2(1995, 742), 232.0, Vector2(480, 160), Vector2(0, 215))
-	_build_location("红湾卫所", Vector2(3245, 414), 270.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("南澳商港", Vector2(4328, 345), 380.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("东极秘岛", Vector2(4417, 1078), 340.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("澄海灯岛", Vector2(405, 1682), 220.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("龙门海寨", Vector2(1560, 1862), 250.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("白沙渔岛", Vector2(428, 2267), 240.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("玄潮古屿", Vector2(1605, 2432), 270.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("沧门礁堡", Vector2(3258, 1682), 230.0, Vector2(360, 110), Vector2(0, -230), "该岛屿即将开放")
-	_build_location("月环商港", Vector2(4173, 1697), 250.0, Vector2(440, 110), Vector2(0, -245), "该岛屿即将开放")
-	_build_location("雾岚群岛", Vector2(3213, 2057), 270.0, Vector2(420, 110), Vector2(0, 245), "该岛屿即将开放")
-	_build_location("伏波古岭", Vector2(4278, 2140), 270.0, Vector2(460, 110), Vector2(0, 235), "该岛屿即将开放")
-	_build_location("珊湾渔链", Vector2(3633, 2432), 280.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("南海军港", Vector2(1080, 650), 238.0, Vector2(480, 130), Vector2(0, 250))
+	_build_location("川山渔村", Vector2(480, 1040), 170.0, Vector2(320, 110), Vector2(0, 160))
+	_build_location("东湾水寨", Vector2(2040, 520), 225.0, Vector2(440, 120), Vector2(0, 180))
+	_build_location("青屿秘境", Vector2(1760, 950), 145.0)
+
+	_build_location("沧门礁堡", Vector2(2780, 1080), 190.0, Vector2(320, 120), Vector2(-210, 80), "该岛屿即将开放")
+	_build_location("月环商港", Vector2(3650, 360), 250.0, Vector2(480, 150), Vector2(-300, 80), "该岛屿即将开放")
+	_build_location("雾岚群岛", Vector2(3070, 850), 165.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("伏波古岭", Vector2(4260, 780), 220.0, Vector2(440, 120), Vector2(0, 175), "该岛屿即将开放")
+	_build_location("珊湾渔链", Vector2(3670, 1150), 155.0, Vector2(260, 100), Vector2(-120, 115), "该岛屿即将开放")
+
+	_build_location("澄海灯岛", Vector2(480, 1680), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("龙门海寨", Vector2(860, 2260), 210.0, Vector2(400, 120), Vector2(0, 190), "该岛屿即将开放")
+	_build_location("白沙渔岛", Vector2(1460, 2460), 180.0, Vector2(360, 110), Vector2(0, 135), "该岛屿即将开放")
+	_build_location("玄潮古屿", Vector2(2100, 2240), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+
+	_build_location("红湾卫所", Vector2(2980, 1760), 190.0, Vector2(360, 120), Vector2(-160, 170), "该岛屿即将开放")
+	_build_location("东极秘岛", Vector2(3730, 2110), 190.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("南澳商港", Vector2(4380, 2460), 280.0, Vector2(560, 150), Vector2(-100, 180), "该岛屿即将开放")
 
 
 func _build_auto_triggers() -> void:
@@ -204,8 +207,8 @@ func _configure_sea_map_hud() -> void:
 			"position": (location_node as Node2D).position,
 		})
 	var map_chunks: Array[Dictionary] = [
-		{"texture": BASE_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, MAP_CHUNK_SIZE)},
-		{"texture": EAST_MAP_TEXTURE, "world_rect": Rect2(EAST_MAP_ORIGIN, MAP_CHUNK_SIZE), "fade_from_left": true},
+		{"texture": A_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, MAP_CHUNK_SIZE)},
+		{"texture": B_MAP_TEXTURE, "world_rect": Rect2(B_MAP_ORIGIN, MAP_CHUNK_SIZE), "fade_from_left": true},
 		{"texture": C_MAP_TEXTURE, "world_rect": Rect2(C_MAP_ORIGIN, MAP_CHUNK_SIZE), "fade_from_left": false, "fade_from_top": true},
 		{"texture": D_MAP_TEXTURE, "world_rect": Rect2(D_MAP_ORIGIN, MAP_CHUNK_SIZE), "fade_from_left": true, "fade_from_top": true},
 	]
@@ -213,7 +216,9 @@ func _configure_sea_map_hud() -> void:
 
 
 func _build_background_chunks() -> void:
-	_configure_background_chunk("EastBackground", EAST_MAP_TEXTURE, EAST_MAP_ORIGIN, -99, true, false)
+	var background := $World/Background as Sprite2D
+	background.texture = A_MAP_TEXTURE
+	_configure_background_chunk("EastBackground", B_MAP_TEXTURE, B_MAP_ORIGIN, -99, true, false)
 	_configure_background_chunk("CBackground", C_MAP_TEXTURE, C_MAP_ORIGIN, -98, false, true)
 	_configure_background_chunk("DBackground", D_MAP_TEXTURE, D_MAP_ORIGIN, -97, true, true)
 

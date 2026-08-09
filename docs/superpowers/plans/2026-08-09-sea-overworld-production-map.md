@@ -72,10 +72,10 @@
 
 ## Task 3：接入新底图并校准区域职责
 
-- [ ] 在 `scripts/sea_overworld.gd` 将 `BASE_MAP_TEXTURE`、`EAST_MAP_TEXTURE`、`C_MAP_TEXTURE`、`D_MAP_TEXTURE` 改为语义清楚的 `A_MAP_TEXTURE`、`B_MAP_TEXTURE`、`C_MAP_TEXTURE`、`D_MAP_TEXTURE`，分别预加载四张 v3 分块。
-- [ ] 保持 `MAP_CHUNK_SIZE = Vector2(2508, 1412)`、`MAP_CHUNK_OVERLAP = 120.0`、四个原点和现有混合 shader 不变。
-- [ ] 在 `scenes/sea_overworld/sea_overworld.tscn` 同步替换四个背景节点的纹理资源，避免场景序列化资源与运行时 preload 不一致。
-- [ ] 将 16 个地点更新为已批准坐标：
+- [x] 在 `scripts/sea_overworld.gd` 将 `BASE_MAP_TEXTURE`、`EAST_MAP_TEXTURE`、`C_MAP_TEXTURE`、`D_MAP_TEXTURE` 改为语义清楚的 `A_MAP_TEXTURE`、`B_MAP_TEXTURE`、`C_MAP_TEXTURE`、`D_MAP_TEXTURE`，分别预加载四张 v3 分块。
+- [x] 保持 `MAP_CHUNK_SIZE = Vector2(2508, 1412)`、`MAP_CHUNK_OVERLAP = 120.0`、四个原点和现有混合 shader 不变。
+- [x] 在 `scenes/sea_overworld/sea_overworld.tscn` 同步替换四个背景节点的纹理资源，避免场景序列化资源与运行时 preload 不一致。
+- [x] 将 16 个地点更新为已批准坐标：
 
   | 区域 | 地点与世界坐标 |
   |---|---|
@@ -84,9 +84,10 @@
   | C | 澄海灯岛 `(480,1680)`；龙门海寨 `(860,2260)`；白沙渔岛 `(1460,2460)`；玄潮古屿 `(2100,2240)` |
   | D | 红湾卫所 `(2980,1760)`；东极秘岛 `(3730,2110)`；南澳商港 `(4380,2460)` |
 
-- [ ] 入口触发按可见登陆方向设置：月环商港使用朝左的矩形触发区；港城、堡垒使用码头侧矩形触发；无人岛和分散礁群使用小范围圆形触发。
-- [ ] 校准 `SOUTH_SEA_HARBOR_SPAWN` 到南海军港外侧可航水面，保证从场景二进入时不压入海岸碰撞，并仍自动激活南海军港提示。
-- [ ] 更新 `_configure_sea_map_hud()` 的四分块纹理，使完整海图与主场景使用同一套 A/B/C/D 资源和地点坐标。
+- [x] 入口触发按可见登陆方向设置：月环商港使用朝左的矩形触发区；港城、堡垒使用码头侧矩形触发；无人岛和分散礁群使用小范围圆形触发。
+- [x] 校准 `SOUTH_SEA_HARBOR_SPAWN` 到南海军港外侧可航水面，保证从场景二进入时不压入海岸碰撞，并仍自动激活南海军港提示。
+- [x] 更新 `_configure_sea_map_hud()` 的四分块纹理，使完整海图与主场景使用同一套 A/B/C/D 资源和地点坐标。
+- [x] 将玩家船体、尾流和侧浪由 `0.34` 缩至 `0.28`，Q 版人物由 `0.105` 缩至 `0.088`，同步收紧碰撞与甲板、尾流锚点，使大地图观感更开阔且切换航行状态时不跳位。
 
 ## Task 4：重做岛屿碰撞与航路留白
 

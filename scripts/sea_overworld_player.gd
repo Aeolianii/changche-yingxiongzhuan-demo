@@ -9,9 +9,10 @@ const WAKE_ATLAS := preload("res://assets/sprites/sea_overworld/ship_wake_fx_atl
 
 const DIRECTION_VECTORS := [Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2.UP]
 const DIRECTION_ROTATIONS := [0.0, PI * 0.5, -PI * 0.5, PI]
-const HERO_OFFSETS := [Vector2(0, -19), Vector2(-4, -18), Vector2(4, -18), Vector2(0, -20)]
+const HERO_OFFSETS := [Vector2(0, -16), Vector2(-3, -15), Vector2(3, -15), Vector2(0, -17)]
 const SHIP_FRAME_Y_OFFSETS := [-98.0, 0.0]
-const WAKE_OFFSET := 76.0
+const WAKE_OFFSET := 62.0
+const SIDE_SPLASH_OFFSET := 3.0
 const WAKE_FRAME_TIME := 0.11
 
 @export var move_speed := 260.0
@@ -99,7 +100,7 @@ func _update_motion_visuals(delta: float, is_moving: bool) -> void:
 	wake_sprite.rotation = facing_rotation
 	side_splash_sprite.rotation = facing_rotation
 	wake_sprite.position = -facing_vector * WAKE_OFFSET
-	side_splash_sprite.position = facing_vector * 4.0
+	side_splash_sprite.position = facing_vector * SIDE_SPLASH_OFFSET
 
 
 func _update_direction_textures(is_moving: bool) -> void:

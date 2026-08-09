@@ -2,14 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/sea_overworld.gd" id="1_world"]
 [ext_resource type="Script" path="res://scripts/sea_overworld_player.gd" id="2_player"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png" id="3_map"]
+[ext_resource type="Texture2D" uid="uid://2mkhgruqho0j" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_a_v3.png" id="3_map"]
 [ext_resource type="PackedScene" path="res://scenes/ui/exploration_hud.tscn" id="4_hud"]
 [ext_resource type="Texture2D" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="5_button"]
 [ext_resource type="Texture2D" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="6_button_active"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png" id="7_east_map"]
+[ext_resource type="Texture2D" uid="uid://db3wnywk2vlwp" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_b_v3.png" id="7_east_map"]
 [ext_resource type="Shader" path="res://shaders/map_chunk_blend.gdshader" id="8_chunk_blend"]
-[ext_resource type="Texture2D" uid="uid://bl4sc5x7xbvp5" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v2.png" id="9_c_map"]
-[ext_resource type="Texture2D" uid="uid://bqj3y3nfttsed" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v2.png" id="10_d_map"]
+[ext_resource type="Texture2D" uid="uid://dbwami5jjx10a" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v3.png" id="9_c_map"]
+[ext_resource type="Texture2D" uid="uid://br011pbau8w5v" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v3.png" id="10_d_map"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_east_blend"]
 shader = ExtResource("8_chunk_blend")
@@ -24,7 +24,7 @@ shader = ExtResource("8_chunk_blend")
 shader_parameter/fade_from_top = true
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
-radius = 23.0
+radius = 19.0
 
 [node name="SeaOverworld" type="Node2D"]
 script = ExtResource("1_world")
@@ -81,24 +81,24 @@ script = ExtResource("2_player")
 [node name="WakeSprite" type="Sprite2D" parent="World/Player"]
 z_index = -2
 texture_filter = 1
-scale = Vector2(0.34, 0.34)
+scale = Vector2(0.28, 0.28)
 
 [node name="SideSplashSprite" type="Sprite2D" parent="World/Player"]
 z_index = -1
 texture_filter = 1
-scale = Vector2(0.34, 0.34)
+scale = Vector2(0.28, 0.28)
 
 [node name="VisualRoot" type="Node2D" parent="World/Player"]
 
 [node name="ShipSprite" type="Sprite2D" parent="World/Player/VisualRoot"]
 z_index = 1
 texture_filter = 1
-scale = Vector2(0.34, 0.34)
+scale = Vector2(0.28, 0.28)
 
 [node name="HeroSprite" type="Sprite2D" parent="World/Player/VisualRoot"]
 z_index = 2
 texture_filter = 1
-scale = Vector2(0.105, 0.105)
+scale = Vector2(0.088, 0.088)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player"]
 shape = SubResource("CircleShape2D_player")

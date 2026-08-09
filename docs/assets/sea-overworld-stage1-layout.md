@@ -1,7 +1,7 @@
 # 海上大地图阶段一构图灰模
 
-- 状态：v4 生产落图规格已锁定，等待生产底图
-- 日期：2026-08-09
+- 状态：v3 生产分块与地点已接入，等待碰撞校准
+- 日期：2026-08-10
 - 当前灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v4.png`
 - 历史灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png`、`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png`、`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png`
 - 适用范围：只确认岛屿体量、位置、密度、航道留白和跨分块联系
@@ -13,7 +13,7 @@
 - 生产母图：`6528×3604`，保存在仓库外的 `D:\厂车英雄传DEMO\artwork\sea_overworld\`，不提交或推送。
 - 运行时分块：A/B/C/D 各 `3344×1882` 源像素；相邻分块共享 `160` 源像素，即 `120` 世界单位重叠带。
 - 运行时原点：A `(0,0)`、B `(2388,0)`、C `(0,1292)`、D `(2388,1292)`；现有二乘二结构与混合 shader 不变。
-- 当前只完成规格锁定，生产 PNG、场景纹理、地点、碰撞、入口和测试尚未切换。
+- 生产 PNG、场景纹理、16 个地点、入口和完整海图已完成接入；玩家船体及航行特效缩至 `0.28`、Q 版人物缩至 `0.088`，碰撞半径同步缩至 `19`，以维持开阔海域观感。新岛屿碰撞与航路验证留待 Task 4。
 
 ## 1. 构图结论
 

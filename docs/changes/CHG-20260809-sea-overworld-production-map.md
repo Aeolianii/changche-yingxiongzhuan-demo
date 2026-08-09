@@ -17,6 +17,7 @@
 - 按批准坐标重排 16 个地点，并将入口触发对准可见码头或登陆口。
 - 按生产底图重做海岸与岛屿碰撞，保留 A→B、A→C、B→D、C→D 和中央十字水门。
 - 更新完整海图资源、针对性测试、视觉截图检查与相关设计、资产、QA 文档。
+- 接入时适度缩小玩家 Q 版人物、船体和航行特效，并同步收紧玩家碰撞与视觉锚点，强化大地图的开阔感。
 - 保留 v1～v4 草图及旧生产背景；新生产资源使用版本化文件名。
 
 ## Non-goals
@@ -24,16 +25,17 @@
 - 不新增、删除或改名现有 16 个地点。
 - 不增加天气、风向、洋流、潮汐、暗礁伤害或航海模拟系统。
 - 不制作实际登岛小地图、剧情、对话、海战切换或快速移动。
-- 不重做玩家船只、月相 HUD、任务 HUD、存档或场景二主流程。
+- 不重绘玩家船只，也不改月相 HUD、任务 HUD、存档或场景二主流程；本次只调整船只与人物显示比例及配套锚点、碰撞。
 - 不把生产母图和生成中间稿提交到仓库或推送 GitHub；仓库只保存最终运行时分块。
 
 ## Acceptance checks
 
 - [x] v4 构图、B/D 职责、四分块尺寸和接缝规格已写入规范文档。
 - [x] 四张生产分块均为 `3344×1882`，四组重叠带逐像素一致；游戏内接缝留待 Task 3 接入后验收。
-- [ ] 运行时和完整海图均使用同一套 A/B/C/D v3 生产分块。
-- [ ] 16 个地点保持 A4、B5、C4、D3，中心坐标相对批准草案偏差不超过 `±80` 世界单位。
-- [ ] 所有入口触发对准可见码头或登陆口，月环商港入口位于左侧。
+- [x] 运行时和完整海图均使用同一套 A/B/C/D v3 生产分块。
+- [x] 16 个地点保持 A4、B5、C4、D3，中心坐标相对批准草案偏差不超过 `±80` 世界单位。
+- [x] 所有入口触发对准可见码头或登陆口，月环商港入口位于左侧。
+- [x] 玩家船体、尾流和侧浪缩至 `0.28`，Q 版人物缩至 `0.088`，碰撞半径缩至 `19`；人物甲板站位与尾流方向保持稳定。
 - [ ] 主要岛屿不可穿越，四条跨区路线和中央十字水门均可航行。
 - [ ] 地点交互、事件船、漂流事件、海图、月相、存档和场景二往返没有回归。
 - [ ] `tests/test_sea_overworld.gd` 通过，并完成 A/B/C/D、中央接缝和完整海图截图检查。
@@ -65,16 +67,18 @@
 - Runtime chunk size: `3344×1882` source pixels displayed at `0.75` scale as approximately `2508×1412` world units.
 - Seam contract: `160` source pixels, corresponding to `120` world units.
 - Coordinate contract: approved centers may move at most `±80` world units during art alignment; a larger move requires updating the layout document before implementation.
+- Player scale contract: ship, wake and side splash use `0.28`; protagonist uses `0.088`; player collision radius uses `19`, with deck and wake offsets recalibrated proportionally.
 - Primary risks: AI-generated chunk drift can break seams; old runtime data currently places the three D landmarks in the upper-right and five B landmarks in the lower-right; oversized collision shapes can close approved waterways; visual docks can diverge from interaction triggers.
 - Task 2 image mode: built-in image generation, `sketch-to-render`, with v4 as the sole edit target and all composition invariants locked.
 - Local production render: `D:\厂车英雄传DEMO\artwork\sea_overworld\sea_overworld_production_render_v1.png`.
 - Local production master: `D:\厂车英雄传DEMO\artwork\sea_overworld\sea_overworld_master_v1.png`, RGB `6528×3604`, SHA-256 `1F12163B60C790D77FB3017256DCEA1F9D86F07C5D05FAD703ACDD302E7E8E04`.
 - Runtime chunk SHA-256: A `ACBB0B091D5F1D9B75EB712C5F048D96DF60A7CC39D520D5AEF98F8049CF03D6`; B `BDA3BD4A2749A39C611F85C48F60358F3DB118DE7257CE6AB4364B35668468D8`; C `04974B2D0FCF139DA6E52C5D62CEE239F2DED9AB98F38265E32786E14EFFC64C`; D `780A6024EE560850D43A31B579751058B93734D980AFA6C841480F1CA95D84A4`.
+- Task 3 runtime landing: A/B/C/D v3 textures are serialized and preloaded consistently; all 16 approved coordinates are exact; `SOUTH_SEA_HARBOR_SPAWN = Vector2(1080, 940)`; moon-harbor entry offset is left-facing; compact player visual/collision values follow the player scale contract.
 
 ## Verification evidence
 
-- Automated: Task 1 文档检查通过。Task 2 的裁图工具通过 `py_compile`；A/B/C/D 均为 RGB `3344×1882`；四组 `160` 像素重叠带逐像素一致；四块重组后与 `6528×3604` 母图逐像素一致；边缘黑像素比例均为 `0.000%`；Godot 4.7.1 headless editor 成功导入四张 PNG，生成的 `.import` 均使用无损压缩模式。
-- Manual/in-engine: 已按原始母图分辨率检查。生产图保持 v4 的岛屿体量、位置、中央堡垒、朝左月环商港、中央沉船、南北气质和开阔水门；海面、岸线、建筑层次、材质和光照完成度已统一。Task 2 不接入场景，游戏内接缝与 16 个交互地点留待 Task 3 验证。
+- Automated: Task 1 文档检查通过。Task 2 的裁图工具通过 `py_compile`；A/B/C/D 均为 RGB `3344×1882`；四组 `160` 像素重叠带逐像素一致；四块重组后与 `6528×3604` 母图逐像素一致；边缘黑像素比例均为 `0.000%`；Godot 4.7.1 headless editor 成功导入四张 PNG，生成的 `.import` 均使用无损压缩模式。Task 3 通过 Godot 4.7.1 headless 编辑器加载和 8 帧场景 smoke test；临时运行时探针验证四张 v3 纹理、16 个精确坐标、月环商港左侧矩形入口、玩家显示比例和 `19` 碰撞半径。
+- Manual/in-engine: 已按原始母图分辨率检查。生产图保持 v4 的岛屿体量、位置、中央堡垒、朝左月环商港、中央沉船、南北气质和开阔水门；海面、岸线、建筑层次、材质和光照完成度已统一。Task 3 已接入生产底图与交互地点；新岛屿碰撞、航路驾驶和原始分辨率游戏截图仍分别留待 Task 4、Task 5。
 
 ## Final reconciliation
 

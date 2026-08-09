@@ -24,7 +24,8 @@
 | 水墨像素海图图标 | `assets/ui/icons/hud_map_v1.png` | 128×128 | 透明PNG；放置于原人物头像的菱形框中 |
 | 岭南海域双向加载图 | `assets/ui/loading/lingnan_sea_loading_v1.png` | 1536×1024 | 3:2全屏背景；文字由 Godot 叠加，可复用于进入大地图与返回南海军港 |
 | 水墨像素月面 | `assets/ui/sea_overworld/moon_clock_moon.png` | 256×256 | 透明PNG；作为左上月相时钟的着色器纹理，不包含外框或文字 |
-| 大地图阶段一构图灰模 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png` | 1672×941 | 四区拼接构图概念；只用于岛屿体量、位置、密度与航道关系，不接入游戏 |
+| 大地图阶段一构图灰模 v1 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png` | 1672×941 | 历史构图；B 为敌方核心、D 为群岛水战区，不接入游戏 |
+| 大地图阶段一构图灰模 v2 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` | 1672×941 | 当前构图；B 右上为群岛水战区、D 右下为敌方核心海域，不接入游戏 |
 
 除地图底图和全屏加载图外，其余素材均已去除对应色键背景并保存为带Alpha通道的PNG；四角透明度已验证为0。
 
@@ -308,6 +309,24 @@ Composition/framing: wide top-down oblique overworld view matching the reference
 Style/medium: deliberately rough preproduction blockout; simplified painted pixel-art silhouettes; flat muted green-gray land, tan shore, cyan water; minimal placeholder architecture blocks only for scale; low detail, clear masses, no polish.
 Size hierarchy: 2-3 extra-large landmarks, 4-5 large islands, 6-8 medium locations, and many tiny islet/reef groups acting as visual glue. Preserve at least 60 percent navigable water.
 Constraints: no text, labels, letters, numbers, UI, legend, grid, quadrant divider lines, arrows, route lines, compass, ships, characters, combat, weather, fog, decorative border, logo, or watermark. No photorealism, no final rendering, no dense architectural detail, no four-corner grid placement, no repeated round green islands, and no empty center.
+```
+
+### 4.17 大地图阶段一 B/D 互换灰模
+
+内置生图模式：精确图像编辑。第一张输入为阶段一 v1 灰模，第二张为三地标敌方核心海域参考，第三张为五岛群水战区参考。A/C 左半区保持宏观体量不变，仅交换 B/D 的区域职责。
+
+```text
+Use case: precise-object-edit
+Asset type: revised low-fidelity game world-map composition graybox for preproduction, not final art
+Input images: Image 1 is the existing stage-one stitched graybox edit target. Image 2 is the three-landmark enemy-core composition reference. Image 3 is the five-complex archipelago battle-zone composition and silhouette reference.
+Primary request: revise Image 1 by swapping ONLY the narrative and compositional roles of the upper-right B quadrant and lower-right D quadrant. B in the upper-right must become the fragmented archipelago naval-battle zone inspired by Image 3. D in the lower-right must become the enemy core sea inspired by Image 2. Preserve the overall 16:9 framing, sea palette, camera, rough graybox treatment, and the macro massing and positions of the entire left half A and C.
+B upper-right composition: distribute five clearly distinct island complexes across the quadrant instead of forming one heavy terminal city. Use a small fortified reef-gate near upper-left B, a crescent harbor near upper-middle/right, a broken misty cluster near middle-left, a long ridge island near middle-right, and a low chain archipelago near the lower B/D seam. Organize three readable water corridors: a broad central passage, a narrow reef channel, and a longer outer detour. Keep broad navigable water and avoid a dense pile at the far right.
+D lower-right composition: use exactly three main strategic landmarks arranged on a descending diagonal from upper-left D toward the bottom-right corner. First is a medium-large fortified forward outpost near upper-left D; second is a medium mysterious island near central D; third is one unmistakably largest fortified enemy core port near the bottom-right, serving as the final visual destination. Add only sparse stepping-stone reefs connecting the three. The final core port must be visually dominant but remain fully inside safe margins with navigable water around it.
+Route structure: the northern route travels from A through B's archipelago and descends across the B/D seam into D. The southern route travels from A through sparse dangerous C and crosses the C/D seam into D. Both routes visually converge on the central D island, then terminate at the bottom-right core port. Use island-chain direction and water openings only; no drawn route lines.
+Center and seams: keep the four-quadrant center connected by sparse diagonal islets but retain a broad cross-shaped navigable water gate. B/D and C/D seam relationships must point toward D rather than back toward B.
+Style/medium: deliberately rough preproduction blockout; simplified painted pixel-art silhouettes; flat muted green-gray land, tan shore, cyan water; minimal placeholder architecture blocks only for scale; low detail, no refinement.
+Invariants: preserve A upper-left as the dense mainland naval departure region. Preserve C lower-left as sparse dangerous outer sea with one lighthouse landmark, one pirate-fort landmark, a small sandbar group, and a broken ruin/reef chain. Do not move or redesign the left-half macro composition.
+Constraints: no text, labels, letters, numbers, UI, legend, grid, quadrant divider lines, arrows, route lines, compass, ships, characters, combat, weather, fog, decorative border, logo, or watermark. No photorealism, no final rendering, no empty center, no repeated round-island grid. Do not leave the dominant enemy city in upper-right B; it must be in lower-right D.
 ```
 
 ## 5. 当前使用边界

@@ -30,7 +30,7 @@
 ## Acceptance checks
 
 - [x] v4 构图、B/D 职责、四分块尺寸和接缝规格已写入规范文档。
-- [ ] 四张生产分块均为 `3344×1882`，重叠带连续且游戏内无明显接缝。
+- [x] 四张生产分块均为 `3344×1882`，四组重叠带逐像素一致；游戏内接缝留待 Task 3 接入后验收。
 - [ ] 运行时和完整海图均使用同一套 A/B/C/D v3 生产分块。
 - [ ] 16 个地点保持 A4、B5、C4、D3，中心坐标相对批准草案偏差不超过 `±80` 世界单位。
 - [ ] 所有入口触发对准可见码头或登陆口，月环商港入口位于左侧。
@@ -66,11 +66,15 @@
 - Seam contract: `160` source pixels, corresponding to `120` world units.
 - Coordinate contract: approved centers may move at most `±80` world units during art alignment; a larger move requires updating the layout document before implementation.
 - Primary risks: AI-generated chunk drift can break seams; old runtime data currently places the three D landmarks in the upper-right and five B landmarks in the lower-right; oversized collision shapes can close approved waterways; visual docks can diverge from interaction triggers.
+- Task 2 image mode: built-in image generation, `sketch-to-render`, with v4 as the sole edit target and all composition invariants locked.
+- Local production render: `D:\厂车英雄传DEMO\artwork\sea_overworld\sea_overworld_production_render_v1.png`.
+- Local production master: `D:\厂车英雄传DEMO\artwork\sea_overworld\sea_overworld_master_v1.png`, RGB `6528×3604`, SHA-256 `1F12163B60C790D77FB3017256DCEA1F9D86F07C5D05FAD703ACDD302E7E8E04`.
+- Runtime chunk SHA-256: A `ACBB0B091D5F1D9B75EB712C5F048D96DF60A7CC39D520D5AEF98F8049CF03D6`; B `BDA3BD4A2749A39C611F85C48F60358F3DB118DE7257CE6AB4364B35668468D8`; C `04974B2D0FCF139DA6E52C5D62CEE239F2DED9AB98F38265E32786E14EFFC64C`; D `780A6024EE560850D43A31B579751058B93734D980AFA6C841480F1CA95D84A4`.
 
 ## Verification evidence
 
-- Automated: Task 1 文档检查通过；变更记录包含目标、范围、非目标、验收项、文件与风险；设计文档和布局文档均锁定 `6528×3604` 母图、`3344×1882` 分块、`160` 源像素 / `120` 世界单位接缝、A4/B5/C4/D3 和 `±80` 坐标容差；Markdown 围栏成对，`git diff --check` 无错误。
-- Manual/in-engine: 已人工核对生产目标为右上 B5 群岛水战区、右下 D3 敌方核心海域，并明确区分当前旧运行时布局；生产资产与运行时集成尚未开始，Task 1 不要求引擎验证。
+- Automated: Task 1 文档检查通过。Task 2 的裁图工具通过 `py_compile`；A/B/C/D 均为 RGB `3344×1882`；四组 `160` 像素重叠带逐像素一致；四块重组后与 `6528×3604` 母图逐像素一致；边缘黑像素比例均为 `0.000%`；Godot 4.7.1 headless editor 成功导入四张 PNG，生成的 `.import` 均使用无损压缩模式。
+- Manual/in-engine: 已按原始母图分辨率检查。生产图保持 v4 的岛屿体量、位置、中央堡垒、朝左月环商港、中央沉船、南北气质和开阔水门；海面、岸线、建筑层次、材质和光照完成度已统一。Task 2 不接入场景，游戏内接缝与 16 个交互地点留待 Task 3 验证。
 
 ## Final reconciliation
 

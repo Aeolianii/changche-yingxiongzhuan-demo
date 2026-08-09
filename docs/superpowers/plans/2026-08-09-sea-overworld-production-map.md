@@ -46,10 +46,10 @@
 
 ## Task 1：锁定生产规格与变更记录
 
-- [ ] 创建 `docs/changes/CHG-20260809-sea-overworld-production-map.md`，记录目标、范围、非目标、验收项、文件清单和风险，状态设为 `in-progress`。
-- [ ] 将 `docs/design/sea-overworld-design.md` 的当前阶段更新为“v4 构图生产落地”，明确 B/D 正确职责、四分块尺寸、接缝和 16 地点不变。
-- [ ] 在 `docs/assets/sea-overworld-stage1-layout.md` 增加生产落图状态与坐标容差：地点中心允许相对草案最多 `±80` 世界单位，入口触发必须对准可见码头或登陆口。
-- [ ] 提交文档基线：`docs(sea-map): define production map rollout`。
+- [x] 创建 `docs/changes/CHG-20260809-sea-overworld-production-map.md`，记录目标、范围、非目标、验收项、文件清单和风险，状态设为 `in-progress`。
+- [x] 将 `docs/design/sea-overworld-design.md` 的当前阶段更新为“v4 构图生产落地”，明确 B/D 正确职责、四分块尺寸、接缝和 16 地点不变。
+- [x] 在 `docs/assets/sea-overworld-stage1-layout.md` 增加生产落图状态与坐标容差：地点中心允许相对草案最多 `±80` 世界单位，入口触发必须对准可见码头或登陆口。
+- [x] 提交文档基线：`docs(sea-map): define production map rollout`。
 
 ## Task 2：制作统一母图与四张生产分块
 

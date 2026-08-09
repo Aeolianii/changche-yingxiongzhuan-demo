@@ -85,7 +85,7 @@ func _build_interface() -> void:
 
 	var title := _make_label("岭 南 海 图", 27, TEXT_LIGHT)
 	title.name = "Title"
-	title.position = Vector2(460, 82)
+	title.position = Vector2(460, 92)
 	title.size = Vector2(360, 60)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

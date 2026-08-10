@@ -248,12 +248,13 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 		map_texture.stretch_mode = TextureRect.STRETCH_SCALE
 		map_texture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		map_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if index > 0:
-			var blend_material := ShaderMaterial.new()
-			blend_material.shader = MAP_CHUNK_BLEND_SHADER
-			blend_material.set_shader_parameter("fade_from_left", bool(chunk_data.get("fade_from_left", true)))
-			blend_material.set_shader_parameter("fade_from_top", bool(chunk_data.get("fade_from_top", false)))
-			map_texture.material = blend_material
+		var blend_material := ShaderMaterial.new()
+		blend_material.shader = MAP_CHUNK_BLEND_SHADER
+		blend_material.set_shader_parameter("fade_from_left", bool(chunk_data.get("fade_from_left", index > 0)))
+		blend_material.set_shader_parameter("fade_from_top", bool(chunk_data.get("fade_from_top", false)))
+		blend_material.set_shader_parameter("world_origin", chunk_rect.position)
+		blend_material.set_shader_parameter("world_size", chunk_rect.size)
+		map_texture.material = blend_material
 		_map_texture_layer.add_child(map_texture)
 
 

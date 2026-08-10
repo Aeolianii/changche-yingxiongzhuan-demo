@@ -274,7 +274,11 @@ func _verify_assets() -> void:
 	var b_background := current_scene.get_node("World/EastBackground") as Sprite2D
 	var c_background := current_scene.get_node("World/CBackground") as Sprite2D
 	var d_background := current_scene.get_node("World/DBackground") as Sprite2D
+	var a_background := current_scene.get_node("World/Background") as Sprite2D
+	_expect(a_background.material is ShaderMaterial, "A map chunk must use animated water shading.")
+	_expect((a_background.material as ShaderMaterial).get_shader_parameter("world_origin") == Vector2.ZERO, "A water animation must start at the world origin.")
 	_expect(b_background.material is ShaderMaterial, "B map chunk must use alpha seam blending.")
+	_expect((b_background.material as ShaderMaterial).get_shader_parameter("world_origin") == Vector2(2388, 0), "B water animation must align with world coordinates.")
 	_expect(c_background.material is ShaderMaterial and bool((c_background.material as ShaderMaterial).get_shader_parameter("fade_from_top")), "C map chunk must fade from its north edge.")
 	_expect(not bool((c_background.material as ShaderMaterial).get_shader_parameter("fade_from_left")), "C map chunk must not fade from its west edge.")
 	_expect(d_background.material is ShaderMaterial and bool((d_background.material as ShaderMaterial).get_shader_parameter("fade_from_left")), "D map chunk must fade from its west edge.")

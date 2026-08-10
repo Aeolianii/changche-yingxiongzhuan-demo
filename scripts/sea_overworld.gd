@@ -309,8 +309,7 @@ func _store_fog_state() -> void:
 
 
 func _build_background_chunks() -> void:
-	var background := $World/Background as Sprite2D
-	background.texture = A_MAP_TEXTURE
+	_configure_background_chunk("Background", A_MAP_TEXTURE, Vector2.ZERO, -100, false, false)
 	_configure_background_chunk("EastBackground", B_MAP_TEXTURE, B_MAP_ORIGIN, -99, true, false)
 	_configure_background_chunk("CBackground", C_MAP_TEXTURE, C_MAP_ORIGIN, -98, false, true)
 	_configure_background_chunk("DBackground", D_MAP_TEXTURE, D_MAP_ORIGIN, -97, true, true)
@@ -332,6 +331,8 @@ func _configure_background_chunk(node_name: String, texture: Texture2D, origin: 
 	blend_material.shader = MAP_CHUNK_BLEND_SHADER
 	blend_material.set_shader_parameter("fade_from_left", fade_from_left)
 	blend_material.set_shader_parameter("fade_from_top", fade_from_top)
+	blend_material.set_shader_parameter("world_origin", origin)
+	blend_material.set_shader_parameter("world_size", MAP_CHUNK_SIZE)
 	background.material = blend_material
 
 

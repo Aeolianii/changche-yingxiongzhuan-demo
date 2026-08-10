@@ -86,6 +86,7 @@ func _ready() -> void:
 	if not restoring_saved_state:
 		player.global_position = SOUTH_SEA_HARBOR_SPAWN
 		_activate_south_sea_harbor_spawn()
+	camera.reset_smoothing()
 	_build_fog_of_war()
 	_configure_sea_map_hud()
 

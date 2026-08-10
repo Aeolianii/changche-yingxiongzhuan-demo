@@ -16,6 +16,8 @@ var _fog_image: Image
 var _fog_texture: ImageTexture
 var _world_overlay: Sprite2D
 var _last_reveal_position := Vector2(INF, INF)
+var _last_camera_center := Vector2(INF, INF)
+var _last_camera_target := Vector2(INF, INF)
 
 
 func setup(world_size: Vector2, camera_node: Camera2D, saved_state: Dictionary = {}) -> void:
@@ -41,8 +43,12 @@ func reveal_at(world_position: Vector2) -> bool:
 	_last_reveal_position = world_position
 	var vision_size := get_vision_world_size()
 	var half_vision := vision_size * 0.5
-	var minimum := _world_to_cell(world_position - half_vision - _cell_world_size)
-	var maximum := _world_to_cell(world_position + half_vision + _cell_world_size)
+	return _reveal_world_rect(world_position - half_vision - _cell_world_size, world_position + half_vision + _cell_world_size)
+
+
+func _reveal_world_rect(minimum_world: Vector2, maximum_world: Vector2) -> bool:
+	var minimum := _world_to_cell(minimum_world)
+	var maximum := _world_to_cell(maximum_world)
 	var changed := false
 	for cell_y in range(minimum.y, maximum.y + 1):
 		for cell_x in range(minimum.x, maximum.x + 1):
@@ -57,7 +63,21 @@ func reveal_at(world_position: Vector2) -> bool:
 func reveal_camera_view() -> bool:
 	if _camera == null or not _camera.is_inside_tree():
 		return false
-	return reveal_at(to_local(_camera.get_screen_center_position()))
+	var camera_center := to_local(_camera.get_screen_center_position())
+	var camera_target := to_local(_camera.global_position)
+	var half_vision := get_vision_world_size() * 0.5
+	var minimum_valid_center := Vector2(_camera.limit_left, _camera.limit_top) + half_vision
+	var maximum_valid_center := Vector2(_camera.limit_right, _camera.limit_bottom) - half_vision
+	if camera_center.x < minimum_valid_center.x - _cell_world_size.x or camera_center.y < minimum_valid_center.y - _cell_world_size.y or camera_center.x > maximum_valid_center.x + _cell_world_size.x or camera_center.y > maximum_valid_center.y + _cell_world_size.y:
+		return false
+	var movement_threshold_squared := pow(CELL_SIZE * 0.5, 2.0)
+	if camera_center.distance_squared_to(_last_camera_center) < movement_threshold_squared and camera_target.distance_squared_to(_last_camera_target) < movement_threshold_squared:
+		return false
+	_last_camera_center = camera_center
+	_last_camera_target = camera_target
+	var minimum_center := Vector2(minf(camera_center.x, camera_target.x), minf(camera_center.y, camera_target.y))
+	var maximum_center := Vector2(maxf(camera_center.x, camera_target.x), maxf(camera_center.y, camera_target.y))
+	return _reveal_world_rect(minimum_center - half_vision - _cell_world_size, maximum_center + half_vision + _cell_world_size)
 
 
 func reveal_polygon(world_polygon: PackedVector2Array) -> bool:

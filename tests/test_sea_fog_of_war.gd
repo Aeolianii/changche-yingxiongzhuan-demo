@@ -36,7 +36,7 @@ func _run() -> void:
 	_expect_polygon_revealed(fog, scene.get_node("World/WorldCollision/NorthwestCoast") as CollisionPolygon2D, scene.get_node("World") as Node2D)
 	_expect(not bool(fog.call("is_world_position_revealed", FAR_WATERS)), "Far waters must remain black on first entry.")
 	var initial_ratio := float(fog.call("get_explored_ratio"))
-	_expect(initial_ratio > 0.0 and initial_ratio < 0.25, "Initial harbor vision must reveal only a limited part of the chart.")
+	_expect(initial_ratio > 0.0 and initial_ratio < 0.35, "Initial land and harbor vision must still leave most of the chart hidden.")
 	if DisplayServer.get_name() != "headless":
 		await process_frame
 		var world_screenshot_error := root.get_texture().get_image().save_png(WORLD_SCREENSHOT_PATH)

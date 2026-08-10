@@ -148,6 +148,8 @@ func _build_interface() -> void:
 	_fog_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = MAP_FOG_SOFT_EDGE_SHADER
+	fog_material.set_shader_parameter("edge_warp_texels", 5.0)
+	fog_material.set_shader_parameter("edge_irregularity", 0.34)
 	_fog_layer.material = fog_material
 	_fog_layer.hide()
 	_map_viewport.add_child(_fog_layer)

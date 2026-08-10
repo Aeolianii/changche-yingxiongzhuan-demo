@@ -75,6 +75,8 @@ func _run() -> void:
 	_expect(map_fog != null and map_fog.texture != null, "Full sea map must display the shared fog texture.")
 	var map_fog_material := map_fog.material as ShaderMaterial
 	_expect(map_fog_material != null and map_fog_material.shader.resource_path.ends_with("sea_map_fog_soft_edge.gdshader"), "Full sea map alone must soften and round the shared fog edge.")
+	_expect(float(map_fog_material.get_shader_parameter("edge_warp_texels")) >= 4.0, "Full sea map fog must visibly warp straight exploration edges.")
+	_expect(float(map_fog_material.get_shader_parameter("edge_irregularity")) >= 0.3, "Full sea map fog must vary its edge threshold with stable ink noise.")
 	var close_button := map_screen.get_node("MapPanel/CloseButton") as Button
 	var close_button_style := close_button.get_theme_stylebox("normal") as StyleBoxTexture
 	_expect(close_button.text == "返回", "Sea-map brush button must display the exact Return label.")

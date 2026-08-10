@@ -835,6 +835,7 @@ func _capture_central_seam(scene: Node) -> void:
 func _verify_auto_triggers(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var toast_label := scene.get_node("UI/ExplorationHUD/ComingSoonToast/Message") as Label
+	var event_dialogue := scene.get_node("UI/FieldEventDialogue") as Control
 	var triggers := get_nodes_in_group("sea_auto_trigger")
 	var saw_event := false
 	var saw_ship := false
@@ -849,9 +850,13 @@ func _verify_auto_triggers(scene: Node) -> void:
 		if kind == "ship":
 			saw_ship = saw_ship or "该船只开发中" in toast_label.text
 		elif kind == "event":
-			saw_event = saw_event or "该事件开发中" in toast_label.text
+			saw_event = saw_event or event_dialogue.visible
+			var option_box := event_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
+			if option_box.get_child_count() == 2:
+				(option_box.get_child(1) as Button).pressed.emit()
+				await process_frame
 	_expect(saw_ship, "Touching a sea-map ship must automatically show its development placeholder.")
-	_expect(saw_event, "Touching a sea event must automatically show its development placeholder.")
+	_expect(saw_event, "Touching the drifting crate must open the soldier choice dialogue.")
 	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
 	_expect(task_objective.text == "继续探索岭南海域", "Sea target contact must finish the prototype exploration task flow.")
 

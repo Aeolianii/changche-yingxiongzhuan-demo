@@ -1,6 +1,9 @@
 extends Node2D
 
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
+const DRIFTING_CRATE_TEXTURE := preload("res://assets/sprites/sea_overworld/drifting_supply_crate_v1.png")
+const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
+const FIELD_EVENT_DIALOGUE_SCENE := preload("res://scenes/ui/field_event_dialogue.tscn")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const A_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_a_v3.png")
 const B_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_b_v3.png")
@@ -23,8 +26,6 @@ const SOUTH_SEA_HARBOR_SPAWN := Vector2(760, 1130)
 const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
 
-const PAPER := Color(0.95, 0.9, 0.75, 1.0)
-
 @onready var player: SeaOverworldPlayer = $World/Player
 @onready var camera: Camera2D = $World/Player/Camera2D
 @onready var world_collision: StaticBody2D = $World/WorldCollision
@@ -45,6 +46,9 @@ var _transitioning := false
 var _loading_transition: SceneLoadingTransition
 var _lunar_day := 0.0
 var _saved_scene_state: Dictionary = {}
+var _event_dialogue: FieldEventDialogue
+var _active_drifting_crate: Area2D
+var _crate_event_resolved := false
 
 
 func _ready() -> void:
@@ -55,6 +59,9 @@ func _ready() -> void:
 	_configure_world_bounds()
 	_build_locations()
 	_build_auto_triggers()
+	_event_dialogue = FIELD_EVENT_DIALOGUE_SCENE.instantiate() as FieldEventDialogue
+	$UI.add_child(_event_dialogue)
+	_event_dialogue.option_selected.connect(_on_crate_dialogue_option_selected)
 	player.connect("sailed", _on_player_sailed)
 	enter_button.pressed.connect(_enter_active_location)
 	exploration_hud.connect("menu_visibility_changed", _on_hud_menu_visibility_changed)
@@ -99,6 +106,8 @@ func _on_player_sailed(delta: float) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if _transitioning:
+		return
+	if _event_dialogue != null and _event_dialogue.visible:
 		return
 	if bool(exploration_hud.call("is_menu_open")):
 		return
@@ -384,26 +393,12 @@ func _build_event_trigger(event_name: String, at: Vector2) -> void:
 	visual.z_index = 18
 	area.add_child(visual)
 
-	var diamond := Polygon2D.new()
-	diamond.polygon = PackedVector2Array([Vector2(0, -15), Vector2(18, 0), Vector2(0, 15), Vector2(-18, 0)])
-	diamond.color = Color(0.82, 0.57, 0.2, 0.96)
-	visual.add_child(diamond)
-
-	var center := Polygon2D.new()
-	center.polygon = PackedVector2Array([Vector2(-8, -6), Vector2(8, -6), Vector2(8, 6), Vector2(-8, 6)])
-	center.color = Color(0.31, 0.18, 0.08, 1.0)
-	visual.add_child(center)
-
-	var label := Label.new()
-	label.text = event_name
-	label.position = Vector2(-72, 22)
-	label.size = Vector2(144, 28)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 17)
-	label.add_theme_color_override("font_color", PAPER)
-	label.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.02, 0.96))
-	label.add_theme_constant_override("outline_size", 5)
-	visual.add_child(label)
+	var crate_sprite := Sprite2D.new()
+	crate_sprite.name = "CrateSprite"
+	crate_sprite.texture = DRIFTING_CRATE_TEXTURE
+	crate_sprite.scale = Vector2(0.22, 0.22)
+	crate_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	visual.add_child(crate_sprite)
 	_floating_visuals.append(visual)
 
 
@@ -454,11 +449,72 @@ func _on_auto_trigger_body_entered(body: Node2D, area: Area2D) -> void:
 		return
 	var display_name := str(area.get_meta("display_name", "海上目标"))
 	var trigger_kind := str(area.get_meta("trigger_kind", "event"))
+	if trigger_kind == "event" and display_name == "漂流木箱":
+		_open_drifting_crate_event(area)
+		return
 	if trigger_kind == "ship":
 		_show_toast("%s · 该船只开发中" % display_name)
 	else:
 		_show_toast("%s · 该事件开发中" % display_name)
 	_advance_exploration_stage(4)
+
+
+func _open_drifting_crate_event(area: Area2D) -> void:
+	if _crate_event_resolved or (_event_dialogue != null and _event_dialogue.visible):
+		return
+	_active_drifting_crate = area
+	area.set_deferred("monitoring", false)
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_event_dialogue.present(
+		"水师士兵",
+		"禀将军！前方海面发现一只漂流而来的木箱，箱体尚且完整，是否命人打捞？",
+		SOLDIER_PORTRAIT,
+		[
+			{"id": &"salvage", "text": "打捞上来"},
+			{"id": &"ignore", "text": "置之不理"},
+		]
+	)
+
+
+func _on_crate_dialogue_option_selected(option_id: StringName) -> void:
+	match option_id:
+		&"salvage":
+			_resolve_drifting_crate_event()
+			_event_dialogue.present(
+				"水师士兵",
+				"禀将军，木箱已经打捞完毕，所得物资如下：\n金石 +100　　木材 +100　　银钱 +1000",
+				SOLDIER_PORTRAIT,
+				[{"id": &"continue", "text": "收下物资，继续航行"}]
+			)
+		&"ignore":
+			_resolve_drifting_crate_event()
+			_close_crate_dialogue()
+		&"continue":
+			_close_crate_dialogue()
+
+
+func _resolve_drifting_crate_event() -> void:
+	if _crate_event_resolved:
+		return
+	_crate_event_resolved = true
+	_remove_drifting_crate()
+	_advance_exploration_stage(4)
+
+
+func _remove_drifting_crate() -> void:
+	var crate := _active_drifting_crate
+	if not is_instance_valid(crate):
+		crate = world_markers.get_node_or_null("DriftEvent") as Area2D
+	if is_instance_valid(crate):
+		crate.queue_free()
+	_active_drifting_crate = null
+
+
+func _close_crate_dialogue() -> void:
+	_event_dialogue.hide_dialogue()
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
 
 
 func _enter_active_location() -> void:
@@ -526,8 +582,9 @@ func _refresh_exploration_task() -> void:
 
 
 func _on_hud_menu_visibility_changed(is_open: bool) -> void:
-	player.controls_enabled = not is_open
-	interaction_prompt.visible = not is_open and not _active_location_name.is_empty()
+	var dialogue_open := _event_dialogue != null and _event_dialogue.visible
+	player.controls_enabled = not is_open and not dialogue_open
+	interaction_prompt.visible = not is_open and not dialogue_open and not _active_location_name.is_empty()
 
 
 func _on_save_requested() -> void:
@@ -543,6 +600,7 @@ func _on_save_requested() -> void:
 		"facing_index": int(player.call("save_facing_index")),
 		"exploration_stage": _exploration_stage,
 		"lunar_day": _lunar_day,
+		"crate_event_resolved": _crate_event_resolved,
 	}
 	var result: Dictionary = game_state.call("save_game", SCENE_PATH, snapshot)
 	_show_save_message(bool(result.get("ok", false)), str(result.get("reason", "")))
@@ -585,6 +643,9 @@ func _restore_saved_scene_state(snapshot: Dictionary) -> void:
 	player.call("restore_facing_index", int(snapshot.get("facing_index", 0)))
 	_exploration_stage = clampi(int(snapshot.get("exploration_stage", 0)), 0, 4)
 	_lunar_day = maxf(0.0, float(snapshot.get("lunar_day", 0.0)))
+	_crate_event_resolved = bool(snapshot.get("crate_event_resolved", false))
+	if _crate_event_resolved:
+		_remove_drifting_crate()
 	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
 
 

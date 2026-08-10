@@ -2,7 +2,8 @@ extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const MERCHANT_PORTRAIT_PATH := "res://assets/大地图商人.png"
-const MERCHANT_SHIP_POSITION := Vector2(1370, 820)
+const MERCHANT_SHIP_POSITION := Vector2(1370, 760)
+const RESULT_SCREENSHOT_PATH := "res://.godot/sea_overworld_tea_merchant_result_preview.png"
 
 var failures: Array[String] = []
 
@@ -61,11 +62,16 @@ func _verify_purchase_branch(scene: Node) -> void:
 	(option_box.get_child(0) as Button).pressed.emit()
 	await process_frame
 	await process_frame
+	await _capture_result_preview()
 	_expect(dialogue.visible, "Buying tea must keep the result dialogue open.")
 	_expect(scene.get_node_or_null("World/WorldMarkers/ShipTrigger0") != null, "Tea merchant ship must remain until the result dialogue ends.")
-	var result_text := (dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text
-	_expect("银钱 -1000" in result_text, "Tea purchase result must display the 1000-silver deduction.")
-	_expect("获得商品：龙井茶" in result_text, "Tea purchase result must display the Longjing tea reward.")
+	var result_line := dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
+	var detail_label := dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DetailLabel") as RichTextLabel
+	_expect(result_line.text == "多谢将军相助！", "Tea purchase dialogue and transaction details must use separate lines.")
+	_expect("银钱 -1000" in detail_label.get_parsed_text(), "Tea purchase detail must display the 1000-silver deduction.")
+	_expect("获得商品：龙井茶" in detail_label.get_parsed_text(), "Tea purchase detail must display the Longjing tea reward.")
+	_expect("[color=#f2c45c]龙井茶[/color]" in detail_label.text, "Longjing tea must use yellow item highlighting.")
+	_expect(detail_label.get_theme_font_size("normal_font_size") < result_line.get_theme_font_size("font_size"), "Transaction details must use smaller text than merchant dialogue.")
 	option_box = _option_box(dialogue)
 	_expect(option_box.get_child_count() == 1, "Tea purchase result must provide one continue option.")
 	if option_box.get_child_count() == 1:
@@ -75,6 +81,14 @@ func _verify_purchase_branch(scene: Node) -> void:
 	_expect(not dialogue.visible and player.controls_enabled, "Acknowledging the tea purchase must resume sailing.")
 	_expect(scene.get_node_or_null("World/WorldMarkers/ShipTrigger0") == null, "Tea merchant ship must disappear after the purchase dialogue ends.")
 	_expect(bool(scene.get("_tea_merchant_event_resolved")), "Tea purchase must resolve the merchant event.")
+
+
+func _capture_result_preview() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	await RenderingServer.frame_post_draw
+	var save_error := root.get_texture().get_image().save_png(RESULT_SCREENSHOT_PATH)
+	_expect(save_error == OK, "Tea merchant result preview could not be saved.")
 
 
 func _verify_decline_branch(scene: Node) -> void:

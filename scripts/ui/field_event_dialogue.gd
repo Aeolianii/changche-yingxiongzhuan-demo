@@ -9,6 +9,7 @@ const DIALOGUE_NAMEPLATE := preload("res://assets/ui/dialogue/ink_speaker_namepl
 @onready var paper_panel: PanelContainer = $FullWidthPaperDialogueBox
 @onready var dialogue_margin: MarginContainer = $FullWidthPaperDialogueBox/DialogueMargin
 @onready var dialogue_label: Label = $FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel
+@onready var detail_label: RichTextLabel = $FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DetailLabel
 @onready var option_box: VBoxContainer = $FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox
 @onready var portrait_image: TextureRect = $LargeTransparentPortrait
 @onready var portrait_box: ColorRect = $PortraitBox
@@ -26,10 +27,13 @@ func present(
 	speaker: String,
 	line: String,
 	portrait: Texture2D,
-	options: Array[Dictionary]
+	options: Array[Dictionary],
+	detail_bbcode: String = ""
 ) -> void:
 	speaker_label.text = speaker
 	dialogue_label.text = line
+	detail_label.text = detail_bbcode
+	detail_label.visible = not detail_bbcode.is_empty()
 	portrait_image.texture = portrait
 	portrait_image.visible = portrait != null
 	portrait_box.visible = portrait == null
@@ -43,6 +47,8 @@ func present(
 
 func hide_dialogue() -> void:
 	hide()
+	detail_label.clear()
+	detail_label.hide()
 	_clear_options()
 
 

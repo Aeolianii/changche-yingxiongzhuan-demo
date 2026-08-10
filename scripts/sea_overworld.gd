@@ -252,7 +252,7 @@ func _build_locations() -> void:
 
 
 func _build_auto_triggers() -> void:
-	_build_ship_trigger("茶叶商船", Vector2(1370, 820), 0)
+	_build_ship_trigger("茶叶商船", Vector2(1370, 760), 0)
 	_build_ship_trigger("岭南商船", Vector2(2600, 760), 1)
 	_build_event_trigger("漂流木箱", Vector2(1300, 1700))
 
@@ -586,9 +586,10 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 		&"buy_longjing_tea":
 			_event_dialogue.present(
 				"茶叶商人",
-				"多谢将军相助！\n银钱 -1000　　获得商品：龙井茶",
+				"多谢将军相助！",
 				TEA_MERCHANT_PORTRAIT,
-				[{"id": &"finish_tea_trade", "text": "收下龙井茶，继续航行"}]
+				[{"id": &"finish_tea_trade", "text": "收下龙井茶，继续航行"}],
+				"银钱 -1000　　获得商品：[color=#f2c45c]龙井茶[/color]"
 			)
 		&"decline_longjing_tea", &"finish_tea_trade":
 			_finish_tea_merchant_event()

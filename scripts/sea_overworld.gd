@@ -53,7 +53,6 @@ func _ready() -> void:
 		_entered_from_scene_two = _consume_scene_two_entry_flag()
 	_build_background_chunks()
 	_configure_world_bounds()
-	_build_world_collisions()
 	_build_locations()
 	_build_auto_triggers()
 	player.connect("sailed", _on_player_sailed)
@@ -112,100 +111,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if not _active_location_name.is_empty():
 			_enter_active_location()
 			get_viewport().set_input_as_handled()
-
-func _build_world_collisions() -> void:
-	# Northwest mainland follows the visible shoreline while leaving every dock approach in water.
-	_add_polygon_blocker("NorthwestCoast", PackedVector2Array([
-		Vector2(0, 0), Vector2(1810, 0), Vector2(1780, 100), Vector2(1650, 145),
-		Vector2(1530, 205), Vector2(1470, 310), Vector2(1510, 430), Vector2(1650, 520),
-		Vector2(1710, 610), Vector2(1600, 675), Vector2(1450, 650), Vector2(1320, 720),
-		Vector2(1180, 690), Vector2(1040, 735), Vector2(880, 725), Vector2(720, 770),
-		Vector2(570, 800), Vector2(470, 880), Vector2(445, 970), Vector2(330, 1040),
-		Vector2(180, 1030), Vector2(0, 1090),
-	]))
-
-	# A-zone crescent military harbor: short round segments preserve the inner basin and southern opening.
-	_add_circle_blocker("SouthHarborWestRock", Vector2(350, 1020), 105.0)
-	_add_circle_blocker("SouthHarborNorthwestWall", Vector2(500, 925), 120.0)
-	_add_circle_blocker("SouthHarborNorthWall", Vector2(700, 885), 115.0)
-	_add_circle_blocker("SouthHarborNortheastWall", Vector2(930, 900), 125.0)
-	_add_circle_blocker("SouthHarborEastWall", Vector2(1160, 985), 145.0)
-	_add_circle_blocker("SouthHarborEastRock", Vector2(1360, 1090), 115.0)
-
-	_add_polygon_blocker("EastBaySandbar", PackedVector2Array([
-		Vector2(1710, 620), Vector2(1830, 565), Vector2(2010, 590), Vector2(2135, 670),
-		Vector2(2040, 715), Vector2(1830, 705),
-	]))
-	_add_polygon_blocker("QingyuPagodaIsland", PackedVector2Array([
-		Vector2(2260, 495), Vector2(2380, 425), Vector2(2490, 475), Vector2(2515, 600),
-		Vector2(2420, 650), Vector2(2290, 610),
-	]))
-
-	# B-zone landmarks use separate hulls so the moon harbor and central water gate remain open.
-	_add_polygon_blocker("CangmenFortress", PackedVector2Array([
-		Vector2(2490, 1050), Vector2(2630, 950), Vector2(2860, 945), Vector2(2995, 1040),
-		Vector2(3010, 1195), Vector2(2900, 1280), Vector2(2660, 1280), Vector2(2500, 1190),
-	]))
-	_add_polygon_blocker("CangmenDock", PackedVector2Array([
-		Vector2(2370, 1165), Vector2(2525, 1095), Vector2(2580, 1160), Vector2(2450, 1230),
-	]))
-	_add_circle_blocker("MoonHarborNorthwest", Vector2(3380, 400), 120.0)
-	_add_circle_blocker("MoonHarborNorth", Vector2(3500, 300), 110.0)
-	_add_circle_blocker("MoonHarborCrown", Vector2(3650, 285), 120.0)
-	_add_circle_blocker("MoonHarborEast", Vector2(3780, 365), 130.0)
-	_add_circle_blocker("MoonHarborSoutheast", Vector2(3810, 510), 125.0)
-	_add_circle_blocker("MoonHarborSouth", Vector2(3690, 600), 105.0)
-	_add_polygon_blocker("WulanVillageIsland", PackedVector2Array([
-		Vector2(3185, 700), Vector2(3290, 650), Vector2(3430, 680), Vector2(3500, 760),
-		Vector2(3410, 825), Vector2(3240, 800),
-	]))
-	_add_polygon_blocker("FuboRidge", PackedVector2Array([
-		Vector2(3860, 735), Vector2(3970, 665), Vector2(4170, 700), Vector2(4390, 820),
-		Vector2(4710, 935), Vector2(4780, 1035), Vector2(4560, 1080), Vector2(4350, 1010),
-		Vector2(4140, 950), Vector2(3950, 895),
-	]))
-	_add_polygon_blocker("ShanwanMountain", PackedVector2Array([
-		Vector2(3260, 1040), Vector2(3440, 940), Vector2(3620, 1020), Vector2(3810, 1180),
-		Vector2(3700, 1330), Vector2(3440, 1390), Vector2(3230, 1290),
-	]))
-
-	# C-zone silhouettes are inset from foam and docks to keep landings reachable.
-	_add_polygon_blocker("ChenghaiLighthouse", PackedVector2Array([
-		Vector2(500, 1510), Vector2(640, 1460), Vector2(760, 1570), Vector2(785, 1790),
-		Vector2(680, 1880), Vector2(520, 1850), Vector2(440, 1700),
-	]))
-	_add_polygon_blocker("LongmenStronghold", PackedVector2Array([
-		Vector2(540, 2150), Vector2(720, 2070), Vector2(980, 2090), Vector2(1175, 2230),
-		Vector2(1120, 2390), Vector2(850, 2440), Vector2(580, 2340),
-	]))
-	_add_polygon_blocker("BaishaSandbar", PackedVector2Array([
-		Vector2(1360, 2370), Vector2(1550, 2270), Vector2(1810, 2260), Vector2(1990, 2375),
-		Vector2(1890, 2490), Vector2(1590, 2535), Vector2(1380, 2475),
-	]))
-	_add_circle_blocker("XuanchaoWestReef", Vector2(1980, 2395), 38.0)
-	_add_circle_blocker("XuanchaoMainReef", Vector2(2220, 2340), 58.0)
-	_add_circle_blocker("XuanchaoSouthReef", Vector2(2130, 2460), 34.0)
-
-	# D-zone keeps the western approach and south-facing final-port basin clear.
-	_add_polygon_blocker("RedBayMountain", PackedVector2Array([
-		Vector2(2820, 1800), Vector2(2990, 1710), Vector2(3170, 1780), Vector2(3370, 1970),
-		Vector2(3310, 2160), Vector2(3140, 2240), Vector2(2920, 2190), Vector2(2740, 2040),
-	]))
-	_add_polygon_blocker("NanaoWestWall", PackedVector2Array([
-		Vector2(3510, 2260), Vector2(3680, 2140), Vector2(3790, 2280), Vector2(3650, 2410),
-		Vector2(3510, 2440),
-	]))
-	_add_polygon_blocker("NanaoCitadel", PackedVector2Array([
-		Vector2(3690, 2080), Vector2(3860, 1920), Vector2(4250, 1820), Vector2(4540, 1940),
-		Vector2(4720, 2160), Vector2(4680, 2360), Vector2(4550, 2480), Vector2(4250, 2460),
-		Vector2(4130, 2350), Vector2(4000, 2350), Vector2(3900, 2270), Vector2(3730, 2300),
-	]))
-
-	# Only visually solid micro-reefs block movement; the central wreck is intentionally decorative.
-	_add_circle_blocker("CentralNorthReef", Vector2(1950, 1585), 38.0)
-	_add_circle_blocker("CentralEastReef", Vector2(2310, 1840), 34.0)
-	_add_circle_blocker("ShanwanOuterReef", Vector2(3970, 1240), 46.0)
-
 
 func _build_locations() -> void:
 	_build_location(
@@ -626,23 +531,6 @@ func _vector_from_save(value: Variant, fallback: Vector2) -> Vector2:
 		return fallback
 	var restored := Vector2(float(value[0]), float(value[1]))
 	return restored if is_finite(restored.x) and is_finite(restored.y) else fallback
-
-
-func _add_polygon_blocker(node_name: String, points: PackedVector2Array) -> void:
-	var shape_node := CollisionPolygon2D.new()
-	shape_node.name = node_name
-	shape_node.polygon = points
-	world_collision.add_child(shape_node)
-
-
-func _add_circle_blocker(node_name: String, at: Vector2, radius: float) -> void:
-	var shape_node := CollisionShape2D.new()
-	shape_node.name = node_name
-	shape_node.position = at
-	var shape := CircleShape2D.new()
-	shape.radius = radius
-	shape_node.shape = shape
-	world_collision.add_child(shape_node)
 
 
 func _atlas_region(texture: Texture2D, columns: int, rows: int, column: int, row: int) -> AtlasTexture:

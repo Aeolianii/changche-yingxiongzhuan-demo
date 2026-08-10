@@ -48,6 +48,89 @@ const LAND_COLLISION_PROBES := [
 	Vector2(3500, 1150), Vector2(620, 1650), Vector2(850, 2250), Vector2(1650, 2400),
 	Vector2(2220, 2340), Vector2(3050, 1950), Vector2(3600, 2300), Vector2(4300, 2100),
 ]
+var EXPECTED_COLLISION_POLYGONS := {
+	"NorthwestCoast": PackedVector2Array([
+		Vector2(0, 0), Vector2(1810, 0), Vector2(1780, 100), Vector2(1650, 145),
+		Vector2(1530, 205), Vector2(1470, 310), Vector2(1510, 430), Vector2(1650, 520),
+		Vector2(1710, 610), Vector2(1600, 675), Vector2(1450, 650), Vector2(1320, 720),
+		Vector2(1180, 690), Vector2(1040, 735), Vector2(880, 725), Vector2(720, 770),
+		Vector2(570, 800), Vector2(470, 880), Vector2(445, 970), Vector2(330, 1040),
+		Vector2(180, 1030), Vector2(0, 1090),
+	]),
+	"EastBaySandbar": PackedVector2Array([
+		Vector2(1710, 620), Vector2(1830, 565), Vector2(2010, 590), Vector2(2135, 670),
+		Vector2(2040, 715), Vector2(1830, 705),
+	]),
+	"QingyuPagodaIsland": PackedVector2Array([
+		Vector2(2260, 495), Vector2(2380, 425), Vector2(2490, 475), Vector2(2515, 600),
+		Vector2(2420, 650), Vector2(2290, 610),
+	]),
+	"CangmenFortress": PackedVector2Array([
+		Vector2(2490, 1050), Vector2(2630, 950), Vector2(2860, 945), Vector2(2995, 1040),
+		Vector2(3010, 1195), Vector2(2900, 1280), Vector2(2660, 1280), Vector2(2500, 1190),
+	]),
+	"CangmenDock": PackedVector2Array([
+		Vector2(2370, 1165), Vector2(2525, 1095), Vector2(2580, 1160), Vector2(2450, 1230),
+	]),
+	"WulanVillageIsland": PackedVector2Array([
+		Vector2(3185, 700), Vector2(3290, 650), Vector2(3430, 680), Vector2(3500, 760),
+		Vector2(3410, 825), Vector2(3240, 800),
+	]),
+	"FuboRidge": PackedVector2Array([
+		Vector2(3860, 735), Vector2(3970, 665), Vector2(4170, 700), Vector2(4390, 820),
+		Vector2(4710, 935), Vector2(4780, 1035), Vector2(4560, 1080), Vector2(4350, 1010),
+		Vector2(4140, 950), Vector2(3950, 895),
+	]),
+	"ShanwanMountain": PackedVector2Array([
+		Vector2(3260, 1040), Vector2(3440, 940), Vector2(3620, 1020), Vector2(3810, 1180),
+		Vector2(3700, 1330), Vector2(3440, 1390), Vector2(3230, 1290),
+	]),
+	"ChenghaiLighthouse": PackedVector2Array([
+		Vector2(500, 1510), Vector2(640, 1460), Vector2(760, 1570), Vector2(785, 1790),
+		Vector2(680, 1880), Vector2(520, 1850), Vector2(440, 1700),
+	]),
+	"LongmenStronghold": PackedVector2Array([
+		Vector2(540, 2150), Vector2(720, 2070), Vector2(980, 2090), Vector2(1175, 2230),
+		Vector2(1120, 2390), Vector2(850, 2440), Vector2(580, 2340),
+	]),
+	"BaishaSandbar": PackedVector2Array([
+		Vector2(1360, 2370), Vector2(1550, 2270), Vector2(1810, 2260), Vector2(1990, 2375),
+		Vector2(1890, 2490), Vector2(1590, 2535), Vector2(1380, 2475),
+	]),
+	"RedBayMountain": PackedVector2Array([
+		Vector2(2820, 1800), Vector2(2990, 1710), Vector2(3170, 1780), Vector2(3370, 1970),
+		Vector2(3310, 2160), Vector2(3140, 2240), Vector2(2920, 2190), Vector2(2740, 2040),
+	]),
+	"NanaoWestWall": PackedVector2Array([
+		Vector2(3510, 2260), Vector2(3680, 2140), Vector2(3790, 2280), Vector2(3650, 2410),
+		Vector2(3510, 2440),
+	]),
+	"NanaoCitadel": PackedVector2Array([
+		Vector2(3690, 2080), Vector2(3860, 1920), Vector2(4250, 1820), Vector2(4540, 1940),
+		Vector2(4720, 2160), Vector2(4680, 2360), Vector2(4550, 2480), Vector2(4250, 2460),
+		Vector2(4130, 2350), Vector2(4000, 2350), Vector2(3900, 2270), Vector2(3730, 2300),
+	]),
+}
+var EXPECTED_COLLISION_CIRCLES := {
+	"SouthHarborWestRock": {"position": Vector2(350, 1020), "radius": 105.0},
+	"SouthHarborNorthwestWall": {"position": Vector2(500, 925), "radius": 120.0},
+	"SouthHarborNorthWall": {"position": Vector2(700, 885), "radius": 115.0},
+	"SouthHarborNortheastWall": {"position": Vector2(930, 900), "radius": 125.0},
+	"SouthHarborEastWall": {"position": Vector2(1160, 985), "radius": 145.0},
+	"SouthHarborEastRock": {"position": Vector2(1360, 1090), "radius": 115.0},
+	"MoonHarborNorthwest": {"position": Vector2(3380, 400), "radius": 120.0},
+	"MoonHarborNorth": {"position": Vector2(3500, 300), "radius": 110.0},
+	"MoonHarborCrown": {"position": Vector2(3650, 285), "radius": 120.0},
+	"MoonHarborEast": {"position": Vector2(3780, 365), "radius": 130.0},
+	"MoonHarborSoutheast": {"position": Vector2(3810, 510), "radius": 125.0},
+	"MoonHarborSouth": {"position": Vector2(3690, 600), "radius": 105.0},
+	"XuanchaoWestReef": {"position": Vector2(1980, 2395), "radius": 38.0},
+	"XuanchaoMainReef": {"position": Vector2(2220, 2340), "radius": 58.0},
+	"XuanchaoSouthReef": {"position": Vector2(2130, 2460), "radius": 34.0},
+	"CentralNorthReef": {"position": Vector2(1950, 1585), "radius": 38.0},
+	"CentralEastReef": {"position": Vector2(2310, 1840), "radius": 34.0},
+	"ShanwanOuterReef": {"position": Vector2(3970, 1240), "radius": 46.0},
+}
 
 var failures: Array[String] = []
 
@@ -62,6 +145,7 @@ func _run() -> void:
 		game_state.call("clear_pending_scene_state")
 	root.set_meta("sea_overworld_lunar_day", 0.0)
 	var scene := SEA_SCENE.instantiate()
+	_verify_serialized_collision_tree(scene)
 	root.add_child(scene)
 	current_scene = scene
 	await process_frame
@@ -88,6 +172,45 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	quit(1)
+
+
+func _verify_serialized_collision_tree(scene: Node) -> void:
+	var world_collision := scene.get_node("World/WorldCollision") as StaticBody2D
+	_expect(world_collision.get_child_count() == 32, "Packed sea-overworld scene must serialize exactly 32 world-collision nodes before runtime startup.")
+	_expect(world_collision.collision_layer == 1 and world_collision.collision_mask == 1, "Serialized world collision must retain layer 1 and mask 1.")
+	_expect(EXPECTED_COLLISION_POLYGONS.size() == 14 and EXPECTED_COLLISION_CIRCLES.size() == 18, "Collision geometry contract must contain fourteen polygons and eighteen circles.")
+	for collision_name in EXPECTED_COLLISION_POLYGONS:
+		var node := world_collision.get_node_or_null(collision_name) as CollisionPolygon2D
+		_expect(node != null, "Serialized collision polygon %s is missing or has the wrong type." % collision_name)
+		if node != null:
+			_expect(_packed_vectors_equal(node.polygon, EXPECTED_COLLISION_POLYGONS[collision_name]), "Serialized collision polygon %s does not match its approved vertices." % collision_name)
+	var circle_shape_ids: Dictionary = {}
+	for collision_name in EXPECTED_COLLISION_CIRCLES:
+		var node := world_collision.get_node_or_null(collision_name) as CollisionShape2D
+		_expect(node != null, "Serialized circle collision %s is missing or has the wrong node type." % collision_name)
+		if node == null:
+			continue
+		var circle := node.shape as CircleShape2D
+		var expected: Dictionary = EXPECTED_COLLISION_CIRCLES[collision_name]
+		_expect(circle != null, "Serialized collision %s must use CircleShape2D." % collision_name)
+		_expect(node.position.is_equal_approx(expected["position"] as Vector2), "Serialized circle collision %s moved from its approved center." % collision_name)
+		if circle != null:
+			_expect(is_equal_approx(circle.radius, float(expected["radius"])), "Serialized circle collision %s changed radius." % collision_name)
+			var shape_id := circle.get_instance_id()
+			_expect(not circle_shape_ids.has(shape_id), "Circle collision %s must own an independent editable Shape resource." % collision_name)
+			circle_shape_ids[shape_id] = collision_name
+	var source_code := (scene.get_script() as Script).get_source_code()
+	_expect("_build_world_collisions" not in source_code, "Sea-overworld script must not retain runtime world-collision generation.")
+	_expect("_add_polygon_blocker" not in source_code and "_add_circle_blocker" not in source_code, "Sea-overworld script must not retain obsolete static-collision builder helpers.")
+
+
+func _packed_vectors_equal(actual: PackedVector2Array, expected: PackedVector2Array) -> bool:
+	if actual.size() != expected.size():
+		return false
+	for index in range(actual.size()):
+		if not actual[index].is_equal_approx(expected[index]):
+			return false
+	return true
 
 
 func _verify_assets() -> void:
@@ -609,7 +732,7 @@ func _verify_region_interactions(scene: Node, locations: Array[Area2D], preview_
 
 func _verify_navigation_collisions(scene: Node) -> void:
 	var world_collision := scene.get_node("World/WorldCollision") as StaticBody2D
-	_expect(world_collision.get_child_count() == 32, "Production map must build the approved 32 named coastline/island blockers.")
+	_expect(world_collision.get_child_count() == 32, "Production map must retain the approved 32 serialized coastline/island blockers without runtime duplication.")
 	for collision_child in world_collision.get_children():
 		_expect(not collision_child.name.is_empty(), "Every production collision component must have a diagnostic name.")
 		_expect("wreck" not in collision_child.name.to_lower(), "The decorative central wreck must not receive collision.")

@@ -72,6 +72,8 @@ func _verify_purchase_branch(scene: Node) -> void:
 	_expect("获得商品：龙井茶" in detail_label.get_parsed_text(), "Tea purchase detail must display the Longjing tea reward.")
 	_expect("[color=#f2c45c]龙井茶[/color]" in detail_label.text, "Longjing tea must use yellow item highlighting.")
 	_expect(detail_label.get_theme_font_size("normal_font_size") < result_line.get_theme_font_size("font_size"), "Transaction details must use smaller text than merchant dialogue.")
+	_expect(is_equal_approx(result_line.custom_minimum_size.y, 34.0), "Short purchase dialogue must compact its line height so transaction details move upward.")
+	_expect(detail_label.position.y - (result_line.position.y + result_line.size.y) <= 10.0, "Transaction details must sit directly on the line below merchant dialogue.")
 	option_box = _option_box(dialogue)
 	_expect(option_box.get_child_count() == 1, "Tea purchase result must provide one continue option.")
 	if option_box.get_child_count() == 1:

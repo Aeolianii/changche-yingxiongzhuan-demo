@@ -5,6 +5,8 @@ signal option_selected(option_id: StringName)
 
 const DIALOGUE_BACKGROUND := preload("res://assets/ui/dialogue/ink_dialogue_backdrop.png")
 const DIALOGUE_NAMEPLATE := preload("res://assets/ui/dialogue/ink_speaker_nameplate.png")
+const DEFAULT_DIALOGUE_MIN_HEIGHT := 62.0
+const COMPACT_DIALOGUE_MIN_HEIGHT := 34.0
 
 @onready var paper_panel: PanelContainer = $FullWidthPaperDialogueBox
 @onready var dialogue_margin: MarginContainer = $FullWidthPaperDialogueBox/DialogueMargin
@@ -32,6 +34,7 @@ func present(
 ) -> void:
 	speaker_label.text = speaker
 	dialogue_label.text = line
+	dialogue_label.custom_minimum_size.y = COMPACT_DIALOGUE_MIN_HEIGHT if not detail_bbcode.is_empty() else DEFAULT_DIALOGUE_MIN_HEIGHT
 	detail_label.text = detail_bbcode
 	detail_label.visible = not detail_bbcode.is_empty()
 	portrait_image.texture = portrait

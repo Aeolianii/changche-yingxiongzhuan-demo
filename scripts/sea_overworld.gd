@@ -65,6 +65,7 @@ func _ready() -> void:
 	_event_dialogue = FIELD_EVENT_DIALOGUE_SCENE.instantiate() as FieldEventDialogue
 	$UI.add_child(_event_dialogue)
 	_event_dialogue.option_selected.connect(_on_crate_dialogue_option_selected)
+	_event_dialogue.visibility_changed.connect(_on_event_dialogue_visibility_changed)
 	player.connect("sailed", _on_player_sailed)
 	enter_button.pressed.connect(_enter_active_location)
 	exploration_hud.connect("menu_visibility_changed", _on_hud_menu_visibility_changed)
@@ -72,6 +73,7 @@ func _ready() -> void:
 	exploration_hud.connect("load_requested", _on_load_requested)
 	exploration_hud.connect("return_title_requested", _on_return_title_requested)
 	exploration_hud.call("set_quest_context", &"sea_overworld")
+	_on_event_dialogue_visibility_changed()
 	if _saved_scene_state.is_empty():
 		_lunar_day = float(get_tree().root.get_meta(LUNAR_DAY_META, 0.0))
 	else:
@@ -580,6 +582,12 @@ func _close_crate_dialogue() -> void:
 	_event_dialogue.hide_dialogue()
 	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
 	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
+
+
+func _on_event_dialogue_visibility_changed() -> void:
+	if _event_dialogue == null:
+		return
+	exploration_hud.call("set_sea_map_button_visible", not _event_dialogue.visible)
 
 
 func _enter_active_location() -> void:

@@ -67,10 +67,14 @@ func _verify_salvage_branch(scene: Node) -> void:
 	await _capture_crate_preview(scene, crate)
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var dialogue := scene.get_node("UI/FieldEventDialogue") as Control
+	var sea_map_status := scene.get_node_or_null("UI/ExplorationHUD/SeaMapStatus") as Control
+	_expect(sea_map_status != null, "Sea map button container must exist on the overworld HUD.")
+	if sea_map_status == null:
+		return
 	player.global_position = crate.global_position
 	for _frame in range(3):
 		await physics_frame
-	_verify_initial_dialogue(dialogue, player)
+	_verify_initial_dialogue(dialogue, player, sea_map_status)
 	await _capture_dialogue_preview()
 	var option_box := _option_box(dialogue)
 	if option_box.get_child_count() != 2:
@@ -80,6 +84,7 @@ func _verify_salvage_branch(scene: Node) -> void:
 	await process_frame
 	_expect(scene.get_node_or_null("World/WorldMarkers/DriftEvent") == null, "Salvaging must remove the drifting crate immediately.")
 	_expect(dialogue.visible, "Salvaging must keep the dialogue open for the resource result.")
+	_expect(not sea_map_status.visible, "Sea map button must remain hidden while the salvage result dialogue is open.")
 	var result_text := (dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text
 	_expect("金石 +100" in result_text and "木材 +100" in result_text and "银钱 +1000" in result_text, "Salvage result must show all three exact resource gains.")
 	_expect(not player.controls_enabled, "Player movement must remain locked until the salvage result is acknowledged.")
@@ -89,6 +94,7 @@ func _verify_salvage_branch(scene: Node) -> void:
 		(option_box.get_child(0) as Button).pressed.emit()
 		await process_frame
 	_expect(not dialogue.visible and player.controls_enabled, "Acknowledging the salvage result must resume sailing.")
+	_expect(sea_map_status.visible, "Sea map button must return after the salvage dialogue closes.")
 
 
 func _capture_crate_preview(scene: Node, crate: Area2D) -> void:
@@ -118,10 +124,14 @@ func _verify_ignore_branch(scene: Node) -> void:
 		return
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var dialogue := scene.get_node("UI/FieldEventDialogue") as Control
+	var sea_map_status := scene.get_node_or_null("UI/ExplorationHUD/SeaMapStatus") as Control
+	_expect(sea_map_status != null, "Sea map button container must exist on the overworld HUD.")
+	if sea_map_status == null:
+		return
 	player.global_position = crate.global_position
 	for _frame in range(3):
 		await physics_frame
-	_verify_initial_dialogue(dialogue, player)
+	_verify_initial_dialogue(dialogue, player, sea_map_status)
 	var option_box := _option_box(dialogue)
 	if option_box.get_child_count() != 2:
 		return
@@ -130,6 +140,7 @@ func _verify_ignore_branch(scene: Node) -> void:
 	await process_frame
 	_expect(scene.get_node_or_null("World/WorldMarkers/DriftEvent") == null, "Ignoring must remove the drifting crate.")
 	_expect(not dialogue.visible and player.controls_enabled, "Ignoring the crate must close dialogue and resume sailing.")
+	_expect(sea_map_status.visible, "Sea map button must return after the ignored crate dialogue closes.")
 
 
 func _verify_resolved_state_restore(scene: Node) -> void:
@@ -159,9 +170,10 @@ func _verify_crate_visual(scene: Node) -> Area2D:
 	return crate
 
 
-func _verify_initial_dialogue(dialogue: Control, player: CharacterBody2D) -> void:
+func _verify_initial_dialogue(dialogue: Control, player: CharacterBody2D, sea_map_status: Control) -> void:
 	_expect(dialogue.visible, "Touching the crate must open the field dialogue.")
 	_expect(not player.controls_enabled, "Touching the crate must pause sailing.")
+	_expect(not sea_map_status.visible, "Sea map button must be hidden while the crate dialogue is open.")
 	var speaker := dialogue.get_node("NamePlate/SpeakerLabel") as Label
 	var line := dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
 	var portrait := dialogue.get_node("LargeTransparentPortrait") as TextureRect

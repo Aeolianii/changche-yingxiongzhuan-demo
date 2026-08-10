@@ -59,6 +59,7 @@ var _moon_phase_label: Label
 var _moon_material: ShaderMaterial
 var _sea_map_status: Control
 var _sea_map_mode := false
+var _sea_map_button_visible := true
 
 signal menu_visibility_changed(is_open: bool)
 signal save_requested
@@ -131,6 +132,12 @@ func set_quest_context(context_id: StringName) -> void:
 func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array, map_chunks: Array = [], fog_of_war: Node = null) -> void:
 	if is_instance_valid(_map_screen):
 		_map_screen.call("configure", player_node, world_size, locations, map_chunks, fog_of_war)
+
+
+func set_sea_map_button_visible(value: bool) -> void:
+	_sea_map_button_visible = value
+	if is_instance_valid(_sea_map_status):
+		_sea_map_status.visible = value
 
 
 func set_lunar_day(total_days: float) -> void:
@@ -288,6 +295,7 @@ func _build_sea_map_button() -> void:
 	_sea_map_status.offset_right = -20.0
 	_sea_map_status.offset_bottom = -20.0
 	_sea_map_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_sea_map_status.visible = _sea_map_button_visible
 	add_child(_sea_map_status)
 
 	var map_frame := TextureRect.new()

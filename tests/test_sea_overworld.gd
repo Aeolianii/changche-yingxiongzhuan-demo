@@ -569,7 +569,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "倭寇营地", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
 	_expect(location_names.all(func(text: String) -> bool: return "南澳商港" not in text), "Full map must not retain the retired South Australia merchant-port name.")
-	for hidden_name in ["茶叶商船", "岭南商船", "漂流木箱"]:
+	for hidden_name in ["茶叶商船", "私盐商船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
 	_expect(qingyu_map_label != null and (qingyu_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2800, 400)), "Qingyu full-map label must align to the pagoda island's upper-right.")
 	_expect(xuanchao_map_label != null and (xuanchao_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2620, 2600)), "Xuanchao full-map label must sit at the reefs' lower-right.")

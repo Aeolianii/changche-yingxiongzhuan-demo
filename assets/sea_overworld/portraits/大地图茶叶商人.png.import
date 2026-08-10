@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://150mjn4n2u52"
-path="res://.godot/imported/大地图商人.png-f8032a499dff94dccdfe60bc9565e338.ctex"
+uid="uid://b2n75kwltbt2a"
+path="res://.godot/imported/大地图茶叶商人.png-f7b6c8dc103421d03c88fc2f39c47a55.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/大地图商人.png"
-dest_files=["res://.godot/imported/大地图商人.png-f8032a499dff94dccdfe60bc9565e338.ctex"]
+source_file="res://assets/sea_overworld/portraits/大地图茶叶商人.png"
+dest_files=["res://.godot/imported/大地图茶叶商人.png-f7b6c8dc103421d03c88fc2f39c47a55.ctex"]
 
 [params]
 

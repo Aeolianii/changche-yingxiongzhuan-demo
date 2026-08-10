@@ -1,7 +1,7 @@
 extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
-const MERCHANT_PORTRAIT_PATH := "res://assets/大地图商人.png"
+const MERCHANT_PORTRAIT_PATH := "res://assets/sea_overworld/portraits/大地图茶叶商人.png"
 const MERCHANT_SHIP_POSITION := Vector2(1370, 760)
 const RESULT_SCREENSHOT_PATH := "res://.godot/sea_overworld_tea_merchant_result_preview.png"
 

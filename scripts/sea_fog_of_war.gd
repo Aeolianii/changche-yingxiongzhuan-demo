@@ -41,26 +41,45 @@ func reveal_at(world_position: Vector2) -> bool:
 	_last_reveal_position = world_position
 	var vision_size := get_vision_world_size()
 	var half_vision := vision_size * 0.5
-	var minimum := _world_to_cell(world_position - half_vision)
-	var maximum := _world_to_cell(world_position + half_vision)
+	var minimum := _world_to_cell(world_position - half_vision - _cell_world_size)
+	var maximum := _world_to_cell(world_position + half_vision + _cell_world_size)
 	var changed := false
 	for cell_y in range(minimum.y, maximum.y + 1):
 		for cell_x in range(minimum.x, maximum.x + 1):
-			var cell_center := Vector2(
-				(float(cell_x) + 0.5) * _cell_world_size.x,
-				(float(cell_y) + 0.5) * _cell_world_size.y
-			)
-			var offset := cell_center - world_position
-			var normalized_distance := pow(offset.x / half_vision.x, 2.0) + pow(offset.y / half_vision.y, 2.0)
-			if normalized_distance > 1.0:
-				continue
 			var cell_index := cell_y * _grid_size.x + cell_x
 			if _set_revealed(cell_index):
 				_fog_image.set_pixel(cell_x, cell_y, Color(0, 0, 0, 0))
 				changed = true
-	if changed:
-		_fog_texture.update(_fog_image)
-		state_changed.emit()
+	_commit_reveal(changed)
+	return changed
+
+
+func reveal_camera_view() -> bool:
+	if _camera == null or not _camera.is_inside_tree():
+		return false
+	return reveal_at(to_local(_camera.get_screen_center_position()))
+
+
+func reveal_polygon(world_polygon: PackedVector2Array) -> bool:
+	if _fog_image == null or world_polygon.size() < 3:
+		return false
+	var bounds := Rect2(world_polygon[0], Vector2.ZERO)
+	for world_point in world_polygon:
+		bounds = bounds.expand(world_point)
+	var minimum := _world_to_cell(bounds.position)
+	var maximum := _world_to_cell(bounds.end)
+	var changed := false
+	for cell_y in range(minimum.y, maximum.y + 1):
+		for cell_x in range(minimum.x, maximum.x + 1):
+			if not _cell_overlaps_polygon(Vector2i(cell_x, cell_y), world_polygon):
+				continue
+			for padded_y in range(maxi(0, cell_y - 1), mini(_grid_size.y - 1, cell_y + 1) + 1):
+				for padded_x in range(maxi(0, cell_x - 1), mini(_grid_size.x - 1, cell_x + 1) + 1):
+					var cell_index := padded_y * _grid_size.x + padded_x
+					if _set_revealed(cell_index):
+						_fog_image.set_pixel(padded_x, padded_y, Color(0, 0, 0, 0))
+						changed = true
+	_commit_reveal(changed)
 	return changed
 
 
@@ -156,3 +175,24 @@ func _set_revealed(cell_index: int) -> bool:
 	var bit_mask := 1 << (cell_index & 7)
 	_revealed_bits[byte_index] = _revealed_bits[byte_index] | bit_mask
 	return true
+
+
+func _cell_overlaps_polygon(cell: Vector2i, world_polygon: PackedVector2Array) -> bool:
+	var cell_rect := Rect2(Vector2(cell) * _cell_world_size, _cell_world_size)
+	var center := cell_rect.get_center()
+	if Geometry2D.is_point_in_polygon(center, world_polygon):
+		return true
+	for corner in [cell_rect.position, Vector2(cell_rect.end.x, cell_rect.position.y), cell_rect.end, Vector2(cell_rect.position.x, cell_rect.end.y)]:
+		if Geometry2D.is_point_in_polygon(corner, world_polygon):
+			return true
+	for polygon_point in world_polygon:
+		if cell_rect.has_point(polygon_point):
+			return true
+	return false
+
+
+func _commit_reveal(changed: bool) -> void:
+	if not changed:
+		return
+	_fog_texture.update(_fog_image)
+	state_changed.emit()

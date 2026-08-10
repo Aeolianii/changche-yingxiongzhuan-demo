@@ -96,6 +96,8 @@ func _process(delta: float) -> void:
 		var visual := _floating_visuals[index]
 		if is_instance_valid(visual):
 			visual.position.y = sin(_float_elapsed * 2.1 + index * 0.9) * 2.0
+	if is_instance_valid(_fog_of_war):
+		_fog_of_war.call("reveal_camera_view")
 
 
 func _on_player_sailed(delta: float) -> void:
@@ -104,7 +106,7 @@ func _on_player_sailed(delta: float) -> void:
 	if _exploration_stage == 0:
 		_advance_exploration_stage(1)
 	if is_instance_valid(_fog_of_war):
-		_fog_of_war.reveal_at(player.global_position)
+		_fog_of_war.call("reveal_camera_view")
 	_lunar_day += delta / SECONDS_PER_LUNAR_DAY
 	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
 	exploration_hud.call("set_lunar_day", _lunar_day)
@@ -278,10 +280,22 @@ func _build_fog_of_war() -> void:
 		saved_fog_state = game_state.call("get_sea_fog_state") as Dictionary
 	_fog_of_war.call("setup", MAP_SIZE, camera, saved_fog_state)
 	_fog_of_war.connect("state_changed", _store_fog_state)
+	_reveal_initial_known_land()
 	if saved_fog_state.is_empty():
 		_fog_of_war.call("reveal_at", SOUTH_SEA_HARBOR_SPAWN)
 	_fog_of_war.reveal_at(player.global_position)
 	_store_fog_state()
+
+
+func _reveal_initial_known_land() -> void:
+	var northwest_coast := world_collision.get_node_or_null("NorthwestCoast") as CollisionPolygon2D
+	if northwest_coast == null:
+		return
+	var world := $World as Node2D
+	var world_polygon := PackedVector2Array()
+	for local_point in northwest_coast.polygon:
+		world_polygon.append(world.to_local(northwest_coast.to_global(local_point)))
+	_fog_of_war.call("reveal_polygon", world_polygon)
 
 
 func _store_fog_state() -> void:

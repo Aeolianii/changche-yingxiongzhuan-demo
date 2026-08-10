@@ -3,6 +3,7 @@ extends SceneTree
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SOUTH_SEA_HARBOR_SPAWN := Vector2(760, 1130)
 const FAR_WATERS := Vector2(4380, 2460)
+const FOG_CELL_SIZE := 16.0
 const WORLD_SCREENSHOT_PATH := "res://.godot/sea_fog_world_preview.png"
 const MAP_SCREENSHOT_PATH := "res://.godot/sea_fog_map_preview.png"
 
@@ -32,6 +33,7 @@ func _run() -> void:
 
 	_expect(fog.has_method("is_world_position_revealed"), "FogOfWar must expose world-position reveal queries.")
 	_expect(bool(fog.call("is_world_position_revealed", SOUTH_SEA_HARBOR_SPAWN)), "South Sea Harbor must be revealed on first entry.")
+	_expect_polygon_revealed(fog, scene.get_node("World/WorldCollision/NorthwestCoast") as CollisionPolygon2D, scene.get_node("World") as Node2D)
 	_expect(not bool(fog.call("is_world_position_revealed", FAR_WATERS)), "Far waters must remain black on first entry.")
 	var initial_ratio := float(fog.call("get_explored_ratio"))
 	_expect(initial_ratio > 0.0 and initial_ratio < 0.25, "Initial harbor vision must reveal only a limited part of the chart.")
@@ -42,6 +44,14 @@ func _run() -> void:
 
 	var vision_size: Vector2 = fog.call("get_vision_world_size")
 	_expect(vision_size.is_equal_approx(Vector2(1344, 896)), "Fog reveal size must match the current Camera2D world viewport.")
+	for corner_sign: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
+		var corner_probe: Vector2 = SOUTH_SEA_HARBOR_SPAWN + corner_sign * vision_size * 0.49
+		_expect(bool(fog.call("is_world_position_revealed", corner_probe)), "Every corner inside the player's initial camera viewport must be revealed.")
+	var camera := scene.get_node("World/Player/Camera2D") as Camera2D
+	var camera_center := (scene.get_node("World") as Node2D).to_local(camera.get_screen_center_position())
+	for corner_sign: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
+		var corner_probe: Vector2 = camera_center + corner_sign * vision_size * 0.5
+		_expect(bool(fog.call("is_world_position_revealed", corner_probe)), "The smoothed Camera2D's actual visible corners must remain revealed.")
 	var reveal_center := Vector2(2500, 1350)
 	fog.call("reveal_at", reveal_center)
 	_expect(float(fog.call("get_explored_ratio")) > initial_ratio, "Sailing into new waters must increase chart completion.")
@@ -94,6 +104,27 @@ func _run() -> void:
 		game_state.call("reset_runtime_world_state")
 
 	_finish()
+
+
+func _expect_polygon_revealed(fog: Node, polygon_node: CollisionPolygon2D, world: Node2D) -> void:
+	var world_polygon := PackedVector2Array()
+	for local_point in polygon_node.polygon:
+		world_polygon.append(world.to_local(polygon_node.to_global(local_point)))
+	var bounds := Rect2(world_polygon[0], Vector2.ZERO)
+	for world_point in world_polygon:
+		bounds = bounds.expand(world_point)
+	var sampled_cells := 0
+	var first_hidden_cell := Vector2.ZERO
+	for cell_y in range(floori(bounds.position.y / FOG_CELL_SIZE), ceili(bounds.end.y / FOG_CELL_SIZE)):
+		for cell_x in range(floori(bounds.position.x / FOG_CELL_SIZE), ceili(bounds.end.x / FOG_CELL_SIZE)):
+			var cell_center := Vector2(cell_x + 0.5, cell_y + 0.5) * FOG_CELL_SIZE
+			if not Geometry2D.is_point_in_polygon(cell_center, world_polygon):
+				continue
+			sampled_cells += 1
+			if first_hidden_cell == Vector2.ZERO and not bool(fog.call("is_world_position_revealed", cell_center)):
+				first_hidden_cell = cell_center
+	_expect(sampled_cells > 0, "NorthwestCoast must provide initial-land fog samples.")
+	_expect(first_hidden_cell == Vector2.ZERO, "Every fog cell inside NorthwestCoast must be initially revealed; first hidden cell: %s" % first_hidden_cell)
 
 
 func _expect(condition: bool, message: String) -> void:

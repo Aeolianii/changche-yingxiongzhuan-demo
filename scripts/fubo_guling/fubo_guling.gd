@@ -51,6 +51,7 @@ var phase := Phase.ARRIVAL
 var _dialogue_index := -1
 var _keeper_focused := false
 var _pending_trigger := ""
+var _test_mode := false
 
 
 func _ready() -> void:
@@ -209,7 +210,8 @@ func _complete_canal(result: Dictionary) -> void:
 	school_shape.set_deferred("disabled", true)
 	school_barrier.visible = false
 	objective_label.text = "古渠贯通（%s），沿山路前往古校场" % String(result.get("rating", "完成"))
-	_show_notice("古渠贯通\n通往校场的山路已开放", 1.8)
+	if not _test_mode:
+		_show_notice("古渠贯通\n通往校场的山路已开放", 1.8)
 
 
 func _complete_drum(_result: Dictionary) -> void:
@@ -219,7 +221,8 @@ func _complete_drum(_result: Dictionary) -> void:
 	viewpoint_shape.set_deferred("disabled", true)
 	viewpoint_barrier.visible = false
 	objective_label.text = "鼓令完成，登上观景台眺望南海"
-	_show_notice("三轮鼓令完成\n观景台入口已开放", 1.8)
+	if not _test_mode:
+		_show_notice("三轮鼓令完成\n观景台入口已开放", 1.8)
 
 
 func _on_minigame_cancelled(game_id: String) -> void:
@@ -291,6 +294,7 @@ func _add_shape_debug(physics_node: Node2D, shape_node: CollisionShape2D, blocke
 
 
 func finish_keeper_dialogue_for_test() -> void:
+	_test_mode = true
 	_unlock_canal_location()
 
 

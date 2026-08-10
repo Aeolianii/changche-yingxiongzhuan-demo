@@ -38,6 +38,11 @@ func _ready() -> void:
 	_play_current_round.call_deferred()
 
 
+func _exit_tree() -> void:
+	_round_token += 1
+	_input_enabled = false
+
+
 func _process(_delta: float) -> void:
 	if not _input_enabled or _focus_suspended:
 		return

@@ -89,6 +89,8 @@ func _test_scene_contract() -> void:
 	_check(level.get_node("World/WorldObjects/Player/Camera2D").limit_right == 3200, "Camera right limit must match the medium map.")
 	_check(level.get_node("World/WorldObjects/Player/Camera2D").limit_bottom == 2200, "Camera bottom limit must match the medium map.")
 	_check(level.get_node("World/Ground/BackgroundPlates").get_child_count() == 4, "Medium map needs four local background plates.")
+	for plate in level.get_node("World/Ground/BackgroundPlates").get_children():
+		_check(plate is Sprite2D and plate.texture != null, "%s needs an imported background texture." % plate.name)
 	var blocked_count := level.get_node("World/Collision/BlockedRegions").get_child_count()
 	_check(blocked_count >= 6 and blocked_count <= 10, "Map must use 6-10 coarse blocked regions.")
 	_check(level.get_node("World/Collision/HouseFoot/Shape").shape is RectangleShape2D, "House must use a separate foot collision shape.")
@@ -96,6 +98,8 @@ func _test_scene_contract() -> void:
 	_check(level.get_node("World/Triggers/SchoolTrigger/Shape").shape is CircleShape2D, "School gameplay must be entered through a trigger area.")
 	_check(level.get_node("Interface/MinigameHost") is Control, "Map needs a full-screen minigame host.")
 	_check(level.get_node("World/WorldObjects").get_child_count() <= 16, "World object layer must stay deliberately sparse.")
+	for prop_name in ["House", "Storage", "TreeCourtyard", "TreePath", "TreeCanal", "CanalMarker", "Drum", "FlagYellow", "FlagRed", "FlagBlue"]:
+		_check(level.get_node("World/WorldObjects/" + prop_name).art_texture != null, "%s needs a modular pixel texture." % prop_name)
 	level.finish_keeper_dialogue_for_test()
 	_check(level.get_phase_for_test() == level.Phase.CANAL_AVAILABLE, "Keeper dialogue must only unlock the canal location.")
 	_check(level.get_node("Interface/MinigameHost").active_minigame == null, "Keeper dialogue must not open the canal game directly.")
@@ -112,6 +116,7 @@ func _test_scene_contract() -> void:
 	_check(level.get_phase_for_test() == level.Phase.VIEWPOINT_OPEN and host.active_minigame == null, "Drum completion must restore the map and open the viewpoint.")
 	level.queue_free()
 	await process_frame
+	await create_timer(0.55).timeout
 
 
 func _check(condition: bool, message: String) -> void:

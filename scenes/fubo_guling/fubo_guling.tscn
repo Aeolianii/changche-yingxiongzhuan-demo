@@ -4,17 +4,22 @@
 [ext_resource type="Script" uid="uid://xr1kqaeysxeo" path="res://scripts/fubo_guling/fubo_placeholder_world.gd" id="2_yoyss"]
 [ext_resource type="PackedScene" uid="uid://cwdko3gfnx6h3" path="res://scenes/characters/player.tscn" id="3_hkqpv"]
 [ext_resource type="Script" uid="uid://dkcte25ysvqxe" path="res://scripts/fubo_guling/fubo_world_prop.gd" id="4_erm8w"]
+[ext_resource type="Material" uid="uid://dajrmcean4e15" path="res://assets/fubo_guling/fubo_plate_feather.tres" id="4_og5ew"]
+[ext_resource type="Texture2D" uid="uid://c5yqhtb6ih88f" path="res://assets/fubo_guling/backgrounds/fubo_plate_sw.png" id="4_sks1q"]
+[ext_resource type="Texture2D" uid="uid://b350btt2n7tfy" path="res://assets/fubo_guling/backgrounds/fubo_plate_se.png" id="5_og5ew"]
+[ext_resource type="Texture2D" uid="uid://br18f4o57la3l" path="res://assets/fubo_guling/backgrounds/fubo_plate_nw.png" id="6_v2yly"]
+[ext_resource type="Texture2D" uid="uid://pk3pk0e6720p" path="res://assets/fubo_guling/backgrounds/fubo_plate_ne.png" id="7_4b73x"]
 [ext_resource type="Texture2D" uid="uid://bomw7nfbwseu2" path="res://assets/characters/soldier/standard/idle/down/1.png" id="10_qcq6o"]
-[ext_resource type="Texture2D" uid="uid://erks2neba6pq" path="res://assets/fubo_guling/generated/guard_house.png" id="11_4qc4v"]
-[ext_resource type="Texture2D" uid="uid://cgqao8wohld6l" path="res://assets/fubo_guling/generated/granary.png" id="12_0qcnr"]
-[ext_resource type="Texture2D" uid="uid://bids0r3ifs0q1" path="res://assets/fubo_guling/generated/banyan_tree.png" id="13_52i7m"]
-[ext_resource type="Texture2D" uid="uid://cf7b3ohjujvpo" path="res://assets/fubo_guling/generated/lychee_tree.png" id="14_wfv8c"]
-[ext_resource type="Texture2D" uid="uid://cqamqwevbep3p" path="res://assets/fubo_guling/generated/coastal_palm.png" id="15_0lv7o"]
-[ext_resource type="Texture2D" uid="uid://d3y18bbve3c8a" path="res://assets/fubo_guling/generated/sluice_mechanism.png" id="16_8rxne"]
-[ext_resource type="Texture2D" uid="uid://b2dawvfshk3io" path="res://assets/fubo_guling/generated/war_drum.png" id="18_x7fr6"]
-[ext_resource type="Texture2D" uid="uid://d2qtxaa0sp23e" path="res://assets/fubo_guling/generated/signal_flag_yellow.png" id="19_lwg7b"]
-[ext_resource type="Texture2D" uid="uid://812mne5wbbhw" path="res://assets/fubo_guling/generated/signal_flag_red.png" id="20_htdxp"]
-[ext_resource type="Texture2D" uid="uid://0tfhug108w4l" path="res://assets/fubo_guling/generated/signal_flag_blue.png" id="21_n8g30"]
+[ext_resource type="Texture2D" uid="uid://f2di8l7jl17" path="res://assets/fubo_guling/generated/modular/guard_house.png" id="11_sks1q"]
+[ext_resource type="Texture2D" uid="uid://828dybkoyljm" path="res://assets/fubo_guling/generated/modular/grain_store.png" id="12_og5ew"]
+[ext_resource type="Texture2D" uid="uid://ciq3govyttmwa" path="res://assets/fubo_guling/generated/modular/banyan_tree.png" id="13_v2yly"]
+[ext_resource type="Texture2D" uid="uid://b7s44n8qvwdhg" path="res://assets/fubo_guling/generated/modular/lychee_tree.png" id="14_4b73x"]
+[ext_resource type="Texture2D" uid="uid://c3hh3h43r2ead" path="res://assets/fubo_guling/generated/modular/coastal_tree.png" id="15_u76b6"]
+[ext_resource type="Texture2D" uid="uid://e0joaxw5mb4y" path="res://assets/fubo_guling/generated/modular/canal_marker.png" id="16_evf45"]
+[ext_resource type="Texture2D" uid="uid://bc8il405yyfx5" path="res://assets/fubo_guling/generated/modular/drum.png" id="17_w4bwy"]
+[ext_resource type="Texture2D" uid="uid://dalaf8ypshasn" path="res://assets/fubo_guling/generated/modular/flag_yellow.png" id="18_p58l7"]
+[ext_resource type="Texture2D" uid="uid://dmu12llgcbde0" path="res://assets/fubo_guling/generated/modular/flag_red.png" id="19_rorjb"]
+[ext_resource type="Texture2D" uid="uid://cp34opjjafc3u" path="res://assets/fubo_guling/generated/modular/flag_blue.png" id="20_psr7n"]
 [ext_resource type="Texture2D" uid="uid://b2gm3a17vabh8" path="res://assets/fubo_guling/generated/road_barrier.png" id="22_5dl1x"]
 [ext_resource type="Texture2D" uid="uid://m0xqxihw0b0y" path="res://assets/fubo_guling/generated/blank_stele.png" id="23_sprgl"]
 [ext_resource type="Script" uid="uid://cny8xf0r0eepe" path="res://scripts/fubo_guling/minigames/fubo_minigame_host.gd" id="29_p58l7"]
@@ -260,13 +265,33 @@ script = ExtResource("2_yoyss")
 
 [node name="BackgroundPlates" type="Node2D" parent="World/Ground" unique_id=517206307]
 
-[node name="SouthLanding" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=1779719619]
+[node name="SW" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=1779719619]
+texture_filter = 1
+material = ExtResource("4_og5ew")
+position = Vector2(800, 1650)
+scale = Vector2(1.08, 1.08)
+texture = ExtResource("4_sks1q")
 
-[node name="KeeperSlope" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=1570184285]
+[node name="SE" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=1570184285]
+texture_filter = 1
+material = ExtResource("4_og5ew")
+position = Vector2(2400, 1550)
+scale = Vector2(1.08, 1.08)
+texture = ExtResource("5_og5ew")
 
-[node name="CanalTerrace" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=565448850]
+[node name="NW" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=565448850]
+texture_filter = 1
+material = ExtResource("4_og5ew")
+position = Vector2(900, 600)
+scale = Vector2(1.08, 1.08)
+texture = ExtResource("6_v2yly")
 
-[node name="NorthSummit" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=1943145778]
+[node name="NE" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=1943145778]
+texture_filter = 1
+material = ExtResource("4_og5ew")
+position = Vector2(2400, 650)
+scale = Vector2(1.08, 1.08)
+texture = ExtResource("7_4b73x")
 
 [node name="Effects" type="Node2D" parent="World" unique_id=246161715]
 z_index = -5
@@ -341,7 +366,8 @@ kind = "house"
 prop_size = Vector2(320, 140)
 main_color = Color(0.53333336, 0.54509807, 0.5686275, 1)
 accent_color = Color(0.77254903, 0.654902, 0.35686275, 1)
-art_texture = ExtResource("11_4qc4v")
+art_texture = ExtResource("11_sks1q")
+art_scale = Vector2(0.68, 0.68)
 
 [node name="Storage" type="Node2D" parent="World/WorldObjects" unique_id=642429939]
 texture_filter = 1
@@ -350,8 +376,8 @@ script = ExtResource("4_erm8w")
 kind = "storage"
 main_color = Color(0.5058824, 0.4627451, 0.41568628, 1)
 accent_color = Color(0.7254902, 0.6039216, 0.3647059, 1)
-art_texture = ExtResource("12_0qcnr")
-art_scale = Vector2(0.75, 0.75)
+art_texture = ExtResource("12_og5ew")
+art_scale = Vector2(0.68, 0.68)
 
 [node name="TreeCourtyard" type="Node2D" parent="World/WorldObjects" unique_id=422152371]
 texture_filter = 1
@@ -360,7 +386,8 @@ script = ExtResource("4_erm8w")
 prop_size = Vector2(90, 90)
 main_color = Color(0.25490198, 0.40392157, 0.2901961, 1)
 accent_color = Color(0.43529412, 0.57254905, 0.3647059, 1)
-art_texture = ExtResource("13_52i7m")
+art_texture = ExtResource("13_v2yly")
+art_scale = Vector2(0.45, 0.45)
 
 [node name="TreePath" type="Node2D" parent="World/WorldObjects" unique_id=896406685]
 texture_filter = 1
@@ -369,7 +396,8 @@ script = ExtResource("4_erm8w")
 prop_size = Vector2(90, 90)
 main_color = Color(0.25490198, 0.40392157, 0.2901961, 1)
 accent_color = Color(0.43529412, 0.57254905, 0.3647059, 1)
-art_texture = ExtResource("14_wfv8c")
+art_texture = ExtResource("14_4b73x")
+art_scale = Vector2(0.45, 0.45)
 
 [node name="TreeCanal" type="Node2D" parent="World/WorldObjects" unique_id=1334816417]
 texture_filter = 1
@@ -378,18 +406,19 @@ script = ExtResource("4_erm8w")
 prop_size = Vector2(90, 90)
 main_color = Color(0.25490198, 0.40392157, 0.2901961, 1)
 accent_color = Color(0.43529412, 0.57254905, 0.3647059, 1)
-art_texture = ExtResource("15_0lv7o")
+art_texture = ExtResource("15_u76b6")
+art_scale = Vector2(0.45, 0.45)
 
 [node name="CanalMarker" type="Node2D" parent="World/WorldObjects" unique_id=1984553261]
 texture_filter = 1
 position = Vector2(2600, 1180)
 script = ExtResource("4_erm8w")
-kind = "gate"
+kind = "stele"
 prop_size = Vector2(60, 60)
 main_color = Color(0.4392157, 0.45882353, 0.4392157, 1)
 accent_color = Color(0.8901961, 0.7411765, 0.40784314, 1)
-art_texture = ExtResource("16_8rxne")
-art_scale = Vector2(0.72, 0.72)
+art_texture = ExtResource("16_evf45")
+art_scale = Vector2(0.55, 0.55)
 
 [node name="Drum" type="Node2D" parent="World/WorldObjects" unique_id=1678334269]
 texture_filter = 1
@@ -399,7 +428,8 @@ kind = "drum"
 prop_size = Vector2(70, 70)
 main_color = Color(0.654902, 0.26666668, 0.2, 1)
 accent_color = Color(0.8745098, 0.8039216, 0.64705884, 1)
-art_texture = ExtResource("18_x7fr6")
+art_texture = ExtResource("17_w4bwy")
+art_scale = Vector2(0.4, 0.4)
 
 [node name="FlagYellow" type="Node2D" parent="World/WorldObjects" unique_id=214825947]
 texture_filter = 1
@@ -409,8 +439,8 @@ kind = "flag"
 prop_size = Vector2(70, 80)
 main_color = Color(0.8784314, 0.73333335, 0.28235295, 1)
 accent_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
-art_texture = ExtResource("19_lwg7b")
-art_scale = Vector2(0.8, 0.8)
+art_texture = ExtResource("18_p58l7")
+art_scale = Vector2(0.35, 0.35)
 
 [node name="FlagRed" type="Node2D" parent="World/WorldObjects" unique_id=162606740]
 texture_filter = 1
@@ -420,8 +450,8 @@ kind = "flag"
 prop_size = Vector2(70, 80)
 main_color = Color(0.74509805, 0.30980393, 0.2627451, 1)
 accent_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
-art_texture = ExtResource("20_htdxp")
-art_scale = Vector2(0.8, 0.8)
+art_texture = ExtResource("19_rorjb")
+art_scale = Vector2(0.35, 0.35)
 
 [node name="FlagBlue" type="Node2D" parent="World/WorldObjects" unique_id=743877861]
 texture_filter = 1
@@ -431,8 +461,8 @@ kind = "flag"
 prop_size = Vector2(70, 80)
 main_color = Color(0.29411766, 0.5137255, 0.70980394, 1)
 accent_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
-art_texture = ExtResource("21_n8g30")
-art_scale = Vector2(0.8, 0.8)
+art_texture = ExtResource("20_psr7n")
+art_scale = Vector2(0.35, 0.35)
 
 [node name="SchoolBarrier" type="Node2D" parent="World/WorldObjects" unique_id=190706852]
 texture_filter = 1

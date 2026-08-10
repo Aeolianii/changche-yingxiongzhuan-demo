@@ -5,7 +5,7 @@ uniform bool fade_from_left = true;
 uniform bool fade_from_top = false;
 uniform vec2 world_origin = vec2(0.0);
 uniform vec2 world_size = vec2(2508.0, 1412.0);
-uniform float water_motion_strength : hint_range(0.0, 1.0, 0.05) = 0.7;
+uniform float water_motion_strength : hint_range(0.0, 1.0, 0.05) = 0.9;
 uniform float water_wave_speed : hint_range(0.0, 2.0, 0.05) = 0.55;
 uniform sampler2D waterNoise : repeat_enable, filter_linear;
 uniform sampler2D waterDistortionNoise : repeat_enable, filter_linear;
@@ -32,8 +32,8 @@ void fragment() {
 	float primary_flow = texture(waterNoise, primary_flow_uv).r;
 	float crossing_flow = texture(waterNoise, crossing_flow_uv).r;
 	float broken_surface = primary_flow * 0.68 + crossing_flow * 0.32;
-	float crest = smoothstep(0.61, 0.9, broken_surface);
-	float fine_crest = smoothstep(0.72, 0.94, crossing_flow) * smoothstep(0.42, 0.82, primary_flow);
+	float crest = smoothstep(0.58, 0.86, broken_surface);
+	float fine_crest = smoothstep(0.68, 0.9, crossing_flow) * smoothstep(0.38, 0.78, primary_flow);
 	float trough = 1.0 - smoothstep(0.18, 0.7, broken_surface);
 	float water_mask = sea_color_mask(source.rgb);
 	vec2 refraction_offset = vec2(distortion, distortion_y) * 0.0016 * water_motion_strength;
@@ -41,9 +41,9 @@ void fragment() {
 	float safe_refraction_mask = water_mask * sea_color_mask(refracted_source.rgb);
 	source.rgb = mix(source.rgb, refracted_source.rgb, safe_refraction_mask * 0.22);
 	vec3 animated_water = source.rgb;
-	animated_water -= trough * vec3(0.004, 0.009, 0.014) * water_motion_strength;
-	animated_water += crest * vec3(0.018, 0.052, 0.075) * water_motion_strength;
-	animated_water += fine_crest * vec3(0.025, 0.07, 0.1) * water_motion_strength;
+	animated_water -= trough * vec3(0.006, 0.014, 0.022) * water_motion_strength;
+	animated_water += crest * vec3(0.035, 0.12, 0.18) * water_motion_strength;
+	animated_water += fine_crest * vec3(0.07, 0.22, 0.3) * water_motion_strength;
 	source.rgb = mix(source.rgb, animated_water, water_mask);
 	float seam_alpha = 1.0;
 	if (fade_from_left) {

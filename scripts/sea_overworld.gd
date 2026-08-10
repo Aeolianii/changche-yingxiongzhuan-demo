@@ -19,7 +19,7 @@ const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
 const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
-const SOUTH_SEA_HARBOR_SPAWN := Vector2(1300, 850)
+const SOUTH_SEA_HARBOR_SPAWN := Vector2(760, 1130)
 const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
 
@@ -75,7 +75,7 @@ func _ready() -> void:
 	interaction_prompt.hide()
 	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
 	$UI.add_child(_loading_transition)
-	if _entered_from_scene_two:
+	if _saved_scene_state.is_empty():
 		player.global_position = SOUTH_SEA_HARBOR_SPAWN
 		_activate_south_sea_harbor_spawn()
 
@@ -124,13 +124,13 @@ func _build_world_collisions() -> void:
 		Vector2(180, 1030), Vector2(0, 1090),
 	]))
 
-	# A-zone crescent village: short round segments preserve the open basin and southern landing water.
-	_add_circle_blocker("ChuanshanWestRock", Vector2(350, 1020), 105.0)
-	_add_circle_blocker("ChuanshanNorthwestWall", Vector2(500, 925), 120.0)
-	_add_circle_blocker("ChuanshanNorthWall", Vector2(700, 885), 115.0)
-	_add_circle_blocker("ChuanshanNortheastWall", Vector2(930, 900), 125.0)
-	_add_circle_blocker("ChuanshanEastWall", Vector2(1160, 985), 145.0)
-	_add_circle_blocker("ChuanshanEastRock", Vector2(1360, 1090), 115.0)
+	# A-zone crescent military harbor: short round segments preserve the inner basin and southern opening.
+	_add_circle_blocker("SouthHarborWestRock", Vector2(350, 1020), 105.0)
+	_add_circle_blocker("SouthHarborNorthwestWall", Vector2(500, 925), 120.0)
+	_add_circle_blocker("SouthHarborNorthWall", Vector2(700, 885), 115.0)
+	_add_circle_blocker("SouthHarborNortheastWall", Vector2(930, 900), 125.0)
+	_add_circle_blocker("SouthHarborEastWall", Vector2(1160, 985), 145.0)
+	_add_circle_blocker("SouthHarborEastRock", Vector2(1360, 1090), 115.0)
 
 	_add_polygon_blocker("EastBaySandbar", PackedVector2Array([
 		Vector2(1710, 620), Vector2(1830, 565), Vector2(2010, 590), Vector2(2135, 670),
@@ -208,8 +208,17 @@ func _build_world_collisions() -> void:
 
 
 func _build_locations() -> void:
-	_build_location("南海军港", Vector2(1080, 650), 238.0, Vector2(480, 130), Vector2(0, 250))
-	_build_location("川山渔村", Vector2(480, 1040), 170.0, Vector2(320, 110), Vector2(0, 160))
+	_build_location(
+		"南海军港",
+		Vector2(480, 1040),
+		110.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该地点即将开放",
+		Vector2.ZERO,
+		[Vector2(20, 90), Vector2(120, 20), Vector2(280, -10), Vector2(440, 30), Vector2(570, 120)]
+	)
+	_build_location("川山渔村", Vector2(1080, 650), 170.0, Vector2(420, 120), Vector2(0, 160))
 	_build_location("东湾水寨", Vector2(2040, 520), 225.0, Vector2(440, 120), Vector2(0, 180))
 	_build_location("青屿秘境", Vector2(2380, 540), 145.0, Vector2(260, 100), Vector2(0, 170), "该地点即将开放", Vector2(420, -140))
 

@@ -72,6 +72,11 @@ func _run() -> void:
 	var map_screen := hud.get_node("SeaMapScreen") as Control
 	var map_fog := map_screen.get_node_or_null("MapPanel/MapViewport/FogLayer") as TextureRect
 	_expect(map_fog != null and map_fog.texture != null, "Full sea map must display the shared fog texture.")
+	var close_button := map_screen.get_node("MapPanel/CloseButton") as Button
+	var close_button_style := close_button.get_theme_stylebox("normal") as StyleBoxTexture
+	_expect(close_button.text == "返回", "Sea-map brush button must display the exact Return label.")
+	_expect(close_button.size.is_equal_approx(Vector2(160, 64)), "Sea-map brush button must provide a larger text-safe click area.")
+	_expect(close_button_style != null and close_button_style.texture.resource_path.ends_with("sea_map_return_brush_v1.png"), "Sea-map Return button must use the generated ink-brush texture instead of a rectangular panel.")
 
 	var south_harbor_label: Label
 	var pirate_camp_label: Label
@@ -88,6 +93,9 @@ func _run() -> void:
 		await process_frame
 		var map_screenshot_error := root.get_texture().get_image().save_png(MAP_SCREENSHOT_PATH)
 		_expect(map_screenshot_error == OK, "Full-chart fog preview screenshot could not be saved.")
+	close_button.pressed.emit()
+	await process_frame
+	_expect(not map_screen.visible, "Pressing the generated sea-map Return button must restore exploration.")
 
 	var revealed_probe := reveal_center
 	current_scene = null

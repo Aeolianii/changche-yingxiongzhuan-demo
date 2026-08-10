@@ -1,6 +1,7 @@
 extends SceneTree
 
 const CANAL_SCRIPT := preload("res://scripts/fubo_guling/fubo_canal_puzzle.gd")
+const CANAL_SCENE := preload("res://scenes/fubo_guling/minigames/fubo_canal_minigame.tscn")
 
 var _failures: Array[String] = []
 
@@ -13,6 +14,7 @@ func _run() -> void:
 	_test_seeded_rounds_are_solvable()
 	_test_mistake_resets_only_current_round()
 	_test_identical_seed_reproduces_challenge()
+	await _test_scene_contract()
 	if not _failures.is_empty():
 		for failure in _failures:
 			push_error(failure)
@@ -65,6 +67,22 @@ func _test_identical_seed_reproduces_challenge() -> void:
 	var second = CANAL_SCRIPT.new(99)
 	_check(first.get_targets_for_test() == second.get_targets_for_test(), "Identical seeds must reproduce canal targets.")
 	_check(first.get_blocked_for_test() == second.get_blocked_for_test(), "Identical seeds must reproduce blocked branches.")
+
+
+func _test_scene_contract() -> void:
+	var ui = CANAL_SCENE.instantiate()
+	root.add_child(ui)
+	await process_frame
+	_check(ui.game_id == "canal", "Canal scene must expose canal game id.")
+	_check(ui.get_node("Layout/BranchButtons/Left") is Button, "Canal scene needs a left branch button.")
+	_check(ui.get_node("Layout/BranchButtons/Center") is Button, "Canal scene needs a center branch button.")
+	_check(ui.get_node("Layout/BranchButtons/Right") is Button, "Canal scene needs a right branch button.")
+	_check(ui.get_node("Layout/ReleaseButton") is Button, "Canal scene needs a release button.")
+	_check(not ui.get_node("ExitConfirm").visible, "Canal exit confirmation must start hidden.")
+	ui.choose_branch_for_test(0)
+	_check(ui.get_selected_branch_for_test() == 0, "Test selection must use the real branch-selection path.")
+	ui.queue_free()
+	await process_frame
 
 
 func _check(condition: bool, message: String) -> void:

@@ -1,0 +1,147 @@
+[gd_scene format=3 uid="uid://ubh3hbvgjldi"]
+
+[ext_resource type="Script" path="res://scripts/fubo_guling/minigames/fubo_canal_minigame.gd" id="1_rm1w8"]
+
+[node name="FuboCanalMinigame" type="Control" unique_id=2027753759]
+process_mode = 2
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_rm1w8")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1842397033]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.7254902, 0.8627451, 0.6039216, 1)
+
+[node name="Layout" type="VBoxContainer" parent="." unique_id=2115375823]
+custom_minimum_size = Vector2(780, 700)
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -390.0
+offset_top = -350.0
+offset_right = 390.0
+offset_bottom = 350.0
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Layout" unique_id=1006011497]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "三渠引水"
+horizontal_alignment = 1
+
+[node name="RoundLabel" type="Label" parent="Layout" unique_id=817470103]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "第 1 / 3 轮"
+horizontal_alignment = 1
+
+[node name="TargetPanel" type="HBoxContainer" parent="Layout" unique_id=1137543002]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="LeftTarget" type="Label" parent="Layout/TargetPanel" unique_id=1512560484]
+custom_minimum_size = Vector2(230, 50)
+layout_mode = 2
+text = "左渠"
+horizontal_alignment = 1
+
+[node name="CenterTarget" type="Label" parent="Layout/TargetPanel" unique_id=1536928232]
+custom_minimum_size = Vector2(230, 50)
+layout_mode = 2
+text = "中渠"
+horizontal_alignment = 1
+
+[node name="RightTarget" type="Label" parent="Layout/TargetPanel" unique_id=911133990]
+custom_minimum_size = Vector2(230, 50)
+layout_mode = 2
+text = "右渠"
+horizontal_alignment = 1
+
+[node name="CanalDrawing" type="Control" parent="Layout" unique_id=1962912489]
+custom_minimum_size = Vector2(760, 280)
+layout_mode = 2
+
+[node name="BranchButtons" type="HBoxContainer" parent="Layout" unique_id=1778697275]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Left" type="Button" parent="Layout/BranchButtons" unique_id=216469799]
+custom_minimum_size = Vector2(240, 64)
+layout_mode = 2
+text = "左渠"
+
+[node name="Center" type="Button" parent="Layout/BranchButtons" unique_id=1196397560]
+custom_minimum_size = Vector2(240, 64)
+layout_mode = 2
+text = "中渠"
+
+[node name="Right" type="Button" parent="Layout/BranchButtons" unique_id=1369549683]
+custom_minimum_size = Vector2(240, 64)
+layout_mode = 2
+text = "右渠"
+
+[node name="ReleaseButton" type="Button" parent="Layout" unique_id=721751499]
+custom_minimum_size = Vector2(760, 64)
+layout_mode = 2
+text = "放水"
+
+[node name="Status" type="Label" parent="Layout" unique_id=2033965401]
+custom_minimum_size = Vector2(760, 48)
+layout_mode = 2
+text = "选择渠道后放水。"
+horizontal_alignment = 1
+
+[node name="ExitButton" type="Button" parent="." unique_id=524530833]
+custom_minimum_size = Vector2(126, 48)
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -160.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 72.0
+text = "暂时离开"
+
+[node name="ExitConfirm" type="PanelContainer" parent="." unique_id=935569511]
+visible = false
+custom_minimum_size = Vector2(460, 200)
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -100.0
+offset_right = 230.0
+offset_bottom = 100.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ExitConfirm" unique_id=901016528]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Prompt" type="Label" parent="ExitConfirm/VBoxContainer" unique_id=1754240803]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "离开后将重置本次挑战"
+horizontal_alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="ExitConfirm/VBoxContainer" unique_id=474479281]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Continue" type="Button" parent="ExitConfirm/VBoxContainer/Actions" unique_id=1085495068]
+custom_minimum_size = Vector2(200, 58)
+layout_mode = 2
+text = "继续挑战"
+
+[node name="Leave" type="Button" parent="ExitConfirm/VBoxContainer/Actions" unique_id=1788206235]
+custom_minimum_size = Vector2(200, 58)
+layout_mode = 2
+text = "暂时离开"

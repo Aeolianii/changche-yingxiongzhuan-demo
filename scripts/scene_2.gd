@@ -69,9 +69,9 @@ var _active_npc: Variant = null
 var _saved_scene_state: Dictionary = {}
 
 var _magistrate_dialogues: Array = [
-	["广州县令", "下官参见伏波大将军！岭南官民苦海乱久矣，听闻将军奉旨南下建水师、镇海疆，万民皆盼将军到来，扫平海患、重安山海！"],
-	["水师主帅", "本官奉旨筹建水师、筑堡固防、剿寇复岛。如今初至岭南，急需战船武备、工坊器械、粮草辎重全面支撑，还需地方鼎力配合。"],
-	["广州县令", "下官早已提前统筹全域资源，全境备战就位，可保水师长期驻海、跨海征战粮草无忧。"],
+	["广州县令", "将军有所不知，南疆水师多年未操练，沿海海域情况未明，旧有海图也多有缺漏。"],
+	["水师主帅", "海防不可只凭旧闻。本帅先检阅诸营操练，随后亲自出海巡视，查明港湾、岛屿与航道。"],
+	["广州县令", "下官已备妥粮草、工匠与船材。待操练结束，还请将军从南海军港启程，探索海域，完善海图。"],
 ]
 
 var _arrival_dialogues: Array = [
@@ -1170,7 +1170,7 @@ func _update_task_hud() -> void:
 			objective = "检阅水师操练"
 			progress_stage = _patrol_task_stage
 		_:
-			task_title = "和县令对话探索岭南海域"
+			task_title = "探索海域，完善海图"
 			objective = "与广州县令交谈，选择是否立即出发"
 			progress_stage = _patrol_task_stage
 	_exploration_hud.call("set_main_task_progress", task_title, objective, progress_stage)

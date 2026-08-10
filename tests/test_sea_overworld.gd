@@ -448,7 +448,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	var main_objective := hud.get_node("QuestTracker/MainQuest/Objective") as Label
 	var side_task := hud.get_node("QuestTracker/SideQuest/TaskName") as Label
 	_expect(hud.visible, "Sea overworld must reuse the shared exploration HUD from scenes one and two.")
-	_expect(main_task.text == "探索大地图" and "点击进入按钮" in main_objective.text, "Spawning inside South Sea Harbor must advance the sea-map task to the location-entry step.")
+	_expect(main_task.text == "探索海域，完善海图" and "点击进入按钮" in main_objective.text, "Spawning inside South Sea Harbor must advance the chart-exploration task to the location-entry step.")
 	_expect(side_task.text == "海上见闻", "Sea overworld must replace the shared HUD's old placeholder side task.")
 	_expect(scene.get_node_or_null("UI/Root/TitlePanel") == null and scene.get_node_or_null("UI/Root/HelpPanel") == null, "Old sea-map title and help panels must be removed.")
 	_expect(scene.get_node_or_null("UI/Root/ToastPanel") == null, "Old sea-map toast UI must be replaced by the shared HUD toast.")
@@ -459,7 +459,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	var quest_screen := hud.get_node("QuestScreen") as Control
 	var selected_title := quest_screen.get_node("SelectedQuestTitle") as RichTextLabel
 	var steps := quest_screen.get_node("QuestStepsScroll/QuestSteps") as VBoxContainer
-	_expect(quest_screen.visible and "探索大地图" in selected_title.text, "Shared quest screen must open on the sea-map exploration task.")
+	_expect(quest_screen.visible and "探索海域，完善海图" in selected_title.text, "Shared quest screen must open on the chart-exploration task.")
 	_expect(steps.get_child_count() == 4, "Explore-map quest must display its four-step task flow.")
 	_expect("奉诏入殿" not in selected_title.text and "巡视水师驻地" not in selected_title.text, "Sea-map quest screen must not show scene-one or scene-two task names.")
 	if DisplayServer.get_name() != "headless":

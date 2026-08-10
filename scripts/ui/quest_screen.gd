@@ -77,6 +77,7 @@ const QUESTS := [
 var _selected_quest := 0
 var _quests: Array[Dictionary] = []
 var _completed_quests: Array[Dictionary] = []
+var _quest_context: StringName = &"default"
 var _quest_buttons: Array[Button] = []
 var _quest_choices: VBoxContainer
 var _active_tab: Button
@@ -142,6 +143,7 @@ func set_main_task_progress(task_title: String, objective: String, progress_stag
 func set_quest_context(context_id: StringName) -> void:
 	if context_id != &"sea_overworld":
 		return
+	_quest_context = context_id
 	_quests = _make_sea_overworld_quests()
 	_completed_quests.clear()
 	_selected_quest = 0
@@ -524,7 +526,7 @@ func _highlight_keywords(text_value: String, keywords: Array) -> String:
 
 
 func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dictionary:
-	if task_title == "探索大地图":
+	if task_title == "探索海域，完善海图" and _quest_context == &"sea_overworld":
 		return _make_sea_overworld_main_task(progress_stage)
 	if task_title == "奉诏入殿":
 		var default_main: Dictionary = QUESTS[0]
@@ -577,7 +579,7 @@ func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dict
 				},
 			],
 		}
-	if task_title == "和县令对话探索岭南海域":
+	if task_title == "探索海域，完善海图":
 		return {
 			"type": "主线",
 			"title": task_title,
@@ -665,7 +667,7 @@ func _make_sea_overworld_quests() -> Array[Dictionary]:
 func _make_sea_overworld_main_task(progress_stage: int) -> Dictionary:
 	return {
 		"type": "主线",
-		"title": "探索大地图",
+		"title": "探索海域，完善海图",
 		"objective": "使用WASD或方向键驾驶船只",
 		"description": "驾驶座船探索岭南海域，熟悉海上大地图的移动、地点接近、进入提示以及海上目标自动触发流程。",
 		"keywords": ["岭南海域", "海上大地图", "地点接近", "进入提示", "自动触发"],
@@ -711,7 +713,7 @@ func _make_completed_quests(task_title: String) -> Array[Dictionary]:
 		"巡视水师驻地": "奉诏入殿",
 		"筹备水师操练": "巡视水师驻地",
 		"参加水师操练": "筹备水师操练",
-		"和县令对话探索岭南海域": "参加水师操练",
+		"探索海域，完善海图": "参加水师操练",
 	}
 	var completed_quests: Array[Dictionary] = []
 	if not previous_by_current.has(task_title):

@@ -578,7 +578,7 @@ func _refresh_exploration_task() -> void:
 			objective = "接触海上的船只或漂流事件"
 		4:
 			objective = "继续探索岭南海域"
-	exploration_hud.call("set_main_task_progress", "探索大地图", objective, _exploration_stage)
+	exploration_hud.call("set_main_task_progress", "探索海域，完善海图", objective, _exploration_stage)
 
 
 func _on_hud_menu_visibility_changed(is_open: bool) -> void:

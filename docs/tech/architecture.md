@@ -15,7 +15,7 @@
 
 `Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操练覆盖层。
 
-`SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用横向拼接的广东海岸基础图与东部扩展图、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；东部扩展以 `World/EastBackground` 节点序列化在场景中，便于在 Godot 2D 编辑器中直接查看，场景脚本仅负责校正统一缩放、重叠偏移和运行时兼容。水师操练完成后可由场景二的广州县令对话进入，并可从南海军港返回场景二。
+`SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用横向拼接的广东海岸基础图与东部扩展图、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；东部扩展以 `World/EastBackground` 节点序列化在场景中，全部 14 个海岸多边形与 18 个圆形礁石碰撞也序列化在 `World/WorldCollision` 下，便于在 Godot 2D 编辑器中直接查看和拖动。场景脚本只负责背景参数、动态地点/事件与运行时交互，不再生成静态世界碰撞。水师操练完成后可由场景二的广州县令对话进入，并可从南海军港返回场景二。
 
 `ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。宫城、水师驻地和海上大地图各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、任务界面、系统菜单、短时提示和退出请求；海上大地图通过独立的 `sea_overworld` 任务上下文覆盖任务栏与任务流程，并把左上状态区切换为月相时钟、把海图入口锚定在右下角，不改变前两章任务数据。菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
 
@@ -71,6 +71,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 - 原型庭院采用少量连续矩形边界定义安全活动区，边界与花坛、石像和画面边缘保持视觉余量；优先避免窄缝与凹角，不逐个包围装饰物。
 - 正殿边界使用独立的左右矩形和连续上下边界：上半部比庭院更窄，下半部仍保持庭院宽度；不使用凹多边形拼接两种宽度，避免物理引擎分解出斜向三角碰撞。
 - 不从生成图片自动识别碰撞，不使用程序生成地形边界。
+- 海上大地图的静态海岸与礁石碰撞必须作为 `sea_overworld.tscn` 中 `World/WorldCollision` 的场景节点保存；不得在运行时重复生成，以保证编辑器可见性和单一数据来源。
 - 装饰物不碰撞；只有建筑、墙体、栏杆、水体和世界边缘阻挡玩家。
 - 宫殿室内外在同一坐标平面；门洞通过手工碰撞缺口表达，不增加高度变量。
 - Scene1 与 Scene2 必须引用同一套对话底板和姓名笔触资源；主角站左、NPC 站右，无说话者时隐藏立绘与姓名。

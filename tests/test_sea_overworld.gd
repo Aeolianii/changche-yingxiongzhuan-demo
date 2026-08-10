@@ -816,7 +816,7 @@ func _verify_navigation_collisions(scene: Node) -> void:
 					break
 	for land_point in LAND_COLLISION_PROBES:
 		_expect(not _is_water_clear(land_point, 2.0), "Major visible land at %s must block navigation." % land_point)
-	for water_point in [Vector2(760, 1130), Vector2(3200, 440), Vector2(2150, 1720), Vector2(4280, 2640)]:
+	for water_point in [Vector2(880, 1170), Vector2(3200, 440), Vector2(2150, 1720), Vector2(4280, 2640)]:
 		_expect(_is_water_clear(water_point, 19.0), "Required spawn/harbor/wreck water at %s must remain clear." % water_point)
 	for location in get_nodes_in_group("sea_location"):
 		_expect(_is_water_clear(_find_clear_entry_point(location as Area2D), 19.0), "%s entry must retain reachable water." % location.get_meta("location_name"))

@@ -24,7 +24,7 @@ const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
 const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
-const SOUTH_SEA_HARBOR_SPAWN := Vector2(760, 1130)
+const SOUTH_SEA_HARBOR_SPAWN := Vector2(880, 1170)
 const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
 

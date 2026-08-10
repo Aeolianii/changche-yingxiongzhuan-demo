@@ -4,6 +4,7 @@ signal close_requested
 
 const SEA_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
+const MAP_FOG_SOFT_EDGE_SHADER := preload("res://shaders/sea_map_fog_soft_edge.gdshader")
 const SEA_MAP_SCROLL_FRAME := preload("res://assets/ui/sea_overworld/sea_map_scroll_frame_v1.png")
 const SEA_MAP_RETURN_BRUSH := preload("res://assets/ui/sea_overworld/sea_map_return_brush_v1.png")
 
@@ -145,6 +146,9 @@ func _build_interface() -> void:
 	_fog_layer.stretch_mode = TextureRect.STRETCH_SCALE
 	_fog_layer.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_fog_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fog_material := ShaderMaterial.new()
+	fog_material.shader = MAP_FOG_SOFT_EDGE_SHADER
+	_fog_layer.material = fog_material
 	_fog_layer.hide()
 	_map_viewport.add_child(_fog_layer)
 

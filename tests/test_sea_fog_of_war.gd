@@ -64,6 +64,7 @@ func _run() -> void:
 	_expect(world_overlay != null and world_overlay.texture != null, "FogOfWar must render a world-space black overlay texture.")
 	if world_overlay != null:
 		_expect(world_overlay.z_index < player.z_index, "World fog must render below the player ship.")
+		_expect(world_overlay.material == null, "World fog must keep the raw rectangular reveal so the full camera viewport stays bright.")
 
 	var hud := scene.get_node("UI/ExplorationHUD") as Control
 	var map_button := hud.get_node("SeaMapStatus/MapButton") as Button
@@ -72,6 +73,8 @@ func _run() -> void:
 	var map_screen := hud.get_node("SeaMapScreen") as Control
 	var map_fog := map_screen.get_node_or_null("MapPanel/MapViewport/FogLayer") as TextureRect
 	_expect(map_fog != null and map_fog.texture != null, "Full sea map must display the shared fog texture.")
+	var map_fog_material := map_fog.material as ShaderMaterial
+	_expect(map_fog_material != null and map_fog_material.shader.resource_path.ends_with("sea_map_fog_soft_edge.gdshader"), "Full sea map alone must soften and round the shared fog edge.")
 	var close_button := map_screen.get_node("MapPanel/CloseButton") as Button
 	var close_button_style := close_button.get_theme_stylebox("normal") as StyleBoxTexture
 	_expect(close_button.text == "返回", "Sea-map brush button must display the exact Return label.")

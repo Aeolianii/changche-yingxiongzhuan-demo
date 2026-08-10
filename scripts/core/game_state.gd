@@ -11,6 +11,7 @@ const ALLOWED_SCENES := [
 var save_path_override := ""
 var _pending_scene_path := ""
 var _pending_scene_state: Dictionary = {}
+var _world_state: Dictionary = {}
 
 
 func save_game(scene_path: String, scene_state: Dictionary) -> Dictionary:
@@ -21,6 +22,7 @@ func save_game(scene_path: String, scene_state: Dictionary) -> Dictionary:
 		"saved_at_unix": int(Time.get_unix_time_from_system()),
 		"scene_path": scene_path,
 		"scene_state": scene_state.duplicate(true),
+		"world_state": _world_state.duplicate(true),
 	}
 	var validation := _validate_save_data(data)
 	if not validation.get("ok", false):
@@ -56,6 +58,7 @@ func load_game() -> Dictionary:
 		return validation
 	_pending_scene_path = str(parsed["scene_path"])
 	_pending_scene_state = (parsed["scene_state"] as Dictionary).duplicate(true)
+	_world_state = (parsed.get("world_state", {}) as Dictionary).duplicate(true)
 	return {
 		"ok": true,
 		"scene_path": _pending_scene_path,
@@ -75,6 +78,22 @@ func consume_pending_scene_state(scene_path: String) -> Dictionary:
 func clear_pending_scene_state() -> void:
 	_pending_scene_path = ""
 	_pending_scene_state.clear()
+
+
+func set_sea_fog_state(state: Dictionary) -> void:
+	if state.is_empty():
+		_world_state.erase("sea_fog")
+		return
+	_world_state["sea_fog"] = state.duplicate(true)
+
+
+func get_sea_fog_state() -> Dictionary:
+	var state = _world_state.get("sea_fog", {})
+	return (state as Dictionary).duplicate(true) if state is Dictionary else {}
+
+
+func reset_runtime_world_state() -> void:
+	_world_state.clear()
 
 
 func has_save() -> bool:
@@ -142,6 +161,8 @@ func _validate_save_data(data: Dictionary) -> Dictionary:
 	if typeof(data["scene_path"]) != TYPE_STRING or str(data["scene_path"]) not in ALLOWED_SCENES:
 		return _reject("unsupported_scene")
 	if not data["scene_state"] is Dictionary:
+		return _reject("invalid_scene_state")
+	if data.has("world_state") and not data["world_state"] is Dictionary:
 		return _reject("invalid_scene_state")
 	return {"ok": true}
 

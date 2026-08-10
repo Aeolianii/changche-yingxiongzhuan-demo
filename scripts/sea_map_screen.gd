@@ -19,6 +19,8 @@ var _location_layer: Control
 var _player_marker: Control
 var _player_name_label: Label
 var _map_content_rect := Rect2(Vector2.ZERO, MAP_VIEW_SIZE)
+var _fog_of_war: Node
+var _fog_layer: TextureRect
 
 
 func _ready() -> void:
@@ -28,8 +30,9 @@ func _ready() -> void:
 	hide()
 
 
-func configure(player_node: Node2D, world_size: Vector2, locations: Array, map_chunks: Array = []) -> void:
+func configure(player_node: Node2D, world_size: Vector2, locations: Array, map_chunks: Array = [], fog_of_war: Node = null) -> void:
 	_player = player_node
+	_fog_of_war = fog_of_war
 	_world_size = Vector2(maxf(world_size.x, 1.0), maxf(world_size.y, 1.0))
 	_refresh_map_content_rect()
 	_rebuild_map_chunks(map_chunks)
@@ -46,6 +49,7 @@ func configure(player_node: Node2D, world_size: Vector2, locations: Array, map_c
 		location_label.set_meta("world_position", location_data.get("position", Vector2.ZERO))
 		_location_layer.add_child(location_label)
 	_player_name_label.text = "当前位置"
+	_configure_fog_layer()
 	_refresh_markers()
 
 
@@ -130,6 +134,15 @@ func _build_interface() -> void:
 	wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_map_viewport.add_child(wash)
 
+	_fog_layer = TextureRect.new()
+	_fog_layer.name = "FogLayer"
+	_fog_layer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_fog_layer.stretch_mode = TextureRect.STRETCH_SCALE
+	_fog_layer.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_fog_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fog_layer.hide()
+	_map_viewport.add_child(_fog_layer)
+
 	_location_layer = Control.new()
 	_location_layer.name = "MapLocationLayer"
 	_location_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -167,6 +180,7 @@ func _refresh_markers() -> void:
 	for location_label in _location_layer.get_children():
 		var world_position: Vector2 = location_label.get_meta("world_position", Vector2.ZERO)
 		location_label.position = _map_position(world_position) - location_label.size * 0.5
+		location_label.visible = _fog_of_war == null or bool(_fog_of_war.call("is_world_position_revealed", world_position))
 	if is_instance_valid(_player) and is_instance_valid(_player_marker):
 		var marker_position := _map_position(_player.global_position)
 		_player_marker.position = Vector2(
@@ -187,6 +201,18 @@ func _refresh_map_content_rect() -> void:
 	var content_scale := minf(MAP_VIEW_SIZE.x / _world_size.x, MAP_VIEW_SIZE.y / _world_size.y)
 	var content_size := _world_size * content_scale
 	_map_content_rect = Rect2((MAP_VIEW_SIZE - content_size) * 0.5, content_size)
+
+
+func _configure_fog_layer() -> void:
+	if not is_instance_valid(_fog_layer):
+		return
+	if _fog_of_war == null or not _fog_of_war.has_method("get_fog_texture"):
+		_fog_layer.hide()
+		return
+	_fog_layer.texture = _fog_of_war.call("get_fog_texture") as Texture2D
+	_fog_layer.position = _map_content_rect.position
+	_fog_layer.size = _map_content_rect.size
+	_fog_layer.show()
 
 
 func _rebuild_map_chunks(map_chunks: Array) -> void:

@@ -115,7 +115,7 @@ func set_quest_context(context_id: StringName) -> void:
 		return
 	_enable_sea_map_status()
 	if is_instance_valid(_main_task_label):
-		_main_task_label.text = "探索大地图"
+		_main_task_label.text = "探索海域，完善海图"
 	if is_instance_valid(_main_objective_label):
 		_main_objective_label.text = "使用WASD或方向键驾驶船只"
 	var side_task := get_node_or_null("QuestTracker/SideQuest/TaskName") as Label
@@ -128,9 +128,9 @@ func set_quest_context(context_id: StringName) -> void:
 		_quest_screen.call("set_quest_context", context_id)
 
 
-func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array, map_chunks: Array = []) -> void:
+func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array, map_chunks: Array = [], fog_of_war: Node = null) -> void:
 	if is_instance_valid(_map_screen):
-		_map_screen.call("configure", player_node, world_size, locations, map_chunks)
+		_map_screen.call("configure", player_node, world_size, locations, map_chunks, fog_of_war)
 
 
 func set_lunar_day(total_days: float) -> void:

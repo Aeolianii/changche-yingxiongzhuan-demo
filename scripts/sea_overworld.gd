@@ -5,6 +5,7 @@ const DRIFTING_CRATE_TEXTURE := preload("res://assets/sprites/sea_overworld/drif
 const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
 const FIELD_EVENT_DIALOGUE_SCENE := preload("res://scenes/ui/field_event_dialogue.tscn")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
+const SEA_FOG_OF_WAR_SCRIPT := preload("res://scripts/sea_fog_of_war.gd")
 const A_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_a_v3.png")
 const B_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_b_v3.png")
 const C_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v3.png")
@@ -49,10 +50,12 @@ var _saved_scene_state: Dictionary = {}
 var _event_dialogue: FieldEventDialogue
 var _active_drifting_crate: Area2D
 var _crate_event_resolved := false
+var _fog_of_war: Node2D
 
 
 func _ready() -> void:
 	_saved_scene_state = _consume_saved_scene_state()
+	var restoring_saved_state := not _saved_scene_state.is_empty()
 	if _saved_scene_state.is_empty():
 		_entered_from_scene_two = _consume_scene_two_entry_flag()
 	_build_background_chunks()
@@ -69,7 +72,6 @@ func _ready() -> void:
 	exploration_hud.connect("load_requested", _on_load_requested)
 	exploration_hud.connect("return_title_requested", _on_return_title_requested)
 	exploration_hud.call("set_quest_context", &"sea_overworld")
-	_configure_sea_map_hud()
 	if _saved_scene_state.is_empty():
 		_lunar_day = float(get_tree().root.get_meta(LUNAR_DAY_META, 0.0))
 	else:
@@ -81,9 +83,11 @@ func _ready() -> void:
 	interaction_prompt.hide()
 	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
 	$UI.add_child(_loading_transition)
-	if _saved_scene_state.is_empty():
+	if not restoring_saved_state:
 		player.global_position = SOUTH_SEA_HARBOR_SPAWN
 		_activate_south_sea_harbor_spawn()
+	_build_fog_of_war()
+	_configure_sea_map_hud()
 
 
 func _process(delta: float) -> void:
@@ -99,6 +103,8 @@ func _on_player_sailed(delta: float) -> void:
 		return
 	if _exploration_stage == 0:
 		_advance_exploration_stage(1)
+	if is_instance_valid(_fog_of_war):
+		_fog_of_war.reveal_at(player.global_position)
 	_lunar_day += delta / SECONDS_PER_LUNAR_DAY
 	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
 	exploration_hud.call("set_lunar_day", _lunar_day)
@@ -259,7 +265,32 @@ func _configure_sea_map_hud() -> void:
 		{"texture": C_MAP_TEXTURE, "world_rect": Rect2(C_MAP_ORIGIN, MAP_CHUNK_SIZE), "fade_from_left": false, "fade_from_top": true},
 		{"texture": D_MAP_TEXTURE, "world_rect": Rect2(D_MAP_ORIGIN, MAP_CHUNK_SIZE), "fade_from_left": true, "fade_from_top": true},
 	]
-	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations, map_chunks)
+	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations, map_chunks, _fog_of_war)
+
+
+func _build_fog_of_war() -> void:
+	_fog_of_war = SEA_FOG_OF_WAR_SCRIPT.new() as Node2D
+	_fog_of_war.name = "FogOfWar"
+	$World.add_child(_fog_of_war)
+	var saved_fog_state: Dictionary = {}
+	var game_state := _game_state()
+	if game_state != null and game_state.has_method("get_sea_fog_state"):
+		saved_fog_state = game_state.call("get_sea_fog_state") as Dictionary
+	_fog_of_war.call("setup", MAP_SIZE, camera, saved_fog_state)
+	_fog_of_war.connect("state_changed", _store_fog_state)
+	if saved_fog_state.is_empty():
+		_fog_of_war.call("reveal_at", SOUTH_SEA_HARBOR_SPAWN)
+	_fog_of_war.reveal_at(player.global_position)
+	_store_fog_state()
+
+
+func _store_fog_state() -> void:
+	if not is_instance_valid(_fog_of_war):
+		return
+	var game_state := _game_state()
+	if game_state == null or not game_state.has_method("set_sea_fog_state"):
+		return
+	game_state.call("set_sea_fog_state", _fog_of_war.call("serialize_state"))
 
 
 func _build_background_chunks() -> void:
@@ -531,6 +562,7 @@ func _return_to_scene_two() -> void:
 	if _transitioning:
 		return
 	_transitioning = true
+	_store_fog_state()
 	player.controls_enabled = false
 	interaction_prompt.hide()
 	exploration_hud.call("set_exploration_visible", false)
@@ -595,6 +627,7 @@ func _on_save_requested() -> void:
 	if game_state == null:
 		_show_save_message(false, "write_failed")
 		return
+	_store_fog_state()
 	var snapshot := {
 		"player_position": _vector_to_save(player.global_position),
 		"facing_index": int(player.call("save_facing_index")),

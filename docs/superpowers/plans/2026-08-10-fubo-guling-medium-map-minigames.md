@@ -147,7 +147,7 @@ Run through Godot MCP `test_run` with `res://tests/test_fubo_guling.gd`.
 Fallback command:
 
 ```powershell
-& 'D:\Programs\Godot-4.7.1-dotnet\Godot_v4.7.1-stable_mono_win64\Godot_v4.7.1-stable_mono_win64_console.exe' --headless --path . --script res://tests/test_fubo_guling.gd
+& 'C:\Users\wangk\Desktop\Godot_v4.7-stable_win64.exe' --headless --path . --script res://tests/test_fubo_guling.gd
 ```
 
 Expected: exit `0` and `Fubo Guling skeleton verification passed.` Record the result as the pre-change baseline.
@@ -550,7 +550,7 @@ const SPECS := {
 生成 44.1 kHz、16-bit、mono PCM；每份音频做 4 ms attack 和指数衰减。运行命令：
 
 ```powershell
-& 'D:\Programs\Godot-4.7.1-dotnet\Godot_v4.7.1-stable_mono_win64\Godot_v4.7.1-stable_mono_win64_console.exe' --headless --path . --script res://tools/generate_fubo_drum_samples.gd
+& 'C:\Users\wangk\Desktop\Godot_v4.7-stable_win64.exe' --headless --path . --script res://tools/generate_fubo_drum_samples.gd
 ```
 
 Expected: four WAV files exist, sizes and SHA-256 differ, each loads as `AudioStreamWAV`.

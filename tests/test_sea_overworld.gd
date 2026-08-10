@@ -210,6 +210,27 @@ func _verify_location_layout(scene: Node) -> void:
 		_expect(_is_water_clear(_find_clear_entry_point(qingyu), 19.0), "Qingyu south-side entry must remain reachable open water.")
 		var qingyu_map_offset := qingyu.get_meta("map_label_offset", Vector2.ZERO) as Vector2
 		_expect(qingyu_map_offset.x > 0.0 and qingyu_map_offset.y < 0.0, "Qingyu full-map label must be offset to the pagoda island's upper-right.")
+	var white_sand := _find_location(locations, "白沙渔岛")
+	if white_sand != null:
+		var white_sand_shape := white_sand.get_node("EntryTriggerShape") as CollisionShape2D
+		_expect(white_sand_shape.shape is RectangleShape2D, "White Sand fishing island must use a dedicated rectangular dock entry.")
+		_expect(white_sand_shape.position.x > 0.0 and white_sand_shape.position.y > 0.0, "White Sand dock entry must stay southeast of the island center.")
+		_expect(_is_water_clear(white_sand.global_position + white_sand_shape.position, 19.0), "White Sand dock entry must remain reachable open water.")
+	var xuanchao := _find_location(locations, "玄潮古屿")
+	if xuanchao != null:
+		var xuanchao_shapes := _location_trigger_shapes(xuanchao)
+		_expect(xuanchao_shapes.size() == 3, "Xuanchao ancient reefs must expose exactly three directional entry points.")
+		var trigger_offsets := xuanchao.get_meta("entry_trigger_offsets", []) as Array
+		_expect(trigger_offsets.size() == 3, "Xuanchao directional entry metadata must list north, south and east points.")
+		if trigger_offsets.size() == 3:
+			_expect((trigger_offsets[0] as Vector2).y < 0.0, "Xuanchao first entry point must sit north of the reefs.")
+			_expect((trigger_offsets[1] as Vector2).y > 0.0, "Xuanchao second entry point must sit south of the reefs.")
+			_expect((trigger_offsets[2] as Vector2).x > 0.0, "Xuanchao third entry point must sit east of the reefs.")
+		for shape_node in xuanchao_shapes:
+			_expect(_is_water_clear(xuanchao.global_position + shape_node.position, 19.0), "Every Xuanchao directional entry point must remain reachable open water.")
+		_expect(not _trigger_contains_point(xuanchao, Vector2(1880, 2395)), "Xuanchao must not expose a west-side entry toward White Sand fishing island.")
+		var xuanchao_map_offset := xuanchao.get_meta("map_label_offset", Vector2.ZERO) as Vector2
+		_expect(xuanchao_map_offset.x > 0.0 and xuanchao_map_offset.y > 0.0, "Xuanchao full-map label must be offset to the reefs' lower-right.")
 	var script_constants := (scene.get_script() as Script).get_script_constant_map()
 	var spawn := script_constants.get("SOUTH_SEA_HARBOR_SPAWN", Vector2.ZERO) as Vector2
 	var south_harbor := _find_location(locations, "南海军港")
@@ -318,6 +339,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	var location_names: Array[String] = []
 	var east_bay_map_label: Label
 	var qingyu_map_label: Label
+	var xuanchao_map_label: Label
 	for location_label in location_layer.get_children():
 		var label := location_label as Label
 		location_names.append(label.text)
@@ -325,11 +347,14 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 			east_bay_map_label = label
 		elif "青屿秘境" in label.text:
 			qingyu_map_label = label
+		elif "玄潮古屿" in label.text:
+			xuanchao_map_label = label
 	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
 	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
 	_expect(qingyu_map_label != null and (qingyu_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2800, 400)), "Qingyu full-map label must align to the pagoda island's upper-right.")
+	_expect(xuanchao_map_label != null and (xuanchao_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2620, 2600)), "Xuanchao full-map label must sit at the reefs' lower-right.")
 	if east_bay_map_label != null and qingyu_map_label != null:
 		var east_bay_label_center := east_bay_map_label.position + east_bay_map_label.size * 0.5
 		var qingyu_label_center := qingyu_map_label.position + qingyu_map_label.size * 0.5
@@ -463,7 +488,38 @@ func _verify_b_expansion(scene: Node) -> void:
 func _verify_c_expansion(scene: Node) -> void:
 	var c_locations := _collect_region_locations(C_LOCATIONS, "C")
 	_expect(c_locations.size() == 4, "C must contain four lower-left frontier locations.")
+	await _verify_c_directional_entries(scene, c_locations)
 	await _verify_region_interactions(scene, c_locations, "龙门海寨", C_ZONE_SCREENSHOT_PATH)
+
+
+func _verify_c_directional_entries(scene: Node, c_locations: Array[Area2D]) -> void:
+	var player := scene.get_node("World/Player") as CharacterBody2D
+	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
+	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
+	var xuanchao := _find_location(c_locations, "玄潮古屿")
+	var white_sand := _find_location(c_locations, "白沙渔岛")
+	if xuanchao != null:
+		for shape_node in _location_trigger_shapes(xuanchao):
+			player.global_position = Vector2(1800, 2100)
+			for _frame in range(2):
+				await physics_frame
+			player.global_position = xuanchao.global_position + shape_node.position
+			for _frame in range(3):
+				await physics_frame
+			_expect(prompt.visible and "玄潮古屿" in location_label.text, "Each Xuanchao north/south/east entry point must activate the location prompt.")
+		player.global_position = Vector2(1880, 2395)
+		for _frame in range(3):
+			await physics_frame
+		_expect(not prompt.visible or "玄潮古屿" not in location_label.text, "The west side of Xuanchao must not activate its location prompt.")
+	if white_sand != null:
+		player.global_position = Vector2(1800, 2100)
+		for _frame in range(2):
+			await physics_frame
+		var dock_shape := white_sand.get_node("EntryTriggerShape") as CollisionShape2D
+		player.global_position = white_sand.global_position + dock_shape.position
+		for _frame in range(3):
+			await physics_frame
+		_expect(prompt.visible and "白沙渔岛" in location_label.text, "White Sand's south dock entry point must activate the location prompt.")
 
 
 func _verify_d_expansion(scene: Node) -> void:
@@ -636,14 +692,24 @@ func _find_clear_entry_point(area: Area2D) -> Vector2:
 
 
 func _trigger_contains_point(area: Area2D, point: Vector2) -> bool:
-	var shape_node := area.get_node("EntryTriggerShape") as CollisionShape2D
-	var local_point := point - area.global_position - shape_node.position
-	if shape_node.shape is RectangleShape2D:
-		var half_size := (shape_node.shape as RectangleShape2D).size * 0.5
-		return absf(local_point.x) <= half_size.x and absf(local_point.y) <= half_size.y
-	if shape_node.shape is CircleShape2D:
-		return local_point.length() <= (shape_node.shape as CircleShape2D).radius
+	for shape_node in _location_trigger_shapes(area):
+		var local_point := point - area.global_position - shape_node.position
+		if shape_node.shape is RectangleShape2D:
+			var half_size := (shape_node.shape as RectangleShape2D).size * 0.5
+			if absf(local_point.x) <= half_size.x and absf(local_point.y) <= half_size.y:
+				return true
+		elif shape_node.shape is CircleShape2D:
+			if local_point.length() <= (shape_node.shape as CircleShape2D).radius:
+				return true
 	return false
+
+
+func _location_trigger_shapes(area: Area2D) -> Array[CollisionShape2D]:
+	var shape_nodes: Array[CollisionShape2D] = []
+	for child in area.get_children():
+		if child is CollisionShape2D:
+			shape_nodes.append(child as CollisionShape2D)
+	return shape_nodes
 
 
 func _is_water_clear(point: Vector2, radius: float) -> bool:

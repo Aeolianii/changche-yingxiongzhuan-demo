@@ -221,8 +221,17 @@ func _build_locations() -> void:
 
 	_build_location("澄海灯岛", Vector2(480, 1680), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
 	_build_location("龙门海寨", Vector2(860, 2260), 210.0, Vector2(400, 120), Vector2(0, 190), "该岛屿即将开放")
-	_build_location("白沙渔岛", Vector2(1460, 2460), 180.0, Vector2(360, 110), Vector2(0, 135), "该岛屿即将开放")
-	_build_location("玄潮古屿", Vector2(2100, 2240), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("白沙渔岛", Vector2(1460, 2460), 180.0, Vector2(300, 120), Vector2(180, 140), "该岛屿即将开放")
+	_build_location(
+		"玄潮古屿",
+		Vector2(2100, 2240),
+		110.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2(520, 360),
+		[Vector2(100, -60), Vector2(100, 360), Vector2(420, 180)]
+	)
 
 	_build_location("红湾卫所", Vector2(2980, 1760), 190.0, Vector2(360, 120), Vector2(-160, 170), "该岛屿即将开放")
 	_build_location("南澳商港", Vector2(4380, 2460), 280.0, Vector2(560, 150), Vector2(-100, 180), "该岛屿即将开放")
@@ -304,7 +313,8 @@ func _build_location(
 	front_trigger_size: Vector2 = Vector2.ZERO,
 	front_trigger_offset: Vector2 = Vector2.ZERO,
 	entry_message: String = "该地点即将开放",
-	map_label_offset: Vector2 = Vector2.ZERO
+	map_label_offset: Vector2 = Vector2.ZERO,
+	entry_trigger_offsets: Array[Vector2] = []
 ) -> void:
 	var area := Area2D.new()
 	area.name = "Location%d" % world_markers.get_child_count()
@@ -317,24 +327,40 @@ func _build_location(
 	area.set_meta("front_trigger_offset", front_trigger_offset)
 	area.set_meta("entry_message", entry_message)
 	area.set_meta("map_label_offset", map_label_offset)
+	area.set_meta("entry_trigger_offsets", entry_trigger_offsets)
 	area.add_to_group("sea_location")
 	world_markers.add_child(area)
 
+	if entry_trigger_offsets.is_empty():
+		_add_location_entry_trigger(area, "EntryTriggerShape", trigger_radius, front_trigger_size, front_trigger_offset)
+	else:
+		for index in range(entry_trigger_offsets.size()):
+			var shape_name := "EntryTriggerShape" if index == 0 else "EntryTriggerShape%d" % (index + 1)
+			_add_location_entry_trigger(area, shape_name, trigger_radius, Vector2.ZERO, entry_trigger_offsets[index])
+
+	area.body_entered.connect(_on_location_body_entered.bind(area))
+	area.body_exited.connect(_on_location_body_exited.bind(area))
+
+
+func _add_location_entry_trigger(
+	area: Area2D,
+	shape_name: String,
+	trigger_radius: float,
+	trigger_size: Vector2,
+	trigger_offset: Vector2
+) -> void:
 	var shape_node := CollisionShape2D.new()
-	shape_node.name = "EntryTriggerShape"
-	if front_trigger_size != Vector2.ZERO:
+	shape_node.name = shape_name
+	shape_node.position = trigger_offset
+	if trigger_size != Vector2.ZERO:
 		var front_shape := RectangleShape2D.new()
-		front_shape.size = front_trigger_size
-		shape_node.position = front_trigger_offset
+		front_shape.size = trigger_size
 		shape_node.shape = front_shape
 	else:
 		var radial_shape := CircleShape2D.new()
 		radial_shape.radius = trigger_radius
 		shape_node.shape = radial_shape
 	area.add_child(shape_node)
-
-	area.body_entered.connect(_on_location_body_entered.bind(area))
-	area.body_exited.connect(_on_location_body_exited.bind(area))
 
 
 func _build_ship_trigger(ship_name: String, at: Vector2, atlas_column: int) -> void:

@@ -1,6 +1,6 @@
 # CHG-20260810 海上大地图碰撞场景化
 
-- 状态：进行中
+- 状态：已完成
 - 类型：技术 / 场景资源
 - 日期：2026-08-10
 
@@ -51,4 +51,13 @@
 
 ## 验证证据
 
-- 待实现后补充。
+- `sea_overworld.tscn` 的 `World/WorldCollision` 在运行前已序列化 32 个子节点：14 个 `CollisionPolygon2D` 与 18 个 `CollisionShape2D`。
+- 自动化几何契约逐项核对 14 个节点的全部多边形顶点，以及 18 个节点的名称、中心坐标和圆形半径；全部与迁移前代码基准一致。
+- 18 个圆形碰撞各自拥有独立的 `CircleShape2D` 子资源，编辑一个半径不会连带修改其他节点。
+- `sea_overworld.gd` 已删除 `_build_world_collisions()` 的调用与实现，并删除 `_add_polygon_blocker()`、`_add_circle_blocker()`；运行后 `WorldCollision` 仍为 32 个子节点，无重复生成。
+- 原有陆地探针、四区航路、中央堡垒四向绕行、地点入口和清水探针全部通过。
+- Godot 4.7.1 Mono 无头海图验证：`Sea overworld runtime verification passed.`
+- Godot 4.7.1 Mono 场景往返验证：`Scene2 and sea-overworld round-trip verification passed.`
+- Godot 4.7.1 Mono 无头编辑器成功扫描项目并重新打开场景，无解析或资源错误。
+- Godot 4.7.1 Mono Vulkan 运行验证：`Sea overworld runtime verification passed.`
+- `sea_overworld.tscn` 原有未提交编辑器改动未纳入本次提交；碰撞节点通过独立索引补丁提交，工作区中原改动保持不变。

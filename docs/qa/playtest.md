@@ -106,6 +106,7 @@
 | 川山渔村下方码头入口 | 从东北大陆聚落下方水面靠近 | 在矩形码头水面触发地点提示 | 船只不压静态碰撞，显示“川山渔村”并可尝试进入 | passed / location interaction runtime |
 | 岭南海图标题下移 | 打开完整海图 | 检查顶部牌匾内标题位置 | 标题 Y 坐标为 `102`，比上一版继续下移且未超出牌匾安全区 | passed / headless assertion + Vulkan render |
 | 川山红点码头校正 | 将船驶到用户截图红点并打开完整海图 | 核对小码头入口和川山渔村标签 | `(1470,680)` 可触发川山渔村；标签上移到房屋区 `(1080,430)`，不压住水面当前位置标记 | passed / screenshot alignment + runtime + Vulkan render |
+| 海图碰撞编辑器场景化 | 未运行游戏时打开 `sea_overworld.tscn` 并展开 `World/WorldCollision` | 核对节点数量、类型、几何和独立 Shape，再运行海图 | 编辑器显示 14 个可编辑多边形与 18 个可独立编辑圆形；逐项几何完全匹配迁移前基准；运行后仍为 32 个且航路无回归 | passed / packed-scene geometry contract + editor load + runtime 2 modes |
 
 ## 手动觐见与任务指引验收
 

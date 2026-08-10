@@ -1,6 +1,6 @@
 # CHG-20260810 岭南海图返回笔触按钮
 
-- 状态：in-progress
+- 状态：done
 - 类型：海图 UI / 生成式资源
 - 日期：2026-08-10
 
@@ -32,4 +32,6 @@
 
 ## 验证证据
 
-- 待实现后补充。
+- 透明资源检查：最终 PNG 为 `384×144` RGBA，四角 Alpha 均为 `0`，无可见绿色色键边缘。
+- 自动验证：`tests/test_sea_fog_of_war.gd` 在 Godot 4.7.1 headless 与 OpenGL Compatibility 模式均退出 0；覆盖资源绑定、按钮尺寸、准确文字和点击关闭。
+- 视觉验证：`.godot/sea_fog_map_preview.png` 原始分辨率复核确认右上按钮为深墨横笔触，“返回”二字居中清晰，未与卷轴和标题冲突。

@@ -1,6 +1,6 @@
 # CHG-20260810 完整海图迷雾圆润边缘
 
-- 状态：in-progress
+- 状态：done
 - 类型：海图探索 / 视觉优化
 - 日期：2026-08-10
 
@@ -33,4 +33,6 @@
 
 ## 验证证据
 
-- 待实现后补充。
+- 自动验证：`tests/test_sea_fog_of_war.gd` 在 Godot 4.7.1 headless 与 OpenGL Compatibility 模式均退出 0；断言确认世界迷雾不使用柔边材质、完整海图独占 `sea_map_fog_soft_edge.gdshader`。
+- 视觉验证：`.godot/sea_fog_map_preview.png` 原始分辨率复核确认相邻矩形探索区的外角和台阶转折已圆润并带窄幅柔边；`.godot/sea_fog_world_preview.png` 确认玩家当前屏幕仍完整明亮。
+- 行为边界：地点标签继续依据原始位图查询，远端未探索地点保持隐藏，存档数据结构未改动。

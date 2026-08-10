@@ -1,0 +1,829 @@
+[gd_scene format=3 uid="uid://dvyfo1qrbh33n"]
+
+[ext_resource type="Script" uid="uid://bdb5k2podbgs" path="res://scripts/fubo_guling/fubo_guling.gd" id="1_xewfn"]
+[ext_resource type="Script" uid="uid://xr1kqaeysxeo" path="res://scripts/fubo_guling/fubo_placeholder_world.gd" id="2_yoyss"]
+[ext_resource type="PackedScene" uid="uid://cwdko3gfnx6h3" path="res://scenes/characters/player.tscn" id="3_hkqpv"]
+[ext_resource type="Texture2D" uid="uid://dldtyh4tdl02f" path="res://assets/fubo_guling/generated/coastal_landing.png" id="3_w4bwy"]
+[ext_resource type="Script" uid="uid://dkcte25ysvqxe" path="res://scripts/fubo_guling/fubo_world_prop.gd" id="4_erm8w"]
+[ext_resource type="Texture2D" uid="uid://dsjgbclnd1ddw" path="res://assets/fubo_guling/generated/stone_courtyard.png" id="4_p58l7"]
+[ext_resource type="Texture2D" uid="uid://bb6ag55vqwcs1" path="res://assets/fubo_guling/generated/earth_road_straight.png" id="5_rorjb"]
+[ext_resource type="Texture2D" uid="uid://be3ackap027ql" path="res://assets/fubo_guling/generated/stone_stairs.png" id="6_psr7n"]
+[ext_resource type="Texture2D" uid="uid://b052femjd3idb" path="res://assets/fubo_guling/generated/grass_patch.png" id="7_hvc7x"]
+[ext_resource type="Texture2D" uid="uid://bomw7nfbwseu2" path="res://assets/characters/soldier/standard/idle/down/1.png" id="10_qcq6o"]
+[ext_resource type="Texture2D" uid="uid://erks2neba6pq" path="res://assets/fubo_guling/generated/guard_house.png" id="11_4qc4v"]
+[ext_resource type="Texture2D" uid="uid://cgqao8wohld6l" path="res://assets/fubo_guling/generated/granary.png" id="12_0qcnr"]
+[ext_resource type="Texture2D" uid="uid://bids0r3ifs0q1" path="res://assets/fubo_guling/generated/banyan_tree.png" id="13_52i7m"]
+[ext_resource type="Texture2D" uid="uid://cf7b3ohjujvpo" path="res://assets/fubo_guling/generated/lychee_tree.png" id="14_wfv8c"]
+[ext_resource type="Texture2D" uid="uid://cqamqwevbep3p" path="res://assets/fubo_guling/generated/coastal_palm.png" id="15_0lv7o"]
+[ext_resource type="Texture2D" uid="uid://d3y18bbve3c8a" path="res://assets/fubo_guling/generated/sluice_mechanism.png" id="16_8rxne"]
+[ext_resource type="Texture2D" uid="uid://c4it0na173fx2" path="res://assets/fubo_guling/generated/stone_basin.png" id="17_qs746"]
+[ext_resource type="Texture2D" uid="uid://b2dawvfshk3io" path="res://assets/fubo_guling/generated/war_drum.png" id="18_x7fr6"]
+[ext_resource type="Texture2D" uid="uid://d2qtxaa0sp23e" path="res://assets/fubo_guling/generated/signal_flag_yellow.png" id="19_lwg7b"]
+[ext_resource type="Texture2D" uid="uid://812mne5wbbhw" path="res://assets/fubo_guling/generated/signal_flag_red.png" id="20_htdxp"]
+[ext_resource type="Texture2D" uid="uid://0tfhug108w4l" path="res://assets/fubo_guling/generated/signal_flag_blue.png" id="21_n8g30"]
+[ext_resource type="Texture2D" uid="uid://b2gm3a17vabh8" path="res://assets/fubo_guling/generated/road_barrier.png" id="22_5dl1x"]
+[ext_resource type="Texture2D" uid="uid://m0xqxihw0b0y" path="res://assets/fubo_guling/generated/blank_stele.png" id="23_sprgl"]
+[ext_resource type="Texture2D" uid="uid://dol12ihecjl51" path="res://assets/fubo_guling/generated/mountain_gate.png" id="24_kakgu"]
+[ext_resource type="Texture2D" uid="uid://bkwllpajmo4ke" path="res://assets/fubo_guling/generated/view_pavilion.png" id="25_r6vrj"]
+[ext_resource type="Texture2D" uid="uid://cbfv8n7sri7oc" path="res://assets/fubo_guling/generated/shrub_cluster.png" id="26_fa1ar"]
+[ext_resource type="Texture2D" uid="uid://c64pevfpf5013" path="res://assets/fubo_guling/generated/coastal_rocks.png" id="27_yivr7"]
+[ext_resource type="Texture2D" uid="uid://be4msuc1gfd1h" path="res://assets/fubo_guling/generated/mossy_boulder.png" id="28_euedq"]
+[ext_resource type="Script" path="res://scripts/fubo_guling/minigames/fubo_minigame_host.gd" id="29_p58l7"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_eyqv8"]
+size = Vector2(40, 1500)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_88otk"]
+size = Vector2(40, 1500)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_qs51d"]
+size = Vector2(1500, 110)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_o7m5c"]
+size = Vector2(1000, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_avxio"]
+size = Vector2(320, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_f12bo"]
+size = Vector2(100, 50)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_iuhai"]
+size = Vector2(18, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3rkah"]
+size = Vector2(20, 14)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3kpwv"]
+size = Vector2(20, 14)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cvwkh"]
+size = Vector2(20, 14)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_op5i6"]
+size = Vector2(124, 86)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1kv3u"]
+size = Vector2(124, 86)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_t6d6q"]
+size = Vector2(124, 86)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_o1d17"]
+size = Vector2(110, 65)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sks1q"]
+size = Vector2(110, 65)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_og5ew"]
+radius = 90.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_v2yly"]
+radius = 60.0
+
+[node name="FuboGuling" type="Node2D" unique_id=579197751]
+script = ExtResource("1_xewfn")
+
+[node name="Ground" type="Node2D" parent="." unique_id=358007687]
+z_index = -20
+script = ExtResource("2_yoyss")
+
+[node name="TerrainArt" type="Node2D" parent="Ground" unique_id=409411743]
+
+[node name="CoastalLanding" type="Sprite2D" parent="Ground/TerrainArt" unique_id=467664834]
+texture_filter = 1
+position = Vector2(430, 1290)
+scale = Vector2(1, 0.72)
+texture = ExtResource("3_w4bwy")
+
+[node name="CourtyardWest" type="Sprite2D" parent="Ground/TerrainArt" unique_id=2140653194]
+texture_filter = 1
+position = Vector2(865, 1145)
+scale = Vector2(1, 0.64)
+texture = ExtResource("4_p58l7")
+
+[node name="CourtyardEast" type="Sprite2D" parent="Ground/TerrainArt" unique_id=2030942461]
+texture_filter = 1
+position = Vector2(1175, 1145)
+scale = Vector2(1, 0.64)
+texture = ExtResource("4_p58l7")
+
+[node name="TrainingCourt" type="Sprite2D" parent="Ground/TerrainArt" unique_id=1404508181]
+texture_filter = 1
+position = Vector2(1470, 415)
+scale = Vector2(1.18, 0.6)
+texture = ExtResource("4_p58l7")
+
+[node name="ViewpointCourt" type="Sprite2D" parent="Ground/TerrainArt" unique_id=282251200]
+texture_filter = 1
+position = Vector2(1840, 190)
+scale = Vector2(0.95, 0.52)
+texture = ExtResource("4_p58l7")
+
+[node name="RoadDock" type="Sprite2D" parent="Ground/TerrainArt" unique_id=1263744668]
+texture_filter = 1
+position = Vector2(650, 1185)
+rotation = -0.18
+scale = Vector2(0.75, 0.58)
+texture = ExtResource("5_rorjb")
+
+[node name="RoadCourtyard" type="Sprite2D" parent="Ground/TerrainArt" unique_id=1895069088]
+texture_filter = 1
+position = Vector2(1240, 1110)
+rotation = -0.28
+scale = Vector2(0.72, 0.55)
+texture = ExtResource("5_rorjb")
+
+[node name="RoadLowerSlope" type="Sprite2D" parent="Ground/TerrainArt" unique_id=1701096109]
+texture_filter = 1
+position = Vector2(1465, 970)
+rotation = -0.58
+scale = Vector2(0.75, 0.55)
+texture = ExtResource("5_rorjb")
+
+[node name="RoadCanal" type="Sprite2D" parent="Ground/TerrainArt" unique_id=220990729]
+texture_filter = 1
+position = Vector2(1760, 800)
+rotation = -0.52
+scale = Vector2(0.72, 0.55)
+texture = ExtResource("5_rorjb")
+
+[node name="RoadCanalTop" type="Sprite2D" parent="Ground/TerrainArt" unique_id=342027886]
+texture_filter = 1
+position = Vector2(1960, 650)
+rotation = -0.52
+scale = Vector2(0.6, 0.52)
+texture = ExtResource("5_rorjb")
+
+[node name="RoadSchool" type="Sprite2D" parent="Ground/TerrainArt" unique_id=1235495033]
+texture_filter = 1
+position = Vector2(1740, 480)
+rotation = 0.2
+scale = Vector2(0.75, 0.55)
+texture = ExtResource("5_rorjb")
+
+[node name="RoadView" type="Sprite2D" parent="Ground/TerrainArt" unique_id=776278435]
+texture_filter = 1
+position = Vector2(1610, 320)
+rotation = -0.68
+scale = Vector2(0.55, 0.52)
+texture = ExtResource("5_rorjb")
+
+[node name="RoadSummit" type="Sprite2D" parent="Ground/TerrainArt" unique_id=2016930010]
+texture_filter = 1
+position = Vector2(1785, 225)
+rotation = -0.2
+scale = Vector2(0.65, 0.52)
+texture = ExtResource("5_rorjb")
+
+[node name="StoneStairs" type="Sprite2D" parent="Ground/TerrainArt" unique_id=691218539]
+texture_filter = 1
+position = Vector2(1580, 310)
+rotation = -0.45
+scale = Vector2(0.95, 0.95)
+texture = ExtResource("6_psr7n")
+
+[node name="GrassDock" type="Sprite2D" parent="Ground/TerrainArt" unique_id=201791998]
+texture_filter = 1
+position = Vector2(260, 1170)
+scale = Vector2(0.72, 0.62)
+texture = ExtResource("7_hvc7x")
+
+[node name="GrassCenter" type="Sprite2D" parent="Ground/TerrainArt" unique_id=1929943699]
+texture_filter = 1
+position = Vector2(1180, 800)
+scale = Vector2(0.78, 0.68)
+texture = ExtResource("7_hvc7x")
+
+[node name="GrassCanal" type="Sprite2D" parent="Ground/TerrainArt" unique_id=2132095831]
+texture_filter = 1
+position = Vector2(2320, 900)
+scale = Vector2(0.74, 0.64)
+texture = ExtResource("7_hvc7x")
+
+[node name="GrassNorth" type="Sprite2D" parent="Ground/TerrainArt" unique_id=1733070440]
+texture_filter = 1
+position = Vector2(2250, 400)
+scale = Vector2(0.74, 0.64)
+texture = ExtResource("7_hvc7x")
+
+[node name="Effects" type="Node2D" parent="." unique_id=246161715]
+z_index = -5
+
+[node name="Water1" type="Line2D" parent="Effects" unique_id=1178794770]
+visible = false
+points = PackedVector2Array(2180, 612, 2155, 650, 2140, 695)
+width = 12.0
+default_color = Color(0.34509805, 0.83137256, 0.8117647, 1)
+
+[node name="Water2" type="Line2D" parent="Effects" unique_id=1059054695]
+visible = false
+points = PackedVector2Array(2110, 715, 2035, 738, 1950, 755)
+width = 12.0
+default_color = Color(0.34509805, 0.83137256, 0.8117647, 1)
+
+[node name="Water3" type="Line2D" parent="Effects" unique_id=1876573200]
+visible = false
+points = PackedVector2Array(1918, 775, 1860, 788, 1815, 795)
+width = 12.0
+default_color = Color(0.34509805, 0.83137256, 0.8117647, 1)
+
+[node name="SpillLine" type="Line2D" parent="Effects" unique_id=1686414127]
+visible = false
+points = PackedVector2Array(0, 0, 0, 72)
+default_color = Color(0.21960784, 0.63529414, 0.627451, 1)
+
+[node name="InteractionMarker" type="Line2D" parent="Effects" unique_id=952594737]
+visible = false
+z_index = 10
+points = PackedVector2Array(-34, -34, 34, -34, 34, 34, -34, 34, -34, -34)
+width = 3.0
+default_color = Color(1, 0.8784314, 0.47843137, 1)
+
+[node name="WorldObjects" type="Node2D" parent="." unique_id=385194643]
+y_sort_enabled = true
+
+[node name="Player" parent="WorldObjects" unique_id=2095704430 instance=ExtResource("3_hkqpv")]
+position = Vector2(430, 1285)
+
+[node name="Keeper" type="Node2D" parent="WorldObjects" unique_id=65810067]
+texture_filter = 1
+position = Vector2(1010, 1172)
+script = ExtResource("4_erm8w")
+kind = "keeper"
+prop_size = Vector2(60, 74)
+main_color = Color(0.23137255, 0.29411766, 0.32156864, 1)
+art_texture = ExtResource("10_qcq6o")
+
+[node name="House" type="Node2D" parent="WorldObjects" unique_id=1227358054]
+texture_filter = 1
+position = Vector2(1010, 1145)
+script = ExtResource("4_erm8w")
+kind = "house"
+prop_size = Vector2(320, 140)
+main_color = Color(0.53333336, 0.54509807, 0.5686275, 1)
+accent_color = Color(0.77254903, 0.654902, 0.35686275, 1)
+art_texture = ExtResource("11_4qc4v")
+
+[node name="Storage" type="Node2D" parent="WorldObjects" unique_id=642429939]
+texture_filter = 1
+position = Vector2(1245, 1125)
+script = ExtResource("4_erm8w")
+kind = "storage"
+main_color = Color(0.5058824, 0.4627451, 0.41568628, 1)
+accent_color = Color(0.7254902, 0.6039216, 0.3647059, 1)
+art_texture = ExtResource("12_0qcnr")
+art_scale = Vector2(0.75, 0.75)
+
+[node name="TreeCourtyard" type="Node2D" parent="WorldObjects" unique_id=422152371]
+texture_filter = 1
+position = Vector2(760, 1000)
+script = ExtResource("4_erm8w")
+prop_size = Vector2(90, 90)
+main_color = Color(0.25490198, 0.40392157, 0.2901961, 1)
+accent_color = Color(0.43529412, 0.57254905, 0.3647059, 1)
+art_texture = ExtResource("13_52i7m")
+
+[node name="TreePath" type="Node2D" parent="WorldObjects" unique_id=896406685]
+texture_filter = 1
+position = Vector2(1350, 1085)
+script = ExtResource("4_erm8w")
+prop_size = Vector2(90, 90)
+main_color = Color(0.25490198, 0.40392157, 0.2901961, 1)
+accent_color = Color(0.43529412, 0.57254905, 0.3647059, 1)
+art_texture = ExtResource("14_wfv8c")
+
+[node name="TreeCanal" type="Node2D" parent="WorldObjects" unique_id=1334816417]
+texture_filter = 1
+position = Vector2(2250, 760)
+script = ExtResource("4_erm8w")
+prop_size = Vector2(90, 90)
+main_color = Color(0.25490198, 0.40392157, 0.2901961, 1)
+accent_color = Color(0.43529412, 0.57254905, 0.3647059, 1)
+art_texture = ExtResource("15_0lv7o")
+
+[node name="Gate1" type="Node2D" parent="WorldObjects" unique_id=1984553261]
+texture_filter = 1
+position = Vector2(2140, 695)
+script = ExtResource("4_erm8w")
+kind = "gate"
+prop_size = Vector2(60, 60)
+main_color = Color(0.4392157, 0.45882353, 0.4392157, 1)
+accent_color = Color(0.8901961, 0.7411765, 0.40784314, 1)
+art_texture = ExtResource("16_8rxne")
+art_scale = Vector2(0.72, 0.72)
+
+[node name="Gate2" type="Node2D" parent="WorldObjects" unique_id=1848902409]
+texture_filter = 1
+position = Vector2(1950, 755)
+script = ExtResource("4_erm8w")
+kind = "gate"
+prop_size = Vector2(60, 60)
+main_color = Color(0.4392157, 0.45882353, 0.4392157, 1)
+accent_color = Color(0.8901961, 0.7411765, 0.40784314, 1)
+art_texture = ExtResource("16_8rxne")
+art_scale = Vector2(0.72, 0.72)
+
+[node name="Gate3" type="Node2D" parent="WorldObjects" unique_id=2128199550]
+texture_filter = 1
+position = Vector2(1815, 795)
+script = ExtResource("4_erm8w")
+kind = "gate"
+prop_size = Vector2(60, 60)
+main_color = Color(0.4392157, 0.45882353, 0.4392157, 1)
+accent_color = Color(0.8901961, 0.7411765, 0.40784314, 1)
+art_texture = ExtResource("16_8rxne")
+art_scale = Vector2(0.72, 0.72)
+
+[node name="Pool1" type="Node2D" parent="WorldObjects" unique_id=1562825788]
+texture_filter = 1
+position = Vector2(2095, 770)
+script = ExtResource("4_erm8w")
+kind = "pool"
+prop_size = Vector2(124, 86)
+main_color = Color(0.45490196, 0.48235294, 0.4627451, 1)
+accent_color = Color(0.33333334, 0.78431374, 0.7607843, 1)
+art_texture = ExtResource("17_qs746")
+
+[node name="Pool2" type="Node2D" parent="WorldObjects" unique_id=2145904479]
+texture_filter = 1
+position = Vector2(1910, 815)
+script = ExtResource("4_erm8w")
+kind = "pool"
+prop_size = Vector2(124, 86)
+main_color = Color(0.45490196, 0.48235294, 0.4627451, 1)
+accent_color = Color(0.33333334, 0.78431374, 0.7607843, 1)
+art_texture = ExtResource("17_qs746")
+
+[node name="Pool3" type="Node2D" parent="WorldObjects" unique_id=652513875]
+texture_filter = 1
+position = Vector2(1765, 855)
+script = ExtResource("4_erm8w")
+kind = "pool"
+prop_size = Vector2(124, 86)
+main_color = Color(0.45490196, 0.48235294, 0.4627451, 1)
+accent_color = Color(0.33333334, 0.78431374, 0.7607843, 1)
+art_texture = ExtResource("17_qs746")
+
+[node name="Drum" type="Node2D" parent="WorldObjects" unique_id=1678334269]
+texture_filter = 1
+position = Vector2(1500, 405)
+script = ExtResource("4_erm8w")
+kind = "drum"
+prop_size = Vector2(70, 70)
+main_color = Color(0.654902, 0.26666668, 0.2, 1)
+accent_color = Color(0.8745098, 0.8039216, 0.64705884, 1)
+art_texture = ExtResource("18_x7fr6")
+
+[node name="FlagYellow" type="Node2D" parent="WorldObjects" unique_id=214825947]
+texture_filter = 1
+position = Vector2(1370, 420)
+script = ExtResource("4_erm8w")
+kind = "flag"
+prop_size = Vector2(70, 80)
+main_color = Color(0.8784314, 0.73333335, 0.28235295, 1)
+accent_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
+art_texture = ExtResource("19_lwg7b")
+art_scale = Vector2(0.8, 0.8)
+
+[node name="FlagRed" type="Node2D" parent="WorldObjects" unique_id=162606740]
+texture_filter = 1
+position = Vector2(1460, 405)
+script = ExtResource("4_erm8w")
+kind = "flag"
+prop_size = Vector2(70, 80)
+main_color = Color(0.74509805, 0.30980393, 0.2627451, 1)
+accent_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
+art_texture = ExtResource("20_htdxp")
+art_scale = Vector2(0.8, 0.8)
+
+[node name="FlagBlue" type="Node2D" parent="WorldObjects" unique_id=743877861]
+texture_filter = 1
+position = Vector2(1550, 425)
+script = ExtResource("4_erm8w")
+kind = "flag"
+prop_size = Vector2(70, 80)
+main_color = Color(0.29411766, 0.5137255, 0.70980394, 1)
+accent_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
+art_texture = ExtResource("21_n8g30")
+art_scale = Vector2(0.8, 0.8)
+
+[node name="SchoolBarrier" type="Node2D" parent="WorldObjects" unique_id=190706852]
+texture_filter = 1
+position = Vector2(1585, 442)
+script = ExtResource("4_erm8w")
+kind = "barrier"
+prop_size = Vector2(110, 85)
+main_color = Color(0.6117647, 0.28627452, 0.22352941, 1)
+art_texture = ExtResource("22_5dl1x")
+
+[node name="ViewpointBarrier" type="Node2D" parent="WorldObjects" unique_id=2114486465]
+texture_filter = 1
+position = Vector2(1625, 272)
+script = ExtResource("4_erm8w")
+kind = "barrier"
+prop_size = Vector2(110, 85)
+main_color = Color(0.6117647, 0.28627452, 0.22352941, 1)
+art_texture = ExtResource("22_5dl1x")
+
+[node name="Stele" type="Node2D" parent="WorldObjects" unique_id=342726022]
+texture_filter = 1
+position = Vector2(1820, 155)
+script = ExtResource("4_erm8w")
+kind = "stele"
+prop_size = Vector2(60, 65)
+main_color = Color(0.45490196, 0.47843137, 0.47058824, 1)
+art_texture = ExtResource("23_sprgl")
+
+[node name="MountainGate" type="Node2D" parent="WorldObjects" unique_id=839449148]
+texture_filter = 1
+position = Vector2(1630, 325)
+script = ExtResource("4_erm8w")
+kind = "house"
+prop_size = Vector2(200, 70)
+art_texture = ExtResource("24_kakgu")
+
+[node name="ViewPavilion" type="Node2D" parent="WorldObjects" unique_id=389562802]
+texture_filter = 1
+position = Vector2(1840, 250)
+script = ExtResource("4_erm8w")
+kind = "house"
+prop_size = Vector2(240, 70)
+art_texture = ExtResource("25_r6vrj")
+
+[node name="ShrubDock" type="Node2D" parent="WorldObjects" unique_id=1747847253]
+texture_filter = 1
+position = Vector2(610, 1300)
+script = ExtResource("4_erm8w")
+prop_size = Vector2(120, 55)
+art_texture = ExtResource("26_fa1ar")
+
+[node name="ShrubPath" type="Node2D" parent="WorldObjects" unique_id=1848172923]
+texture_filter = 1
+position = Vector2(1460, 1040)
+script = ExtResource("4_erm8w")
+prop_size = Vector2(110, 50)
+art_texture = ExtResource("26_fa1ar")
+art_scale = Vector2(0.9, 0.9)
+
+[node name="ShrubCanal" type="Node2D" parent="WorldObjects" unique_id=464495194]
+texture_filter = 1
+position = Vector2(2310, 660)
+script = ExtResource("4_erm8w")
+prop_size = Vector2(120, 55)
+art_texture = ExtResource("26_fa1ar")
+
+[node name="RocksDock" type="Node2D" parent="WorldObjects" unique_id=1441925483]
+texture_filter = 1
+position = Vector2(250, 1360)
+script = ExtResource("4_erm8w")
+kind = "stele"
+prop_size = Vector2(130, 55)
+art_texture = ExtResource("27_yivr7")
+
+[node name="RocksNorth" type="Node2D" parent="WorldObjects" unique_id=962687173]
+texture_filter = 1
+position = Vector2(2350, 250)
+script = ExtResource("4_erm8w")
+kind = "stele"
+prop_size = Vector2(130, 55)
+art_texture = ExtResource("27_yivr7")
+
+[node name="MossyBoulder" type="Node2D" parent="WorldObjects" unique_id=618903988]
+texture_filter = 1
+position = Vector2(2080, 360)
+script = ExtResource("4_erm8w")
+kind = "stele"
+prop_size = Vector2(100, 60)
+art_texture = ExtResource("28_euedq")
+
+[node name="PalmDock" type="Node2D" parent="WorldObjects" unique_id=924492835]
+texture_filter = 1
+position = Vector2(650, 1210)
+script = ExtResource("4_erm8w")
+prop_size = Vector2(70, 40)
+art_texture = ExtResource("15_0lv7o")
+
+[node name="Foreground" type="Node2D" parent="." unique_id=1061311423]
+z_index = 20
+
+[node name="Collision" type="Node2D" parent="." unique_id=1022803271]
+
+[node name="LeftEdge" type="StaticBody2D" parent="Collision" unique_id=227550769]
+position = Vector2(20, 750)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/LeftEdge" unique_id=1097200769]
+shape = SubResource("RectangleShape2D_eyqv8")
+
+[node name="RightEdge" type="StaticBody2D" parent="Collision" unique_id=667926487]
+position = Vector2(2580, 750)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/RightEdge" unique_id=531474969]
+shape = SubResource("RectangleShape2D_88otk")
+
+[node name="SouthSea" type="StaticBody2D" parent="Collision" unique_id=1576935993]
+position = Vector2(750, 1445)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/SouthSea" unique_id=574407232]
+shape = SubResource("RectangleShape2D_qs51d")
+
+[node name="NorthSea" type="StaticBody2D" parent="Collision" unique_id=1963654276]
+position = Vector2(2100, 50)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/NorthSea" unique_id=1844127833]
+shape = SubResource("RectangleShape2D_o7m5c")
+
+[node name="HouseFoot" type="StaticBody2D" parent="Collision" unique_id=1072976023]
+position = Vector2(1010, 1115)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/HouseFoot" unique_id=1989778268]
+shape = SubResource("RectangleShape2D_avxio")
+
+[node name="StorageFoot" type="StaticBody2D" parent="Collision" unique_id=1593798774]
+position = Vector2(1245, 1100)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/StorageFoot" unique_id=2032088569]
+shape = SubResource("RectangleShape2D_f12bo")
+
+[node name="KeeperBody" type="StaticBody2D" parent="Collision" unique_id=52014167]
+position = Vector2(1010, 1165)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/KeeperBody" unique_id=188710918]
+shape = SubResource("RectangleShape2D_iuhai")
+
+[node name="TreeCourtyardBody" type="StaticBody2D" parent="Collision" unique_id=1394604597]
+position = Vector2(760, 995)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/TreeCourtyardBody" unique_id=880883983]
+shape = SubResource("RectangleShape2D_3rkah")
+
+[node name="TreePathBody" type="StaticBody2D" parent="Collision" unique_id=1805235164]
+position = Vector2(1350, 1080)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/TreePathBody" unique_id=36844810]
+shape = SubResource("RectangleShape2D_3kpwv")
+
+[node name="TreeCanalBody" type="StaticBody2D" parent="Collision" unique_id=686299016]
+position = Vector2(2250, 755)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/TreeCanalBody" unique_id=1515166308]
+shape = SubResource("RectangleShape2D_cvwkh")
+
+[node name="Pool1Body" type="StaticBody2D" parent="Collision" unique_id=1258588599]
+position = Vector2(2095, 727)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/Pool1Body" unique_id=1387136416]
+shape = SubResource("RectangleShape2D_op5i6")
+
+[node name="Pool2Body" type="StaticBody2D" parent="Collision" unique_id=1197509267]
+position = Vector2(1910, 772)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/Pool2Body" unique_id=1824327664]
+shape = SubResource("RectangleShape2D_1kv3u")
+
+[node name="Pool3Body" type="StaticBody2D" parent="Collision" unique_id=37828846]
+position = Vector2(1765, 812)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/Pool3Body" unique_id=1784072133]
+shape = SubResource("RectangleShape2D_t6d6q")
+
+[node name="SchoolBlocker" type="StaticBody2D" parent="Collision" unique_id=337605248]
+position = Vector2(1585, 420)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/SchoolBlocker" unique_id=1195475284]
+shape = SubResource("RectangleShape2D_o1d17")
+
+[node name="ViewpointBlocker" type="StaticBody2D" parent="Collision" unique_id=919584238]
+position = Vector2(1625, 250)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Collision/ViewpointBlocker" unique_id=288587626]
+shape = SubResource("RectangleShape2D_sks1q")
+
+[node name="Triggers" type="Node2D" parent="." unique_id=236146207]
+
+[node name="SchoolTrigger" type="Area2D" parent="Triggers" unique_id=1621426876]
+position = Vector2(1470, 420)
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/SchoolTrigger" unique_id=1850016409]
+shape = SubResource("CircleShape2D_og5ew")
+
+[node name="ViewpointTrigger" type="Area2D" parent="Triggers" unique_id=13324334]
+position = Vector2(1820, 170)
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Triggers/ViewpointTrigger" unique_id=1482719123]
+shape = SubResource("CircleShape2D_v2yly")
+
+[node name="CollisionDebug" type="Node2D" parent="." unique_id=515053450]
+visible = false
+z_index = 80
+
+[node name="Audio" type="AudioStreamPlayer" parent="." unique_id=86385048]
+
+[node name="Interface" type="CanvasLayer" parent="." unique_id=869282089]
+
+[node name="HUD" type="Control" parent="Interface" unique_id=495363611]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1344.0
+offset_bottom = 896.0
+mouse_filter = 2
+
+[node name="TitlePanel" type="ColorRect" parent="Interface/HUD" unique_id=1157079043]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 22.0
+offset_right = 544.0
+offset_bottom = 120.0
+mouse_filter = 2
+color = Color(0.09019608, 0.15294118, 0.18039216, 0.9019608)
+
+[node name="Location" type="Label" parent="Interface/HUD/TitlePanel" unique_id=2092592497]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 6.0
+offset_right = 502.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(0.9411765, 0.80784315, 0.47058824, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 28
+text = "伏波古岭"
+vertical_alignment = 1
+
+[node name="Objective" type="Label" parent="Interface/HUD/TitlePanel" unique_id=1028839862]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 48.0
+offset_right = 502.0
+offset_bottom = 82.0
+theme_override_colors/font_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 18
+text = "沿山路寻找守岭人"
+vertical_alignment = 1
+
+[node name="CanalPanel" type="ColorRect" parent="Interface/HUD" unique_id=1083058099]
+visible = false
+layout_mode = 0
+offset_left = 24.0
+offset_top = 130.0
+offset_right = 544.0
+offset_bottom = 230.0
+mouse_filter = 2
+color = Color(0.09019608, 0.15294118, 0.18039216, 0.9019608)
+
+[node name="CanalStatus" type="Label" parent="Interface/HUD/CanalPanel" unique_id=2118630051]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 8.0
+offset_right = 506.0
+offset_bottom = 92.0
+theme_override_colors/font_color = Color(0.9019608, 0.9490196, 0.85882354, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 16
+text = "三道分流闸"
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="DrumPanel" type="ColorRect" parent="Interface/HUD" unique_id=2063979599]
+visible = false
+layout_mode = 0
+offset_left = 900.0
+offset_top = 22.0
+offset_right = 1320.0
+offset_bottom = 112.0
+mouse_filter = 2
+color = Color(0.09019608, 0.15294118, 0.18039216, 0.9019608)
+
+[node name="DrumStatus" type="Label" parent="Interface/HUD/DrumPanel" unique_id=1708863627]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 8.0
+offset_right = 406.0
+offset_bottom = 82.0
+theme_override_colors/font_color = Color(0.9019608, 0.9490196, 0.85882354, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 16
+text = "听鼓传令"
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="PromptPanel" type="ColorRect" parent="Interface/HUD" unique_id=222740050]
+visible = false
+layout_mode = 0
+offset_left = 322.0
+offset_top = 820.0
+offset_right = 1022.0
+offset_bottom = 872.0
+mouse_filter = 2
+color = Color(0.09019608, 0.15294118, 0.18039216, 0.9019608)
+
+[node name="Prompt" type="Label" parent="Interface/HUD/PromptPanel" unique_id=1409687728]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 4.0
+offset_right = 688.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color(1, 0.8784314, 0.47843137, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 19
+text = "按 E / 空格 互动"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DialoguePanel" type="ColorRect" parent="Interface/HUD" unique_id=891830751]
+visible = false
+layout_mode = 0
+offset_left = 220.0
+offset_top = 664.0
+offset_right = 1124.0
+offset_bottom = 820.0
+mouse_filter = 2
+color = Color(0.09019608, 0.15294118, 0.18039216, 0.9490196)
+
+[node name="Speaker" type="Label" parent="Interface/HUD/DialoguePanel" unique_id=766310247]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 12.0
+offset_right = 880.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(0.9411765, 0.80784315, 0.47058824, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 22
+text = "守岭人"
+vertical_alignment = 1
+
+[node name="Dialogue" type="Label" parent="Interface/HUD/DialoguePanel" unique_id=1734370144]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 52.0
+offset_right = 880.0
+offset_bottom = 134.0
+theme_override_colors/font_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 19
+autowrap_mode = 2
+
+[node name="Overlay" type="ColorRect" parent="Interface/HUD" unique_id=1299744194]
+visible = false
+layout_mode = 0
+offset_left = 272.0
+offset_top = 240.0
+offset_right = 1072.0
+offset_bottom = 600.0
+mouse_filter = 2
+color = Color(0.050980393, 0.101960786, 0.1254902, 0.9490196)
+
+[node name="OverlayText" type="Label" parent="Interface/HUD/Overlay" unique_id=2082976102]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 32.0
+offset_right = 768.0
+offset_bottom = 328.0
+theme_override_colors/font_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="MinigameHost" type="Control" parent="Interface" unique_id=848775043]
+process_mode = 2
+z_index = 100
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("29_p58l7")

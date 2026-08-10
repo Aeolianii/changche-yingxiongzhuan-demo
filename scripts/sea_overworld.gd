@@ -133,16 +133,66 @@ func _build_locations() -> void:
 		Vector2(0, -220),
 		[Vector2(390, 30)]
 	)
-	_build_location("东湾水寨", Vector2(2040, 520), 225.0, Vector2(440, 120), Vector2(0, 180))
+	_build_location(
+		"东湾水寨",
+		Vector2(2040, 520),
+		105.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该地点即将开放",
+		Vector2.ZERO,
+		[Vector2(140, 240)]
+	)
 	_build_location("青屿秘境", Vector2(2380, 540), 145.0, Vector2(260, 100), Vector2(0, 170), "该地点即将开放", Vector2(420, -140))
 
 	_build_location("沧门礁堡", Vector2(2780, 1080), 190.0, Vector2(320, 120), Vector2(-360, 140), "该岛屿即将开放")
 	_build_location("月环商港", Vector2(3650, 360), 250.0, Vector2(480, 150), Vector2(-300, 80), "该岛屿即将开放")
-	_build_location("雾岚群岛", Vector2(3070, 850), 165.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("伏波古岭", Vector2(4260, 780), 220.0, Vector2(440, 120), Vector2(0, 175), "该岛屿即将开放")
-	_build_location("珊湾渔链", Vector2(3670, 1150), 155.0, Vector2(260, 100), Vector2(250, 160), "该岛屿即将开放")
+	_build_location(
+		"雾岚群岛",
+		Vector2(3070, 850),
+		95.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[Vector2(405, -20)]
+	)
+	_build_location(
+		"伏波古岭",
+		Vector2(4260, 780),
+		110.0,
+		Vector2(440, 120),
+		Vector2(0, 175),
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[],
+		[Vector2(460, 445)]
+	)
+	_build_location(
+		"珊湾渔链",
+		Vector2(3670, 1150),
+		110.0,
+		Vector2(260, 100),
+		Vector2(250, 160),
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[],
+		[Vector2(-490, 220)]
+	)
 
-	_build_location("澄海灯岛", Vector2(480, 1680), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location(
+		"澄海灯岛",
+		Vector2(480, 1680),
+		85.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[
+			Vector2(190, -290), Vector2(390, -230), Vector2(450, 0), Vector2(420, 220),
+			Vector2(180, 300), Vector2(-60, 230), Vector2(-100, 20), Vector2(-50, -200),
+		]
+	)
 	_build_location("龙门海寨", Vector2(860, 2260), 210.0, Vector2(400, 120), Vector2(0, 190), "该岛屿即将开放")
 	_build_location("白沙渔岛", Vector2(1460, 2460), 180.0, Vector2(300, 120), Vector2(180, 140), "该岛屿即将开放")
 	_build_location(
@@ -156,8 +206,26 @@ func _build_locations() -> void:
 		[Vector2(100, -60), Vector2(100, 360), Vector2(420, 180)]
 	)
 
-	_build_location("红湾卫所", Vector2(2980, 1760), 190.0, Vector2(360, 120), Vector2(-160, 170), "该岛屿即将开放")
-	_build_location("南澳商港", Vector2(4380, 2460), 280.0, Vector2(560, 150), Vector2(-100, 180), "该岛屿即将开放")
+	_build_location(
+		"红湾卫所",
+		Vector2(2980, 1760),
+		130.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[Vector2(380, 430)]
+	)
+	_build_location(
+		"倭寇营地",
+		Vector2(4380, 2460),
+		120.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[Vector2(-630, 140)]
+	)
 
 
 func _build_auto_triggers() -> void:
@@ -237,7 +305,8 @@ func _build_location(
 	front_trigger_offset: Vector2 = Vector2.ZERO,
 	entry_message: String = "该地点即将开放",
 	map_label_offset: Vector2 = Vector2.ZERO,
-	entry_trigger_offsets: Array[Vector2] = []
+	entry_trigger_offsets: Array[Vector2] = [],
+	additional_entry_trigger_offsets: Array[Vector2] = []
 ) -> void:
 	var area := Area2D.new()
 	area.name = "Location%d" % world_markers.get_child_count()
@@ -251,6 +320,7 @@ func _build_location(
 	area.set_meta("entry_message", entry_message)
 	area.set_meta("map_label_offset", map_label_offset)
 	area.set_meta("entry_trigger_offsets", entry_trigger_offsets)
+	area.set_meta("additional_entry_trigger_offsets", additional_entry_trigger_offsets)
 	area.add_to_group("sea_location")
 	world_markers.add_child(area)
 
@@ -260,6 +330,15 @@ func _build_location(
 		for index in range(entry_trigger_offsets.size()):
 			var shape_name := "EntryTriggerShape" if index == 0 else "EntryTriggerShape%d" % (index + 1)
 			_add_location_entry_trigger(area, shape_name, trigger_radius, Vector2.ZERO, entry_trigger_offsets[index])
+	for index in range(additional_entry_trigger_offsets.size()):
+		var shape_index: int = maxi(1, entry_trigger_offsets.size()) + index + 1
+		_add_location_entry_trigger(
+			area,
+			"EntryTriggerShape%d" % shape_index,
+			trigger_radius,
+			Vector2.ZERO,
+			additional_entry_trigger_offsets[index]
+		)
 
 	area.body_entered.connect(_on_location_body_entered.bind(area))
 	area.body_exited.connect(_on_location_body_exited.bind(area))

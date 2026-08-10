@@ -26,12 +26,12 @@ const EXPECTED_LOCATIONS := {
 	"白沙渔岛": Vector2(1460, 2460),
 	"玄潮古屿": Vector2(2100, 2240),
 	"红湾卫所": Vector2(2980, 1760),
-	"南澳商港": Vector2(4380, 2460),
+	"倭寇营地": Vector2(4380, 2460),
 }
 const A_LOCATIONS := ["南海军港", "川山渔村", "东湾水寨", "青屿秘境"]
 const B_LOCATIONS := ["沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]
 const C_LOCATIONS := ["澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿"]
-const D_LOCATIONS := ["红湾卫所", "南澳商港"]
+const D_LOCATIONS := ["红湾卫所", "倭寇营地"]
 const NAVIGATION_ROUTES := {
 	"A_TO_B": [Vector2(1500, 800), Vector2(2100, 800), Vector2(2388, 800), Vector2(2700, 800), Vector2(3050, 800)],
 	"A_TO_C": [Vector2(1700, 1050), Vector2(1700, 1292), Vector2(1700, 1500), Vector2(1550, 1750), Vector2(1400, 1950)],
@@ -153,6 +153,7 @@ func _run() -> void:
 
 	_verify_assets()
 	_verify_location_layout(scene)
+	await _verify_production_entry_alignment(scene)
 	await _verify_shared_exploration_hud(scene)
 	await _verify_keyboard_movement(scene)
 	await _verify_location_interaction(scene)
@@ -380,6 +381,66 @@ func _verify_location_layout(scene: Node) -> void:
 		_expect(chuanshan_map_offset.is_equal_approx(Vector2(0, -220)), "Chuanshan's full-map label must move upward onto the mainland houses.")
 
 
+func _verify_production_entry_alignment(scene: Node) -> void:
+	var locations := get_nodes_in_group("sea_location")
+	var player := scene.get_node("World/Player") as CharacterBody2D
+	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
+	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
+	var expected_entry_centers := {
+		"东湾水寨": [Vector2(2180, 760)],
+		"雾岚群岛": [Vector2(3475, 830)],
+		"伏波古岭": [Vector2(4720, 1225)],
+		"珊湾渔链": [Vector2(3180, 1370)],
+		"澄海灯岛": [
+			Vector2(670, 1390), Vector2(870, 1450), Vector2(930, 1680), Vector2(900, 1900),
+			Vector2(660, 1980), Vector2(420, 1910), Vector2(380, 1700), Vector2(430, 1480),
+		],
+		"红湾卫所": [Vector2(3360, 2190)],
+		"倭寇营地": [Vector2(3750, 2600)],
+	}
+	for location_name in expected_entry_centers:
+		var location := _find_location(locations, location_name)
+		_expect(location != null, "%s must exist for production-entry alignment verification." % location_name)
+		if location == null:
+			continue
+		var expected_centers: Array = expected_entry_centers[location_name]
+		var shape_nodes := _location_trigger_shapes(location)
+		var expected_shape_count := expected_centers.size()
+		if location_name in ["伏波古岭", "珊湾渔链"]:
+			expected_shape_count += 1
+		_expect(shape_nodes.size() == expected_shape_count, "%s must expose the approved number of production-map entry ranges." % location_name)
+		for expected_center in expected_centers:
+			var matched_shape: CollisionShape2D
+			for shape_node in shape_nodes:
+				if (location.global_position + shape_node.position).is_equal_approx(expected_center as Vector2):
+					matched_shape = shape_node
+					break
+			_expect(matched_shape != null, "%s is missing its approved entry at %s." % [location_name, expected_center])
+			if matched_shape == null:
+				continue
+			_expect(matched_shape.shape is CircleShape2D, "%s's dock/directional entry must use a focused circular range." % location_name)
+			_expect(_is_water_clear(expected_center as Vector2, 19.0, player), "%s entry at %s must sit on navigable water." % [location_name, expected_center])
+			player.global_position = Vector2(2200, 1500)
+			for _frame in range(2):
+				await physics_frame
+			player.global_position = expected_center as Vector2
+			for _frame in range(3):
+				await physics_frame
+			_expect(prompt.visible and location_name in location_label.text, "%s entry at %s must activate the correct prompt." % [location_name, expected_center])
+
+	var fubo := _find_location(locations, "伏波古岭")
+	if fubo != null:
+		var fubo_primary := fubo.get_node("EntryTriggerShape") as CollisionShape2D
+		_expect(fubo_primary.shape is RectangleShape2D and fubo_primary.position.is_equal_approx(Vector2(0, 175)), "Fubo Ridge must retain its original lower entry while adding the lower-right entry.")
+	var shanwan := _find_location(locations, "珊湾渔链")
+	if shanwan != null:
+		var shanwan_primary := shanwan.get_node("EntryTriggerShape") as CollisionShape2D
+		_expect(shanwan_primary.shape is RectangleShape2D and shanwan_primary.position.is_equal_approx(Vector2(250, 160)), "Shanwan fishing chain must retain its original lower-right entry while adding the lower-left entry.")
+	player.global_position = Vector2(2200, 1500)
+	for _frame in range(3):
+		await physics_frame
+
+
 func _verify_shared_exploration_hud(scene: Node) -> void:
 	var hud := scene.get_node("UI/ExplorationHUD") as Control
 	var player := scene.get_node("World/Player") as CharacterBody2D
@@ -499,8 +560,9 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 			south_harbor_map_label = label
 		elif "川山渔村" in label.text:
 			chuanshan_map_label = label
-	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
+	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "倭寇营地", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
+	_expect(location_names.all(func(text: String) -> bool: return "南澳商港" not in text), "Full map must not retain the retired South Australia merchant-port name.")
 	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
 	_expect(qingyu_map_label != null and (qingyu_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2800, 400)), "Qingyu full-map label must align to the pagoda island's upper-right.")
@@ -611,9 +673,8 @@ func _verify_location_interaction(scene: Node) -> void:
 	_expect(east_bay != null, "East Bay stronghold trigger is missing.")
 	if east_bay != null:
 		var east_bay_shape_node := east_bay.get_node("EntryTriggerShape") as CollisionShape2D
-		var east_bay_shape := east_bay_shape_node.shape as RectangleShape2D
-		_expect(east_bay_shape != null and east_bay_shape.size.x >= 400.0, "East Bay must retain a broad dock-side rectangular entry.")
-		_expect(east_bay_shape_node.position.y > 0.0, "East Bay entry range must stay on the island's front side.")
+		_expect(east_bay_shape_node.shape is CircleShape2D, "East Bay must use a focused circular dock entry.")
+		_expect((east_bay.global_position + east_bay_shape_node.position).is_equal_approx(Vector2(2180, 760)), "East Bay entry range must align to the island's lower dock.")
 		player.global_position = _find_clear_entry_point(east_bay)
 		for _frame in range(3):
 			await physics_frame
@@ -677,7 +738,7 @@ func _verify_c_directional_entries(scene: Node, c_locations: Array[Area2D]) -> v
 func _verify_d_expansion(scene: Node) -> void:
 	var d_locations := _collect_region_locations(D_LOCATIONS, "D")
 	_expect(d_locations.size() == 2, "D must contain two lower-right enemy-core locations matching the two visible islands.")
-	await _verify_region_interactions(scene, d_locations, "南澳商港", D_ZONE_SCREENSHOT_PATH)
+	await _verify_region_interactions(scene, d_locations, "倭寇营地", D_ZONE_SCREENSHOT_PATH)
 
 
 func _collect_region_locations(names: Array, region_name: String) -> Array[Area2D]:

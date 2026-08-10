@@ -1,0 +1,171 @@
+[gd_scene format=3 uid="uid://bfmu0nhh7uhu0"]
+
+[ext_resource type="Script" uid="uid://c7s4yjwjxn08l" path="res://scripts/fubo_guling/minigames/fubo_drum_minigame.gd" id="1_vb3fn"]
+[ext_resource type="AudioStream" uid="uid://mxoq4cnbceu2" path="res://assets/audio/fubo_guling/drum_low.wav" id="2_56wgr"]
+[ext_resource type="AudioStream" uid="uid://ccf5lvr54wvac" path="res://assets/audio/fubo_guling/drum_mid.wav" id="3_im1aa"]
+[ext_resource type="AudioStream" uid="uid://dalxcw04yogis" path="res://assets/audio/fubo_guling/drum_rim.wav" id="4_7akku"]
+[ext_resource type="AudioStream" uid="uid://clbhy7tv5upo4" path="res://assets/audio/fubo_guling/drum_fail.wav" id="5_vxq0m"]
+
+[node name="FuboDrumMinigame" type="Control" unique_id=651567962]
+process_mode = 2
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_vb3fn")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1888986108]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.8627451, 0.9372549, 0.8392157, 1)
+
+[node name="Layout" type="VBoxContainer" parent="." unique_id=471701911]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -380.0
+offset_top = -258.0
+offset_right = 380.0
+offset_bottom = 206.0
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="Layout" unique_id=1153725660]
+layout_mode = 2
+theme_override_font_sizes/font_size = 38
+text = "岭南鼓令"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Layout" unique_id=2126572418]
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "听清三面鼓的音色与节拍，再用 A / S / D 跟敲"
+horizontal_alignment = 1
+
+[node name="RoundLabel" type="Label" parent="Layout" unique_id=1650001942]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "第 1 / 3 轮"
+horizontal_alignment = 1
+
+[node name="BeatTrack" type="ProgressBar" parent="Layout" unique_id=769736628]
+custom_minimum_size = Vector2(760, 26)
+layout_mode = 2
+show_percentage = false
+
+[node name="Drums" type="HBoxContainer" parent="Layout" unique_id=1216641697]
+layout_mode = 2
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="LeftDrum" type="Button" parent="Layout/Drums" unique_id=1323006219]
+custom_minimum_size = Vector2(220, 170)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "A
+左鼓 · 低沉"
+
+[node name="CenterDrum" type="Button" parent="Layout/Drums" unique_id=1051199016]
+custom_minimum_size = Vector2(220, 170)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "S
+中鼓 · 浑厚"
+
+[node name="RightDrum" type="Button" parent="Layout/Drums" unique_id=1503691415]
+custom_minimum_size = Vector2(220, 170)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "D
+边鼓 · 清脆"
+
+[node name="Status" type="Label" parent="Layout" unique_id=1824827833]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "先听鼓点，再跟着敲。"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ExitButton" type="Button" parent="." unique_id=1250724830]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -168.0
+offset_top = 24.0
+offset_right = -88.0
+offset_bottom = 58.0
+theme_override_font_sizes/font_size = 18
+text = "退出鼓令"
+
+[node name="ExitConfirm" type="PanelContainer" parent="." unique_id=1834799945]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ExitConfirm" unique_id=540558]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="ExitConfirm/VBoxContainer" unique_id=245500979]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "要离开鼓令吗？"
+horizontal_alignment = 1
+
+[node name="Message" type="Label" parent="ExitConfirm/VBoxContainer" unique_id=1883757467]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "离开后本次进度不会保留。"
+horizontal_alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="ExitConfirm/VBoxContainer" unique_id=521774203]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Continue" type="Button" parent="ExitConfirm/VBoxContainer/Actions" unique_id=2040217907]
+custom_minimum_size = Vector2(150, 52)
+layout_mode = 2
+text = "继续挑战"
+
+[node name="Leave" type="Button" parent="ExitConfirm/VBoxContainer/Actions" unique_id=1652400064]
+custom_minimum_size = Vector2(150, 52)
+layout_mode = 2
+text = "离开"
+
+[node name="ResumeCountdown" type="Label" parent="." unique_id=1975708553]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.0
+offset_top = -11.5
+offset_right = 5.0
+offset_bottom = 11.5
+theme_override_font_sizes/font_size = 96
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AudioLow" type="AudioStreamPlayer" parent="." unique_id=837561693]
+stream = ExtResource("2_56wgr")
+
+[node name="AudioMid" type="AudioStreamPlayer" parent="." unique_id=1306916577]
+stream = ExtResource("3_im1aa")
+
+[node name="AudioRim" type="AudioStreamPlayer" parent="." unique_id=1613137668]
+stream = ExtResource("4_7akku")
+
+[node name="AudioFail" type="AudioStreamPlayer" parent="." unique_id=644112084]
+stream = ExtResource("5_vxq0m")

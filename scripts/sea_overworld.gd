@@ -257,7 +257,7 @@ func _build_locations() -> void:
 func _build_auto_triggers() -> void:
 	_build_ship_trigger("茶叶商船", Vector2(1370, 760), 0)
 	_build_ship_trigger("岭南商船", Vector2(2600, 760), 1)
-	_build_ship_trigger("私盐商船", Vector2(2200, 1500), 0, "SaltMerchantShip")
+	_build_ship_trigger("私盐商船", Vector2(2200, 1500), 0, "SaltMerchantShip", 48.0)
 	_build_event_trigger("漂流木箱", Vector2(1300, 1700))
 
 
@@ -448,9 +448,9 @@ func _add_location_entry_trigger(
 	area.add_child(shape_node)
 
 
-func _build_ship_trigger(ship_name: String, at: Vector2, atlas_column: int, node_name: String = "") -> void:
+func _build_ship_trigger(ship_name: String, at: Vector2, atlas_column: int, node_name: String = "", trigger_radius: float = 82.0) -> void:
 	var trigger_name := node_name if not node_name.is_empty() else "ShipTrigger%d" % atlas_column
-	var area := _make_auto_trigger(trigger_name, at, ship_name, "ship")
+	var area := _make_auto_trigger(trigger_name, at, ship_name, "ship", trigger_radius)
 	var sprite := Sprite2D.new()
 	sprite.name = "ShipSprite"
 	sprite.texture = _atlas_region(EVENT_SHIPS_ATLAS, 4, 1, atlas_column, 0)
@@ -477,7 +477,7 @@ func _build_event_trigger(event_name: String, at: Vector2) -> void:
 	_floating_visuals.append(visual)
 
 
-func _make_auto_trigger(node_name: String, at: Vector2, display_name: String, trigger_kind: String) -> Area2D:
+func _make_auto_trigger(node_name: String, at: Vector2, display_name: String, trigger_kind: String, trigger_radius: float = 82.0) -> Area2D:
 	var area := Area2D.new()
 	area.name = node_name
 	area.position = at
@@ -490,7 +490,7 @@ func _make_auto_trigger(node_name: String, at: Vector2, display_name: String, tr
 
 	var shape_node := CollisionShape2D.new()
 	var shape := CircleShape2D.new()
-	shape.radius = 82.0
+	shape.radius = trigger_radius
 	shape_node.shape = shape
 	area.add_child(shape_node)
 	area.body_entered.connect(_on_auto_trigger_body_entered.bind(area))

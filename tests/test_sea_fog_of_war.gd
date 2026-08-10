@@ -3,6 +3,8 @@ extends SceneTree
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SOUTH_SEA_HARBOR_SPAWN := Vector2(760, 1130)
 const FAR_WATERS := Vector2(4380, 2460)
+const WORLD_SCREENSHOT_PATH := "res://.godot/sea_fog_world_preview.png"
+const MAP_SCREENSHOT_PATH := "res://.godot/sea_fog_map_preview.png"
 
 var failures: Array[String] = []
 
@@ -31,11 +33,18 @@ func _run() -> void:
 	_expect(fog.has_method("is_world_position_revealed"), "FogOfWar must expose world-position reveal queries.")
 	_expect(bool(fog.call("is_world_position_revealed", SOUTH_SEA_HARBOR_SPAWN)), "South Sea Harbor must be revealed on first entry.")
 	_expect(not bool(fog.call("is_world_position_revealed", FAR_WATERS)), "Far waters must remain black on first entry.")
+	var initial_ratio := float(fog.call("get_explored_ratio"))
+	_expect(initial_ratio > 0.0 and initial_ratio < 0.25, "Initial harbor vision must reveal only a limited part of the chart.")
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		var world_screenshot_error := root.get_texture().get_image().save_png(WORLD_SCREENSHOT_PATH)
+		_expect(world_screenshot_error == OK, "Initial world-fog preview screenshot could not be saved.")
 
 	var vision_size: Vector2 = fog.call("get_vision_world_size")
 	_expect(vision_size.is_equal_approx(Vector2(1344, 896)), "Fog reveal size must match the current Camera2D world viewport.")
 	var reveal_center := Vector2(2500, 1350)
 	fog.call("reveal_at", reveal_center)
+	_expect(float(fog.call("get_explored_ratio")) > initial_ratio, "Sailing into new waters must increase chart completion.")
 	_expect(bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.45, 0))), "A point inside the camera-width reveal footprint must be visible.")
 	_expect(not bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.65, 0))), "A point outside the camera-width reveal footprint must remain hidden.")
 	_expect(bool(fog.call("is_world_position_revealed", SOUTH_SEA_HARBOR_SPAWN)), "Previously revealed harbor water must stay visible after sailing elsewhere.")
@@ -65,6 +74,10 @@ func _run() -> void:
 	_expect(south_harbor_label != null and south_harbor_label.visible, "Revealed South Sea Harbor name must appear on the full chart.")
 	_expect(pirate_camp_label != null and not pirate_camp_label.visible, "Unexplored pirate-camp name must stay hidden.")
 	_expect(map_screen.get_node("MapPanel/MapViewport/PlayerMarker").visible, "Current-position marker must remain visible above fog.")
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		var map_screenshot_error := root.get_texture().get_image().save_png(MAP_SCREENSHOT_PATH)
+		_expect(map_screenshot_error == OK, "Full-chart fog preview screenshot could not be saved.")
 
 	var revealed_probe := reveal_center
 	current_scene = null

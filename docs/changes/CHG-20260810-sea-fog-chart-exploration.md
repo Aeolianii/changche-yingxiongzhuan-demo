@@ -1,6 +1,6 @@
 # CHG-20260810 海域迷雾与海图探索
 
-- 状态：in-progress
+- 状态：done
 - 类型：海图探索 / 剧情 / 任务 / 存档
 - 日期：2026-08-10
 
@@ -62,10 +62,11 @@
 
 ## 验证证据
 
-- Automated: 待实现后补充。
-- Manual/in-engine: 待实现后补充。
+- Automated: `test_sea_fog_of_war.gd`、`test_sea_fog_persistence.gd`、`test_title_screen.gd`、`test_scene_two_dialogue_patrol.gd`、`test_scene_two_sea_link.gd`、`test_sea_overworld_crate_event.gd`、`test_exploration_hud.gd` 与 `test_main_flow_save.gd` 在 Godot 4.7.1 headless 模式退出 0。
+- Visual: `test_sea_fog_of_war.gd` 在 OpenGL Compatibility 模式退出 0，并生成 `.godot/sea_fog_world_preview.png` 与 `.godot/sea_fog_map_preview.png`；原始分辨率检查确认军港视野外为黑色、玩家位于迷雾之上、完整海图只显示已揭示地图和地点名。
+- Regression boundary: 完整 `test_sea_overworld.gd` 仍因用户当前未提交的 `sea_overworld.tscn` 碰撞节点数量、顶点与旧批准基准不一致而失败；输出没有新增迷雾、任务或存档断言失败。本变更未修改该场景文件。
 
 ## 最终对账
 
-- 实际修改：待实现后补充。
-- 已知限制：待实现后补充。
+- 实际修改：新增 `SeaFogOfWar` 位图组件；海上大地图运行时创建世界遮罩并驱动揭示；完整海图复用遮罩并隐藏未探索地点；`GameState` 保存可选全局海图状态；新游戏重置运行时海图；县令首次对白和两处任务投影完成更新。
+- 已知限制：迷雾为永久揭示的两态系统，不含“当前可见 / 曾经见过”的第三种暗化状态；本次不设置 100% 探索结算或奖励。

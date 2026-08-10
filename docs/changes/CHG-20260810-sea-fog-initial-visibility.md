@@ -1,6 +1,6 @@
 # CHG-20260810 海图迷雾初始可见范围修正
 
-- 状态：in-progress
+- 状态：done
 - 类型：海图探索 / 视觉修正
 - 日期：2026-08-10
 
@@ -33,4 +33,6 @@
 
 ## 验证证据
 
-- 待实现后补充。
+- `tests/test_sea_fog_of_war.gd` 在 Godot 4.7.1 headless 与 OpenGL Compatibility 模式均退出 0；断言覆盖左上大陆全部迷雾单元、出生点四角及平滑相机实际可见四角。
+- `tests/test_sea_fog_persistence.gd`、`tests/test_main_flow_save.gd`、`tests/test_scene_two_sea_link.gd` 均退出 0，确认跨场景与存档恢复无回归。
+- `.godot/sea_fog_world_preview.png` 原始分辨率复核确认出生画面全屏无黑色迷雾边条；`.godot/sea_fog_map_preview.png` 确认左上大陆完整点亮、其余未探索区域仍为黑色。

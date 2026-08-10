@@ -61,8 +61,8 @@
 | 旁白显隐 | 查看急报、圣旨和完成旁白 | 推进文本 | 只显示水墨正文底板，不残留上一位人物立绘或姓名 | passed / Scene1 portrait runtime |
 | 对话操作精简 | 查看所有对话状态 | 检查界面控件 | 保留继续与剧情选项，不出现自动播放或长按跳过 | passed / ink dialogue static + runtime 1 |
 | 海上月相时钟 | 进入海上大地图 | 静止后持续航行，观察左上月面 | 静止时相位不变；航行时从新月连续经过上弦至满月，阶段名同步更新 | passed / sea overworld lunar runtime + render 1 |
-| 海图初始迷雾 | 新游戏从场景二进入海上大地图 | 检查出生画面四角，再打开右下完整海图查看远端四区 | 左上大陆全部点亮，玩家出生视野矩形内无黑色边角；大陆外远端海域全黑且地点名称隐藏 | pending / initial-visibility refinement |
-| 航行永久揭示 | 从南海军港沿任意航道持续航行后折返 | 对比航行画面与完整海图 | 点亮范围覆盖相机完整可见矩形（含四角），走过航线保持可见且两处遮罩一致 | pending / initial-visibility refinement |
+| 海图初始迷雾 | 新游戏从场景二进入海上大地图 | 检查出生画面四角，再打开右下完整海图查看远端四区 | 左上大陆全部点亮，玩家出生视野矩形内无黑色边角；大陆外远端海域全黑且地点名称隐藏 | passed / fog runtime + OpenGL render 2 |
+| 航行永久揭示 | 从南海军港沿任意航道持续航行后折返 | 对比航行画面与完整海图 | 点亮范围覆盖相机完整可见矩形（含四角），走过航线保持可见且两处遮罩一致 | passed / fog runtime + OpenGL render 2 |
 | 海图迷雾持久化 | 揭示一段远离军港的航线 | 返回场景二后再出海，并分别保存、读取 | 已揭示航线保持可见；旧存档无迷雾字段时只初始化军港视野 | passed / fog persistence + main-flow save runtime 1 |
 | 县令海图任务 | 完成驻地巡视后首次与县令会谈，再完成操练并重复交谈 | 检查对白、任务栏和任务界面 | 首次说明水师久疏操练与海情未明；任务为“探索海域，完善海图”；第二次以后仍使用既有出海询问和选项 | passed / dialogue patrol + round-trip runtime 1 |
 | 月相暂停与恢复 | 海上航行中 | 分别打开任务、完整海图或系统菜单再关闭 | 阻断界面打开时月相暂停，关闭后继续从原相位推进 | passed / sea overworld lunar runtime 1 |
@@ -181,6 +181,7 @@
 | 2026-08-10 / sea overworld production QA 1 | Codex | A/B/C/D v3 底图、16 地点、缩小船只、入口和碰撞完成双模式回归与原始分辨率视觉验收 | 地图专项 headless/OpenGL、存档、Scene2 往返、A/B/C/D/中央/完整海图截图 | 生产落图完成 |
 | 2026-08-10 / sea map scroll UI render 1 | Codex | 完整海图替换为生成式水墨像素展开海图框，详细地图嵌入中央，删除底部说明 | PNG Alpha/尺寸检查、地图专项 headless/OpenGL、1344×896 完整海图截图 | 交付用户试玩 |
 | 2026-08-10 / sea overworld D2 simplification 1 | Codex | 删除无独立岛体的东极秘岛，D 区改为红湾卫所与南澳商港两层结构 | 15 地点专项 headless/OpenGL、完整海图与 D 区截图 | 交付用户试玩 |
+| 2026-08-10 / sea fog initial visibility 2 | Codex | 左上大陆改为默认已知，出生与航行时按平滑相机真实可见矩形完整揭示，屏幕四角和边缘不再残留黑色迷雾 | 大陆逐单元断言、相机四角断言、1344×896 OpenGL 航行与完整海图截图 | 交付用户试玩 |
 
 ## Known issues
 

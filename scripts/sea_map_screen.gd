@@ -233,6 +233,8 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 	if chunks.is_empty():
 		chunks = [{"texture": SEA_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, _world_size)}]
 	var content_scale := _map_content_rect.size.x / _world_size.x
+	var water_noise := _create_water_noise_texture(0.045, 4, 0.55)
+	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)
 	for index in range(chunks.size()):
 		var chunk_data: Dictionary = chunks[index]
 		var chunk_texture := chunk_data.get("texture") as Texture2D
@@ -254,8 +256,24 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 		blend_material.set_shader_parameter("fade_from_top", bool(chunk_data.get("fade_from_top", false)))
 		blend_material.set_shader_parameter("world_origin", chunk_rect.position)
 		blend_material.set_shader_parameter("world_size", chunk_rect.size)
+		blend_material.set_shader_parameter("waterNoise", water_noise)
+		blend_material.set_shader_parameter("waterDistortionNoise", distortion_noise)
 		map_texture.material = blend_material
 		_map_texture_layer.add_child(map_texture)
+
+
+func _create_water_noise_texture(frequency: float, octaves: int, gain: float) -> NoiseTexture2D:
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = frequency
+	noise.fractal_octaves = octaves
+	noise.fractal_gain = gain
+	var texture := NoiseTexture2D.new()
+	texture.width = 512
+	texture.height = 512
+	texture.noise = noise
+	texture.seamless = true
+	return texture
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

@@ -309,13 +309,29 @@ func _store_fog_state() -> void:
 
 
 func _build_background_chunks() -> void:
-	_configure_background_chunk("Background", A_MAP_TEXTURE, Vector2.ZERO, -100, false, false)
-	_configure_background_chunk("EastBackground", B_MAP_TEXTURE, B_MAP_ORIGIN, -99, true, false)
-	_configure_background_chunk("CBackground", C_MAP_TEXTURE, C_MAP_ORIGIN, -98, false, true)
-	_configure_background_chunk("DBackground", D_MAP_TEXTURE, D_MAP_ORIGIN, -97, true, true)
+	var water_noise := _create_water_noise_texture(0.045, 4, 0.55)
+	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)
+	_configure_background_chunk("Background", A_MAP_TEXTURE, Vector2.ZERO, -100, false, false, water_noise, distortion_noise)
+	_configure_background_chunk("EastBackground", B_MAP_TEXTURE, B_MAP_ORIGIN, -99, true, false, water_noise, distortion_noise)
+	_configure_background_chunk("CBackground", C_MAP_TEXTURE, C_MAP_ORIGIN, -98, false, true, water_noise, distortion_noise)
+	_configure_background_chunk("DBackground", D_MAP_TEXTURE, D_MAP_ORIGIN, -97, true, true, water_noise, distortion_noise)
 
 
-func _configure_background_chunk(node_name: String, texture: Texture2D, origin: Vector2, draw_order: int, fade_from_left: bool, fade_from_top: bool) -> void:
+func _create_water_noise_texture(frequency: float, octaves: int, gain: float) -> NoiseTexture2D:
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = frequency
+	noise.fractal_octaves = octaves
+	noise.fractal_gain = gain
+	var texture := NoiseTexture2D.new()
+	texture.width = 512
+	texture.height = 512
+	texture.noise = noise
+	texture.seamless = true
+	return texture
+
+
+func _configure_background_chunk(node_name: String, texture: Texture2D, origin: Vector2, draw_order: int, fade_from_left: bool, fade_from_top: bool, water_noise: Texture2D, distortion_noise: Texture2D) -> void:
 	var background := $World.get_node_or_null(node_name) as Sprite2D
 	if background == null:
 		background = Sprite2D.new()
@@ -333,6 +349,8 @@ func _configure_background_chunk(node_name: String, texture: Texture2D, origin: 
 	blend_material.set_shader_parameter("fade_from_top", fade_from_top)
 	blend_material.set_shader_parameter("world_origin", origin)
 	blend_material.set_shader_parameter("world_size", MAP_CHUNK_SIZE)
+	blend_material.set_shader_parameter("waterNoise", water_noise)
+	blend_material.set_shader_parameter("waterDistortionNoise", distortion_noise)
 	background.material = blend_material
 
 

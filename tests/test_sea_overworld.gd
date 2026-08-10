@@ -250,8 +250,11 @@ func _verify_location_layout(scene: Node) -> void:
 			_expect((harbor_offsets[0] as Vector2).y > (harbor_offsets[2] as Vector2).y and (harbor_offsets[4] as Vector2).y > (harbor_offsets[2] as Vector2).y, "South Sea Harbor entry segments must form a shallow crescent inside the basin.")
 	if chuanshan != null:
 		var chuanshan_shape := chuanshan.get_node("EntryTriggerShape") as CollisionShape2D
-		_expect(chuanshan_shape.shape is RectangleShape2D and chuanshan_shape.position.y > 0.0, "Chuanshan fishing village must use the dock water below the mainland settlement.")
+		_expect(chuanshan_shape.shape is CircleShape2D and chuanshan_shape.position.is_equal_approx(Vector2(390, 30)), "Chuanshan fishing village must use the screenshot-marked southeast dock point.")
+		_expect((chuanshan.global_position + chuanshan_shape.position).is_equal_approx(Vector2(1470, 680)), "Chuanshan's entry center must match the red current-position marker at the small dock.")
 		_expect(_is_water_clear(chuanshan.global_position + chuanshan_shape.position, 19.0), "Chuanshan's lower dock entry must remain reachable open water.")
+		var chuanshan_map_offset := chuanshan.get_meta("map_label_offset", Vector2.ZERO) as Vector2
+		_expect(chuanshan_map_offset.is_equal_approx(Vector2(0, -220)), "Chuanshan's full-map label must move upward onto the mainland houses.")
 
 
 func _verify_shared_exploration_hud(scene: Node) -> void:
@@ -380,7 +383,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	_expect(qingyu_map_label != null and (qingyu_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2800, 400)), "Qingyu full-map label must align to the pagoda island's upper-right.")
 	_expect(xuanchao_map_label != null and (xuanchao_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2620, 2600)), "Xuanchao full-map label must sit at the reefs' lower-right.")
 	_expect(south_harbor_map_label != null and (south_harbor_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(480, 1040)), "South Sea Harbor's full-map name must move to the southwest crescent harbor.")
-	_expect(chuanshan_map_label != null and (chuanshan_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(1080, 650)), "Chuanshan's full-map name must move to the northeast mainland docks.")
+	_expect(chuanshan_map_label != null and (chuanshan_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(1080, 430)), "Chuanshan's full-map name must move upward onto the northeast mainland houses.")
 	if east_bay_map_label != null and qingyu_map_label != null:
 		var east_bay_label_center := east_bay_map_label.position + east_bay_map_label.size * 0.5
 		var qingyu_label_center := qingyu_map_label.position + qingyu_map_label.size * 0.5

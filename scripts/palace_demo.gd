@@ -117,6 +117,7 @@ func _process(delta: float) -> void:
 		StoryState.GO_TO_EMPEROR:
 			_move_actor(attendant, ATTENDANT_INSIDE_TARGET, delta)
 			_update_interaction_prompt(emperor, "觐见")
+	_sync_player_controls()
 	_refresh_exploration_hud()
 
 
@@ -211,6 +212,7 @@ func _show_dialogue(text: String) -> void:
 	_set_dialogue_text_layout(-1)
 	_hide_portrait()
 	dialogue_panel.show()
+	_sync_player_controls()
 
 
 func _show_character_dialogue(text: String, speaker: String, portrait_texture: Texture2D, portrait_on_left: bool, placeholder_text: String = "") -> void:
@@ -219,6 +221,7 @@ func _show_character_dialogue(text: String, speaker: String, portrait_texture: T
 	_show_portrait(speaker, portrait_texture, portrait_on_left, placeholder_text)
 	_set_dialogue_text_layout(1 if portrait_on_left else 0)
 	dialogue_panel.show()
+	_sync_player_controls()
 
 
 func _show_portrait(speaker: String, portrait_texture: Texture2D, portrait_on_left: bool, placeholder_text: String) -> void:
@@ -271,6 +274,16 @@ func _hide_portrait() -> void:
 func _hide_dialogue() -> void:
 	dialogue_panel.hide()
 	_hide_portrait()
+	_sync_player_controls()
+
+
+func _sync_player_controls() -> void:
+	player.controls_enabled = (
+		not transition_started
+		and not dialogue_panel.visible
+		and not bool(exploration_hud.call("is_menu_open"))
+		and _is_free_story_state()
+	)
 
 
 func _show_interaction(text: String) -> void:

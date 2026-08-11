@@ -9,6 +9,8 @@
 
 ## Player inputs and feedback
 
+全局输入规则：任何对话、旁白或选项界面显示期间，玩家角色停止移动，方向键和点击移动均不生效；界面关闭且回到自由探索状态后才恢复控制。
+
 | Step | Player action | Game response | Reward/cost |
 |---|---|---|---|
 | 1 | 点击继续 | 依次显示岭南急报 | 了解危机 |

@@ -2,6 +2,7 @@ extends SceneTree
 
 const PLAYER_SCENE := preload("res://scenes/characters/player.tscn")
 const SCENE_TWO := preload("res://scenes/Scene2.tscn")
+const FUBO_SCENE := preload("res://scenes/fubo_guling/fubo_guling.tscn")
 
 var failures: Array[String] = []
 
@@ -13,6 +14,7 @@ func _initialize() -> void:
 func _run() -> void:
 	await _verify_palace_player_click_move()
 	await _verify_scene_two_click_move()
+	await _verify_fubo_click_move()
 	if failures.is_empty():
 		print("Click-to-move runtime verification passed.")
 		quit(0)
@@ -88,6 +90,29 @@ func _verify_scene_two_click_move() -> void:
 	await physics_frame
 	_expect(not bool(scene_two.call("has_player_move_target")), "Opening the Scene2 system menu must clear the click target.")
 	scene_two.queue_free()
+	await process_frame
+
+
+func _verify_fubo_click_move() -> void:
+	var fubo := FUBO_SCENE.instantiate()
+	root.add_child(fubo)
+	await process_frame
+	await physics_frame
+	var player := fubo.get_node("World/WorldObjects/Player") as CharacterBody2D
+	var target := player.global_position + Vector2(90.0, 0.0)
+	_send_world_click(fubo, target)
+	_expect(bool(player.call("has_move_target")), "Fubo must accept a left-click move target during free exploration.")
+	_expect((player.call("move_target") as Vector2).distance_to(target) < 0.5, "Fubo click coordinates must map to the intended world position.")
+	await _wait_physics_frames(40)
+	_expect(player.global_position.distance_to(target) <= 7.0, "Fubo player must walk to an unobstructed click target.")
+	_expect(not bool(player.call("has_move_target")), "Fubo must clear the target after arrival.")
+
+	player.call("request_move_to", player.global_position + Vector2(120.0, 0.0))
+	var menu_button := root.get_node("ExplorationUI/HUD/FunctionButtons/MenuButtonSlot/MenuButton") as BaseButton
+	menu_button.pressed.emit()
+	await physics_frame
+	_expect(not bool(player.call("has_move_target")), "Opening the Fubo system menu must clear the click target.")
+	fubo.queue_free()
 	await process_frame
 
 

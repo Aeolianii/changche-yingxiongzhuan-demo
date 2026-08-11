@@ -278,6 +278,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_echo():
 		return
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT and player.controls_enabled:
+			var world_position := get_viewport().get_canvas_transform().affine_inverse() * mouse_event.position
+			player.request_move_to(world_position)
+			get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("interact"):
 		_handle_interaction()
 		get_viewport().set_input_as_handled()

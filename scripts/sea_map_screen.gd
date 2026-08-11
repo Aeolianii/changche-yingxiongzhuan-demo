@@ -4,6 +4,7 @@ signal close_requested
 
 const SEA_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
+const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
 const SEA_MAP_SCROLL_FRAME := preload("res://assets/ui/sea_overworld/sea_map_scroll_frame_v1.png")
 
 const GOLD := Color(0.73, 0.59, 0.32, 1.0)
@@ -196,6 +197,7 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 	if chunks.is_empty():
 		chunks = [{"texture": SEA_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, _world_size)}]
 	var content_scale := _map_content_rect.size.x / _world_size.x
+	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)
 	for index in range(chunks.size()):
 		var chunk_data: Dictionary = chunks[index]
 		var chunk_texture := chunk_data.get("texture") as Texture2D
@@ -211,13 +213,31 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 		map_texture.stretch_mode = TextureRect.STRETCH_SCALE
 		map_texture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		map_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if index > 0:
-			var blend_material := ShaderMaterial.new()
-			blend_material.shader = MAP_CHUNK_BLEND_SHADER
-			blend_material.set_shader_parameter("fade_from_left", bool(chunk_data.get("fade_from_left", true)))
-			blend_material.set_shader_parameter("fade_from_top", bool(chunk_data.get("fade_from_top", false)))
-			map_texture.material = blend_material
+		var blend_material := ShaderMaterial.new()
+		blend_material.shader = MAP_CHUNK_BLEND_SHADER
+		blend_material.set_shader_parameter("fade_from_left", bool(chunk_data.get("fade_from_left", index > 0)))
+		blend_material.set_shader_parameter("fade_from_top", bool(chunk_data.get("fade_from_top", false)))
+		blend_material.set_shader_parameter("world_origin", chunk_rect.position)
+		blend_material.set_shader_parameter("world_size", chunk_rect.size)
+		blend_material.set_shader_parameter("waterNoise", distortion_noise)
+		blend_material.set_shader_parameter("waterFlowTexture", SEA_FLOW_TEXTURE)
+		blend_material.set_shader_parameter("waterDistortionNoise", distortion_noise)
+		map_texture.material = blend_material
 		_map_texture_layer.add_child(map_texture)
+
+
+func _create_water_noise_texture(frequency: float, octaves: int, gain: float) -> NoiseTexture2D:
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = frequency
+	noise.fractal_octaves = octaves
+	noise.fractal_gain = gain
+	var texture := NoiseTexture2D.new()
+	texture.width = 512
+	texture.height = 512
+	texture.noise = noise
+	texture.seamless = true
+	return texture
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

@@ -3,6 +3,8 @@ extends SceneTree
 const TITLE_SCENE := preload("res://scenes/ui/title_screen.tscn")
 const TEST_SAVE_PATH := "user://test_title_screen_save.json"
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
+const FUBO_PATH := "res://scenes/fubo_guling/fubo_guling.tscn"
+const FUBO_SAVE_STATE := preload("res://scripts/fubo_guling/fubo_save_state.gd")
 const SCREENSHOT_PATH := "res://.godot/title_screen_preview.png"
 
 var failures: Array[String] = []
@@ -81,13 +83,8 @@ func _verify_empty_title_state() -> void:
 
 
 func _verify_continue_game() -> void:
-	var snapshot := {
-		"patrol_task_stage": 0,
-		"heard_soldier_roles": [],
-		"player_position": [612.0, 548.0],
-		"last_direction": "left",
-	}
-	var save_result: Dictionary = game_state.call("save_game", SCENE_TWO_PATH, snapshot)
+	var snapshot: Dictionary = FUBO_SAVE_STATE.make_snapshot(Vector2(612, 548), "left", 1, {})
+	var save_result: Dictionary = game_state.call("save_game", FUBO_PATH, snapshot)
 	_expect(bool(save_result.get("ok", false)), "Title test must create its isolated save.")
 	var title := current_scene
 	title.call("refresh_save_state")
@@ -96,14 +93,14 @@ func _verify_continue_game() -> void:
 	continue_button.pressed.emit()
 	await process_frame
 	await process_frame
-	_expect(current_scene != null and current_scene.scene_file_path == SCENE_TWO_PATH, "Continue must enter the scene recorded by the save.")
-	if current_scene != null and current_scene.scene_file_path == SCENE_TWO_PATH:
-		var player := current_scene.get_node("World/Actors/Player") as CharacterBody2D
+	_expect(current_scene != null and current_scene.scene_file_path == FUBO_PATH, "Continue must enter Fubo when the save records the island.")
+	if current_scene != null and current_scene.scene_file_path == FUBO_PATH:
+		var player := current_scene.get_node("World/WorldObjects/Player") as CharacterBody2D
 		_expect(player.global_position.distance_to(Vector2(612.0, 548.0)) < 1.0, "Continue must restore the saved player position.")
-		(current_scene.get_node("UI/ExplorationHUD") as Control).emit_signal("return_title_requested")
+		root.get_node("ExplorationUI").emit_signal("return_title_requested")
 		await process_frame
 		await process_frame
-		_expect(current_scene != null and current_scene.scene_file_path == "res://scenes/ui/title_screen.tscn", "Scene2 system menu route must return to the title screen.")
+		_expect(current_scene != null and current_scene.scene_file_path == "res://scenes/ui/title_screen.tscn", "Fubo system menu route must return to the title screen.")
 
 
 func _verify_new_game_preserves_save() -> void:
@@ -116,7 +113,7 @@ func _verify_new_game_preserves_save() -> void:
 	_expect(FileAccess.file_exists(TEST_SAVE_PATH), "New game must not delete the existing save.")
 	_expect(FileAccess.get_file_as_string(TEST_SAVE_PATH) == save_before, "New game must not rewrite the existing save.")
 	if current_scene != null and current_scene.scene_file_path == "res://scenes/palace/palace_demo.tscn":
-		(current_scene.get_node("UI/ExplorationHUD") as Control).emit_signal("return_title_requested")
+		root.get_node("ExplorationUI").emit_signal("return_title_requested")
 		await process_frame
 		await process_frame
 		_expect(current_scene != null and current_scene.scene_file_path == "res://scenes/ui/title_screen.tscn", "Palace system menu route must return to the title screen.")

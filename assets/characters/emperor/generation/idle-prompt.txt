@@ -1,0 +1,9 @@
+Create one separate production-oriented 4-direction idle sprite sheet for the same fictional Lingnan maritime emperor as the accepted walk sheet.
+
+Use the walk sheet as the primary exact character identity reference. Preserve the emperor's face, simplified small gold ceremonial crown/diadem, hair bun, black and deep-vermilion imperial robe, restrained gold trim, jade belt, body proportions, pixel density, camera distance and directional appearance. Use the four project direction sprites as secondary style and framing references. This must be the same emperor and asset family, not a redesign and not a real historical person.
+
+Exact sheet contract: exactly 4 rows by 4 columns, sixteen equal invisible cells, no visible grid, no dividers and no borders. Row order: down/front, left, right, up/back. Each row is a subtle four-frame seamless idle loop: neutral; slight chest/shoulder rise and tiny sleeve settling; neutral return; slight breath release with restrained robe hem and crown ornament secondary motion. Keep both feet and pelvis rooted. No whole-body lateral translation, walking step, raised foot, or dramatic gesture.
+
+Authentic crisp pixel art matching the accepted walk sheet and project references, no antialiasing, painterly texture, or pseudo-pixel blur. Full body visible. Same camera distance and standing-equivalent anatomical scale in every cell. Keep the body centered within the central 60–65% safe area. Use one stable foot-contact line per row. Leave generous background margin on every side. Nothing may touch or cross a cell edge. No detached effects, shadows, floor, props, weapons, text, labels, UI, watermark, guide marks, or frame numbers.
+
+Background: perfectly uniform flat solid #FF00FF magenta with no gradient, texture, lighting, shadow, grid line, or color variation. Do not use #FF00FF on the emperor.

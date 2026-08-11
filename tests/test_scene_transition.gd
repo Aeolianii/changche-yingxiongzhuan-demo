@@ -58,7 +58,7 @@ func _verify_transition(skip_wait: bool, wait_seconds: float, label: String) -> 
 
 	var dialogue_panel := current_scene.get_node("UI/DialoguePanel") as Control
 	var speaker_label := current_scene.get_node("UI/DialoguePanel/NamePlate/SpeakerLabel") as Label
-	var exploration_hud := current_scene.get_node("UI/ExplorationHUD") as Control
+	var exploration_hud := root.get_node("ExplorationUI/HUD") as Control
 	if not dialogue_panel.visible or speaker_label.text != "水师副将":
 		failures.append("Scene2 did not open with the deputy greeting after the %s transition." % label)
 	if exploration_hud.visible:

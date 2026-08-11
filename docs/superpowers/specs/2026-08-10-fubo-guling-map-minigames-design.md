@@ -1,6 +1,8 @@
 # 伏波古岭中型地图与独立小游戏设计
 
-- Status: approved design, pending owner review of written spec
+> Status: superseded on 2026-08-10. The four-plate and modular-environment direction in this historical draft must not be implemented. Current canonical truth is in `docs/design/fubo-guling-slice.md`, `docs/design/art-direction.md`, and `docs/changes/CHG-20260810-fubo-guling-medium-map-minigames.md`.
+
+- Historical status: previously approved, now superseded
 - Date: 2026-08-10
 - Engine: Godot 4.7.1
 - Target: desktop and Web export

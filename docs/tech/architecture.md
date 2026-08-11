@@ -15,13 +15,13 @@
 
 `Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操练覆盖层。
 
-`SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用横向拼接的广东海岸基础图与东部扩展图、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；东部扩展以 `World/EastBackground` 节点序列化在场景中，便于在 Godot 2D 编辑器中直接查看，场景脚本仅负责校正统一缩放、重叠偏移和运行时兼容。水师操练完成后可由场景二的广州县令对话进入，并可从南海军港返回场景二。
+`SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用横向拼接的广东海岸基础图与东部扩展图、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；东部扩展以 `World/EastBackground` 节点序列化在场景中，便于在 Godot 2D 编辑器中直接查看，场景脚本仅负责校正统一缩放、重叠偏移和运行时兼容。水师操练完成后可由场景二的广州县令对话进入，可从南海军港返回场景二，也可从伏波古岭入口进入真实岛屿场景。
 
-`ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。宫城、水师驻地和海上大地图各实例化一次，通过 `set_exploration_visible(bool)` 接口投射当前场景状态。组件处理角落 HUD、任务界面、系统菜单、短时提示和退出请求；海上大地图通过独立的 `sea_overworld` 任务上下文覆盖任务栏与任务流程，并把左上状态区切换为月相时钟、把海图入口锚定在右下角，不改变前两章任务数据。菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
+`ExplorationHUD` 是由 `scenes/ui/exploration_hud.tscn` 和 `scripts/exploration_hud.gd` 组成的共享 Canvas UI 组件。`scripts/ui/exploration_ui.gd` 已注册为 `ExplorationUI` Autoload 并持有进程内唯一实例，宫城、水师驻地、海上大地图和伏波古岭只提交场景所有者、任务上下文与可见状态，不再各自实例化。管理器用 `WeakRef` 管理当前所有者，负责切场重置与四类菜单信号转发；组件继续处理角落 HUD、任务界面、系统菜单、短时提示和退出请求。海上大地图使用 `sea_overworld` 上下文启用月相与海图，伏波使用 `fubo_guling` 上下文投射岛内任务。菜单使用 `shaders/menu_blur.gdshader` 采样屏幕纹理，模糊层之后再绘制清晰的中央面板。
 
 Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容器，但其 `panel` 样式改为拉伸共享的生成式像素水墨对话底板；姓名容器使用共享姓名笔触。Scene1 直接引用同一资源。两处保留各自既有状态机，只统一底板、人物左右站位和正文安全边距。
 
-角色为 `CharacterBody2D`，脚底小矩形碰撞，`AnimatedSprite2D` 使用独立帧构建 `SpriteFrames`。主角负责输入和相机目标，NPC 复用同一角色动画接口。
+角色为 `CharacterBody2D`，脚底小矩形碰撞，`AnimatedSprite2D` 使用独立帧构建 `SpriteFrames`。主角负责输入和相机目标，NPC 复用同一角色动画接口。`CharacterActor.character_key` 包含 `emperor`，仍从 `assets/characters/<key>/standard/<state>/<direction>/` 动态建立动画；第一幕只在皇帝实例的视觉子节点上覆盖 128×128 源帧所需的约 `0.55` 缩放和既有脚底偏移，不改变共享碰撞与行为。
 
 ## Data flow
 
@@ -49,6 +49,8 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 操练界面关闭后，Scene2 进入稳定的“探索岭南海域”阶段。县令的“立即出发”选项先写入一次性大地图入口标记，再通过共享 `SceneLoadingTransition` 显示至少一秒的加载图并切换场景。SeaOverworld 消费入口标记后把玩家放置到南海军港正前方；玩家进入军港时写入返回标记并播放同款加载界面。Scene2 消费返回标记后直接恢复巡视与操练均已完成的阶段，从而避免重复对白和任务回退。场景切换失败时清理对应标记并恢复当前场景输入。
 
+伏波古岭往返使用 `FuboTravelSession` 统一场景路径、SceneTree 元数据键、返回上下文构造和校验。海图在登岛前把船位、朝向、探索阶段和月相写入根节点会话元数据；岛屿码头只写入一次性返回请求并切回海图。新海图实例在 `_ready()` 中消费返回请求和上下文，校验成功后恢复四项状态，校验失败则使用 `Vector2(4200, 1140)` 安全船位。该上下文只存在于当前进程，不改变正式存档版本；加载失败时必须清除本次请求标记并恢复当前场景输入。
+
 ## Directory ownership
 
 | Path | Responsibility |
@@ -58,6 +60,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 | `scenes/characters/` | Player 和 NPC 可复用场景 |
 | `scenes/palace/` | 皇宫可玩场景和手工碰撞 |
 | `scenes/sea_overworld/` | 海上大地图场景、地点触发与船只原型 |
+| `scenes/fubo_guling/` | 伏波古岭独立探索切片与占位地图骨架 |
 | `scripts/` | 移动、动画、交互与 UI 行为 |
 | `assets/` | 统一管理背景、角色、UI 与场景素材 |
 | `shaders/` | 场景二水面等视觉效果着色器 |
@@ -66,7 +69,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 ## Interfaces and invariants
 
 - 2D 单平面，不实现高度系统。
-- 像素纹理使用最近邻过滤，角色保持原始 64×64 比例。
+- 像素纹理使用最近邻过滤；LPC 角色保持原始 64×64 比例，第一幕皇帝保留 128×128 源帧并通过场景实例变换匹配 LPC 可见高度。
 - 一次性边界只用编辑器可见、可拖动的 `CollisionPolygon2D`。
 - 原型庭院采用少量连续矩形边界定义安全活动区，边界与花坛、石像和画面边缘保持视觉余量；优先避免窄缝与凹角，不逐个包围装饰物。
 - 正殿边界使用独立的左右矩形和连续上下边界：上半部比庭院更窄，下半部仍保持庭院宽度；不使用凹多边形拼接两种宽度，避免物理引擎分解出斜向三角碰撞。
@@ -81,6 +84,11 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 - Scene2 的士兵汇报必须按角色标识去重；军官复命和县令操练入口必须由任务阶段约束，不能只依赖玩家点击某个通用选项。
 - 探索 HUD 使用全屏锚点和角落容器适配窗口；底部中央交互区和底部对话区必须保持无遮挡。
 - 海上大地图月相时钟固定在左上，右下海图入口使用右下锚点；二者只在 `sea_overworld` 任务上下文启用，不能改变宫城和水师驻地的角色状态区。
+- 伏波古岭使用独立 `Node2D` 根场景和七阶段状态机，并已接入正式单槽存档的稳定探索边界。`FuboSaveState` 校验四个稳定阶段、JSON 坐标、朝向、完成标记和可选返航上下文；`GameState` 保持版本 1 并将伏波加入白名单。对话、小游戏、加载与完成覆盖层不做逐帧持久化。与 `PalaceDemo` 相同，`World/Background` 只承载一个完整背景 `Sprite2D`；`WorldCollisions` 使用手工 `CollisionPolygon2D` 定义可走安全区，整体封闭海水、山体、密林、房屋和底图边缘。
+- 伏波古岭的 `World/Triggers/SeaReturnTrigger` 固定在码头端点 `Vector2(235, 835)`，使用半径 55 的 `Area2D`。它与钓鱼触发区不重叠，且只在统一 `interact` 输入确认后切换场景。
+- 伏波古岭的 Y 排序只用于 Player、守岭人和其他动态角色。玩家不能进入背景房屋或大型树木后方，因此环境不参与 Y 排序；独立世界节点仅保留角色、剧情障碍、必要效果和 `Area2D` 触发。
+- `FuboMinigameHost` 在同一 SceneTree 中暂停并隐藏 `World`，实例化独立全屏 `PackedScene`。小游戏通过统一 `completed(result)` / `exit_requested` 信号返回，完成或退出后恢复原地图实例，不重新加载场景。`FuboMinigameBase.request_exit()` 负责区分运行环境：存在宿主监听时只发出退出信号；直接运行子场景且无人监听时调用 `change_scene_to_file()` 返回该小游戏配置的地图场景。小游戏的“返回地图”入口禁止调用 `SceneTree.quit()`。
+- 伏波古岭的钓鱼与听鼓规则是无场景依赖的 `RefCounted` 模型。钓鱼模型管理摆钩、发射、命中、按重量收线、计分、倒计时和重试；鱼获生成运行时随机、测试时可注入种子。听鼓运行时随机、测试时可注入种子，并显式验证 BPM、节拍偏移和输入时间窗。
 
 ## Persistence
 
@@ -88,11 +96,12 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 项目进程重启不会删除正式存档；启动后由标题界面显式提供继续入口，不自动读档。自动化测试必须通过 `save_path_override` 使用独立测试文件，并在结束时清理测试文件，禁止触碰 `user://main_flow_save.json`。
 
-存档顶层只包含格式版本、目标场景路径和该场景的稳定快照。首版支持 `PalaceDemo`、`Scene2` 与 `SeaOverworld`：
+存档顶层只包含格式版本、目标场景路径和该场景的稳定快照。当前支持 `PalaceDemo`、`Scene2`、`SeaOverworld` 与 `FuboGuling`：
 
 - 皇宫只允许在 `WAIT_TALK` 与 `GO_TO_EMPEROR` 两个自由探索状态保存，记录剧情状态、玩家位置和内侍位置。
 - 水师驻地记录巡视任务阶段、已登记的士兵角色标识、玩家位置和最后朝向。
 - 海上大地图记录玩家位置与朝向、探索引导阶段和月相日数。
+- 伏波古岭只允许在自由移动的稳定任务阶段保存，记录玩家位置与朝向、阶段、钓鱼/鼓令完成标记和经校验的海图返航上下文。
 
 正在播放的对白、选项、章节过场、加载过场和操练覆盖层不做逐帧持久化；这些界面本身不会显示系统菜单，因此玩家只能在稳定探索边界保存。读取成功后 `GameState` 暂存一次性场景快照并切换或重载目标场景，目标场景读取后立即消费快照，避免后续普通切换重复恢复。
 

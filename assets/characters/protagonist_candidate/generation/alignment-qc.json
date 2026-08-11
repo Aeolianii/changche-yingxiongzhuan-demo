@@ -1,0 +1,16 @@
+{
+  "frame_count": 32,
+  "frame_size": [64, 64],
+  "mode": "RGBA",
+  "actions": ["idle", "walk"],
+  "directions": ["down", "left", "right", "up"],
+  "frames_per_direction": 4,
+  "subject_height_min": 46,
+  "subject_height_max": 50,
+  "subject_height_mean": 48.81,
+  "foot_y_values": [63],
+  "edge_clipped_frames": 0,
+  "nontransparent_corner_frames": 0,
+  "visible_magenta_pixels_alpha_gte_16": 0,
+  "final_vertical_alignment_px": 6
+}

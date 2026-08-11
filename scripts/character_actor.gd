@@ -1,9 +1,10 @@
 class_name CharacterActor
 extends CharacterBody2D
 
-@export_enum("protagonist", "soldier", "magistrate") var character_key := "protagonist"
+@export_enum("protagonist", "soldier", "magistrate", "emperor") var character_key := "protagonist"
 @export var facing := "down"
 @export var move_speed := 170.0
+@export var visual_scale := Vector2.ONE
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -11,6 +12,7 @@ var move_direction := Vector2.ZERO
 
 
 func _ready() -> void:
+	animated_sprite.scale = visual_scale
 	animated_sprite.sprite_frames = _build_sprite_frames()
 	_play_state("idle")
 

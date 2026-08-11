@@ -1,6 +1,6 @@
 # 伏波古岭中型地图与独立小游戏 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> Status: superseded on 2026-08-10. Do not execute the four-background-plate or modular-environment tasks in this historical plan. Use the current canonical Fubo design and change record before writing a replacement implementation plan.
 
 **Goal:** 将现有伏波古岭骨架升级为一张约 3200×2200、相机跟随、移步换景的清新中式地图，并把水渠与军鼓改为地点触发的独立全屏轻量小游戏。
 

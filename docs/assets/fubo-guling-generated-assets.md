@@ -1,17 +1,57 @@
 # 伏波古岭生成素材清单
 
-- Status: integrated
+- Status: single-background selected; Godot integration pending
 - Last updated: 2026-08-10
 
 ## Shared specification
 
 - 视角：俯视偏正面 3/4 像素 RPG，与 64×64 四方向角色兼容。
-- 像素密度：地表以约 32×32 模块为基准，建筑和树木按整数像素缩放使用。
-- 色彩：南海青蓝、岭南湿润草绿、灰砖黛瓦、旧木赭色、少量朱红和铜金。
+- 像素密度：以现有 64×64 角色叠放效果为基准；背景保持清楚的像素簇与稳定比例，不靠运行时缩放修正巨型物件。
+- 色彩：南海青蓝、岭南湿润草绿、红褐岭南土壤、灰砖黛瓦、旧木赭色、少量朱红和铜金。
 - 禁止：写实照片、等距 3D、柔焦、平滑矢量边缘、现代物件、人物、文字、Logo、水印。
-- 透明模块先在纯色键背景生成，再移除背景；Godot 导入统一使用最近邻过滤。
+- Godot 导入统一使用最近邻过滤；主背景保持不透明完整画面，只有后续确需动态表现的少量效果才使用透明素材。
 
-## Planned modules
+## Drum minigame audio source
+
+- Selected source recording: `TAIKO DRUM 001.wav` by Freesound user `sandyrb`, performed by Tyson Goodyear. The source is a clean 2.438-second mono taiko-style single hit made from a slowed floor-tom strike.
+- Source page: `https://freesound.org/people/sandyrb/sounds/82712/`.
+- Project source copy: `assets/audio/fubo_guling/sources/taiko_drum_001_hq.mp3`, downloaded from Freesound's public high-quality preview CDN because the original WAV download requires an account.
+- License: Creative Commons Attribution 4.0, confirmed on the Freesound sound page on 2026-08-11. Required credit: `TAIKO DRUM 001.wav` by sandyrb, played by Tyson Goodyear, licensed under CC BY 4.0.
+- Runtime derivatives: `drum_low.wav`, `drum_mid.wav`, `drum_rim.wav`; each is a mono single-hit derivative with different pitch/filter/envelope treatment for low drumhead, medium drumhead and sharp rim roles.
+- `drum_fail.wav` is also derived from the same licensed source as a short, quieter, high-passed wooden-stick cue. It must remain below 0.3 seconds and quieter than the three playable drums; it is feedback, not an alarm.
+- Source SHA-256: `B45B21F9D5C382C2376C67ED26B5815585F5A0727D8FACCAE75B4A392F99B797`. Derivative SHA-256 values: low `BFE0832EEA4A07843C2679F802267E230F3328577DAC7CC4CB9532D04572403B`, mid `C9C355E10A9CCA302D1513450D20B03ECBA36C85F8266378767CD0152A53BE87`, rim `5D1106479CBBD980D079F5007E0361F341D41F97A6690C186B715E3E5CCCF68B`, fail `BBE385E80828E1B0F86BF5D48847303D8CD19195289487C14E1A94E9EA11FDCE` (0.23 seconds, measured peak `-7.3 dB`).
+- Research-only rejected source: Wikimedia Commons `02 Taiko2 (short).oga` is CC0 but contains continuous ensemble performance and overlapping hits, so it is not stored or used at runtime.
+
+## Active production target: one complete background
+
+- Active runtime target: `assets/fubo_guling/backgrounds/fubo_guling_complete.png`.
+- Target source size: approximately 1536×1024, matching the first-act palace background method and the image model's stable 3:2 landscape output. Use one generation result with proportion-preserving crop only; do not stitch, outpaint or assemble multiple plates.
+- The image contains all low lateritic hills, one continuous low-noise light red-brown critical path, coast, guard compound, trees, canal exterior, training yard, lookout and distant blocked scenery. It contains no characters, text, UI, interaction markers, decorative timber fencing or watermarks.
+- Godot keeps only Player, Keeper, story blockers, optional water highlight and the Canal/School/Viewpoint `Area2D` triggers as separate scene content.
+- Collision is manually authored as 6–9 broad `CollisionPolygon2D` regions. Buildings, roofs, large trees, forest, sea and cliffs are wholly inaccessible; no collision is inferred from pixels.
+- Existing 64×64 characters are composited over the generated draft before approval. Reject the image if buildings or trees dominate half the camera, roads cannot fit two characters, or a complete island silhouette is visible.
+
+### Selected production asset
+
+- Owner selection date: 2026-08-10.
+- Selection source: user-provided review image `C:\Users\wangk\AppData\Local\Temp\codex-clipboard-e2fe3b8a-77a6-4ff7-ba99-a7663d66a0d0.png`.
+- Project destination: `assets/fubo_guling/backgrounds/fubo_guling_complete.png`.
+- File properties: 1536×1024 PNG, 3,442,520 bytes, SHA-256 `1BD476F6FC176F93779BE6B42B040099DF0AE839D9976840F78539A82B8407DA`.
+- Decision: use this image unchanged as the single map background; stop and discard the unselected style-variant generation run.
+- Approved qualities: clear red-earth critical path, humid Lingnan vegetation, sparse functional stonework, modest grey-brick/blue-tile buildings, readable canal and training-yard landmarks, no decorative fence clutter.
+- Integration status: selected for production, not yet assigned to the Godot scene and not yet collision-tested with the 64×64 player.
+
+### Active generation prompt contract
+
+The production prompt must preserve the following meaning:
+
+> One complete 3:2 top-down three-quarter pixel-art RPG background for an ancient Chinese Lingnan coastal garrison, bright fresh and polished, crisp clustered pixels, clear turquoise South China Sea only at the landing edge, vegetation-covered low rolling lateritic hills, visible red-brown earth cuts, and one continuous lighter compacted red-earth critical path from dock to guard house, canal, training yard and lookout. The path stays about 144–192 pixels wide, smooth, low-noise and visibly brighter than blocked terrain; every local view reveals its continuation or the next landmark. Use light grey brick, blue-grey tiled roofs, small wok-ear or plain hard-gable houses, banyan, lychee and bamboo, a narrow stone-lined canal embedded in a red-soil slope, open red-earth military training yard with Chinese drum and plain flags, and a low sea-view beacon terrace. Stone is sparse and functional, limited to the dock, canal lining, foundations and a few natural outcrops. Shape boundaries with dark grass edges, low earth banks, tree masses and occasional building walls, never decorative timber fencing. Keep path centers and interaction clearings free of crates, rocks, posts, flowers and crossing lines. A local walkable scene, not a whole-island overview; land and winding roads continue toward the image edges. Spacious clean walkable ground sized for a 64×64 character, small-to-medium architecture, stable orthographic perspective, short soft shadows, refined but uncluttered detail. No characters, text, UI, logo, watermark, full island silhouette, ocean ring, giant buildings, generic Jiangnan garden compound, ornate sweeping eaves, tall stone tower, grey cliffs, rock forest, continuous stone ramparts, decorative timber fences, scattered rubble, cluttered path, Japanese shrine, Southeast Asian temple, northern imperial palace, tropical resort, isometric 3D, dark realistic rendering, painterly blur or antialiasing.
+
+## Legacy modular plan (superseded)
+
+The module lists and generated sheets below record previous prototypes only. They are not the active composition plan and must not be assembled into the next map. Keep them until the replacement background has passed visual review; deletion is a separate cleanup decision.
+
+## Historical planned modules
 
 - Ground: grass/earth texture and coastal ground treatment.
 - Paths: packed-earth road, stone courtyard and coastal landing modules.
@@ -20,14 +60,14 @@
 - Canal: three-way sluice, stone water basin and channel decorations.
 - Training/viewpoint: war drum, three plain signal flags, wooden barriers and weathered stele.
 
-## Runtime rules
+## Legacy runtime rules
 
 - Ground and paths remain below the player.
 - Buildings, trees and tall props use their wall base, trunk or pole base as Y-sort anchor.
 - Water effects remain independent Godot nodes so gameplay state can animate them.
 - Collision and triggers remain authored in the scene and are never inferred from generated pixels.
 
-## Final prompts and files
+## Historical prompts and files (superseded)
 
 All four sheets were generated with the built-in image generation tool. The project keeps both chroma-key sources, alpha sheets and cropped runtime modules under `assets/fubo_guling/generated/`.
 
@@ -57,9 +97,9 @@ All four sheets were generated with the built-in image generation tool. The proj
 - Sheets were split by their documented grids, trimmed by alpha and resized with nearest-neighbor sampling.
 - The flag cell was separated by connected opaque components so adjacent flag fragments do not leak into individual textures.
 
-## 2026-08-10 medium-map coarse-pixel pass
+## Historical 2026-08-10 four-plate coarse-pixel pass (superseded)
 
-This pass replaces the dense realistic-pixel collage with four local camera plates and ten sparse foreground modules. It used the built-in image generation tool. The visual target was explicitly corrected to a native `384×256`-like image enlarged 4× with nearest-neighbor sampling: hard square pixels, no antialiasing, 24–32 colors, broad readable clusters and fewer tiny foliage marks.
+This pass replaced the dense realistic-pixel collage with four local camera plates and ten sparse foreground modules. It is retained as provenance but was rejected as the production direction because the result remained visually fragmented and more complex than the accepted first-act single-background method.
 
 ### Local background plates
 

@@ -110,22 +110,44 @@ func set_main_task_progress(task_title: String, objective: String, progress_stag
 		_quest_screen.call("set_main_task_progress", task_title, objective, progress_stage)
 
 
-func set_quest_context(context_id: StringName) -> void:
-	if context_id != &"sea_overworld":
-		return
-	_enable_sea_map_status()
+func reset_context(context_id: StringName) -> void:
+	set_exploration_visible(false)
+	_disable_sea_map_status()
+	if is_instance_valid(_toast_timer):
+		_toast_timer.stop()
+	if is_instance_valid(_toast_panel):
+		_toast_panel.hide()
 	if is_instance_valid(_main_task_label):
-		_main_task_label.text = "探索大地图"
+		_main_task_label.text = "奉诏入殿"
 	if is_instance_valid(_main_objective_label):
-		_main_objective_label.text = "使用WASD或方向键驾驶船只"
+		_main_objective_label.text = "前往标记地点推进剧情"
 	var side_task := get_node_or_null("QuestTracker/SideQuest/TaskName") as Label
 	var side_objective := get_node_or_null("QuestTracker/SideQuest/Objective") as Label
 	if side_task != null:
-		side_task.text = "海上见闻"
+		side_task.text = "访查军港"
 	if side_objective != null:
-		side_objective.text = "接触海上的船只或漂流事件"
+		side_objective.text = "与船匠交谈（效果占位）"
+	if context_id == &"sea_overworld":
+		_enable_sea_map_status()
+		_main_task_label.text = "探索大地图"
+		_main_objective_label.text = "使用WASD或方向键驾驶船只"
+		if side_task != null:
+			side_task.text = "海上见闻"
+		if side_objective != null:
+			side_objective.text = "接触海上的船只或漂流事件"
+	elif context_id == &"fubo_guling":
+		_main_task_label.text = "伏波古岭"
+		_main_objective_label.text = "沿山路寻找守岭人"
+		if side_task != null:
+			side_task.text = "岛上见闻"
+		if side_objective != null:
+			side_objective.text = "完成码头渔获与古校场鼓令"
 	if is_instance_valid(_quest_screen):
 		_quest_screen.call("set_quest_context", context_id)
+
+
+func set_quest_context(context_id: StringName) -> void:
+	reset_context(context_id)
 
 
 func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Array, map_chunks: Array = []) -> void:
@@ -277,6 +299,37 @@ func _enable_sea_map_status() -> void:
 	status.add_child(_moon_phase_label)
 
 	_build_sea_map_button()
+
+
+func _disable_sea_map_status() -> void:
+	if not _sea_map_mode:
+		return
+	_sea_map_mode = false
+	if is_instance_valid(_sea_map_status):
+		remove_child(_sea_map_status)
+		_sea_map_status.queue_free()
+	_sea_map_status = null
+	if is_instance_valid(_moon_icon):
+		_moon_icon.get_parent().remove_child(_moon_icon)
+		_moon_icon.queue_free()
+	_moon_icon = null
+	if is_instance_valid(_moon_phase_label):
+		_moon_phase_label.get_parent().remove_child(_moon_phase_label)
+		_moon_phase_label.queue_free()
+	_moon_phase_label = null
+	_moon_material = null
+	var status := get_node_or_null("PlayerStatus") as Control
+	if status == null:
+		return
+	status.position = Vector2(22, 18)
+	status.size = Vector2(495, 192)
+	(status.get_node("GeneratedStatusFrame") as TextureRect).texture = EXPLORATION_STATUS_FRAME
+	var portrait_frame := status.get_node("PortraitFrame") as Control
+	portrait_frame.position = Vector2(33, 23)
+	portrait_frame.size = Vector2(141, 141)
+	portrait_frame.clip_contents = true
+	portrait_frame.get_node("ProtagonistPortrait").show()
+	status.get_node("NamePlate").show()
 
 
 func _build_sea_map_button() -> void:

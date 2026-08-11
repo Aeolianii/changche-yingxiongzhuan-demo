@@ -1,6 +1,6 @@
 # CHG-20260811-palace-emperor-sprite: 第一幕皇帝世界角色替换
 
-- Status: proposed
+- Status: done
 - Type: content
 - Owner: Project owner
 - Created: 2026-08-11
@@ -26,13 +26,13 @@
 
 ## Acceptance checks
 
-- [ ] 从标题界面开始新游戏后，第一幕红毯上方显示新皇帝，不再显示县令占位小人。
-- [ ] 皇帝面朝下循环播放四帧待机动画；四方向待机与行走资源均可由共享角色加载器建立动画。
-- [ ] 皇帝脚底继续落在原世界坐标 `(768, 270)`；约 `0.55` 缩放后可见高度为 48–50 像素，与原县令占位约 49 像素及宫殿石砖比例协调。
-- [ ] 像素纹理保持最近邻、透明边缘无黑底或品红残留，角色没有裁切或明显抖脚。
-- [ ] 玩家接近皇帝后“觐见”仍按原距离和剧情状态出现，皇帝碰撞、Y 排序和对白流程不变。
-- [ ] 对话中的皇帝立绘继续显示既有“帝”字占位卡。
-- [ ] 相关角色/场景测试和项目场景解析通过，运行日志无新增阻断错误。
+- [x] 从标题界面开始新游戏后，第一幕红毯上方显示新皇帝，不再显示县令占位小人。
+- [x] 皇帝面朝下循环播放四帧待机动画；四方向待机与行走资源均可由共享角色加载器建立动画。
+- [x] 皇帝脚底继续落在原世界坐标 `(768, 270)`；约 `0.55` 缩放后可见高度为 48–50 像素，与原县令占位约 49 像素及宫殿石砖比例协调。
+- [x] 像素纹理保持最近邻、透明边缘无黑底或品红残留，角色没有裁切或明显抖脚。
+- [x] 玩家接近皇帝后“觐见”仍按原距离和剧情状态出现，皇帝碰撞、Y 排序和对白流程不变。
+- [x] 对话中的皇帝立绘继续显示既有“帝”字占位卡。
+- [x] 相关角色/场景测试和项目场景解析通过，运行日志无新增阻断错误。
 
 ## Documentation impact
 
@@ -47,10 +47,10 @@
 
 ## Verification evidence
 
-- Automated: not run
-- Manual/in-engine: not run
+- Automated: focused test first failed on the existing `magistrate` key, `1.0` scale and 8/9-frame LPC animations, then passed after implementation with `Palace emperor sprite verification passed.` `test_scene_portraits.gd` passed and retained the emperor dialogue placeholder; `test_title_screen.gd` passed and retained the title-to-palace route. The broad `verify_merged_project.ps1` remains red only on its pre-existing prohibition against the project's current .NET/C# configuration; no emperor-specific assertion failed.
+- Manual/in-engine: Godot 4.7 Vulkan rendered `.godot/palace_emperor_preview.png` at 1344×896. The emperor faces down on the original red-carpet anchor, reads as black/gold/vermilion, matches the former character height at approximately 49 pixels, keeps transparent palace pixels around the silhouette, and does not alter the protagonist, attendant, background or opening dialogue panel.
 
 ## Final reconciliation
 
-- Files changed: TBD
-- Documented limitations/follow-ups: the dialogue portrait remains the approved “帝” placeholder until a separate portrait asset is produced.
+- Files changed: `assets/characters/emperor/` (32 delivery frames, generated `.import` metadata and five provenance files), `scripts/character_actor.gd`, `scenes/palace/palace_demo.tscn`, `tests/test_palace_emperor_sprite.gd`, `docs/design/palace-scene.md`, `docs/assets/character-assets.md`, `docs/design/art-direction.md`, `docs/tech/architecture.md`, `docs/qa/playtest.md`, approved design spec, and this change record.
+- Documented limitations/follow-ups: the dialogue portrait remains the approved “帝” placeholder until a separate portrait asset is produced. The shared static verifier's unrelated .NET/C# policy mismatch remains outside this content change.

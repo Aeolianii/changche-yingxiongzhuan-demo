@@ -6,6 +6,7 @@ const A_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong
 const B_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_b_v3.png")
 const C_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v3.png")
 const D_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v3.png")
+const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 const MAP_CHUNK_SIZE := Vector2(2508, 1412)
 const MAP_CHUNK_OVERLAP := 120.0
@@ -29,7 +30,8 @@ const PAPER := Color(0.95, 0.9, 0.75, 1.0)
 @onready var camera: Camera2D = $World/Player/Camera2D
 @onready var world_collision: StaticBody2D = $World/WorldCollision
 @onready var world_markers: Node2D = $World/WorldMarkers
-@onready var exploration_hud: Control = $UI/ExplorationHUD
+var exploration_hud: Control
+var _exploration_ui: Node
 @onready var interaction_prompt: Control = $UI/Root/InteractionPrompt
 @onready var location_name_label: Label = $UI/Root/InteractionPrompt/LocationName
 @onready var enter_button: BaseButton = $UI/Root/InteractionPrompt/EnterButton
@@ -45,11 +47,16 @@ var _transitioning := false
 var _loading_transition: SceneLoadingTransition
 var _lunar_day := 0.0
 var _saved_scene_state: Dictionary = {}
+var _fubo_return_context: Dictionary = {}
+var _returning_from_fubo := false
 
 
 func _ready() -> void:
+	_exploration_ui = get_node("/root/ExplorationUI")
+	exploration_hud = _exploration_ui.call("acquire", self, &"sea_overworld") as Control
 	_saved_scene_state = _consume_saved_scene_state()
-	if _saved_scene_state.is_empty():
+	_fubo_return_context = _consume_fubo_return()
+	if _saved_scene_state.is_empty() and not _returning_from_fubo:
 		_entered_from_scene_two = _consume_scene_two_entry_flag()
 	_build_background_chunks()
 	_configure_world_bounds()
@@ -58,17 +65,17 @@ func _ready() -> void:
 	_build_auto_triggers()
 	player.connect("sailed", _on_player_sailed)
 	enter_button.pressed.connect(_enter_active_location)
-	exploration_hud.connect("menu_visibility_changed", _on_hud_menu_visibility_changed)
-	exploration_hud.connect("save_requested", _on_save_requested)
-	exploration_hud.connect("load_requested", _on_load_requested)
-	exploration_hud.connect("return_title_requested", _on_return_title_requested)
+	_connect_global_hud_signals()
 	exploration_hud.call("set_quest_context", &"sea_overworld")
 	_configure_sea_map_hud()
-	if _saved_scene_state.is_empty():
-		_lunar_day = float(get_tree().root.get_meta(LUNAR_DAY_META, 0.0))
-	else:
+	if not _saved_scene_state.is_empty():
 		_restore_saved_scene_state(_saved_scene_state)
 		_saved_scene_state.clear()
+	elif _returning_from_fubo:
+		_restore_fubo_return(_fubo_return_context)
+		_fubo_return_context.clear()
+	else:
+		_lunar_day = float(get_tree().root.get_meta(LUNAR_DAY_META, 0.0))
 	exploration_hud.call("set_lunar_day", _lunar_day)
 	_refresh_exploration_task()
 	exploration_hud.call("set_exploration_visible", true)
@@ -78,6 +85,35 @@ func _ready() -> void:
 	if _entered_from_scene_two:
 		player.global_position = SOUTH_SEA_HARBOR_SPAWN
 		_activate_south_sea_harbor_spawn()
+
+
+func _exit_tree() -> void:
+	if _exploration_ui == null:
+		return
+	_disconnect_global_hud_signals()
+	_exploration_ui.call("release", self)
+
+
+func _connect_global_hud_signals() -> void:
+	for binding in [
+		[&"menu_visibility_changed", Callable(self, "_on_hud_menu_visibility_changed")],
+		[&"save_requested", Callable(self, "_on_save_requested")],
+		[&"load_requested", Callable(self, "_on_load_requested")],
+		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+	]:
+		if not _exploration_ui.is_connected(binding[0], binding[1]):
+			_exploration_ui.connect(binding[0], binding[1])
+
+
+func _disconnect_global_hud_signals() -> void:
+	for binding in [
+		[&"menu_visibility_changed", Callable(self, "_on_hud_menu_visibility_changed")],
+		[&"save_requested", Callable(self, "_on_save_requested")],
+		[&"load_requested", Callable(self, "_on_load_requested")],
+		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+	]:
+		if _exploration_ui.is_connected(binding[0], binding[1]):
+			_exploration_ui.disconnect(binding[0], binding[1])
 
 
 func _process(delta: float) -> void:
@@ -216,7 +252,7 @@ func _build_locations() -> void:
 	_build_location("沧门礁堡", Vector2(2780, 1080), 190.0, Vector2(320, 120), Vector2(-360, 140), "该岛屿即将开放")
 	_build_location("月环商港", Vector2(3650, 360), 250.0, Vector2(480, 150), Vector2(-300, 80), "该岛屿即将开放")
 	_build_location("雾岚群岛", Vector2(3070, 850), 165.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("伏波古岭", Vector2(4260, 780), 220.0, Vector2(440, 120), Vector2(0, 175), "该岛屿即将开放")
+	_build_location("伏波古岭", Vector2(4260, 780), 220.0, Vector2(440, 120), Vector2(0, 175), "进入伏波古岭", Vector2.ZERO, FUBO_TRAVEL.FUBO_SCENE_PATH)
 	_build_location("珊湾渔链", Vector2(3670, 1150), 155.0, Vector2(260, 100), Vector2(250, 160), "该岛屿即将开放")
 
 	_build_location("澄海灯岛", Vector2(480, 1680), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
@@ -304,7 +340,8 @@ func _build_location(
 	front_trigger_size: Vector2 = Vector2.ZERO,
 	front_trigger_offset: Vector2 = Vector2.ZERO,
 	entry_message: String = "该地点即将开放",
-	map_label_offset: Vector2 = Vector2.ZERO
+	map_label_offset: Vector2 = Vector2.ZERO,
+	target_scene_path: String = ""
 ) -> void:
 	var area := Area2D.new()
 	area.name = "Location%d" % world_markers.get_child_count()
@@ -317,6 +354,7 @@ func _build_location(
 	area.set_meta("front_trigger_offset", front_trigger_offset)
 	area.set_meta("entry_message", entry_message)
 	area.set_meta("map_label_offset", map_label_offset)
+	area.set_meta("target_scene_path", target_scene_path)
 	area.add_to_group("sea_location")
 	world_markers.add_child(area)
 
@@ -434,13 +472,44 @@ func _on_auto_trigger_body_entered(body: Node2D, area: Area2D) -> void:
 
 
 func _enter_active_location() -> void:
-	if _active_location_name.is_empty():
+	if _active_location_name.is_empty() or _transitioning:
 		return
 	if _active_location_name == "南海军港" and _entered_from_scene_two:
 		_return_to_scene_two()
 		return
+	var target_scene_path := "" if _active_location_area == null else str(_active_location_area.get_meta("target_scene_path", ""))
+	if not target_scene_path.is_empty():
+		_advance_exploration_stage(3)
+		_enter_location_scene(target_scene_path, "正在登陆%s" % _active_location_name)
+		return
 	_show_toast("%s · %s" % [_active_location_name, _active_location_message])
 	_advance_exploration_stage(3)
+
+
+func _enter_location_scene(scene_path: String, loading_text: String) -> void:
+	if _transitioning:
+		return
+	_transitioning = true
+	var scene_root := get_tree().root
+	scene_root.set_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, FUBO_TRAVEL.make_context(
+		player.global_position,
+		int(player.call("save_facing_index")),
+		_exploration_stage,
+		_lunar_day
+	))
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	exploration_hud.call("set_exploration_visible", false)
+	await _loading_transition.play_loading(loading_text)
+	var change_error := get_tree().change_scene_to_file(scene_path)
+	if change_error == OK:
+		return
+	scene_root.remove_meta(FUBO_TRAVEL.RETURN_CONTEXT_META)
+	_loading_transition.reset_loading()
+	_transitioning = false
+	player.controls_enabled = true
+	exploration_hud.call("set_exploration_visible", true)
+	interaction_prompt.visible = not _active_location_name.is_empty()
 
 
 func _return_to_scene_two() -> void:
@@ -472,6 +541,31 @@ func _consume_scene_two_entry_flag() -> bool:
 	return true
 
 
+func _consume_fubo_return() -> Dictionary:
+	var scene_root := get_tree().root
+	_returning_from_fubo = scene_root.has_meta(FUBO_TRAVEL.RETURN_REQUEST_META)
+	if not _returning_from_fubo:
+		return {}
+	scene_root.remove_meta(FUBO_TRAVEL.RETURN_REQUEST_META)
+	var raw_context: Variant = scene_root.get_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, {})
+	if scene_root.has_meta(FUBO_TRAVEL.RETURN_CONTEXT_META):
+		scene_root.remove_meta(FUBO_TRAVEL.RETURN_CONTEXT_META)
+	return FUBO_TRAVEL.decode_context(raw_context)
+
+
+func _restore_fubo_return(context: Dictionary) -> void:
+	var restored := FUBO_TRAVEL.decode_context(context)
+	if restored.is_empty():
+		player.global_position = FUBO_TRAVEL.FALLBACK_SEA_POSITION.clamp(player.movement_bounds.position, player.movement_bounds.end)
+		_lunar_day = maxf(0.0, float(get_tree().root.get_meta(LUNAR_DAY_META, _lunar_day)))
+	else:
+		player.global_position = (restored["ship_position"] as Vector2).clamp(player.movement_bounds.position, player.movement_bounds.end)
+		player.call("restore_facing_index", int(restored["facing_index"]))
+		_exploration_stage = int(restored["exploration_stage"])
+		_lunar_day = float(restored["lunar_day"])
+	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
+
+
 func _show_toast(message: String) -> void:
 	exploration_hud.call("show_toast", message)
 
@@ -498,11 +592,15 @@ func _refresh_exploration_task() -> void:
 
 
 func _on_hud_menu_visibility_changed(is_open: bool) -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	player.controls_enabled = not is_open
 	interaction_prompt.visible = not is_open and not _active_location_name.is_empty()
 
 
 func _on_save_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	if _transitioning:
 		_show_save_message(false, "unstable_scene")
 		return
@@ -521,6 +619,8 @@ func _on_save_requested() -> void:
 
 
 func _on_load_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	var game_state := _game_state()
 	if game_state == null:
 		_show_save_message(false, "read_failed")
@@ -536,6 +636,8 @@ func _on_load_requested() -> void:
 
 
 func _on_return_title_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	var game_state := _game_state()
 	if game_state != null:
 		game_state.call("clear_pending_scene_state")

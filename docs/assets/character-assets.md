@@ -29,6 +29,16 @@
 - `magistrate`：县令角色资源，不再用于第一幕皇帝世界小人。
 - `soldier`：太监占位；正式太监素材到位后只替换角色资源，不改剧情流程。
 
+## 年轻水师主角正式世界素材
+
+- 正式路径：`assets/characters/protagonist/standard/{idle,walk}/{down,left,right,up}/1.png..4.png`。
+- 生成与追溯包保留在 `assets/characters/protagonist_candidate/`。
+- 单帧固定为 64×64 RGBA，人物可见高度约 48–50 像素，脚底统一位于 y=61–63，不新增运行时缩放例外。
+- 待机和行走均为 down、left、right、up 四方向，每方向 4 帧。
+- 角色为年轻无须的中国水师将领：黑色束发、蓝灰轻甲、朱红短披肩和中式佩刀；不采用欧洲板甲、日本武士甲或老年灰须形象。
+- 最终 32 帧脚底统一位于 y=63；透明动作表、原始生图、处理元数据与 QC 记录保存在候选包的 `generation/`。
+- 正式目录每方向只保留 4 帧；旧 LPC 待机/行走帧由 Git 历史恢复，不在项目内额外复制备份。
+
 ## 场景一对话立绘
 
 - `assets/characters/protagonist/picture.png`：600×600 水师主帅半身立绘。

@@ -1,6 +1,7 @@
 extends SceneTree
 
 const HOST_SCRIPT := preload("res://scripts/fubo_guling/minigames/fubo_minigame_host.gd")
+const BASE_SCRIPT := preload("res://scripts/fubo_guling/minigames/fubo_minigame_base.gd")
 
 var _failures: Array[String] = []
 
@@ -18,6 +19,17 @@ class FakePlayer extends CharacterBody2D:
 		velocity = Vector2.ZERO
 
 
+class StandaloneExitProbe extends FuboMinigameBase:
+	var legacy_quit_requested := false
+	var requested_scene_path := ""
+
+	func _quit_standalone() -> void:
+		legacy_quit_requested = true
+
+	func _change_to_standalone_return_scene(scene_path: String) -> void:
+		requested_scene_path = scene_path
+
+
 func _initialize() -> void:
 	_run.call_deferred()
 
@@ -25,6 +37,7 @@ func _initialize() -> void:
 func _run() -> void:
 	await _test_finish_restores_original_state()
 	await _test_cancel_restores_original_state()
+	_test_minigame_exit_routes_by_host_presence()
 	if not _failures.is_empty():
 		for failure in _failures:
 			push_error(failure)
@@ -64,6 +77,30 @@ func _test_cancel_restores_original_state() -> void:
 	_check(fixture.player.controls_enabled, "Cancel must restore controls.")
 	fixture.root.queue_free()
 	await process_frame
+
+
+func _test_minigame_exit_routes_by_host_presence() -> void:
+	var hosted := StandaloneExitProbe.new()
+	var exit_seen := [0]
+	hosted.exit_requested.connect(func(): exit_seen[0] += 1)
+	if hosted.has_method("request_exit"):
+		hosted.request_exit()
+	_check(hosted.has_method("request_exit"), "Minigames need a unified exit entry point.")
+	_check(exit_seen[0] == 1 and not hosted.legacy_quit_requested and hosted.requested_scene_path.is_empty(), "Hosted exit must emit once without quitting or replacing the current scene.")
+	hosted.free()
+
+	var standalone := StandaloneExitProbe.new()
+	var return_path := "res://scenes/fubo_guling/fubo_guling.tscn"
+	var has_return_property := standalone.get_property_list().any(func(property: Dictionary): return property.name == "standalone_return_scene_path")
+	if has_return_property:
+		standalone.set("standalone_return_scene_path", return_path)
+	if standalone.has_method("request_exit"):
+		standalone.request_exit()
+	_check(standalone.has_method("request_exit"), "Standalone minigames must use the unified exit entry point.")
+	_check(has_return_property, "Standalone minigames need a configured map-return scene.")
+	_check(not standalone.legacy_quit_requested, "Returning to the map must never quit the application.")
+	_check(standalone.requested_scene_path == return_path, "An unhosted minigame must change to its configured map scene.")
+	standalone.free()
 
 
 func _make_fixture() -> Dictionary:

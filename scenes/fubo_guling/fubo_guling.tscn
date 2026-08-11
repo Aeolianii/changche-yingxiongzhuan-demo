@@ -1,64 +1,39 @@
 [gd_scene format=3 uid="uid://dvyfo1qrbh33n"]
 
 [ext_resource type="Script" uid="uid://bdb5k2podbgs" path="res://scripts/fubo_guling/fubo_guling.gd" id="1_xewfn"]
-[ext_resource type="Script" uid="uid://xr1kqaeysxeo" path="res://scripts/fubo_guling/fubo_placeholder_world.gd" id="2_yoyss"]
+[ext_resource type="Texture2D" uid="uid://clehfc6w1nkii" path="res://assets/fubo_guling/backgrounds/fubo_guling_complete.png" id="3_erm8w"]
 [ext_resource type="PackedScene" uid="uid://cwdko3gfnx6h3" path="res://scenes/characters/player.tscn" id="3_hkqpv"]
 [ext_resource type="Script" uid="uid://dkcte25ysvqxe" path="res://scripts/fubo_guling/fubo_world_prop.gd" id="4_erm8w"]
-[ext_resource type="Material" uid="uid://dajrmcean4e15" path="res://assets/fubo_guling/fubo_plate_feather.tres" id="4_og5ew"]
-[ext_resource type="Texture2D" uid="uid://c5yqhtb6ih88f" path="res://assets/fubo_guling/backgrounds/fubo_plate_sw.png" id="4_sks1q"]
-[ext_resource type="Texture2D" uid="uid://b350btt2n7tfy" path="res://assets/fubo_guling/backgrounds/fubo_plate_se.png" id="5_og5ew"]
-[ext_resource type="Texture2D" uid="uid://br18f4o57la3l" path="res://assets/fubo_guling/backgrounds/fubo_plate_nw.png" id="6_v2yly"]
-[ext_resource type="Texture2D" uid="uid://pk3pk0e6720p" path="res://assets/fubo_guling/backgrounds/fubo_plate_ne.png" id="7_4b73x"]
+[ext_resource type="Texture2D" uid="uid://cbfn4y6xno5sx" path="res://assets/ui/dialogue/ink_speaker_nameplate.png" id="4_qs51d"]
 [ext_resource type="Texture2D" uid="uid://bomw7nfbwseu2" path="res://assets/characters/soldier/standard/idle/down/1.png" id="10_qcq6o"]
-[ext_resource type="Texture2D" uid="uid://f2di8l7jl17" path="res://assets/fubo_guling/generated/modular/guard_house.png" id="11_sks1q"]
-[ext_resource type="Texture2D" uid="uid://828dybkoyljm" path="res://assets/fubo_guling/generated/modular/grain_store.png" id="12_og5ew"]
-[ext_resource type="Texture2D" uid="uid://ciq3govyttmwa" path="res://assets/fubo_guling/generated/modular/banyan_tree.png" id="13_v2yly"]
-[ext_resource type="Texture2D" uid="uid://b7s44n8qvwdhg" path="res://assets/fubo_guling/generated/modular/lychee_tree.png" id="14_4b73x"]
-[ext_resource type="Texture2D" uid="uid://c3hh3h43r2ead" path="res://assets/fubo_guling/generated/modular/coastal_tree.png" id="15_u76b6"]
-[ext_resource type="Texture2D" uid="uid://e0joaxw5mb4y" path="res://assets/fubo_guling/generated/modular/canal_marker.png" id="16_evf45"]
-[ext_resource type="Texture2D" uid="uid://bc8il405yyfx5" path="res://assets/fubo_guling/generated/modular/drum.png" id="17_w4bwy"]
-[ext_resource type="Texture2D" uid="uid://dalaf8ypshasn" path="res://assets/fubo_guling/generated/modular/flag_yellow.png" id="18_p58l7"]
-[ext_resource type="Texture2D" uid="uid://dmu12llgcbde0" path="res://assets/fubo_guling/generated/modular/flag_red.png" id="19_rorjb"]
-[ext_resource type="Texture2D" uid="uid://cp34opjjafc3u" path="res://assets/fubo_guling/generated/modular/flag_blue.png" id="20_psr7n"]
 [ext_resource type="Texture2D" uid="uid://b2gm3a17vabh8" path="res://assets/fubo_guling/generated/road_barrier.png" id="22_5dl1x"]
-[ext_resource type="Texture2D" uid="uid://m0xqxihw0b0y" path="res://assets/fubo_guling/generated/blank_stele.png" id="23_sprgl"]
 [ext_resource type="Script" uid="uid://cny8xf0r0eepe" path="res://scripts/fubo_guling/minigames/fubo_minigame_host.gd" id="29_p58l7"]
+[ext_resource type="Texture2D" uid="uid://cofirowu5vner" path="res://assets/ui/dialogue/ink_dialogue_backdrop.png" id="30_dialogue"]
+[ext_resource type="Texture2D" uid="uid://d4fe3kc37c3kx" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="31_prompt"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_yewv4"]
 size = Vector2(18, 10)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_avxio"]
-size = Vector2(320, 60)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_f12bo"]
-size = Vector2(100, 50)
-
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_iuhai"]
 size = Vector2(18, 16)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_3rkah"]
-size = Vector2(20, 14)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_eyqv8"]
+size = Vector2(82, 42)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_3kpwv"]
-size = Vector2(20, 14)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_88otk"]
+size = Vector2(76, 38)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_cvwkh"]
-size = Vector2(20, 14)
+[sub_resource type="CircleShape2D" id="CircleShape2D_qs51d"]
+radius = 68.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_o1d17"]
-size = Vector2(110, 65)
+[sub_resource type="CircleShape2D" id="CircleShape2D_o7m5c"]
+radius = 55.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_sks1q"]
-size = Vector2(110, 65)
+[sub_resource type="CircleShape2D" id="CircleShape2D_avxio"]
+radius = 62.0
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_op5i6"]
-radius = 130.0
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_1kv3u"]
-radius = 110.0
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_t6d6q"]
-radius = 120.0
+[sub_resource type="CircleShape2D" id="CircleShape2D_sea_return"]
+radius = 55.0
 
 [node name="FuboGuling" type="Node2D" unique_id=579197751]
 script = ExtResource("1_xewfn")
@@ -74,102 +49,18 @@ offset_right = 1344.0
 offset_bottom = 896.0
 mouse_filter = 2
 
-[node name="TitlePanel" type="ColorRect" parent="Interface/HUD" unique_id=1157079043]
-layout_mode = 0
-offset_left = 24.0
-offset_top = 22.0
-offset_right = 544.0
-offset_bottom = 120.0
-mouse_filter = 2
-color = Color(0.09019608, 0.15294118, 0.18039216, 0.9019608)
-
-[node name="Location" type="Label" parent="Interface/HUD/TitlePanel" unique_id=2092592497]
-layout_mode = 0
-offset_left = 18.0
-offset_top = 6.0
-offset_right = 502.0
-offset_bottom = 44.0
-theme_override_colors/font_color = Color(0.9411765, 0.80784315, 0.47058824, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 28
-text = "伏波古岭"
-vertical_alignment = 1
-
-[node name="Objective" type="Label" parent="Interface/HUD/TitlePanel" unique_id=1028839862]
-layout_mode = 0
-offset_left = 18.0
-offset_top = 48.0
-offset_right = 502.0
-offset_bottom = 82.0
-theme_override_colors/font_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 18
-text = "沿山路寻找守岭人"
-vertical_alignment = 1
-
-[node name="CanalPanel" type="ColorRect" parent="Interface/HUD" unique_id=1083058099]
+[node name="PromptPanel" type="TextureRect" parent="Interface/HUD" unique_id=222740050]
 visible = false
-layout_mode = 0
-offset_left = 24.0
-offset_top = 130.0
-offset_right = 544.0
-offset_bottom = 230.0
-mouse_filter = 2
-color = Color(0.09019608, 0.15294118, 0.18039216, 0.9019608)
-
-[node name="CanalStatus" type="Label" parent="Interface/HUD/CanalPanel" unique_id=2118630051]
-layout_mode = 0
-offset_left = 14.0
-offset_top = 8.0
-offset_right = 506.0
-offset_bottom = 92.0
-theme_override_colors/font_color = Color(0.9019608, 0.9490196, 0.85882354, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 16
-text = "三道分流闸"
-vertical_alignment = 1
-autowrap_mode = 2
-
-[node name="DrumPanel" type="ColorRect" parent="Interface/HUD" unique_id=2063979599]
-visible = false
-layout_mode = 0
-offset_left = 900.0
-offset_top = 22.0
-offset_right = 1320.0
-offset_bottom = 112.0
-mouse_filter = 2
-color = Color(0.09019608, 0.15294118, 0.18039216, 0.9019608)
-
-[node name="DrumStatus" type="Label" parent="Interface/HUD/DrumPanel" unique_id=1708863627]
-layout_mode = 0
-offset_left = 14.0
-offset_top = 8.0
-offset_right = 406.0
-offset_bottom = 82.0
-theme_override_colors/font_color = Color(0.9019608, 0.9490196, 0.85882354, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 16
-text = "听鼓传令"
-vertical_alignment = 1
-autowrap_mode = 2
-
-[node name="PromptPanel" type="ColorRect" parent="Interface/HUD" unique_id=222740050]
-visible = false
+texture_filter = 1
 layout_mode = 0
 offset_left = 322.0
 offset_top = 820.0
 offset_right = 1022.0
 offset_bottom = 872.0
 mouse_filter = 2
-color = Color(0.09019608, 0.15294118, 0.18039216, 0.9019608)
+texture = ExtResource("31_prompt")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Prompt" type="Label" parent="Interface/HUD/PromptPanel" unique_id=1409687728]
 layout_mode = 0
@@ -186,15 +77,30 @@ text = "按 E / 空格 互动"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DialoguePanel" type="ColorRect" parent="Interface/HUD" unique_id=891830751]
+[node name="DialoguePanel" type="TextureRect" parent="Interface/HUD" unique_id=891830751]
 visible = false
+texture_filter = 1
 layout_mode = 0
 offset_left = 220.0
 offset_top = 664.0
 offset_right = 1124.0
 offset_bottom = 820.0
 mouse_filter = 2
-color = Color(0.09019608, 0.15294118, 0.18039216, 0.9490196)
+texture = ExtResource("30_dialogue")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SpeakerPlate" type="TextureRect" parent="Interface/HUD/DialoguePanel" unique_id=1841254327]
+texture_filter = 1
+layout_mode = 0
+offset_left = 12.0
+offset_top = 6.0
+offset_right = 260.0
+offset_bottom = 50.0
+mouse_filter = 2
+texture = ExtResource("4_qs51d")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Speaker" type="Label" parent="Interface/HUD/DialoguePanel" unique_id=766310247]
 layout_mode = 0
@@ -233,6 +139,16 @@ offset_bottom = 600.0
 mouse_filter = 2
 color = Color(0.050980393, 0.101960786, 0.1254902, 0.9490196)
 
+[node name="NoticeBackdrop" type="TextureRect" parent="Interface/HUD/Overlay" unique_id=945664907]
+texture_filter = 1
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = ExtResource("30_dialogue")
+expand_mode = 1
+stretch_mode = 5
+
 [node name="OverlayText" type="Label" parent="Interface/HUD/Overlay" unique_id=2082976102]
 layout_mode = 0
 offset_left = 32.0
@@ -249,372 +165,147 @@ vertical_alignment = 1
 autowrap_mode = 2
 
 [node name="MinigameHost" type="Control" parent="Interface" unique_id=848775043]
-process_mode = 2
+process_mode = 3
 z_index = 100
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("29_p58l7")
 
 [node name="World" type="Node2D" parent="." unique_id=1095094591]
 
 [node name="Ground" type="Node2D" parent="World" unique_id=358007687]
 z_index = -20
-script = ExtResource("2_yoyss")
 
-[node name="BackgroundPlates" type="Node2D" parent="World/Ground" unique_id=517206307]
-
-[node name="SW" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=1779719619]
-texture_filter = 1
-material = ExtResource("4_og5ew")
-position = Vector2(800, 1650)
-scale = Vector2(1.08, 1.08)
-texture = ExtResource("4_sks1q")
-
-[node name="SE" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=1570184285]
-texture_filter = 1
-material = ExtResource("4_og5ew")
-position = Vector2(2400, 1550)
-scale = Vector2(1.08, 1.08)
-texture = ExtResource("5_og5ew")
-
-[node name="NW" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=565448850]
-texture_filter = 1
-material = ExtResource("4_og5ew")
-position = Vector2(900, 600)
-scale = Vector2(1.08, 1.08)
-texture = ExtResource("6_v2yly")
-
-[node name="NE" type="Sprite2D" parent="World/Ground/BackgroundPlates" unique_id=1943145778]
-texture_filter = 1
-material = ExtResource("4_og5ew")
-position = Vector2(2400, 650)
-scale = Vector2(1.08, 1.08)
-texture = ExtResource("7_4b73x")
-
-[node name="Effects" type="Node2D" parent="World" unique_id=246161715]
-z_index = -5
-
-[node name="Water1" type="Line2D" parent="World/Effects" unique_id=1178794770]
-visible = false
-points = PackedVector2Array(2180, 612, 2155, 650, 2140, 695)
-width = 12.0
-default_color = Color(0.34509805, 0.83137256, 0.8117647, 1)
-
-[node name="Water2" type="Line2D" parent="World/Effects" unique_id=1059054695]
-visible = false
-points = PackedVector2Array(2110, 715, 2035, 738, 1950, 755)
-width = 12.0
-default_color = Color(0.34509805, 0.83137256, 0.8117647, 1)
-
-[node name="Water3" type="Line2D" parent="World/Effects" unique_id=1876573200]
-visible = false
-points = PackedVector2Array(1918, 775, 1860, 788, 1815, 795)
-width = 12.0
-default_color = Color(0.34509805, 0.83137256, 0.8117647, 1)
-
-[node name="SpillLine" type="Line2D" parent="World/Effects" unique_id=1686414127]
-visible = false
-points = PackedVector2Array(0, 0, 0, 72)
-default_color = Color(0.21960784, 0.63529414, 0.627451, 1)
-
-[node name="InteractionMarker" type="Line2D" parent="World/Effects" unique_id=952594737]
-visible = false
-z_index = 10
-points = PackedVector2Array(-34, -34, 34, -34, 34, 34, -34, 34, -34, -34)
-width = 3.0
-default_color = Color(1, 0.8784314, 0.47843137, 1)
+[node name="Background" type="Sprite2D" parent="World/Ground" unique_id=796931721]
+texture = ExtResource("3_erm8w")
+centered = false
 
 [node name="WorldObjects" type="Node2D" parent="World" unique_id=385194643]
 y_sort_enabled = true
 
 [node name="Player" parent="World/WorldObjects" unique_id=2095704430 instance=ExtResource("3_hkqpv")]
-position = Vector2(420, 1850)
+position = Vector2(220, 868)
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="World/WorldObjects/Player" unique_id=2007126433]
+[node name="AnimatedSprite2D2" type="AnimatedSprite2D" parent="World/WorldObjects/Player" unique_id=2007126433]
 texture_filter = 1
 position = Vector2(0, -25)
 
-[node name="FootCollision" type="CollisionShape2D" parent="World/WorldObjects/Player" unique_id=906449486]
+[node name="FootCollision2" type="CollisionShape2D" parent="World/WorldObjects/Player" unique_id=906449486]
 position = Vector2(0, -5)
 shape = SubResource("RectangleShape2D_yewv4")
 
-[node name="Camera2D" type="Camera2D" parent="World/WorldObjects/Player" unique_id=359799915]
-position = Vector2(0, -80)
+[node name="Camera2D2" type="Camera2D" parent="World/WorldObjects/Player" unique_id=359799915]
+zoom = Vector2(1.15, 1.15)
 limit_left = 0
 limit_top = 0
-limit_right = 3200
-limit_bottom = 2200
+limit_right = 1536
+limit_bottom = 1024
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
 [node name="Keeper" type="Node2D" parent="World/WorldObjects" unique_id=65810067]
 texture_filter = 1
-position = Vector2(1150, 1650)
+position = Vector2(450, 475)
 script = ExtResource("4_erm8w")
 kind = "keeper"
 prop_size = Vector2(60, 74)
 main_color = Color(0.23137255, 0.29411766, 0.32156864, 1)
 art_texture = ExtResource("10_qcq6o")
 
-[node name="House" type="Node2D" parent="World/WorldObjects" unique_id=1227358054]
-texture_filter = 1
-position = Vector2(980, 1570)
-script = ExtResource("4_erm8w")
-kind = "house"
-prop_size = Vector2(320, 140)
-main_color = Color(0.53333336, 0.54509807, 0.5686275, 1)
-accent_color = Color(0.77254903, 0.654902, 0.35686275, 1)
-art_texture = ExtResource("11_sks1q")
-art_scale = Vector2(0.68, 0.68)
-
-[node name="Storage" type="Node2D" parent="World/WorldObjects" unique_id=642429939]
-texture_filter = 1
-position = Vector2(1320, 1550)
-script = ExtResource("4_erm8w")
-kind = "storage"
-main_color = Color(0.5058824, 0.4627451, 0.41568628, 1)
-accent_color = Color(0.7254902, 0.6039216, 0.3647059, 1)
-art_texture = ExtResource("12_og5ew")
-art_scale = Vector2(0.68, 0.68)
-
-[node name="TreeCourtyard" type="Node2D" parent="World/WorldObjects" unique_id=422152371]
-texture_filter = 1
-position = Vector2(760, 1680)
-script = ExtResource("4_erm8w")
-prop_size = Vector2(90, 90)
-main_color = Color(0.25490198, 0.40392157, 0.2901961, 1)
-accent_color = Color(0.43529412, 0.57254905, 0.3647059, 1)
-art_texture = ExtResource("13_v2yly")
-art_scale = Vector2(0.45, 0.45)
-
-[node name="TreePath" type="Node2D" parent="World/WorldObjects" unique_id=896406685]
-texture_filter = 1
-position = Vector2(1540, 1420)
-script = ExtResource("4_erm8w")
-prop_size = Vector2(90, 90)
-main_color = Color(0.25490198, 0.40392157, 0.2901961, 1)
-accent_color = Color(0.43529412, 0.57254905, 0.3647059, 1)
-art_texture = ExtResource("14_4b73x")
-art_scale = Vector2(0.45, 0.45)
-
-[node name="TreeCanal" type="Node2D" parent="World/WorldObjects" unique_id=1334816417]
-texture_filter = 1
-position = Vector2(2780, 1160)
-script = ExtResource("4_erm8w")
-prop_size = Vector2(90, 90)
-main_color = Color(0.25490198, 0.40392157, 0.2901961, 1)
-accent_color = Color(0.43529412, 0.57254905, 0.3647059, 1)
-art_texture = ExtResource("15_u76b6")
-art_scale = Vector2(0.45, 0.45)
-
-[node name="CanalMarker" type="Node2D" parent="World/WorldObjects" unique_id=1984553261]
-texture_filter = 1
-position = Vector2(2600, 1180)
-script = ExtResource("4_erm8w")
-kind = "stele"
-prop_size = Vector2(60, 60)
-main_color = Color(0.4392157, 0.45882353, 0.4392157, 1)
-accent_color = Color(0.8901961, 0.7411765, 0.40784314, 1)
-art_texture = ExtResource("16_evf45")
-art_scale = Vector2(0.55, 0.55)
-
-[node name="Drum" type="Node2D" parent="World/WorldObjects" unique_id=1678334269]
-texture_filter = 1
-position = Vector2(1850, 620)
-script = ExtResource("4_erm8w")
-kind = "drum"
-prop_size = Vector2(70, 70)
-main_color = Color(0.654902, 0.26666668, 0.2, 1)
-accent_color = Color(0.8745098, 0.8039216, 0.64705884, 1)
-art_texture = ExtResource("17_w4bwy")
-art_scale = Vector2(0.4, 0.4)
-
-[node name="FlagYellow" type="Node2D" parent="World/WorldObjects" unique_id=214825947]
-texture_filter = 1
-position = Vector2(1730, 580)
-script = ExtResource("4_erm8w")
-kind = "flag"
-prop_size = Vector2(70, 80)
-main_color = Color(0.8784314, 0.73333335, 0.28235295, 1)
-accent_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
-art_texture = ExtResource("18_p58l7")
-art_scale = Vector2(0.35, 0.35)
-
-[node name="FlagRed" type="Node2D" parent="World/WorldObjects" unique_id=162606740]
-texture_filter = 1
-position = Vector2(1850, 550)
-script = ExtResource("4_erm8w")
-kind = "flag"
-prop_size = Vector2(70, 80)
-main_color = Color(0.74509805, 0.30980393, 0.2627451, 1)
-accent_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
-art_texture = ExtResource("19_rorjb")
-art_scale = Vector2(0.35, 0.35)
-
-[node name="FlagBlue" type="Node2D" parent="World/WorldObjects" unique_id=743877861]
-texture_filter = 1
-position = Vector2(1970, 580)
-script = ExtResource("4_erm8w")
-kind = "flag"
-prop_size = Vector2(70, 80)
-main_color = Color(0.29411766, 0.5137255, 0.70980394, 1)
-accent_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
-art_texture = ExtResource("20_psr7n")
-art_scale = Vector2(0.35, 0.35)
-
 [node name="SchoolBarrier" type="Node2D" parent="World/WorldObjects" unique_id=190706852]
+visible = false
 texture_filter = 1
-position = Vector2(2180, 900)
+position = Vector2(960, 465)
+rotation = -0.22
 script = ExtResource("4_erm8w")
 kind = "barrier"
 prop_size = Vector2(110, 85)
 main_color = Color(0.6117647, 0.28627452, 0.22352941, 1)
 art_texture = ExtResource("22_5dl1x")
+art_scale = Vector2(0.7, 0.7)
 
 [node name="ViewpointBarrier" type="Node2D" parent="World/WorldObjects" unique_id=2114486465]
+visible = false
 texture_filter = 1
-position = Vector2(2300, 450)
+position = Vector2(1250, 160)
+rotation = -0.18
 script = ExtResource("4_erm8w")
 kind = "barrier"
 prop_size = Vector2(110, 85)
 main_color = Color(0.6117647, 0.28627452, 0.22352941, 1)
 art_texture = ExtResource("22_5dl1x")
-
-[node name="Stele" type="Node2D" parent="World/WorldObjects" unique_id=342726022]
-texture_filter = 1
-position = Vector2(2520, 1050)
-script = ExtResource("4_erm8w")
-kind = "stele"
-prop_size = Vector2(60, 65)
-main_color = Color(0.45490196, 0.47843137, 0.47058824, 1)
-art_texture = ExtResource("23_sprgl")
+art_scale = Vector2(0.65, 0.65)
 
 [node name="Foreground" type="Node2D" parent="World" unique_id=1061311423]
 z_index = 20
 
 [node name="Collision" type="Node2D" parent="World" unique_id=1022803271]
 
-[node name="HouseFoot" type="StaticBody2D" parent="World/Collision" unique_id=1072976023]
-position = Vector2(980, 1570)
-collision_mask = 0
-
-[node name="Shape" type="CollisionShape2D" parent="World/Collision/HouseFoot" unique_id=1989778268]
-shape = SubResource("RectangleShape2D_avxio")
-
-[node name="StorageFoot" type="StaticBody2D" parent="World/Collision" unique_id=1593798774]
-position = Vector2(1320, 1550)
-collision_mask = 0
-
-[node name="Shape" type="CollisionShape2D" parent="World/Collision/StorageFoot" unique_id=2032088569]
-shape = SubResource("RectangleShape2D_f12bo")
-
 [node name="KeeperBody" type="StaticBody2D" parent="World/Collision" unique_id=52014167]
-position = Vector2(1150, 1650)
+position = Vector2(450, 475)
 collision_mask = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Collision/KeeperBody" unique_id=188710918]
 shape = SubResource("RectangleShape2D_iuhai")
 
-[node name="TreeCourtyardBody" type="StaticBody2D" parent="World/Collision" unique_id=1394604597]
-position = Vector2(760, 1680)
-collision_mask = 0
-
-[node name="Shape" type="CollisionShape2D" parent="World/Collision/TreeCourtyardBody" unique_id=880883983]
-shape = SubResource("RectangleShape2D_3rkah")
-
-[node name="TreePathBody" type="StaticBody2D" parent="World/Collision" unique_id=1805235164]
-position = Vector2(1540, 1420)
-collision_mask = 0
-
-[node name="Shape" type="CollisionShape2D" parent="World/Collision/TreePathBody" unique_id=36844810]
-shape = SubResource("RectangleShape2D_3kpwv")
-
-[node name="TreeCanalBody" type="StaticBody2D" parent="World/Collision" unique_id=686299016]
-position = Vector2(2780, 1160)
-collision_mask = 0
-
-[node name="Shape" type="CollisionShape2D" parent="World/Collision/TreeCanalBody" unique_id=1515166308]
-shape = SubResource("RectangleShape2D_cvwkh")
-
 [node name="SchoolBlocker" type="StaticBody2D" parent="World/Collision" unique_id=337605248]
-position = Vector2(2180, 900)
+position = Vector2(960, 465)
+rotation = -0.22
 collision_mask = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Collision/SchoolBlocker" unique_id=1195475284]
-shape = SubResource("RectangleShape2D_o1d17")
+shape = SubResource("RectangleShape2D_eyqv8")
+disabled = true
 
 [node name="ViewpointBlocker" type="StaticBody2D" parent="World/Collision" unique_id=919584238]
-position = Vector2(2300, 450)
+position = Vector2(1250, 160)
+rotation = -0.18
 collision_mask = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Collision/ViewpointBlocker" unique_id=288587626]
-shape = SubResource("RectangleShape2D_sks1q")
+shape = SubResource("RectangleShape2D_88otk")
+disabled = true
 
 [node name="BlockedRegions" type="Node2D" parent="World/Collision" unique_id=1079472491]
 
-[node name="NorthWestMass" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=1408855036]
+[node name="WalkableBoundary" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=767887569]
 
-[node name="Polygon" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/NorthWestMass" unique_id=2017425768]
-polygon = PackedVector2Array(0, 0, 1500, 0, 1500, 280, 1200, 400, 900, 620, 0, 700)
-
-[node name="NorthRidge" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=385547881]
-
-[node name="Polygon" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/NorthRidge" unique_id=43897142]
-polygon = PackedVector2Array(1500, 0, 3200, 0, 3200, 180, 2850, 180, 2450, 340, 2100, 450, 1500, 280)
-
-[node name="WestForest" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=1076960736]
-
-[node name="Polygon" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/WestForest" unique_id=1627112806]
-polygon = PackedVector2Array(0, 700, 900, 620, 1200, 800, 1350, 1200, 900, 1450, 0, 1500)
-
-[node name="EastCliff" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=51052501]
-
-[node name="Polygon" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/EastCliff" unique_id=1909496304]
-polygon = PackedVector2Array(2850, 180, 3200, 180, 3200, 1550, 2850, 1450, 2750, 1100, 2850, 700)
-
-[node name="SouthWestSea" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=967618857]
-
-[node name="Polygon" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/SouthWestSea" unique_id=1069925242]
-polygon = PackedVector2Array(0, 1500, 900, 1450, 850, 1750, 1050, 1950, 1800, 2000, 1800, 2200, 0, 2200)
-
-[node name="SouthCoast" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=1204848040]
-
-[node name="Polygon" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/SouthCoast" unique_id=831639771]
-polygon = PackedVector2Array(1050, 1950, 1800, 2000, 2300, 1900, 2500, 2200, 1800, 2200)
-
-[node name="SouthEastSlope" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=486851011]
-
-[node name="Polygon" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/SouthEastSlope" unique_id=1958159829]
-polygon = PackedVector2Array(2300, 1500, 2850, 1450, 3200, 1550, 3200, 2200, 2500, 2200, 2300, 1900)
-
-[node name="CanalCliff" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=2139373877]
-
-[node name="Polygon" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/CanalCliff" unique_id=15586037]
-polygon = PackedVector2Array(1700, 1050, 2300, 900, 2450, 1020, 2300, 1200, 2000, 1250)
+[node name="Boundary" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/WalkableBoundary" unique_id=544021498]
+build_mode = 1
+polygon = PackedVector2Array(1070, 55, 1120, 58, 1190, 78, 1240, 86, 1285, 120, 1330, 137, 1320, 217, 1260, 263, 1190, 309, 1070, 320, 1050, 389, 1020, 491, 980, 589, 930, 640, 860, 642, 800, 663, 760, 731, 755, 811, 775, 857, 810, 903, 810, 937, 770, 977, 730, 989, 680, 971, 620, 926, 570, 880, 550, 768, 515, 800, 480, 808, 420, 823, 350, 868, 275, 918, 200, 943, 150, 898, 95, 868, 175, 838, 250, 788, 320, 738, 380, 688, 470, 663, 470, 629, 440, 606, 410, 606, 385, 549, 365, 457, 380, 434, 420, 406, 460, 377, 485, 383, 500, 400, 505, 457, 530, 514, 575, 571, 620, 589, 720, 589, 770, 571, 830, 537, 870, 491, 900, 411, 930, 320, 960, 194, 950, 149, 965, 109, 1010, 74)
 
 [node name="Triggers" type="Node2D" parent="World" unique_id=236146207]
 
 [node name="SchoolTrigger" type="Area2D" parent="World/Triggers" unique_id=1621426876]
-position = Vector2(1850, 620)
+position = Vector2(1110, 330)
 collision_layer = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Triggers/SchoolTrigger" unique_id=1850016409]
-shape = SubResource("CircleShape2D_op5i6")
+shape = SubResource("CircleShape2D_qs51d")
 
 [node name="ViewpointTrigger" type="Area2D" parent="World/Triggers" unique_id=13324334]
-position = Vector2(2550, 320)
+position = Vector2(1290, 105)
 collision_layer = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Triggers/ViewpointTrigger" unique_id=1482719123]
-shape = SubResource("CircleShape2D_1kv3u")
+shape = SubResource("CircleShape2D_o7m5c")
 
-[node name="CanalTrigger" type="Area2D" parent="World/Triggers" unique_id=1435280955]
-position = Vector2(2600, 1180)
+[node name="FishingTrigger" type="Area2D" parent="World/Triggers" unique_id=1435280955]
+position = Vector2(380, 790)
 
-[node name="Shape" type="CollisionShape2D" parent="World/Triggers/CanalTrigger" unique_id=1179949765]
-shape = SubResource("CircleShape2D_t6d6q")
+[node name="Shape" type="CollisionShape2D" parent="World/Triggers/FishingTrigger" unique_id=1179949765]
+shape = SubResource("CircleShape2D_avxio")
+
+[node name="SeaReturnTrigger" type="Area2D" parent="World/Triggers" unique_id=1204877489]
+position = Vector2(235, 835)
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Triggers/SeaReturnTrigger" unique_id=1541688146]
+shape = SubResource("CircleShape2D_sea_return")
 
 [node name="CollisionDebug" type="Node2D" parent="World" unique_id=515053450]
 visible = false

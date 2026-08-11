@@ -1,6 +1,7 @@
 extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
+const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
 const SCREENSHOT_PATH := "res://.godot/sea_overworld_preview.png"
 const MOVEMENT_SCREENSHOT_PATH := "res://.godot/sea_overworld_movement_preview.png"
 const STOPPED_SCREENSHOT_PATH := "res://.godot/sea_overworld_stopped_preview.png"
@@ -69,6 +70,7 @@ func _run() -> void:
 
 	_verify_assets()
 	_verify_location_layout(scene)
+	_verify_fubo_return_contract(scene)
 	await _verify_shared_exploration_hud(scene)
 	await _verify_keyboard_movement(scene)
 	await _verify_location_interaction(scene)
@@ -215,10 +217,43 @@ func _verify_location_layout(scene: Node) -> void:
 	var south_harbor := _find_location(locations, "南海军港")
 	_expect(_is_water_clear(spawn, 19.0), "South Sea harbor spawn must remain outside static collision.")
 	_expect(south_harbor != null and _trigger_contains_point(south_harbor, spawn), "South Sea harbor spawn must still activate its entry trigger.")
+	var fubo := _find_location(locations, "伏波古岭")
+	_expect(fubo != null and str(fubo.get_meta("target_scene_path", "")) == FUBO_TRAVEL.FUBO_SCENE_PATH, "Fubo must point to its real island scene.")
+	_expect(fubo != null and str(fubo.get_meta("entry_message", "")) == "进入伏波古岭", "Fubo must no longer use coming-soon copy.")
+
+
+func _verify_fubo_return_contract(scene: Node) -> void:
+	if not scene.has_method("_consume_fubo_return") or not scene.has_method("_restore_fubo_return"):
+		_expect(false, "Sea overworld must expose Fubo return consume and restore helpers.")
+		return
+	var original_context := FUBO_TRAVEL.make_context(
+		(scene.get_node("World/Player") as CharacterBody2D).global_position,
+		int(scene.get_node("World/Player").call("save_facing_index")),
+		int(scene.get("_exploration_stage")),
+		float(scene.get("_lunar_day"))
+	)
+	var expected_context := FUBO_TRAVEL.make_context(Vector2(4210, 1135), 2, 3, 8.5)
+	root.set_meta(FUBO_TRAVEL.RETURN_REQUEST_META, true)
+	root.set_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, expected_context)
+	var consumed: Dictionary = scene.call("_consume_fubo_return")
+	_expect(consumed == expected_context, "Fubo return context must be consumed intact.")
+	_expect(not root.has_meta(FUBO_TRAVEL.RETURN_REQUEST_META) and not root.has_meta(FUBO_TRAVEL.RETURN_CONTEXT_META), "Consumed Fubo return metadata must be removed.")
+	scene.call("_restore_fubo_return", consumed)
+	var player := scene.get_node("World/Player") as CharacterBody2D
+	_expect(player.global_position.is_equal_approx(Vector2(4210, 1135)), "Fubo return must restore the ship position.")
+	_expect(int(player.call("save_facing_index")) == 2, "Fubo return must restore ship facing.")
+	_expect(int(scene.get("_exploration_stage")) == 3, "Fubo return must restore exploration stage.")
+	_expect(is_equal_approx(float(scene.get("_lunar_day")), 8.5), "Fubo return must restore lunar day.")
+	root.set_meta(FUBO_TRAVEL.RETURN_REQUEST_META, true)
+	root.set_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, {"ship_position": Vector2(INF, 0)})
+	var invalid_context: Dictionary = scene.call("_consume_fubo_return")
+	scene.call("_restore_fubo_return", invalid_context)
+	_expect(player.global_position.is_equal_approx(FUBO_TRAVEL.FALLBACK_SEA_POSITION), "Invalid Fubo return data must use the approved safe sea position.")
+	scene.call("_restore_fubo_return", original_context)
 
 
 func _verify_shared_exploration_hud(scene: Node) -> void:
-	var hud := scene.get_node("UI/ExplorationHUD") as Control
+	var hud := root.get_node("ExplorationUI/HUD") as Control
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var main_task := hud.get_node("QuestTracker/MainQuest/TaskName") as Label
 	var main_objective := hud.get_node("QuestTracker/MainQuest/Objective") as Label
@@ -359,7 +394,7 @@ func _verify_keyboard_movement(scene: Node) -> void:
 	_expect(player.position.x > starting_position.x, "WASD/direction input did not move the sea-map ship.")
 	_expect(wake.visible, "Moving ship must show the animated wake layer.")
 	_expect(float(root.get_meta("sea_overworld_lunar_day", 0.0)) > starting_lunar_day, "Sailing must advance lunar time.")
-	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
+	var task_objective := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
 	_expect("靠近任意岛屿" in task_objective.text, "First map-exploration step must advance after sailing.")
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
@@ -388,9 +423,9 @@ func _verify_location_interaction(scene: Node) -> void:
 	var enter_button := scene.get_node("UI/Root/InteractionPrompt/EnterButton") as BaseButton
 	var texture_button := enter_button as TextureButton
 	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
-	var toast := scene.get_node("UI/ExplorationHUD/ComingSoonToast") as Control
-	var toast_label := scene.get_node("UI/ExplorationHUD/ComingSoonToast/Message") as Label
-	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
+	var toast := root.get_node("ExplorationUI/HUD/ComingSoonToast") as Control
+	var toast_label := root.get_node("ExplorationUI/HUD/ComingSoonToast/Message") as Label
+	var task_objective := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
 	var locations := get_nodes_in_group("sea_location")
 	_expect(not locations.is_empty(), "Sea overworld must provide at least one location trigger.")
 	_expect(texture_button.texture_normal.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_v1.png", "Location interaction must use the ink-wash normal button asset.")
@@ -457,7 +492,11 @@ func _verify_location_interaction(scene: Node) -> void:
 func _verify_b_expansion(scene: Node) -> void:
 	var b_locations := _collect_region_locations(B_LOCATIONS, "B")
 	_expect(b_locations.size() == 5, "B must contain five upper-right water-combat locations.")
-	await _verify_region_interactions(scene, b_locations, "月环商港", B_ZONE_SCREENSHOT_PATH)
+	var placeholder_locations: Array[Area2D] = []
+	for location in b_locations:
+		if str(location.get_meta("location_name", "")) != "伏波古岭":
+			placeholder_locations.append(location)
+	await _verify_region_interactions(scene, placeholder_locations, "月环商港", B_ZONE_SCREENSHOT_PATH)
 
 
 func _verify_c_expansion(scene: Node) -> void:
@@ -481,7 +520,8 @@ func _collect_region_locations(names: Array, region_name: String) -> Array[Area2
 		if location == null:
 			continue
 		region_locations.append(location)
-		_expect(str(location.get_meta("entry_message", "")) == "该岛屿即将开放", "%s must use the island coming-soon message." % expected_name)
+		if expected_name != "伏波古岭":
+			_expect(str(location.get_meta("entry_message", "")) == "该岛屿即将开放", "%s must use the island coming-soon message." % expected_name)
 	return region_locations
 
 
@@ -490,7 +530,7 @@ func _verify_region_interactions(scene: Node, locations: Array[Area2D], preview_
 	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
 	var enter_button := scene.get_node("UI/Root/InteractionPrompt/EnterButton") as BaseButton
 	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
-	var toast_label := scene.get_node("UI/ExplorationHUD/ComingSoonToast/Message") as Label
+	var toast_label := root.get_node("ExplorationUI/HUD/ComingSoonToast/Message") as Label
 	for location in locations:
 		player.global_position = Vector2(2200, 1500)
 		for _frame in range(3):
@@ -554,7 +594,7 @@ func _capture_central_seam(scene: Node) -> void:
 		return
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	player.global_position = Vector2(2450, 1400)
-	(scene.get_node("UI/ExplorationHUD/ComingSoonToast") as Control).hide()
+	(root.get_node("ExplorationUI/HUD/ComingSoonToast") as Control).hide()
 	(player.get_node("Camera2D") as Camera2D).reset_smoothing()
 	for _frame in range(3):
 		await physics_frame
@@ -565,7 +605,7 @@ func _capture_central_seam(scene: Node) -> void:
 
 func _verify_auto_triggers(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
-	var toast_label := scene.get_node("UI/ExplorationHUD/ComingSoonToast/Message") as Label
+	var toast_label := root.get_node("ExplorationUI/HUD/ComingSoonToast/Message") as Label
 	var triggers := get_nodes_in_group("sea_auto_trigger")
 	var saw_event := false
 	var saw_ship := false
@@ -583,7 +623,7 @@ func _verify_auto_triggers(scene: Node) -> void:
 			saw_event = saw_event or "该事件开发中" in toast_label.text
 	_expect(saw_ship, "Touching a sea-map ship must automatically show its development placeholder.")
 	_expect(saw_event, "Touching a sea event must automatically show its development placeholder.")
-	var task_objective := scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
+	var task_objective := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
 	_expect(task_objective.text == "继续探索岭南海域", "Sea target contact must finish the prototype exploration task flow.")
 
 

@@ -83,7 +83,7 @@ func _verify_scene_two_click_move() -> void:
 	_expect(not bool(scene_two.call("has_player_move_target")), "Scene2 must clear the target after arrival.")
 
 	scene_two.call("request_player_move_to", player.global_position + Vector2(120.0, 0.0))
-	var menu_button := scene_two.get_node("UI/ExplorationHUD/FunctionButtons/MenuButtonSlot/MenuButton") as BaseButton
+	var menu_button := root.get_node("ExplorationUI/HUD/FunctionButtons/MenuButtonSlot/MenuButton") as BaseButton
 	menu_button.pressed.emit()
 	await physics_frame
 	_expect(not bool(scene_two.call("has_player_move_target")), "Opening the Scene2 system menu must clear the click target.")

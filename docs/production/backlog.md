@@ -4,6 +4,7 @@ Keep only actionable work here. Link each in-progress item to its change record.
 
 ## Now
 
+- [ ] 伏波古岭 Godot 分层骨架、三向分流古渠与随机听鼓传令（[CHG-20260810-fubo-guling-godot-skeleton](../changes/CHG-20260810-fubo-guling-godot-skeleton.md)）。
 - [ ] 用户试玩场景一并反馈节奏、文案和角色站位。
 
 ## Next

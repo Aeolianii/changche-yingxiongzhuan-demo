@@ -85,6 +85,7 @@ var _show_completed := false
 var _detail_title: RichTextLabel
 var _detail_description: RichTextLabel
 var _steps_container: VBoxContainer
+var _context_id := &"palace"
 
 signal close_requested
 
@@ -140,10 +141,20 @@ func set_main_task_progress(task_title: String, objective: String, progress_stag
 
 
 func set_quest_context(context_id: StringName) -> void:
-	if context_id != &"sea_overworld":
-		return
-	_quests = _make_sea_overworld_quests()
-	_completed_quests.clear()
+	_context_id = context_id
+	match context_id:
+		&"sea_overworld":
+			_quests = _make_sea_overworld_quests()
+			_completed_quests.clear()
+		&"fubo_guling":
+			_quests = _make_fubo_guling_quests()
+			_completed_quests.clear()
+		_:
+			_quests.clear()
+			for quest_value in QUESTS:
+				var quest: Dictionary = quest_value
+				_quests.append(quest.duplicate(true))
+			_completed_quests = _make_completed_quests(str(_quests[0]["title"]))
 	_selected_quest = 0
 	_show_completed = false
 	if is_instance_valid(_quest_choices):
@@ -526,6 +537,8 @@ func _highlight_keywords(text_value: String, keywords: Array) -> String:
 func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dictionary:
 	if task_title == "探索大地图":
 		return _make_sea_overworld_main_task(progress_stage)
+	if task_title == "伏波古岭":
+		return _make_fubo_guling_main_task(progress_stage)
 	if task_title == "奉诏入殿":
 		var default_main: Dictionary = QUESTS[0]
 		return default_main.duplicate(true)
@@ -660,6 +673,61 @@ func _make_sea_overworld_quests() -> Array[Dictionary]:
 			],
 		},
 	]
+
+
+func _make_fubo_guling_quests() -> Array[Dictionary]:
+	return [
+		_make_fubo_guling_main_task(0),
+		{
+			"type": "支线",
+			"title": "岛上见闻",
+			"objective": "完成码头渔获与古校场鼓令",
+			"description": "伏波古岭保留着岭南海防、水利与军镇遗迹。完成两项轻量挑战，熟悉岛屿的主要互动地点。",
+			"keywords": ["伏波古岭", "码头渔获", "古校场鼓令"],
+			"steps": [
+				{
+					"title": "体验码头渔获",
+					"description": "在码头使用摆钩捕捞鱼获。",
+					"keywords": ["码头", "摆钩", "鱼获"],
+					"completed": false,
+					"expanded": true,
+				},
+				{
+					"title": "体验古校场鼓令",
+					"description": "按示范顺序和节奏敲响三面战鼓。",
+					"keywords": ["古校场", "战鼓", "节奏"],
+					"completed": false,
+					"expanded": false,
+				},
+			],
+		},
+	]
+
+
+func _make_fubo_guling_main_task(progress_stage: int) -> Dictionary:
+	return {
+		"type": "主线",
+		"title": "伏波古岭",
+		"objective": [
+			"沿山路寻找守岭人",
+			"返回码头，开始摆钩钓鱼",
+			"沿山路前往古校场",
+			"登上观景台眺望南海",
+			"行程完成",
+		][clampi(progress_stage, 0, 4)],
+		"description": "从码头登陆伏波古岭，拜访守岭人，完成码头渔获与古校场鼓令，最后登岭眺望南海。",
+		"keywords": ["伏波古岭", "守岭人", "码头渔获", "古校场", "南海"],
+		"steps": [
+			{"title": "寻找守岭人", "description": "沿红土山路前往房前，与守岭人交谈。", "keywords": ["红土山路", "守岭人"], "completed": progress_stage >= 1, "expanded": progress_stage == 0},
+			{"title": "码头摆钩钓鱼", "description": "回到码头完成摆钩钓鱼挑战。", "keywords": ["码头", "摆钩钓鱼"], "completed": progress_stage >= 2, "expanded": progress_stage == 1},
+			{"title": "完成古校场鼓令", "description": "前往古校场，听令后依次敲响三面战鼓。", "keywords": ["古校场", "三面战鼓"], "completed": progress_stage >= 3, "expanded": progress_stage == 2},
+			{"title": "登岭眺望南海", "description": "鼓令完成后登上观景台。", "keywords": ["观景台", "南海"], "completed": progress_stage >= 4, "expanded": progress_stage >= 3},
+		],
+	}
+
+
+func quest_context_for_test() -> StringName:
+	return _context_id
 
 
 func _make_sea_overworld_main_task(progress_stage: int) -> Dictionary:

@@ -10,7 +10,8 @@ const SUBMIT_FINISHED := 3
 const ROUND_LENGTHS := [4, 5, 6]
 const BPMS := [72, 84, 96]
 const PERFECT_WINDOW_MS := 120
-const PASS_WINDOW_MS := 280
+const LATE_WINDOW_MS := 520
+const PASS_WINDOW_MS := LATE_WINDOW_MS
 const INTERVAL_SCALES := [0.92, 1.0, 1.08]
 
 var _rng := RandomNumberGenerator.new()
@@ -56,7 +57,7 @@ func submit(drum_index: int, timing_error_ms: int = 0) -> int:
 	var sequence := get_current_sequence()
 	if sequence.is_empty():
 		return SUBMIT_REJECTED
-	if drum_index != sequence[_input_index] or absi(timing_error_ms) > PASS_WINDOW_MS:
+	if drum_index != sequence[_input_index] or timing_error_ms > LATE_WINDOW_MS:
 		_input_index = 0
 		_mistakes += 1
 		return SUBMIT_MISTAKE
@@ -140,7 +141,13 @@ func is_finished() -> bool:
 
 
 func get_timing_label(timing_error_ms: int) -> String:
-	return "正拍" if absi(timing_error_ms) <= PERFECT_WINDOW_MS else "稍迟"
+	if timing_error_ms < -PERFECT_WINDOW_MS:
+		return "提前 · 通过"
+	if timing_error_ms <= PERFECT_WINDOW_MS:
+		return "正拍"
+	if timing_error_ms <= LATE_WINDOW_MS:
+		return "稍晚 · 通过"
+	return "过晚"
 
 
 func _generate_rounds() -> void:

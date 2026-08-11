@@ -1,11 +1,13 @@
 extends Node
 
+const FUBO_SAVE_STATE := preload("res://scripts/fubo_guling/fubo_save_state.gd")
 const SAVE_VERSION := 1
 const DEFAULT_SAVE_PATH := "user://main_flow_save.json"
 const ALLOWED_SCENES := [
 	"res://scenes/palace/palace_demo.tscn",
 	"res://scenes/Scene2.tscn",
 	"res://scenes/sea_overworld/sea_overworld.tscn",
+	"res://scenes/fubo_guling/fubo_guling.tscn",
 ]
 
 var save_path_override := ""
@@ -142,6 +144,8 @@ func _validate_save_data(data: Dictionary) -> Dictionary:
 	if typeof(data["scene_path"]) != TYPE_STRING or str(data["scene_path"]) not in ALLOWED_SCENES:
 		return _reject("unsupported_scene")
 	if not data["scene_state"] is Dictionary:
+		return _reject("invalid_scene_state")
+	if str(data["scene_path"]) == "res://scenes/fubo_guling/fubo_guling.tscn" and FUBO_SAVE_STATE.decode_snapshot(data["scene_state"]).is_empty():
 		return _reject("invalid_scene_state")
 	return {"ok": true}
 

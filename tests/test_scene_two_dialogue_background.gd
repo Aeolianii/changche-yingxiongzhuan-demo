@@ -90,7 +90,7 @@ func _verify_ink_layout(paper_panel: PanelContainer, portrait: TextureRect, name
 
 func _capture_preview(scene_two: Node, portrait: TextureRect, name_plate: PanelContainer) -> void:
 	var dialogue_panel := scene_two.get_node("UI/DialoguePanel") as Control
-	var exploration_hud := scene_two.get_node("UI/ExplorationHUD") as Control
+	var exploration_hud := root.get_node("ExplorationUI/HUD") as Control
 	var player := scene_two.get_node("World/Actors/Player") as CharacterBody2D
 	var soldier := scene_two.get_node("World/Actors/Npcs/MagistrateLeftGuard") as Node2D
 	player.global_position = soldier.global_position + Vector2(0, 54)

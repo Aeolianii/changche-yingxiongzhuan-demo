@@ -9,12 +9,14 @@ const BRANCH_NAMES := ["左渠", "中渠", "右渠"]
 @onready var branch_buttons := [$Layout/BranchButtons/Left, $Layout/BranchButtons/Center, $Layout/BranchButtons/Right]
 @onready var release_button: Button = $Layout/ReleaseButton
 @onready var status_label: Label = $Layout/Status
+@onready var canal_board: FuboCanalBoard = $Layout/CanalDrawing
 @onready var exit_confirm: PanelContainer = $ExitConfirm
 
 var _game: FuboCanalPuzzle
 var _selected_branch := 1
 var _started_ms := 0
 var _input_locked := false
+var _exiting := false
 
 
 func _ready() -> void:
@@ -24,10 +26,11 @@ func _ready() -> void:
 	_game.allocation_changed.connect(_on_allocation_changed)
 	for index in branch_buttons.size():
 		branch_buttons[index].pressed.connect(_select_branch.bind(index))
+	canal_board.branch_selected.connect(_select_branch)
 	release_button.pressed.connect(_release_selected)
-	$ExitButton.pressed.connect(_show_exit_confirm)
+	$ExitButton.pressed.connect(_request_exit)
 	$ExitConfirm/VBoxContainer/Actions/Continue.pressed.connect(_hide_exit_confirm)
-	$ExitConfirm/VBoxContainer/Actions/Leave.pressed.connect(func(): exit_requested.emit())
+	$ExitConfirm/VBoxContainer/Actions/Leave.pressed.connect(_request_exit)
 	exit_confirm.visible = false
 	_game.start()
 	_select_branch(1)
@@ -35,10 +38,7 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
-		if exit_confirm.visible:
-			_hide_exit_confirm()
-		else:
-			_show_exit_confirm()
+		_request_exit()
 		get_viewport().set_input_as_handled()
 
 
@@ -46,9 +46,10 @@ func _select_branch(branch: int) -> void:
 	if _input_locked or branch < 0 or branch >= branch_buttons.size():
 		return
 	_selected_branch = branch
+	canal_board.set_selected(branch)
 	for index in branch_buttons.size():
 		branch_buttons[index].modulate = Color("ffe39b") if index == branch else Color.WHITE
-	status_label.text = "已选择%s，点击“放水”释放一股水。" % BRANCH_NAMES[branch]
+	status_label.text = "当前选择：%s。点击“② 放水 +1 格”，让水量达到上方目标。" % BRANCH_NAMES[branch]
 
 
 func _release_selected() -> int:
@@ -57,6 +58,7 @@ func _release_selected() -> int:
 	_input_locked = true
 	_set_buttons_enabled(false)
 	var result: int = _game.release_to(_selected_branch)
+	canal_board.play_release(_selected_branch, result != CANAL_SCRIPT.RELEASE_MISTAKE)
 	match result:
 		CANAL_SCRIPT.RELEASE_MISTAKE:
 			status_label.text = "水流溢出或进入封闭支渠，本轮重新开始。"
@@ -84,6 +86,7 @@ func _on_allocation_changed(target: PackedInt32Array, levels: PackedInt32Array, 
 	for branch in 3:
 		var suffix := " · 封闭" if branch == blocked_branch else ""
 		target_labels[branch].text = "%s  %d / %d%s" % [BRANCH_NAMES[branch], levels[branch], target[branch], suffix]
+	canal_board.set_state(target, levels, blocked_branch)
 
 
 func _set_buttons_enabled(enabled: bool) -> void:
@@ -101,6 +104,15 @@ func _hide_exit_confirm() -> void:
 	exit_confirm.visible = false
 	if not _input_locked:
 		_set_buttons_enabled(true)
+
+
+func _request_exit() -> void:
+	if _exiting:
+		return
+	_exiting = true
+	_set_buttons_enabled(false)
+	$ExitButton.disabled = true
+	exit_requested.emit()
 
 
 func choose_branch_for_test(branch: int) -> void:

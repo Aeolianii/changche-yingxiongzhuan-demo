@@ -4,18 +4,17 @@
 [ext_resource type="Texture2D" uid="uid://c658ysgxyclcj" path="res://assets/backgrounds/palace_cutaway_v2.png" id="2_x75u6"]
 [ext_resource type="PackedScene" uid="uid://cwdko3gfnx6h3" path="res://scenes/characters/player.tscn" id="3_uqvjv"]
 [ext_resource type="PackedScene" uid="uid://dxwj2y08144al" path="res://scenes/characters/npc.tscn" id="4_x75u6"]
-[ext_resource type="Texture2D" path="res://assets/ui/dialogue/ink_dialogue_backdrop.png" id="5_ntdlv"]
+[ext_resource type="Texture2D" uid="uid://cofirowu5vner" path="res://assets/ui/dialogue/ink_dialogue_backdrop.png" id="5_ntdlv"]
 [ext_resource type="Texture2D" uid="uid://d4fe3kc37c3kx" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="6_re2s4"]
 [ext_resource type="Texture2D" uid="uid://d2w4jmas4pnol" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="7_xi4kr"]
-[ext_resource type="PackedScene" path="res://scenes/ui/exploration_hud.tscn" id="8_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/chapter_transition.tscn" id="9_chapter"]
-[ext_resource type="Texture2D" path="res://assets/ui/dialogue/ink_speaker_nameplate.png" id="10_nameplate"]
+[ext_resource type="Texture2D" uid="uid://cbfn4y6xno5sx" path="res://assets/ui/dialogue/ink_speaker_nameplate.png" id="10_nameplate"]
 
 [node name="PalaceDemo" type="Node2D" unique_id=838520599]
 process_mode = 3
 script = ExtResource("1_gbxuh")
 
-[node name="SceneTransitionTimer" type="Timer" parent="."]
+[node name="SceneTransitionTimer" type="Timer" parent="." unique_id=1091866925]
 wait_time = 2.5
 one_shot = true
 
@@ -62,7 +61,8 @@ position = Vector2(768, 850)
 
 [node name="Emperor" parent="YSortedCharacters" unique_id=584899406 instance=ExtResource("4_x75u6")]
 position = Vector2(768, 270)
-character_key = "magistrate"
+character_key = "emperor"
+visual_scale = Vector2(0.55, 0.55)
 
 [node name="Attendant" parent="YSortedCharacters" unique_id=609752261 instance=ExtResource("4_x75u6")]
 position = Vector2(670, 380)
@@ -75,12 +75,14 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 
-[node name="PortraitDisplay" type="Control" parent="UI/Overlay"]
+[node name="PortraitDisplay" type="Control" parent="UI/Overlay" unique_id=1618129096]
 visible = false
 z_index = 3
-layout_mode = 0
+anchors_preset = 0
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 18.0
@@ -89,7 +91,7 @@ offset_right = 418.0
 offset_bottom = -6.0
 mouse_filter = 2
 
-[node name="PortraitImage" type="TextureRect" parent="UI/Overlay/PortraitDisplay"]
+[node name="PortraitImage" type="TextureRect" parent="UI/Overlay/PortraitDisplay" unique_id=697177667]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -102,8 +104,9 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="PlaceholderFrame" type="ColorRect" parent="UI/Overlay/PortraitDisplay"]
+[node name="PlaceholderFrame" type="ColorRect" parent="UI/Overlay/PortraitDisplay" unique_id=455656751]
 layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.16
 anchor_top = 0.12
 anchor_right = 0.84
@@ -113,7 +116,7 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.84313726, 0.6627451, 0.29411766, 1)
 
-[node name="PlaceholderInner" type="ColorRect" parent="UI/Overlay/PortraitDisplay/PlaceholderFrame"]
+[node name="PlaceholderInner" type="ColorRect" parent="UI/Overlay/PortraitDisplay/PlaceholderFrame" unique_id=513091067]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -127,7 +130,7 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.24313726, 0.06666667, 0.05490196, 0.96)
 
-[node name="PlaceholderText" type="Label" parent="UI/Overlay/PortraitDisplay/PlaceholderFrame/PlaceholderInner"]
+[node name="PlaceholderText" type="Label" parent="UI/Overlay/PortraitDisplay/PlaceholderFrame/PlaceholderInner" unique_id=113819928]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -143,9 +146,11 @@ text = "帝"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="NamePlate" type="TextureRect" parent="UI/Overlay/PortraitDisplay"]
+[node name="NamePlate" type="TextureRect" parent="UI/Overlay/PortraitDisplay" unique_id=1073180672]
+self_modulate = Color(1, 1, 1, 0.96)
 texture_filter = 1
 layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.1
 anchor_top = 1.0
 anchor_right = 0.9
@@ -155,12 +160,10 @@ offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
-self_modulate = Color(1, 1, 1, 0.96)
 texture = ExtResource("10_nameplate")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="NameText" type="Label" parent="UI/Overlay/PortraitDisplay/NamePlate"]
+[node name="NameText" type="Label" parent="UI/Overlay/PortraitDisplay/NamePlate" unique_id=298658570]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -187,7 +190,6 @@ anchor_bottom = 1.0
 offset_left = -672.0
 offset_top = -300.0
 offset_right = 672.0
-offset_bottom = 0.0
 mouse_filter = 2
 texture = ExtResource("5_ntdlv")
 expand_mode = 1
@@ -231,15 +233,16 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.95, 0.86, 0.65, 1)
 theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.95)
 theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 20
 text = "继续  ▼"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="InteractionButton" type="TextureButton" parent="UI/Overlay" unique_id=1867506327]
+texture_filter = 1
 layout_mode = 0
 anchor_left = 0.5
 anchor_top = 1.0
@@ -249,7 +252,6 @@ offset_left = -150.0
 offset_top = -96.0
 offset_right = 150.0
 offset_bottom = -22.0
-texture_filter = 1
 texture_normal = ExtResource("6_re2s4")
 texture_pressed = ExtResource("7_xi4kr")
 ignore_texture_size = true
@@ -267,7 +269,7 @@ text = "对话"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TransitionFade" type="ColorRect" parent="UI/Overlay"]
+[node name="TransitionFade" type="ColorRect" parent="UI/Overlay" unique_id=1920252802]
 modulate = Color(1, 1, 1, 0)
 z_index = 100
 layout_mode = 1
@@ -279,6 +281,5 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 1)
 
-[node name="ChapterTransition" parent="UI/Overlay" instance=ExtResource("9_chapter")]
-
-[node name="ExplorationHUD" parent="UI" instance=ExtResource("8_hud")]
+[node name="ChapterTransition" parent="UI/Overlay" unique_id=1248845601 instance=ExtResource("9_chapter")]
+layout_mode = 1

@@ -1,6 +1,6 @@
 extends SceneTree
 
-const CANAL_SCRIPT := preload("res://scripts/fubo_guling/fubo_canal_puzzle.gd")
+const FISHING_SCRIPT := preload("res://scripts/fubo_guling/fubo_fishing_game.gd")
 const DRUM_SCRIPT := preload("res://scripts/fubo_guling/fubo_drum_memory.gd")
 const FUBO_SCENE := preload("res://scenes/fubo_guling/fubo_guling.tscn")
 
@@ -12,7 +12,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	_test_canal_truth_table()
+	_test_fishing_loop()
 	_test_drum_random_constraints()
 	await _test_scene_contract()
 	if not _failures.is_empty():
@@ -24,30 +24,15 @@ func _run() -> void:
 	quit(0)
 
 
-func _test_canal_truth_table() -> void:
-	var canal = CANAL_SCRIPT.new()
-	var solved_count := 0
-	for first in 3:
-		for second in 3:
-			for third in 3:
-				canal.reset()
-				canal.set_states_for_test(PackedInt32Array([first, second, third]), 6)
-				var expected := first == 2 and second == 1 and third == 0
-				if canal.is_completed() != expected:
-					_fail("Canal completion mismatch for [%d, %d, %d]." % [first, second, third])
-				if expected:
-					solved_count += 1
-				else:
-					var active := canal.get_active_segments()
-					if canal.get_spill_branch() != [first, second, third][active]:
-						_fail("Canal spill branch must match the first incorrect gate.")
-	_check(solved_count == 1, "Exactly one of the 27 canal states must solve the puzzle.")
-	canal.reset()
-	_check(canal.get_states() == PackedInt32Array([0, 2, 1]), "Canal initial state changed unexpectedly.")
-	canal.set_states_for_test(PackedInt32Array([2, 1, 0]), 6)
-	_check(canal.get_rating() == "善治", "Six-action canal solution must receive 善治.")
-	canal.set_states_for_test(PackedInt32Array([2, 1, 0]), 8)
-	_check(canal.get_rating() == "通达", "Eight-action canal solution must receive 通达.")
+func _test_fishing_loop() -> void:
+	var fishing = FISHING_SCRIPT.new(20260811)
+	fishing.place_item_on_hook_path_for_test(0, 100.0, "small_fish")
+	_check(fishing.cast_hook(), "Fishing hook must launch from its swinging state.")
+	for _step in 500:
+		fishing.step(0.016)
+		if fishing.get_state() == FISHING_SCRIPT.State.SWINGING:
+			break
+	_check(fishing.get_score() == 55, "Fishing must award the caught fish value and resume swinging.")
 
 
 func _test_drum_random_constraints() -> void:
@@ -83,38 +68,70 @@ func _test_scene_contract() -> void:
 	root.add_child(level)
 	await process_frame
 	_check(level.get_phase_for_test() == 0, "Fubo scene must start in ARRIVAL phase.")
-	_check(level.is_school_locked_for_test(), "School route must start locked.")
-	_check(level.is_viewpoint_locked_for_test(), "Viewpoint route must start locked.")
-	_check(level.get_node("World/WorldObjects").y_sort_enabled, "World objects must use Y sorting for occlusion.")
-	_check(level.get_node("World/WorldObjects/Player/Camera2D").limit_right == 3200, "Camera right limit must match the medium map.")
-	_check(level.get_node("World/WorldObjects/Player/Camera2D").limit_bottom == 2200, "Camera bottom limit must match the medium map.")
-	_check(level.get_node("World/Ground/BackgroundPlates").get_child_count() == 4, "Medium map needs four local background plates.")
-	for plate in level.get_node("World/Ground/BackgroundPlates").get_children():
-		_check(plate is Sprite2D and plate.texture != null, "%s needs an imported background texture." % plate.name)
-	var blocked_count := level.get_node("World/Collision/BlockedRegions").get_child_count()
-	_check(blocked_count >= 6 and blocked_count <= 10, "Map must use 6-10 coarse blocked regions.")
-	_check(level.get_node("World/Collision/HouseFoot/Shape").shape is RectangleShape2D, "House must use a separate foot collision shape.")
-	_check(level.get_node("World/Triggers/CanalTrigger/Shape").shape is CircleShape2D, "Canal gameplay must be entered through a trigger area.")
+	_check(not level.is_school_locked_for_test(), "The owner-marked walkable road must not be physically blocked before the fishing game.")
+	_check(not level.is_viewpoint_locked_for_test(), "The owner-marked walkable road must not be physically blocked before the drum game.")
+	_check(level.get_node("World/WorldObjects").y_sort_enabled, "Dynamic characters must retain Y sorting.")
+	var camera: Camera2D = level.get_node("World/WorldObjects/Player/Camera2D")
+	_check(camera.limit_right == 1536, "Camera right limit must match the approved background width.")
+	_check(camera.limit_bottom == 1024, "Camera bottom limit must match the approved background height.")
+	_check(camera.zoom == Vector2(1.15, 1.15), "Camera zoom must provide limited follow without exposing the image edges.")
+	var background: Sprite2D = level.get_node("World/Ground/Background")
+	_check(background.texture != null, "The approved complete background must be imported.")
+	_check(background.texture.resource_path == "res://assets/fubo_guling/backgrounds/fubo_guling_complete.png", "Fubo must use the owner-approved complete background.")
+	_check(not background.centered and background.position == Vector2.ZERO, "The complete background must align to world coordinates from its top-left corner.")
+	_check(not level.has_node("World/Ground/BackgroundPlates"), "The four-plate composition must be removed.")
+	var blocked_regions := level.get_node("World/Collision/BlockedRegions")
+	_check(blocked_regions.get_child_count() == 1, "The owner annotation must be implemented as one closed walkable boundary.")
+	var boundary: CollisionPolygon2D = level.get_node("World/Collision/BlockedRegions/WalkableBoundary/Boundary")
+	_check(boundary.build_mode == 1 and boundary.polygon.size() >= 20, "The walkable boundary must use closed segment collision around the marked route.")
+	_check(level.get_node("World/WorldObjects/Player").position == Vector2(220, 868), "The player must spawn at the owner-marked dock cross.")
+	for dock_vertex in [Vector2(550, 768), Vector2(420, 823), Vector2(200, 943), Vector2(95, 868), Vector2(250, 788), Vector2(380, 688)]:
+		_check(boundary.polygon.has(dock_vertex), "The dock boundary must include approved vertex %s." % dock_vertex)
+	_check(not boundary.polygon.has(Vector2(260, 966)), "The old dock-tip boundary vertex must be removed.")
+	_check(level.get_node("World/WorldObjects/Keeper").position == Vector2(450, 475), "The keeper must stand at the house-front X.")
+	var prop_source := FileAccess.get_file_as_string("res://scripts/fubo_guling/fubo_world_prop.gd")
+	_check("ffe07a" not in prop_source, "The keeper interaction focus must not draw the rejected yellow ring.")
+	level.call("_set_keeper_focus", true)
+	_check(level.get_node("Interface/HUD/PromptPanel").visible and "守岭人" in (level.get_node("Interface/HUD/PromptPanel/Prompt") as Label).text, "Removing the ring must preserve the keeper interaction prompt.")
+	level.call("_set_keeper_focus", false)
+	_check(level.get_node("World/Triggers/FishingTrigger").position == Vector2(380, 790), "The fishing trigger must sit on the dock play area.")
+	_check(level.get_node("World/Triggers/SchoolTrigger").position == Vector2(1110, 330), "The drum trigger must sit below the drum at the annotated X.")
+	_check(level.get_node("World/Triggers/FishingTrigger/Shape").shape is CircleShape2D, "Fishing gameplay must be entered through a trigger area.")
 	_check(level.get_node("World/Triggers/SchoolTrigger/Shape").shape is CircleShape2D, "School gameplay must be entered through a trigger area.")
+	var sea_return := level.get_node_or_null("World/Triggers/SeaReturnTrigger") as Area2D
+	_check(sea_return != null, "The dock must expose a sea-map return trigger.")
+	if sea_return != null:
+		_check(sea_return.position == Vector2(235, 835), "The sea return trigger must sit at the approved dock tip.")
+		var sea_return_shape := (sea_return.get_node("Shape") as CollisionShape2D).shape as CircleShape2D
+		_check(sea_return_shape != null and is_equal_approx(sea_return_shape.radius, 55.0), "The sea return trigger must use the approved radius 55.")
+		var fishing_shape := (level.get_node("World/Triggers/FishingTrigger/Shape") as CollisionShape2D).shape as CircleShape2D
+		_check(sea_return.position.distance_to(level.get_node("World/Triggers/FishingTrigger").position) > sea_return_shape.radius + fishing_shape.radius, "Sea return and fishing triggers must not overlap.")
+		_check(level.has_method("_on_sea_return_body_entered") and level.has_method("_return_to_sea_overworld"), "Fubo must implement explicit dock return behavior.")
+		if level.has_method("_on_sea_return_body_entered"):
+			level.call("_on_sea_return_body_entered", level.get_node("World/WorldObjects/Player"))
+			_check(str(level.get("_pending_trigger")) == "sea_return", "Entering the dock return trigger must only arm the return action.")
+			_check(level.get_node("Interface/HUD/PromptPanel").visible and "返回海图" in (level.get_node("Interface/HUD/PromptPanel/Prompt") as Label).text, "The dock return trigger must show a clear confirmation prompt.")
 	_check(level.get_node("Interface/MinigameHost") is Control, "Map needs a full-screen minigame host.")
-	_check(level.get_node("World/WorldObjects").get_child_count() <= 16, "World object layer must stay deliberately sparse.")
-	for prop_name in ["House", "Storage", "TreeCourtyard", "TreePath", "TreeCanal", "CanalMarker", "Drum", "FlagYellow", "FlagRed", "FlagBlue"]:
-		_check(level.get_node("World/WorldObjects/" + prop_name).art_texture != null, "%s needs a modular pixel texture." % prop_name)
+	_check(level.get_node("Interface/MinigameHost").process_mode == Node.PROCESS_MODE_ALWAYS, "Minigame host must process input without pausing the SceneTree.")
+	_check(level.get_node("World/WorldObjects").get_child_count() <= 5, "Only the player, keeper and story barriers may remain as separate world objects.")
+	for baked_prop_name in ["House", "Storage", "TreeCourtyard", "TreePath", "TreeCanal", "CanalMarker", "Drum", "FlagYellow", "FlagRed", "FlagBlue", "Stele"]:
+		_check(not level.has_node("World/WorldObjects/" + baked_prop_name), "%s must be baked into the complete background." % baked_prop_name)
 	level.finish_keeper_dialogue_for_test()
-	_check(level.get_phase_for_test() == level.Phase.CANAL_AVAILABLE, "Keeper dialogue must only unlock the canal location.")
-	_check(level.get_node("Interface/MinigameHost").active_minigame == null, "Keeper dialogue must not open the canal game directly.")
-	level.trigger_canal_for_test()
+	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Keeper dialogue must only unlock dock fishing.")
+	_check(level.get_node("Interface/MinigameHost").active_minigame == null, "Keeper dialogue must not open fishing directly.")
+	level.trigger_fishing_for_test()
 	var host = level.get_node("Interface/MinigameHost")
-	_check(host.active_minigame != null and host.active_minigame.game_id == "canal", "Canal trigger must open the canal minigame.")
-	host.active_minigame.completed.emit({"game_id": "canal", "completed": true, "rating": "通达", "mistakes": 0, "duration_ms": 1000})
+	_check(host.active_minigame != null and host.active_minigame.game_id == "fishing", "Dock trigger must open the fishing minigame.")
+	_check(host.active_minigame.can_process() and host.active_minigame.get_node("ExitButton").can_process(), "Hosted fishing controls must receive real input.")
+	host.active_minigame.completed.emit({"game_id": "fishing", "completed": true, "rating": "渔获丰足", "mistakes": 0, "duration_ms": 1000})
 	await process_frame
-	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Canal completion must restore the map and unlock the school.")
+	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Fishing completion must restore the map and unlock the school.")
 	level.trigger_drum_for_test()
 	_check(host.active_minigame != null and host.active_minigame.game_id == "drum", "School trigger must open the drum minigame.")
 	host.active_minigame.completed.emit({"game_id": "drum", "completed": true, "rating": "鼓点稳健", "mistakes": 1, "duration_ms": 1000})
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.VIEWPOINT_OPEN and host.active_minigame == null, "Drum completion must restore the map and open the viewpoint.")
-	level.queue_free()
+	level.free()
 	await process_frame
 	await create_timer(0.55).timeout
 

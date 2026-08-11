@@ -23,7 +23,7 @@ func _run() -> void:
 
 	scene_two.set("_patrol_task_stage", 5)
 	scene_two.call("_update_task_hud")
-	var task_name := scene_two.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/TaskName") as Label
+	var task_name := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label
 	_expect(task_name.text == "和县令对话探索岭南海域", "Post-drill Scene2 task was not prepared for sea departure.")
 
 	var loading := scene_two.get_node("UI/SceneLoadingTransition") as SceneLoadingTransition
@@ -70,15 +70,15 @@ func _run() -> void:
 		_finish()
 		return
 	await physics_frame
-	var returned_task := returned_scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/TaskName") as Label
-	var returned_objective := returned_scene.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
+	var returned_task := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label
+	var returned_objective := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
 	_expect(returned_task.text == "和县令对话探索岭南海域", "Returning to Scene2 must preserve the completed patrol-and-drill task state.")
 	_expect(returned_objective.text == "与广州县令交谈，选择是否立即出发", "Returning to Scene2 must not restore patrol or drill objectives.")
 	_expect(not (returned_scene.get_node("UI/DialoguePanel") as Control).visible, "Returning from the sea must not replay the Scene2 arrival dialogue.")
 	_expect(int(returned_scene.get("_patrol_task_stage")) == 5, "Returning from the sea must restore the post-drill task stage.")
 	_expect((returned_scene.get("_heard_soldier_reports") as Dictionary).size() == 2, "Returning from the sea must keep both patrol reports completed.")
 
-	var hud := returned_scene.get_node("UI/ExplorationHUD") as Control
+	var hud := root.get_node("ExplorationUI/HUD") as Control
 	var quest_button := hud.find_child("QuestButton", true, false) as Button
 	quest_button.pressed.emit()
 	await process_frame

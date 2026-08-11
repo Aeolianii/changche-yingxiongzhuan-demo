@@ -19,6 +19,7 @@ func _initialize() -> void:
 func _run() -> void:
 	_verify_generated_assets()
 	await _verify_component_contract()
+	await _verify_global_context_reset()
 	await _verify_palace_visibility()
 	await _verify_scene_two_visibility()
 
@@ -367,11 +368,42 @@ func _verify_component_contract() -> void:
 	await process_frame
 
 
+func _verify_global_context_reset() -> void:
+	var ui := root.get_node_or_null("ExplorationUI")
+	_expect(ui != null, "Global HUD test requires ExplorationUI.")
+	if ui == null:
+		return
+	var owner := Node.new()
+	root.add_child(owner)
+	var hud := ui.call("acquire", owner, &"palace") as Control
+	if not hud.has_method("reset_context"):
+		_expect(false, "ExplorationHUD must expose reset_context for global reuse.")
+		ui.call("release", owner)
+		owner.free()
+		return
+	hud.call("reset_context", &"sea_overworld")
+	await process_frame
+	_expect(hud.has_node("SeaMapStatus"), "Sea context must expose the map entry.")
+	hud.call("reset_context", &"fubo_guling")
+	await process_frame
+	await process_frame
+	_expect(not hud.has_node("SeaMapStatus"), "Fubo context must remove sea-only controls.")
+	hud.call("set_main_task_progress", "伏波古岭", "沿山路寻找守岭人", 0)
+	_expect((hud.get_node("QuestTracker/MainQuest/TaskName") as Label).text == "伏波古岭", "Fubo tracker must use its own task.")
+	var quest_screen := hud.get_node("QuestScreen")
+	_expect(quest_screen.has_method("quest_context_for_test") and quest_screen.call("quest_context_for_test") == &"fubo_guling", "Quest screen must receive the Fubo context.")
+	hud.call("reset_context", &"palace")
+	await process_frame
+	_expect((hud.get_node("PlayerStatus/PortraitFrame/ProtagonistPortrait") as CanvasItem).visible, "Land context must restore the protagonist portrait.")
+	ui.call("release", owner)
+	owner.free()
+
+
 func _verify_palace_visibility() -> void:
 	var palace := PALACE_SCENE.instantiate()
 	root.add_child(palace)
 	await process_frame
-	var hud := palace.get_node("UI/ExplorationHUD") as Control
+	var hud := root.get_node("ExplorationUI/HUD") as Control
 	var dialogue := palace.get_node("UI/Overlay/DialoguePanel") as Control
 	var player := palace.get_node("YSortedCharacters/Player")
 	var interaction_button := palace.get_node("UI/Overlay/InteractionButton") as TextureButton
@@ -447,7 +479,7 @@ func _verify_scene_two_visibility() -> void:
 	await process_frame
 	await process_frame
 
-	var hud := scene_two.get_node("UI/ExplorationHUD") as Control
+	var hud := root.get_node("ExplorationUI/HUD") as Control
 	var dialogue := scene_two.get_node("UI/DialoguePanel") as Control
 	var drill := scene_two.get_node_or_null("UI/DrillOverlay") as Control
 	var player := scene_two.get_node("World/Actors/Player") as CharacterBody2D

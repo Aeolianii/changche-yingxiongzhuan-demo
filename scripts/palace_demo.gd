@@ -47,7 +47,8 @@ const SCENE_TRANSITION_DELAY := 2.5
 @onready var portrait_name_text: Label = $UI/Overlay/PortraitDisplay/NamePlate/NameText
 @onready var interaction_button: BaseButton = $UI/Overlay/InteractionButton
 @onready var interaction_text: Label = $UI/Overlay/InteractionButton/Text
-@onready var exploration_hud: Control = $UI/ExplorationHUD
+var exploration_hud: Control
+var _exploration_ui: Node
 @onready var transition_timer: Timer = $SceneTransitionTimer
 @onready var transition_fade: ColorRect = $UI/Overlay/TransitionFade
 @onready var chapter_transition: Control = $UI/Overlay/ChapterTransition
@@ -59,12 +60,11 @@ var transition_started := false
 
 
 func _ready() -> void:
+	_exploration_ui = get_node("/root/ExplorationUI")
+	exploration_hud = _exploration_ui.call("acquire", self, &"palace") as Control
 	continue_button.pressed.connect(_on_continue_pressed)
 	interaction_button.pressed.connect(_on_interaction_pressed)
-	exploration_hud.connect("menu_visibility_changed", _on_menu_visibility_changed)
-	exploration_hud.connect("save_requested", _on_save_requested)
-	exploration_hud.connect("load_requested", _on_load_requested)
-	exploration_hud.connect("return_title_requested", _on_return_title_requested)
+	_connect_global_hud_signals()
 	transition_timer.timeout.connect(_start_scene_transition)
 	chapter_transition.connect("transition_finished", _change_to_scene_two)
 	transition_timer.wait_time = SCENE_TRANSITION_DELAY
@@ -76,6 +76,35 @@ func _ready() -> void:
 		_show_dialogue(OPENING_REPORTS[opening_index])
 	else:
 		_restore_saved_scene_state(restored_state)
+
+
+func _exit_tree() -> void:
+	if _exploration_ui == null:
+		return
+	_disconnect_global_hud_signals()
+	_exploration_ui.call("release", self)
+
+
+func _connect_global_hud_signals() -> void:
+	for binding in [
+		[&"menu_visibility_changed", Callable(self, "_on_menu_visibility_changed")],
+		[&"save_requested", Callable(self, "_on_save_requested")],
+		[&"load_requested", Callable(self, "_on_load_requested")],
+		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+	]:
+		if not _exploration_ui.is_connected(binding[0], binding[1]):
+			_exploration_ui.connect(binding[0], binding[1])
+
+
+func _disconnect_global_hud_signals() -> void:
+	for binding in [
+		[&"menu_visibility_changed", Callable(self, "_on_menu_visibility_changed")],
+		[&"save_requested", Callable(self, "_on_save_requested")],
+		[&"load_requested", Callable(self, "_on_load_requested")],
+		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+	]:
+		if _exploration_ui.is_connected(binding[0], binding[1]):
+			_exploration_ui.disconnect(binding[0], binding[1])
 
 
 func _process(delta: float) -> void:
@@ -273,6 +302,8 @@ func _is_free_story_state() -> bool:
 
 
 func _on_menu_visibility_changed(is_open: bool) -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	player.controls_enabled = (
 		not is_open
 		and not transition_started
@@ -285,6 +316,8 @@ func _on_menu_visibility_changed(is_open: bool) -> void:
 
 
 func _on_save_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	if not _is_free_story_state() or transition_started or dialogue_panel.visible:
 		_show_save_message(false, "unstable_scene")
 		return
@@ -302,6 +335,8 @@ func _on_save_requested() -> void:
 
 
 func _on_load_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	var game_state := _game_state()
 	if game_state == null:
 		_show_save_message(false, "read_failed")
@@ -317,6 +352,8 @@ func _on_load_requested() -> void:
 
 
 func _on_return_title_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	var game_state := _game_state()
 	if game_state != null:
 		game_state.call("clear_pending_scene_state")

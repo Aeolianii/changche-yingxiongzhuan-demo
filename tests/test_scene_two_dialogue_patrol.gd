@@ -28,8 +28,8 @@ func _run() -> void:
 	dialogue_panel = scene_two.get_node("UI/DialoguePanel") as Control
 	option_box = scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
 	next_button = scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/NextDialogueButton") as Button
-	task_name = scene_two.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/TaskName") as Label
-	objective = scene_two.get_node("UI/ExplorationHUD/QuestTracker/MainQuest/Objective") as Label
+	task_name = root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label
+	objective = root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
 	drill_overlay = scene_two.get_node("UI/DrillOverlay") as Control
 
 	_expect(task_name.text == "巡视水师驻地", "Scene2 must begin with the patrol task.")

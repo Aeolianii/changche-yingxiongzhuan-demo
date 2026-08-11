@@ -1,27 +1,34 @@
 class_name FuboGuling
 extends Node2D
 
-const CANAL_SCENE := preload("res://scenes/fubo_guling/minigames/fubo_canal_minigame.tscn")
+const FISHING_SCENE := preload("res://scenes/fubo_guling/minigames/fubo_fishing_minigame.tscn")
 const DRUM_SCENE := preload("res://scenes/fubo_guling/minigames/fubo_drum_minigame.tscn")
+const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
+const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
+const FUBO_SAVE_STATE := preload("res://scripts/fubo_guling/fubo_save_state.gd")
+const SCENE_PATH := "res://scenes/fubo_guling/fubo_guling.tscn"
+const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 
 enum Phase {
 	ARRIVAL,
-	CANAL_AVAILABLE,
-	CANAL_ACTIVE,
+	FISHING_AVAILABLE,
+	FISHING_ACTIVE,
 	DRUM_AVAILABLE,
 	DRUM_ACTIVE,
 	VIEWPOINT_OPEN,
 	COMPLETE,
 }
 
-const KEEPER_POSITION := Vector2(1150, 1650)
-const CANAL_SAFE_POSITION := Vector2(2450, 1330)
-const SCHOOL_SAFE_POSITION := Vector2(1700, 790)
+const MAP_SIZE := Vector2i(1536, 1024)
+const CAMERA_ZOOM := Vector2(1.15, 1.15)
+const KEEPER_POSITION := Vector2(450, 475)
+const DOCK_SAFE_POSITION := Vector2(220, 868)
+const SCHOOL_SAFE_POSITION := Vector2(1030, 390)
 const INTERACTION_RADIUS := 76.0
 const DIALOGUE_LINES := [
-	"年轻人，这古岭的水断了许久。",
-	"沿山路去古渠，把三支水量调到石刻所示的数目。",
-	"古渠通水后，校场的守军会以三面鼓考验你的耳力。",
+	"年轻人，码头外正是鱼群回游的时候。",
+	"回码头试试摆钩捕鱼，满载后再去校场。",
+	"校场的守军还会以三面鼓考验你的耳力。",
 ]
 
 @onready var world: Node2D = $World
@@ -32,16 +39,16 @@ const DIALOGUE_LINES := [
 @onready var viewpoint_barrier: Node2D = $World/WorldObjects/ViewpointBarrier
 @onready var school_shape: CollisionShape2D = $World/Collision/SchoolBlocker/Shape
 @onready var viewpoint_shape: CollisionShape2D = $World/Collision/ViewpointBlocker/Shape
-@onready var canal_trigger: Area2D = $World/Triggers/CanalTrigger
+@onready var fishing_trigger: Area2D = $World/Triggers/FishingTrigger
+@onready var sea_return_trigger: Area2D = $World/Triggers/SeaReturnTrigger
 @onready var school_trigger: Area2D = $World/Triggers/SchoolTrigger
 @onready var viewpoint_trigger: Area2D = $World/Triggers/ViewpointTrigger
 @onready var collision_debug: Node2D = $World/CollisionDebug
 @onready var minigame_host: FuboMinigameHost = $Interface/MinigameHost
 @onready var hud: Control = $Interface/HUD
-@onready var objective_label: Label = $Interface/HUD/TitlePanel/Objective
-@onready var prompt_panel: ColorRect = $Interface/HUD/PromptPanel
+@onready var prompt_panel: TextureRect = $Interface/HUD/PromptPanel
 @onready var prompt_label: Label = $Interface/HUD/PromptPanel/Prompt
-@onready var dialogue_panel: ColorRect = $Interface/HUD/DialoguePanel
+@onready var dialogue_panel: TextureRect = $Interface/HUD/DialoguePanel
 @onready var speaker_label: Label = $Interface/HUD/DialoguePanel/Speaker
 @onready var dialogue_label: Label = $Interface/HUD/DialoguePanel/Dialogue
 @onready var overlay: ColorRect = $Interface/HUD/Overlay
@@ -52,33 +59,208 @@ var _dialogue_index := -1
 var _keeper_focused := false
 var _pending_trigger := ""
 var _test_mode := false
+var _transitioning := false
+var _loading_transition: SceneLoadingTransition
+var exploration_hud: Control
+var _exploration_ui: Node
 
 
 func _ready() -> void:
 	_configure_camera()
-	minigame_host.configure(world, hud, player)
+	_exploration_ui = get_node_or_null("/root/ExplorationUI")
+	if _exploration_ui != null:
+		exploration_hud = _exploration_ui.call("acquire", self, &"fubo_guling") as Control
+		_connect_global_hud_signals()
+	minigame_host.configure(world, exploration_hud if exploration_hud != null else hud, player)
 	minigame_host.minigame_finished.connect(_on_minigame_finished)
 	minigame_host.minigame_cancelled.connect(_on_minigame_cancelled)
-	canal_trigger.body_entered.connect(_on_canal_body_entered)
-	canal_trigger.body_exited.connect(_on_trigger_body_exited.bind("canal"))
+	fishing_trigger.body_entered.connect(_on_fishing_body_entered)
+	fishing_trigger.body_exited.connect(_on_trigger_body_exited.bind("fishing"))
+	sea_return_trigger.body_entered.connect(_on_sea_return_body_entered)
+	sea_return_trigger.body_exited.connect(_on_trigger_body_exited.bind("sea_return"))
 	school_trigger.body_entered.connect(_on_school_body_entered)
 	school_trigger.body_exited.connect(_on_trigger_body_exited.bind("drum"))
 	viewpoint_trigger.body_entered.connect(_on_viewpoint_body_entered)
 	prompt_panel.visible = false
 	dialogue_panel.visible = false
 	overlay.visible = false
-	$Interface/HUD/CanalPanel.visible = false
-	$Interface/HUD/DrumPanel.visible = false
-	objective_label.text = "沿山路寻找守岭人"
+	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
+	$Interface.add_child(_loading_transition)
 	_build_collision_debug()
+	_restore_saved_scene_state(_consume_saved_scene_state())
+	_refresh_exploration_hud()
+
+
+func _exit_tree() -> void:
+	if _exploration_ui == null:
+		return
+	for binding in [
+		[&"menu_visibility_changed", Callable(self, "_on_hud_menu_visibility_changed")],
+		[&"save_requested", Callable(self, "_on_save_requested")],
+		[&"load_requested", Callable(self, "_on_load_requested")],
+		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+	]:
+		if _exploration_ui.is_connected(binding[0], binding[1]):
+			_exploration_ui.disconnect(binding[0], binding[1])
+	_exploration_ui.call("release", self)
+
+
+func _connect_global_hud_signals() -> void:
+	for binding in [
+		[&"menu_visibility_changed", Callable(self, "_on_hud_menu_visibility_changed")],
+		[&"save_requested", Callable(self, "_on_save_requested")],
+		[&"load_requested", Callable(self, "_on_load_requested")],
+		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+	]:
+		if not _exploration_ui.is_connected(binding[0], binding[1]):
+			_exploration_ui.connect(binding[0], binding[1])
+
+
+func _on_hud_menu_visibility_changed(is_open: bool) -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
+	if is_open:
+		player.controls_enabled = false
+		player.cancel_move_target()
+		prompt_panel.visible = false
+	else:
+		player.controls_enabled = not _transitioning and not dialogue_panel.visible and not overlay.visible and minigame_host.active_minigame == null
+	_refresh_exploration_hud()
+
+
+func _on_save_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
+	if not _is_stable_save_state():
+		_show_save_message(false, "unstable_scene")
+		return
+	var game_state := _game_state()
+	if game_state == null:
+		_show_save_message(false, "write_failed")
+		return
+	var sea_context := get_tree().root.get_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, {}) as Dictionary
+	var snapshot := FUBO_SAVE_STATE.make_snapshot(player.global_position, str(player.get("facing")), phase, sea_context)
+	if snapshot.is_empty():
+		_show_save_message(false, "invalid_scene_state")
+		return
+	var result: Dictionary = game_state.call("save_game", SCENE_PATH, snapshot)
+	_show_save_message(bool(result.get("ok", false)), str(result.get("reason", "")))
+
+
+func _on_load_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
+	var game_state := _game_state()
+	if game_state == null:
+		_show_save_message(false, "read_failed")
+		return
+	var result: Dictionary = game_state.call("load_game")
+	if not result.get("ok", false):
+		_show_save_message(false, str(result.get("reason", "read_failed")))
+		return
+	var change_error := get_tree().change_scene_to_file(str(result["scene_path"]))
+	if change_error != OK:
+		game_state.call("clear_pending_scene_state")
+		_show_save_message(false, "scene_change_failed")
+
+
+func _on_return_title_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
+	var game_state := _game_state()
+	if game_state != null:
+		game_state.call("clear_pending_scene_state")
+	var change_error := get_tree().change_scene_to_file(TITLE_SCENE_PATH)
+	if change_error != OK:
+		_show_save_message(false, "scene_change_failed")
+
+
+func _is_stable_save_state() -> bool:
+	return phase in [Phase.ARRIVAL, Phase.FISHING_AVAILABLE, Phase.DRUM_AVAILABLE, Phase.VIEWPOINT_OPEN] and not _transitioning and not dialogue_panel.visible and not overlay.visible and minigame_host.active_minigame == null
+
+
+func _consume_saved_scene_state() -> Dictionary:
+	var game_state := _game_state()
+	if game_state == null:
+		return {}
+	return game_state.call("consume_pending_scene_state", SCENE_PATH) as Dictionary
+
+
+func _restore_saved_scene_state(raw_snapshot: Dictionary) -> void:
+	if raw_snapshot.is_empty():
+		return
+	var snapshot := FUBO_SAVE_STATE.decode_snapshot(raw_snapshot)
+	if snapshot.is_empty():
+		_show_save_message(false, "invalid_scene_state")
+		return
+	var saved_position := snapshot["player_position"] as Array
+	player.global_position = Vector2(float(saved_position[0]), float(saved_position[1]))
+	player.set("facing", str(snapshot["player_facing"]))
+	player.call("set_move_direction", Vector2.ZERO)
+	phase = int(snapshot["phase"])
+	_apply_phase_world_state()
+	var runtime_context := FUBO_SAVE_STATE.sea_context_for_runtime(snapshot.get("sea_return_context", {}))
+	if runtime_context.is_empty():
+		if get_tree().root.has_meta(FUBO_TRAVEL.RETURN_CONTEXT_META):
+			get_tree().root.remove_meta(FUBO_TRAVEL.RETURN_CONTEXT_META)
+	else:
+		get_tree().root.set_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, runtime_context)
+
+
+func _apply_phase_world_state() -> void:
+	var fishing_done := phase >= Phase.DRUM_AVAILABLE
+	var drum_done := phase >= Phase.VIEWPOINT_OPEN
+	school_shape.disabled = fishing_done
+	school_barrier.visible = not fishing_done
+	viewpoint_shape.disabled = drum_done
+	viewpoint_barrier.visible = not drum_done
+
+
+func _show_save_message(success: bool, reason: String) -> void:
+	if exploration_hud == null:
+		return
+	if success:
+		exploration_hud.call("show_toast", "进度已保存")
+		return
+	var game_state := _game_state()
+	var message := "存档操作失败。" if game_state == null else str(game_state.call("error_message", reason))
+	exploration_hud.call("show_toast", message)
+
+
+func _game_state() -> Node:
+	return get_node_or_null("/root/GameState")
+
+
+func _refresh_exploration_hud() -> void:
+	if exploration_hud == null:
+		return
+	var objective := "沿山路寻找守岭人"
+	var progress_stage := 0
+	match phase:
+		Phase.FISHING_AVAILABLE, Phase.FISHING_ACTIVE:
+			objective = "返回码头，在岸边开始钓鱼"
+			progress_stage = 1
+		Phase.DRUM_AVAILABLE, Phase.DRUM_ACTIVE:
+			objective = "沿山路前往古校场，完成听令回鼓"
+			progress_stage = 2
+		Phase.VIEWPOINT_OPEN:
+			objective = "登上观景台眺望南海"
+			progress_stage = 3
+		Phase.COMPLETE:
+			objective = "伏波古岭行程完成"
+			progress_stage = 4
+	exploration_hud.call("set_main_task_progress", "伏波古岭", objective, progress_stage)
+	var should_show := not _transitioning and not dialogue_panel.visible and not overlay.visible and minigame_host.active_minigame == null
+	exploration_hud.call("set_exploration_visible", should_show)
 
 
 func _configure_camera() -> void:
 	camera.limit_left = 0
 	camera.limit_top = 0
-	camera.limit_right = 3200
-	camera.limit_bottom = 2200
-	camera.position = Vector2(0, -80)
+	camera.limit_right = MAP_SIZE.x
+	camera.limit_bottom = MAP_SIZE.y
+	camera.position = Vector2.ZERO
+	camera.zoom = CAMERA_ZOOM
 	camera.position_smoothing_enabled = true
 	camera.position_smoothing_speed = 6.0
 	camera.reset_smoothing()
@@ -92,6 +274,8 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _transitioning:
+		return
 	if event.is_echo():
 		return
 	if event.is_action_pressed("interact"):
@@ -103,12 +287,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _handle_interaction() -> void:
-	if phase == Phase.COMPLETE:
+	if _pending_trigger == "sea_return":
+		_return_to_sea_overworld()
+	elif phase == Phase.COMPLETE:
 		get_tree().reload_current_scene()
 	elif dialogue_panel.visible:
 		_advance_dialogue()
-	elif _pending_trigger == "canal":
-		_open_canal_minigame()
+	elif _pending_trigger == "fishing":
+		_open_fishing_minigame()
 	elif _pending_trigger == "drum":
 		_open_drum_minigame()
 	elif _keeper_focused:
@@ -134,6 +320,7 @@ func _start_dialogue() -> void:
 	dialogue_label.text = DIALOGUE_LINES[0]
 	dialogue_panel.visible = true
 	prompt_panel.visible = false
+	_refresh_exploration_hud()
 
 
 func _advance_dialogue() -> void:
@@ -143,25 +330,33 @@ func _advance_dialogue() -> void:
 		return
 	dialogue_panel.visible = false
 	player.controls_enabled = true
-	_unlock_canal_location()
+	_unlock_fishing_location()
 
 
-func _unlock_canal_location() -> void:
-	phase = Phase.CANAL_AVAILABLE
-	objective_label.text = "前往山腰古渠，靠近石碑开始调水"
+func _unlock_fishing_location() -> void:
+	phase = Phase.FISHING_AVAILABLE
+	_refresh_exploration_hud()
 
 
-func _on_canal_body_entered(body: Node) -> void:
-	if body == player and phase == Phase.CANAL_AVAILABLE:
-		_pending_trigger = "canal"
-		prompt_label.text = "按 E / 空格 调整三渠水量"
+func _on_fishing_body_entered(body: Node) -> void:
+	if body == player and phase == Phase.FISHING_AVAILABLE:
+		_pending_trigger = "fishing"
+		prompt_label.text = "按 E / 空格 开始码头钓鱼；离开则暂不进入"
 		prompt_panel.visible = true
+
+
+func _on_sea_return_body_entered(body: Node) -> void:
+	if body != player or _transitioning:
+		return
+	_pending_trigger = "sea_return"
+	prompt_label.text = "按 E / 空格 乘船返回海图"
+	prompt_panel.visible = true
 
 
 func _on_school_body_entered(body: Node) -> void:
 	if body == player and phase == Phase.DRUM_AVAILABLE:
 		_pending_trigger = "drum"
-		prompt_label.text = "按 E / 空格 接受岭南鼓令"
+		prompt_label.text = "按 E / 空格 进入听令回鼓；离开则暂不进入"
 		prompt_panel.visible = true
 
 
@@ -171,14 +366,40 @@ func _on_trigger_body_exited(body: Node, trigger_id: String) -> void:
 		prompt_panel.visible = false
 
 
-func _open_canal_minigame() -> bool:
-	if phase != Phase.CANAL_AVAILABLE:
+func _return_to_sea_overworld() -> void:
+	if _transitioning:
+		return
+	_transitioning = true
+	_pending_trigger = ""
+	prompt_panel.visible = false
+	player.controls_enabled = false
+	player.cancel_move_target()
+	_refresh_exploration_hud()
+	var scene_root := get_tree().root
+	scene_root.set_meta(FUBO_TRAVEL.RETURN_REQUEST_META, true)
+	await _loading_transition.play_loading("正在返回岭南海图")
+	var change_error := get_tree().change_scene_to_file(FUBO_TRAVEL.SEA_SCENE_PATH)
+	if change_error == OK:
+		return
+	scene_root.remove_meta(FUBO_TRAVEL.RETURN_REQUEST_META)
+	_loading_transition.reset_loading()
+	_transitioning = false
+	player.controls_enabled = true
+	_pending_trigger = "sea_return"
+	prompt_label.text = "返回海图失败，请按 E / 空格重试"
+	prompt_panel.visible = true
+	_refresh_exploration_hud()
+
+
+func _open_fishing_minigame() -> bool:
+	if phase != Phase.FISHING_AVAILABLE:
 		return false
 	_pending_trigger = ""
 	prompt_panel.visible = false
-	if not minigame_host.open_minigame(CANAL_SCENE, "canal"):
+	if not minigame_host.open_minigame(FISHING_SCENE, "fishing"):
 		return false
-	phase = Phase.CANAL_ACTIVE
+	phase = Phase.FISHING_ACTIVE
+	_refresh_exploration_hud()
 	return true
 
 
@@ -190,6 +411,7 @@ func _open_drum_minigame() -> bool:
 	if not minigame_host.open_minigame(DRUM_SCENE, "drum"):
 		return false
 	phase = Phase.DRUM_ACTIVE
+	_refresh_exploration_hud()
 	return true
 
 
@@ -197,21 +419,21 @@ func _on_minigame_finished(result: Dictionary) -> void:
 	if not result.get("completed", false):
 		return
 	match String(result.get("game_id", "")):
-		"canal":
-			_complete_canal(result)
+		"fishing":
+			_complete_fishing(result)
 		"drum":
 			_complete_drum(result)
 
 
-func _complete_canal(result: Dictionary) -> void:
-	if phase != Phase.CANAL_ACTIVE:
+func _complete_fishing(result: Dictionary) -> void:
+	if phase != Phase.FISHING_ACTIVE:
 		return
 	phase = Phase.DRUM_AVAILABLE
 	school_shape.set_deferred("disabled", true)
 	school_barrier.visible = false
-	objective_label.text = "古渠贯通（%s），沿山路前往古校场" % String(result.get("rating", "完成"))
+	_refresh_exploration_hud()
 	if not _test_mode:
-		_show_notice("古渠贯通\n通往校场的山路已开放", 1.8)
+		_show_notice("渔获满舱\n可以前往古校场", 1.8)
 
 
 func _complete_drum(_result: Dictionary) -> void:
@@ -220,21 +442,22 @@ func _complete_drum(_result: Dictionary) -> void:
 	phase = Phase.VIEWPOINT_OPEN
 	viewpoint_shape.set_deferred("disabled", true)
 	viewpoint_barrier.visible = false
-	objective_label.text = "鼓令完成，登上观景台眺望南海"
+	_refresh_exploration_hud()
 	if not _test_mode:
 		_show_notice("三轮鼓令完成\n观景台入口已开放", 1.8)
 
 
 func _on_minigame_cancelled(game_id: String) -> void:
 	match game_id:
-		"canal":
-			phase = Phase.CANAL_AVAILABLE
-			player.global_position = CANAL_SAFE_POSITION
+		"fishing":
+			phase = Phase.FISHING_AVAILABLE
+			player.global_position = DOCK_SAFE_POSITION
 		"drum":
 			phase = Phase.DRUM_AVAILABLE
 			player.global_position = SCHOOL_SAFE_POSITION
 	player.controls_enabled = true
 	prompt_panel.visible = false
+	_refresh_exploration_hud()
 
 
 func _on_viewpoint_body_entered(body: Node) -> void:
@@ -243,17 +466,19 @@ func _on_viewpoint_body_entered(body: Node) -> void:
 	phase = Phase.COMPLETE
 	player.controls_enabled = false
 	player.cancel_move_target()
-	objective_label.text = "伏波古岭行程完成"
-	overlay_text.text = "伏波古岭\n古渠已通，鼓令已成\n\n按 E / 空格 重新开始"
+	overlay_text.text = "伏波古岭\n渔获满舱，鼓令已成\n\n按 E / 空格 重新开始"
 	overlay.visible = true
+	_refresh_exploration_hud()
 
 
 func _show_notice(text_value: String, duration: float) -> void:
 	overlay_text.text = text_value
 	overlay.visible = true
+	_refresh_exploration_hud()
 	await get_tree().create_timer(duration).timeout
 	if phase != Phase.COMPLETE and minigame_host.active_minigame == null:
 		overlay.visible = false
+		_refresh_exploration_hud()
 
 
 func _build_collision_debug() -> void:
@@ -263,11 +488,20 @@ func _build_collision_debug() -> void:
 				if child is CollisionShape2D and child.shape != null:
 					_add_shape_debug(physics_node, child, parent == $World/Collision)
 				elif child is CollisionPolygon2D:
-					var polygon := Polygon2D.new()
-					polygon.polygon = child.polygon
-					polygon.color = Color(0.95, 0.28, 0.18, 0.22)
-					polygon.position = physics_node.position + child.position
-					collision_debug.add_child(polygon)
+					if child.build_mode == CollisionPolygon2D.BUILD_SEGMENTS:
+						var boundary := Line2D.new()
+						boundary.points = child.polygon
+						boundary.closed = true
+						boundary.width = 6.0
+						boundary.default_color = Color(1.0, 0.2, 0.12, 0.9)
+						boundary.position = physics_node.position + child.position
+						collision_debug.add_child(boundary)
+					else:
+						var polygon := Polygon2D.new()
+						polygon.polygon = child.polygon
+						polygon.color = Color(0.95, 0.28, 0.18, 0.22)
+						polygon.position = physics_node.position + child.position
+						collision_debug.add_child(polygon)
 
 
 func _add_shape_debug(physics_node: Node2D, shape_node: CollisionShape2D, blocked: bool) -> void:
@@ -295,11 +529,11 @@ func _add_shape_debug(physics_node: Node2D, shape_node: CollisionShape2D, blocke
 
 func finish_keeper_dialogue_for_test() -> void:
 	_test_mode = true
-	_unlock_canal_location()
+	_unlock_fishing_location()
 
 
-func trigger_canal_for_test() -> bool:
-	return _open_canal_minigame()
+func trigger_fishing_for_test() -> bool:
+	return _open_fishing_minigame()
 
 
 func trigger_drum_for_test() -> bool:

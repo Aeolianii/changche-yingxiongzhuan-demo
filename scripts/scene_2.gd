@@ -31,6 +31,7 @@ var _player: CharacterBody2D
 var _player_sprite: AnimatedSprite2D
 var _interaction_panel: Control
 var _exploration_hud: Control
+var _exploration_ui: Node
 var _dialogue_panel: Control
 var _portrait_box: ColorRect
 var _portrait_label: Label
@@ -561,8 +562,8 @@ func _build_sprite_frames(asset_dir: String) -> SpriteFrames:
 		frames.remove_animation(default_animation)
 
 	for direction in ["down", "left", "right", "up"]:
-		_add_animation_frames(frames, "idle_%s" % direction, "%s/standard/idle/%s" % [asset_dir, direction], 2, 2.5)
-		_add_animation_frames(frames, "walk_%s" % direction, "%s/standard/walk/%s" % [asset_dir, direction], 9, 10.0)
+		_add_animation_frames(frames, "idle_%s" % direction, "%s/standard/idle/%s" % [asset_dir, direction], 4, 2.5)
+		_add_animation_frames(frames, "walk_%s" % direction, "%s/standard/walk/%s" % [asset_dir, direction], 4, 10.0)
 	return frames
 
 
@@ -634,7 +635,8 @@ func _update_player_animation(input_vector: Vector2) -> void:
 
 func _build_ui() -> void:
 	var canvas := get_node("UI") as CanvasLayer
-	_exploration_hud = get_node("UI/ExplorationHUD") as Control
+	_exploration_ui = get_node("/root/ExplorationUI")
+	_exploration_hud = _exploration_ui.call("acquire", self, &"scene_two") as Control
 	_interaction_panel = _create_interaction_panel()
 	canvas.add_child(_interaction_panel)
 	_initialize_dialogue_panel()
@@ -642,9 +644,7 @@ func _build_ui() -> void:
 	canvas.add_child(_drill_overlay)
 	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
 	canvas.add_child(_loading_transition)
-	_exploration_hud.connect("save_requested", _on_save_requested)
-	_exploration_hud.connect("load_requested", _on_load_requested)
-	_exploration_hud.connect("return_title_requested", _on_return_title_requested)
+	_connect_global_hud_signals()
 
 	if not _saved_scene_state.is_empty():
 		_restore_saved_scene_state(_saved_scene_state)
@@ -659,6 +659,31 @@ func _build_ui() -> void:
 		_refresh_exploration_hud()
 
 
+func _exit_tree() -> void:
+	if _exploration_ui == null:
+		return
+	_disconnect_global_hud_signals()
+	_exploration_ui.call("release", self)
+
+
+func _connect_global_hud_signals() -> void:
+	for binding in [
+		[&"save_requested", Callable(self, "_on_save_requested")],
+		[&"load_requested", Callable(self, "_on_load_requested")],
+		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+	]:
+		if not _exploration_ui.is_connected(binding[0], binding[1]):
+			_exploration_ui.connect(binding[0], binding[1])
+
+
+func _disconnect_global_hud_signals() -> void:
+	for binding in [
+		[&"save_requested", Callable(self, "_on_save_requested")],
+		[&"load_requested", Callable(self, "_on_load_requested")],
+		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+	]:
+		if _exploration_ui.is_connected(binding[0], binding[1]):
+			_exploration_ui.disconnect(binding[0], binding[1])
 func _initialize_dialogue_panel() -> void:
 	_dialogue_panel = get_node("UI/DialoguePanel") as Control
 	_paper_panel = get_node("UI/DialoguePanel/FullWidthPaperDialogueBox") as PanelContainer
@@ -1202,6 +1227,8 @@ func _is_menu_open() -> bool:
 
 
 func _on_save_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	if _transitioning or _dialogue_panel.visible or _drill_overlay.visible:
 		_show_save_message(false, "unstable_scene")
 		return
@@ -1225,6 +1252,8 @@ func _on_save_requested() -> void:
 
 
 func _on_load_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	var game_state := _game_state()
 	if game_state == null:
 		_show_save_message(false, "read_failed")
@@ -1240,6 +1269,8 @@ func _on_load_requested() -> void:
 
 
 func _on_return_title_requested() -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
 	var game_state := _game_state()
 	if game_state != null:
 		game_state.call("clear_pending_scene_state")

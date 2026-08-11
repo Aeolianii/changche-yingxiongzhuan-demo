@@ -13,6 +13,7 @@ const B_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong
 const C_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v3.png")
 const D_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v3.png")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
+const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
 const MAP_CHUNK_SIZE := Vector2(2508, 1412)
 const MAP_CHUNK_OVERLAP := 120.0
 const B_MAP_ORIGIN := Vector2(MAP_CHUNK_SIZE.x - MAP_CHUNK_OVERLAP, 0)
@@ -318,12 +319,11 @@ func _store_fog_state() -> void:
 
 
 func _build_background_chunks() -> void:
-	var water_noise := _create_water_noise_texture(0.045, 4, 0.55)
 	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)
-	_configure_background_chunk("Background", A_MAP_TEXTURE, Vector2.ZERO, -100, false, false, water_noise, distortion_noise)
-	_configure_background_chunk("EastBackground", B_MAP_TEXTURE, B_MAP_ORIGIN, -99, true, false, water_noise, distortion_noise)
-	_configure_background_chunk("CBackground", C_MAP_TEXTURE, C_MAP_ORIGIN, -98, false, true, water_noise, distortion_noise)
-	_configure_background_chunk("DBackground", D_MAP_TEXTURE, D_MAP_ORIGIN, -97, true, true, water_noise, distortion_noise)
+	_configure_background_chunk("Background", A_MAP_TEXTURE, Vector2.ZERO, -100, false, false, distortion_noise)
+	_configure_background_chunk("EastBackground", B_MAP_TEXTURE, B_MAP_ORIGIN, -99, true, false, distortion_noise)
+	_configure_background_chunk("CBackground", C_MAP_TEXTURE, C_MAP_ORIGIN, -98, false, true, distortion_noise)
+	_configure_background_chunk("DBackground", D_MAP_TEXTURE, D_MAP_ORIGIN, -97, true, true, distortion_noise)
 
 
 func _create_water_noise_texture(frequency: float, octaves: int, gain: float) -> NoiseTexture2D:
@@ -340,7 +340,7 @@ func _create_water_noise_texture(frequency: float, octaves: int, gain: float) ->
 	return texture
 
 
-func _configure_background_chunk(node_name: String, texture: Texture2D, origin: Vector2, draw_order: int, fade_from_left: bool, fade_from_top: bool, water_noise: Texture2D, distortion_noise: Texture2D) -> void:
+func _configure_background_chunk(node_name: String, texture: Texture2D, origin: Vector2, draw_order: int, fade_from_left: bool, fade_from_top: bool, distortion_noise: Texture2D) -> void:
 	var background := $World.get_node_or_null(node_name) as Sprite2D
 	if background == null:
 		background = Sprite2D.new()
@@ -358,7 +358,8 @@ func _configure_background_chunk(node_name: String, texture: Texture2D, origin: 
 	blend_material.set_shader_parameter("fade_from_top", fade_from_top)
 	blend_material.set_shader_parameter("world_origin", origin)
 	blend_material.set_shader_parameter("world_size", MAP_CHUNK_SIZE)
-	blend_material.set_shader_parameter("waterNoise", water_noise)
+	blend_material.set_shader_parameter("waterNoise", distortion_noise)
+	blend_material.set_shader_parameter("waterFlowTexture", SEA_FLOW_TEXTURE)
 	blend_material.set_shader_parameter("waterDistortionNoise", distortion_noise)
 	background.material = blend_material
 

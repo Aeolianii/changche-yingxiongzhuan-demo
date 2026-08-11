@@ -22,6 +22,7 @@ const RETURN_FROM_SEA_META := "scene_two_return_from_sea_overworld"
 const SEA_OVERWORLD_ENTRY_META := "sea_overworld_from_scene_two"
 const SEA_OVERWORLD_SCENE := "res://scenes/sea_overworld/sea_overworld.tscn"
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
+const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
 const LEFT_SOLDIER_ROLE := "patrol_soldier_left"
 const RIGHT_SOLDIER_ROLE := "patrol_soldier_right"
 const OFFICER_ROLE := "patrol_officer"
@@ -234,24 +235,19 @@ func _update_ambient_background(delta: float) -> void:
 func _create_water_material() -> ShaderMaterial:
 	var material := ShaderMaterial.new()
 	material.shader = load("res://shaders/water_2d_distortion.gdshader") as Shader
-	material.set_shader_parameter("waterNoise", _create_noise_texture(0.045, 4, 0.55))
 	material.set_shader_parameter("waterDistortionNoise", _create_noise_texture(0.025, 3, 0.5))
 	material.set_shader_parameter("waterColor", Color(0.12, 0.55, 0.76, 1.0))
 	material.set_shader_parameter("colorCorection", 0.28)
-	material.set_shader_parameter("distortionForce", 0.01)
-	material.set_shader_parameter("WDBrightness", 1.25)
-	material.set_shader_parameter("WDFreq", 0.62)
-	material.set_shader_parameter("WDSize", 0.92)
-	material.set_shader_parameter("WDSpeed", 4.0)
-	material.set_shader_parameter("tiling", Vector2(4.0, 2.4))
-	material.set_shader_parameter("offSetSpeed", Vector2(0.08, 0.035))
-	material.set_shader_parameter("backGroundDirX", 0.01)
-	material.set_shader_parameter("backGroundDirY", 0.006)
+	material.set_shader_parameter("flow_speed", 0.014)
+	material.set_shader_parameter("warp_strength", 0.052)
+	material.set_shader_parameter("caustic_strength", 0.24)
+	material.set_shader_parameter("tiling", Vector2(1.35, 1.0))
+	material.set_shader_parameter("refraction_strength", 0.004)
 	return material
 
 
 func _create_sea_water_texture() -> Texture2D:
-	return _create_noise_texture(0.035, 5, 0.48)
+	return SEA_FLOW_TEXTURE
 
 
 func _create_noise_texture(frequency: float, octaves: int, gain: float) -> NoiseTexture2D:

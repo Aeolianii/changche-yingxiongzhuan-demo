@@ -11,6 +11,7 @@ var next_button: Button
 var task_name: Label
 var objective: Label
 var drill_overlay: Control
+var used_interaction_button := false
 
 
 func _initialize() -> void:
@@ -101,11 +102,22 @@ func _interact_with(actor_path: String) -> void:
 	player.global_position = actor.global_position + Vector2(0, 54)
 	await physics_frame
 	await physics_frame
-	var event := InputEventAction.new()
-	event.action = &"interact"
-	event.pressed = true
-	scene_two._unhandled_input(event)
+	var interaction_panel := scene_two.get_node("UI/InteractionPanel") as TextureButton
+	var interaction_label := interaction_panel.get_node("Text") as Label
+	var actor_sprite := actor.get_node("Sprite") as AnimatedSprite2D
+	_expect(interaction_panel.visible, "Scene2 must show the bottom interaction button for %s." % actor_path)
+	_expect("交谈" in interaction_label.text, "Scene2 interaction button must describe the talk action.")
+	_expect(actor_sprite.modulate.r > 1.0, "Scene2 must highlight %s while its interaction button is available." % actor_path)
+	if not used_interaction_button:
+		used_interaction_button = true
+		interaction_panel.pressed.emit()
+	else:
+		var event := InputEventAction.new()
+		event.action = &"interact"
+		event.pressed = true
+		scene_two._unhandled_input(event)
 	await process_frame
+	_expect(not interaction_panel.visible, "Scene2 interaction button must hide after dialogue starts.")
 	_expect(dialogue_panel.visible, "Dialogue did not open for %s." % actor_path)
 
 

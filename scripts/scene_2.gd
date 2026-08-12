@@ -23,6 +23,8 @@ const SEA_OVERWORLD_ENTRY_META := "sea_overworld_from_scene_two"
 const SEA_OVERWORLD_SCENE := "res://scenes/sea_overworld/sea_overworld.tscn"
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
+const INTERACTION_BUTTON_NORMAL := preload("res://assets/ui/sea_overworld/interaction_button_ink_v1.png")
+const INTERACTION_BUTTON_ACTIVE := preload("res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png")
 const LEFT_SOLDIER_ROLE := "patrol_soldier_left"
 const RIGHT_SOLDIER_ROLE := "patrol_soldier_right"
 const OFFICER_ROLE := "patrol_officer"
@@ -31,6 +33,7 @@ const MAGISTRATE_ROLE := "magistrate"
 var _player: CharacterBody2D
 var _player_sprite: AnimatedSprite2D
 var _interaction_panel: Control
+var _interaction_label: Label
 var _exploration_hud: Control
 var _exploration_ui: Node
 var _dialogue_panel: Control
@@ -44,7 +47,6 @@ var _speaker_label: Label
 var _dialogue_label: Label
 var _option_box: VBoxContainer
 var _next_dialogue_button: Button
-var _drill_button: Button
 var _drill_overlay: Control
 var _loading_transition: SceneLoadingTransition
 
@@ -97,6 +99,7 @@ func _physics_process(delta: float) -> void:
 	_refresh_exploration_hud()
 
 	if _transitioning or _dialogue_panel.visible or _drill_overlay.visible or _is_menu_open():
+		_suspend_interaction_prompt()
 		cancel_player_move_target()
 		_player.velocity = Vector2.ZERO
 		_player_sprite.play("idle_%s" % _last_direction)
@@ -387,11 +390,28 @@ func _update_interaction_target() -> void:
 			nearest = npc
 			nearest_distance = distance
 
-	if _current_target == nearest:
+	if _current_target != nearest:
+		_clear_target_highlight(_current_target)
+		_current_target = nearest
+		_apply_target_highlight(_current_target)
+	_update_interaction_prompt(_current_target)
+
+
+func _update_interaction_prompt(npc: Variant) -> void:
+	if _interaction_panel == null or _interaction_label == null:
 		return
+	if npc == null:
+		_interaction_panel.hide()
+		return
+	_interaction_label.text = "与%s交谈" % str(npc["display_name"])
+	_interaction_panel.show()
+
+
+func _suspend_interaction_prompt() -> void:
+	if _interaction_panel != null:
+		_interaction_panel.hide()
 	_clear_target_highlight(_current_target)
-	_current_target = nearest
-	_apply_target_highlight(_current_target)
+	_current_target = null
 
 
 func _apply_target_highlight(npc: Variant) -> void:
@@ -722,29 +742,38 @@ func _apply_dialogue_panel_styles() -> void:
 
 
 func _create_interaction_panel() -> Control:
-	var panel := PanelContainer.new()
+	var panel := TextureButton.new()
 	panel.name = "InteractionPanel"
-	panel.position = Vector2(548, 650)
-	panel.size = Vector2(250, 92)
+	panel.position = Vector2(522, 800)
+	panel.size = Vector2(300, 74)
+	panel.texture_normal = INTERACTION_BUTTON_NORMAL
+	panel.texture_pressed = INTERACTION_BUTTON_ACTIVE
+	panel.ignore_texture_size = true
+	panel.stretch_mode = TextureButton.STRETCH_SCALE
 	panel.visible = false
+	panel.pressed.connect(_on_interaction_prompt_pressed)
 
-	var box := VBoxContainer.new()
-	box.custom_minimum_size = Vector2(250, 92)
-	panel.add_child(box)
-
-	var meet_button := Button.new()
-	meet_button.text = "拜见"
-	meet_button.custom_minimum_size = Vector2(220, 40)
-	meet_button.pressed.connect(_start_dialogue)
-	box.add_child(meet_button)
-
-	_drill_button = Button.new()
-	_drill_button.text = "操练"
-	_drill_button.custom_minimum_size = Vector2(220, 40)
-	_drill_button.visible = false
-	_drill_button.pressed.connect(_show_drill)
-	box.add_child(_drill_button)
+	_interaction_label = Label.new()
+	_interaction_label.name = "Text"
+	_interaction_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_interaction_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_interaction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_interaction_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_interaction_label.add_theme_font_size_override("font_size", 22)
+	panel.add_child(_interaction_label)
 	return panel
+
+
+func _on_interaction_prompt_pressed() -> void:
+	if (
+		_current_target == null
+		or _transitioning
+		or _dialogue_panel.visible
+		or _drill_overlay.visible
+		or _is_menu_open()
+	):
+		return
+	_open_npc_dialogue(_current_target)
 
 
 func _create_drill_overlay() -> Control:
@@ -819,7 +848,7 @@ func _add_drill_ship(root: Control, position_value: Vector2, rotation_degrees_va
 
 func _open_npc_dialogue(npc: Dictionary) -> void:
 	_active_npc = npc
-	_interaction_panel.hide()
+	_suspend_interaction_prompt()
 	_dialogue_panel.show()
 	_refresh_exploration_hud()
 	_option_box.show()

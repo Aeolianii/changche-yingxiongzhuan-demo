@@ -57,6 +57,9 @@ var story_state := StoryState.OPENING_REPORTS
 var opening_index := 0
 var audience_index := 0
 var transition_started := false
+var _highlighted_interaction_target: CharacterActor
+var _highlighted_target_modulate := Color.WHITE
+var _highlighted_target_scale := Vector2.ONE
 
 
 func _ready() -> void:
@@ -149,10 +152,39 @@ func _move_actor(actor: CharacterActor, target: Vector2, delta: float) -> bool:
 
 
 func _update_interaction_prompt(target: Node2D, prompt: String) -> void:
-	if player.global_position.distance_to(target.global_position) <= INTERACTION_DISTANCE:
+	if (
+		player.global_position.distance_to(target.global_position) <= INTERACTION_DISTANCE
+		and not dialogue_panel.visible
+		and not transition_started
+		and not bool(exploration_hud.call("is_menu_open"))
+	):
+		_apply_interaction_highlight(target as CharacterActor)
 		_show_interaction(prompt)
 	else:
+		_clear_interaction_highlight()
 		interaction_button.hide()
+
+
+func _apply_interaction_highlight(target: CharacterActor) -> void:
+	if target == null or target.animated_sprite == null:
+		return
+	if _highlighted_interaction_target == target:
+		return
+	_clear_interaction_highlight()
+	_highlighted_interaction_target = target
+	_highlighted_target_modulate = target.animated_sprite.modulate
+	_highlighted_target_scale = target.animated_sprite.scale
+	target.animated_sprite.modulate = Color(1.35, 1.22, 0.72, _highlighted_target_modulate.a)
+	target.animated_sprite.scale = _highlighted_target_scale * 1.08
+
+
+func _clear_interaction_highlight() -> void:
+	if _highlighted_interaction_target == null or _highlighted_interaction_target.animated_sprite == null:
+		_highlighted_interaction_target = null
+		return
+	_highlighted_interaction_target.animated_sprite.modulate = _highlighted_target_modulate
+	_highlighted_interaction_target.animated_sprite.scale = _highlighted_target_scale
+	_highlighted_interaction_target = null
 
 
 func _on_continue_pressed() -> void:
@@ -188,6 +220,7 @@ func _on_continue_pressed() -> void:
 
 func _on_interaction_pressed() -> void:
 	interaction_button.hide()
+	_clear_interaction_highlight()
 	match story_state:
 		StoryState.WAIT_TALK:
 			story_state = StoryState.SUMMON_DIALOGUE
@@ -207,6 +240,8 @@ func _show_audience_dialogue() -> void:
 
 
 func _show_dialogue(text: String) -> void:
+	_clear_interaction_highlight()
+	interaction_button.hide()
 	dialogue_text.text = text
 	_set_continue_text("继续")
 	_set_dialogue_text_layout(-1)
@@ -216,6 +251,8 @@ func _show_dialogue(text: String) -> void:
 
 
 func _show_character_dialogue(text: String, speaker: String, portrait_texture: Texture2D, portrait_on_left: bool, placeholder_text: String = "") -> void:
+	_clear_interaction_highlight()
+	interaction_button.hide()
 	dialogue_text.text = text
 	_set_continue_text("继续")
 	_show_portrait(speaker, portrait_texture, portrait_on_left, placeholder_text)
@@ -324,6 +361,7 @@ func _on_menu_visibility_changed(is_open: bool) -> void:
 		and _is_free_story_state()
 	)
 	if is_open:
+		_clear_interaction_highlight()
 		interaction_button.hide()
 	_refresh_exploration_hud()
 
@@ -431,6 +469,7 @@ func _start_scene_transition() -> void:
 	player.controls_enabled = false
 	_refresh_exploration_hud()
 	continue_button.disabled = true
+	_clear_interaction_highlight()
 	interaction_button.hide()
 	_hide_dialogue()
 	chapter_transition.call("play")

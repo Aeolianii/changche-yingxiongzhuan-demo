@@ -50,6 +50,7 @@ func _run() -> void:
 	_expect("1/2" in objective.text, "First unique soldier report must advance patrol progress to one of two.")
 
 	await _interact_with("World/Actors/Npcs/MagistrateLeftGuard")
+	_expect(option_box.get_child_count() == 1 and (option_box.get_child(0) as Button).text == "无事", "A soldier must remain available for fixed dialogue with one 无事 exit after reporting.")
 	await _press_option(0)
 	_expect("1/2" in objective.text, "Repeated soldier dialogue must not advance patrol progress twice.")
 
@@ -99,15 +100,19 @@ func _run() -> void:
 
 func _interact_with(actor_path: String) -> void:
 	var actor := scene_two.get_node(actor_path) as Node2D
+	var actor_sprite := actor.get_node("Sprite") as AnimatedSprite2D
+	var normal_scale := actor_sprite.scale
+	var normal_modulate := actor_sprite.modulate
 	player.global_position = actor.global_position + Vector2(0, 54)
 	await physics_frame
 	await physics_frame
 	var interaction_panel := scene_two.get_node("UI/InteractionPanel") as TextureButton
 	var interaction_label := interaction_panel.get_node("Text") as Label
-	var actor_sprite := actor.get_node("Sprite") as AnimatedSprite2D
 	_expect(interaction_panel.visible, "Scene2 must show the bottom interaction button for %s." % actor_path)
 	_expect("交谈" in interaction_label.text, "Scene2 interaction button must describe the talk action.")
-	_expect(actor_sprite.modulate.r > 1.0, "Scene2 must highlight %s while its interaction button is available." % actor_path)
+	_expect(actor_sprite.scale.is_equal_approx(normal_scale), "Scene2 highlight must not resize %s." % actor_path)
+	_expect(actor_sprite.modulate.is_equal_approx(normal_modulate), "Scene2 highlight must preserve the colors of %s." % actor_path)
+	_expect(actor_sprite.material is ShaderMaterial, "Scene2 must outline %s while its interaction button is available." % actor_path)
 	if not used_interaction_button:
 		used_interaction_button = true
 		interaction_panel.pressed.emit()

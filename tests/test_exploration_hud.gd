@@ -426,11 +426,14 @@ func _verify_palace_visibility() -> void:
 	var attendant := palace.get_node("YSortedCharacters/Attendant") as CharacterActor
 	var attendant_sprite := attendant.get_node("AnimatedSprite2D") as AnimatedSprite2D
 	var attendant_normal_scale := attendant_sprite.scale
+	var attendant_normal_modulate := attendant_sprite.modulate
 	player.global_position = attendant.global_position + Vector2(0, 54)
 	await physics_frame
 	await physics_frame
 	_expect(interaction_button.visible, "Scene one must show the bottom interaction button near an NPC.")
-	_expect(attendant_sprite.scale.x > attendant_normal_scale.x, "Scene one must highlight the nearby NPC together with the interaction button.")
+	_expect(attendant_sprite.scale.is_equal_approx(attendant_normal_scale), "Scene one interaction highlight must not resize the NPC.")
+	_expect(attendant_sprite.modulate.is_equal_approx(attendant_normal_modulate), "Scene one interaction highlight must preserve the NPC colors.")
+	_expect(attendant_sprite.material is ShaderMaterial, "Scene one must highlight the nearby NPC with a silhouette outline.")
 	hud.call("set_main_task", "听取内侍传召")
 	await process_frame
 	var quest_button := hud.find_child("QuestButton", true, false) as Button

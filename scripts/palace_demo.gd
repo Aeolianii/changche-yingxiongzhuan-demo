@@ -33,6 +33,7 @@ const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 const NEXT_SCENE_PATH := "res://scenes/Scene2.tscn"
 const CHAPTER_ENTRY_META := &"chapter_transition_from_scene_one"
 const SCENE_TRANSITION_DELAY := 2.5
+const INTERACTION_HIGHLIGHT := preload("res://scripts/ui/interaction_highlight.gd")
 
 @onready var player: CharacterActor = $YSortedCharacters/Player
 @onready var emperor: CharacterActor = $YSortedCharacters/Emperor
@@ -58,8 +59,6 @@ var opening_index := 0
 var audience_index := 0
 var transition_started := false
 var _highlighted_interaction_target: CharacterActor
-var _highlighted_target_modulate := Color.WHITE
-var _highlighted_target_scale := Vector2.ONE
 
 
 func _ready() -> void:
@@ -172,18 +171,14 @@ func _apply_interaction_highlight(target: CharacterActor) -> void:
 		return
 	_clear_interaction_highlight()
 	_highlighted_interaction_target = target
-	_highlighted_target_modulate = target.animated_sprite.modulate
-	_highlighted_target_scale = target.animated_sprite.scale
-	target.animated_sprite.modulate = Color(1.35, 1.22, 0.72, _highlighted_target_modulate.a)
-	target.animated_sprite.scale = _highlighted_target_scale * 1.08
+	INTERACTION_HIGHLIGHT.set_highlighted(target.animated_sprite, true)
 
 
 func _clear_interaction_highlight() -> void:
 	if _highlighted_interaction_target == null or _highlighted_interaction_target.animated_sprite == null:
 		_highlighted_interaction_target = null
 		return
-	_highlighted_interaction_target.animated_sprite.modulate = _highlighted_target_modulate
-	_highlighted_interaction_target.animated_sprite.scale = _highlighted_target_scale
+	INTERACTION_HIGHLIGHT.set_highlighted(_highlighted_interaction_target.animated_sprite, false)
 	_highlighted_interaction_target = null
 
 

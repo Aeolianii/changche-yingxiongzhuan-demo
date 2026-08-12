@@ -30,6 +30,7 @@ const DIALOGUE_LINES := [
 	"去岸边鱼竿处试试摆钩捕鱼，满载后再去校场。",
 	"校场的守军还会以三面鼓考验你的耳力。",
 ]
+const KEEPER_IDLE_LINE := "倭寇之乱什么时候才能平定啊……"
 
 @onready var world: Node2D = $World
 @onready var player: CharacterBody2D = $World/WorldObjects/Player
@@ -112,6 +113,8 @@ func _present_keeper_dialogue_line() -> void:
 func _on_keeper_dialogue_option_selected(option_id: StringName) -> void:
 	if option_id == &"continue":
 		_advance_dialogue()
+	elif option_id == &"leave":
+		_close_keeper_dialogue()
 
 
 func _exit_tree() -> void:
@@ -295,7 +298,7 @@ func _configure_camera() -> void:
 
 
 func _process(_delta: float) -> void:
-	if phase != Phase.ARRIVAL or dialogue_panel.visible or minigame_host.active_minigame != null:
+	if dialogue_panel.visible or overlay.visible or minigame_host.active_minigame != null or _transitioning:
 		_set_keeper_focus(false)
 		return
 	_set_keeper_focus(player.global_position.distance_to(KEEPER_POSITION) <= INTERACTION_RADIUS)
@@ -324,8 +327,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func _handle_interaction() -> void:
 	if _pending_trigger == "sea_return":
 		_return_to_sea_overworld()
-	elif phase == Phase.COMPLETE:
-		get_tree().reload_current_scene()
 	elif dialogue_panel.visible:
 		_advance_dialogue()
 	elif _pending_trigger == "fishing":
@@ -348,22 +349,40 @@ func _set_keeper_focus(enabled: bool) -> void:
 
 
 func _start_dialogue() -> void:
-	_dialogue_index = 0
 	player.controls_enabled = false
 	player.cancel_move_target()
-	_present_keeper_dialogue_line()
+	if phase == Phase.ARRIVAL:
+		_dialogue_index = 0
+		_present_keeper_dialogue_line()
+	else:
+		_dialogue_index = -1
+		dialogue_panel.present(
+			"守岭人",
+			KEEPER_IDLE_LINE,
+			KEEPER_PORTRAIT,
+			[{"id": &"leave", "text": "无事"}]
+		)
 	prompt_panel.visible = false
 	_refresh_exploration_hud()
 
 
 func _advance_dialogue() -> void:
+	if phase != Phase.ARRIVAL:
+		_close_keeper_dialogue()
+		return
 	_dialogue_index += 1
 	if _dialogue_index < DIALOGUE_LINES.size():
 		_present_keeper_dialogue_line()
 		return
+	_close_keeper_dialogue()
+	_unlock_fishing_location()
+
+
+func _close_keeper_dialogue() -> void:
 	dialogue_panel.hide_dialogue()
 	player.controls_enabled = true
-	_unlock_fishing_location()
+	_dialogue_index = -1
+	_refresh_exploration_hud()
 
 
 func _unlock_fishing_location() -> void:

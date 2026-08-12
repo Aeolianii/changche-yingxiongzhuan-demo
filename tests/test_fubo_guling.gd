@@ -96,10 +96,11 @@ func _test_scene_contract() -> void:
 	var keeper_normal_scale := keeper.scale
 	level.call("_set_keeper_focus", true)
 	_check(level.get_node("Interface/HUD/PromptPanel").visible and "守岭人" in (level.get_node("Interface/HUD/PromptPanel/Prompt") as Label).text, "Removing the ring must preserve the keeper interaction prompt.")
-	_check(keeper.modulate.is_equal_approx(Color(1.35, 1.22, 0.72, keeper_normal_modulate.a)), "Keeper proximity must apply the shared scene-one/two gold highlight.")
-	_check(keeper.scale.is_equal_approx(keeper_normal_scale * 1.08), "Keeper proximity must apply the shared scene-one/two scale highlight.")
+	_check(keeper.modulate.is_equal_approx(keeper_normal_modulate), "Keeper outline must preserve the original character colors.")
+	_check(keeper.scale.is_equal_approx(keeper_normal_scale), "Keeper outline must not resize the character.")
+	_check(keeper.material is ShaderMaterial, "Keeper proximity must apply the shared silhouette outline.")
 	level.call("_set_keeper_focus", false)
-	_check(keeper.modulate.is_equal_approx(keeper_normal_modulate) and keeper.scale.is_equal_approx(keeper_normal_scale), "Leaving keeper range must restore its exact visual state.")
+	_check(keeper.modulate.is_equal_approx(keeper_normal_modulate) and keeper.scale.is_equal_approx(keeper_normal_scale) and keeper.material == null, "Leaving keeper range must restore its exact visual state.")
 	var fishing_station := level.get_node("World/WorldObjects/FishingStation") as Node2D
 	_check(fishing_station.position == Vector2(585, 835), "The fishing station must sit on the coast beside the dock.")
 	var fishing_sprite := fishing_station.get_node("Sprite") as Sprite2D
@@ -147,6 +148,7 @@ func _test_scene_contract() -> void:
 			level.call("_on_sea_return_body_entered", level.get_node("World/WorldObjects/Player"))
 			_check(str(level.get("_pending_trigger")) == "sea_return", "Entering the dock return trigger must only arm the return action.")
 			_check(level.get_node("Interface/HUD/PromptPanel").visible and "返回海图" in (level.get_node("Interface/HUD/PromptPanel/Prompt") as Label).text, "The dock return trigger must show a clear confirmation prompt.")
+			level.call("_on_trigger_body_exited", level.get_node("World/WorldObjects/Player"), "sea_return")
 	var prompt_button := level.get_node("Interface/HUD/PromptPanel") as TextureButton
 	_check(prompt_button.texture_normal.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_v1.png", "Fubo interaction must reuse the scene-one/two normal ink button.")
 	_check(prompt_button.texture_pressed.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png", "Fubo interaction must reuse the scene-one/two active ink button.")
@@ -158,6 +160,15 @@ func _test_scene_contract() -> void:
 		_check(not level.has_node("World/WorldObjects/" + baked_prop_name), "%s must be baked into the complete background." % baked_prop_name)
 	level.finish_keeper_dialogue_for_test()
 	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Keeper dialogue must only unlock coastal fishing.")
+	level.call("_set_keeper_focus", true)
+	level.call("_handle_interaction")
+	var keeper_dialogue := level.get_node("Interface/KeeperDialogue") as FieldEventDialogue
+	var keeper_dialogue_text := keeper_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
+	var keeper_options := keeper_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
+	_check(keeper_dialogue.visible and "倭寇之乱什么时候才能平定" in keeper_dialogue_text.text, "Keeper must remain interactable with a fixed line after the story dialogue.")
+	_check(keeper_options.get_child_count() == 1 and (keeper_options.get_child(0) as Button).text == "无事", "Repeated keeper dialogue must provide one 无事 exit option.")
+	(keeper_options.get_child(0) as Button).pressed.emit()
+	_check(not keeper_dialogue.visible and level.get_node("World/WorldObjects/Player").controls_enabled, "Choosing 无事 must close the repeated keeper dialogue and restore control.")
 	_check(fishing_station.call("is_available_for_test"), "The fishing rod must sparkle once fishing becomes available.")
 	var player := level.get_node("World/WorldObjects/Player") as CharacterBody2D
 	player.global_position = Vector2(650, 810)

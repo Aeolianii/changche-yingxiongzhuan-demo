@@ -29,6 +29,7 @@ const LEFT_SOLDIER_ROLE := "patrol_soldier_left"
 const RIGHT_SOLDIER_ROLE := "patrol_soldier_right"
 const OFFICER_ROLE := "patrol_officer"
 const MAGISTRATE_ROLE := "magistrate"
+const INTERACTION_HIGHLIGHT := preload("res://scripts/ui/interaction_highlight.gd")
 
 var _player: CharacterBody2D
 var _player_sprite: AnimatedSprite2D
@@ -374,8 +375,6 @@ func _register_interactable(
 		"portrait_path": portrait_path,
 		"dialogue_line": dialogue_line if not dialogue_line.is_empty() else "我是%s" % display_name,
 		"role": role,
-		"normal_modulate": sprite.modulate,
-		"normal_scale": sprite.scale,
 	})
 
 
@@ -418,17 +417,14 @@ func _apply_target_highlight(npc: Variant) -> void:
 	if npc == null:
 		return
 	var sprite := npc["sprite"] as AnimatedSprite2D
-	var normal_modulate := npc["normal_modulate"] as Color
-	sprite.modulate = Color(1.35, 1.22, 0.72, normal_modulate.a)
-	sprite.scale = (npc["normal_scale"] as Vector2) * 1.08
+	INTERACTION_HIGHLIGHT.set_highlighted(sprite, true)
 
 
 func _clear_target_highlight(npc: Variant) -> void:
 	if npc == null:
 		return
 	var sprite := npc["sprite"] as AnimatedSprite2D
-	sprite.modulate = npc["normal_modulate"]
-	sprite.scale = npc["normal_scale"]
+	INTERACTION_HIGHLIGHT.set_highlighted(sprite, false)
 
 
 func _add_magistrate() -> void:
@@ -875,12 +871,12 @@ func _configure_soldier_dialogue(soldier: Dictionary) -> void:
 	var role := str(soldier["role"])
 	if _heard_soldier_reports.has(role):
 		_dialogue_label.text = "属下方才所报句句属实，若有异动，定即刻呈报中军。"
-		_add_dialogue_option("知道了。", _close_npc_dialogue)
+		_add_dialogue_option("无事", _close_npc_dialogue)
 		return
 
 	if _patrol_task_stage != PatrolTaskStage.TALK_TO_SOLDIERS:
 		_dialogue_label.text = "属下继续在此值守，请元帅放心。"
-		_add_dialogue_option("继续当值。", _close_npc_dialogue)
+		_add_dialogue_option("无事", _close_npc_dialogue)
 		return
 
 	_dialogue_label.text = (
@@ -905,7 +901,7 @@ func _configure_officer_dialogue() -> void:
 		return
 
 	_dialogue_label.text = "巡视军令已经传至各岗。末将督促诸营整改，不敢懈怠。"
-	_add_dialogue_option("严加督办。", _close_npc_dialogue)
+	_add_dialogue_option("无事", _close_npc_dialogue)
 
 
 func _configure_magistrate_dialogue() -> void:
@@ -927,7 +923,7 @@ func _configure_magistrate_dialogue() -> void:
 		return
 
 	_dialogue_label.text = "地方所需粮草与工匠，下官会依议定之数按期送至军港。"
-	_add_dialogue_option("有劳县令。", _close_npc_dialogue)
+	_add_dialogue_option("无事", _close_npc_dialogue)
 
 
 func _add_dialogue_option(text_value: String, action: Callable) -> void:

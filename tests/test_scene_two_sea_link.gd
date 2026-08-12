@@ -37,13 +37,20 @@ func _run() -> void:
 	var departure_started_at := Time.get_ticks_msec()
 	(option_box.get_child(0) as Button).pressed.emit()
 	_expect(loading.visible and (loading.get_node("LoadingText") as Label).text == "正在进入大地图", "Scene2 departure must show the enter-overworld loading message immediately.")
+	var loading_progress := loading.get_node("LoadingBar/Progress") as ProgressBar
+	_expect(loading_progress != null and not loading_progress.show_percentage and is_zero_approx(loading_progress.value), "Loading transition must begin at zero without percentage text.")
+	var loading_frame := loading.get_node("LoadingBar/Frame") as TextureRect
+	_expect(loading_frame.texture != null and loading_frame.texture.resource_path.ends_with("loading_progress_frame_v1.png"), "Loading transition must use the generated ink-pixel progress frame.")
 	var shared_hud := root.get_node("ExplorationUI/HUD") as Control
 	_expect(not shared_hud.is_visible_in_tree(), "Shared exploration HUD must hide as soon as the enter-overworld transition starts.")
 	await create_timer(0.25).timeout
 	_expect(not shared_hud.is_visible_in_tree(), "Shared exploration HUD must remain hidden while the enter-overworld loading screen is visible.")
+	_expect(loading_progress.value > 0.0 and loading_progress.value < 90.0, "Loading progress must visibly rise from zero during the fake load.")
 	if DisplayServer.get_name() != "headless":
 		var screenshot_error := root.get_texture().get_image().save_png(LOADING_SCREENSHOT_PATH)
 		_expect(screenshot_error == OK, "Lingnan loading preview screenshot could not be saved.")
+	await create_timer(0.52).timeout
+	_expect(loading_progress.value >= 89.0 and loading_progress.value <= 91.0, "Loading progress must pause near ninety before the final jump.")
 
 	var sea_scene := await _wait_for_scene("SeaOverworld")
 	_expect(sea_scene != null, "Scene2 did not transition to the sea overworld.")

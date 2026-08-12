@@ -512,7 +512,7 @@ func _complete_fishing(result: Dictionary) -> void:
 		school_barrier.visible = false
 	_refresh_exploration_hud()
 	if not _test_mode:
-		_show_notice("渔获满舱\n可以前往古校场" if first_completion else "渔获满舱\n收竿归岸", 1.8)
+		_show_notice("渔获满舱，可以前往古校场" if first_completion else "渔获满舱，收竿归岸", 1.8)
 
 
 func _complete_drum(_result: Dictionary) -> void:
@@ -523,7 +523,7 @@ func _complete_drum(_result: Dictionary) -> void:
 	viewpoint_barrier.visible = false
 	_refresh_exploration_hud()
 	if not _test_mode:
-		_show_notice("三轮鼓令完成\n观景台入口已开放", 1.8)
+		_show_notice("三轮鼓令完成，观景台入口已开放", 1.8)
 
 
 func _on_minigame_cancelled(game_id: String) -> void:

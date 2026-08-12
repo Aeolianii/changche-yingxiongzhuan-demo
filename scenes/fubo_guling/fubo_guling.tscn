@@ -143,17 +143,17 @@ autowrap_mode = 2
 visible = false
 layout_mode = 0
 offset_left = 272.0
-offset_top = 240.0
+offset_top = 330.0
 offset_right = 1072.0
-offset_bottom = 600.0
+offset_bottom = 510.0
 mouse_filter = 2
-color = Color(0.050980393, 0.101960786, 0.1254902, 0.9490196)
+color = Color(0, 0, 0, 0)
 
 [node name="NoticeBackdrop" type="TextureRect" parent="Interface/HUD/Overlay" unique_id=945664907]
 texture_filter = 1
 layout_mode = 0
 offset_right = 800.0
-offset_bottom = 360.0
+offset_bottom = 180.0
 mouse_filter = 2
 texture = ExtResource("30_dialogue")
 expand_mode = 1
@@ -162,9 +162,9 @@ stretch_mode = 5
 [node name="OverlayText" type="Label" parent="Interface/HUD/Overlay" unique_id=2082976102]
 layout_mode = 0
 offset_left = 32.0
-offset_top = 32.0
+offset_top = 20.0
 offset_right = 768.0
-offset_bottom = 328.0
+offset_bottom = 160.0
 theme_override_colors/font_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
 theme_override_constants/shadow_offset_x = 2

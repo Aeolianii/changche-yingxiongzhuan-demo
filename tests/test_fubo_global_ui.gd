@@ -36,6 +36,10 @@ func _run() -> void:
 	_check(name_plate.position == Vector2(1060, 830) and name_style != null and name_style.texture.resource_path.ends_with("ink_speaker_nameplate.png"), "Keeper dialogue must use the scene-two ink nameplate position and art.")
 	var notice_backdrop := level.get_node("Interface/HUD/Overlay/NoticeBackdrop") as TextureRect
 	_check(notice_backdrop != null and notice_backdrop.texture != null and notice_backdrop.texture.resource_path.ends_with("ink_dialogue_backdrop.png"), "Fubo notices must use an ink backdrop over a separate dimmer.")
+	var notice_overlay := level.get_node("Interface/HUD/Overlay") as ColorRect
+	_check(is_zero_approx(notice_overlay.color.a) and notice_overlay.size == Vector2(800, 180), "Fubo notices must expose only the cleanly cut ink stroke without a rectangular backing plate.")
+	var fubo_source := FileAccess.get_file_as_string("res://scripts/fubo_guling/fubo_guling.gd")
+	_check("渔获满舱，收竿归岸" in fubo_source and "渔获满舱\\n收竿归岸" not in fubo_source, "Fishing return notice must be one line joined by a Chinese comma.")
 
 	_check(level.call("_is_stable_save_state"), "Fubo initial fishing-available exploration must be saveable.")
 	level.call("_start_dialogue")

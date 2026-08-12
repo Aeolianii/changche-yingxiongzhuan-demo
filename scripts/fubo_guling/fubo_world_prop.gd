@@ -1,6 +1,9 @@
 class_name FuboWorldProp
 extends Node2D
 
+const INTERACTION_HIGHLIGHT_MODULATE := Color(1.35, 1.22, 0.72, 1.0)
+const INTERACTION_HIGHLIGHT_SCALE := 1.08
+
 @export_enum("keeper", "house", "storage", "tree", "gate", "pool", "drum", "flag", "barrier", "stele") var kind := "tree"
 @export var prop_size := Vector2(100, 80)
 @export var main_color := Color("6f7b69")
@@ -12,6 +15,14 @@ extends Node2D
 @export var art_scale := Vector2.ONE
 @export var art_offset := Vector2.ZERO
 
+var _normal_modulate := Color.WHITE
+var _normal_scale := Vector2.ONE
+
+
+func _ready() -> void:
+	_normal_modulate = modulate
+	_normal_scale = scale
+
 
 func set_state(value: int) -> void:
 	state = value
@@ -20,6 +31,13 @@ func set_state(value: int) -> void:
 
 func set_highlighted(value: bool) -> void:
 	highlighted = value
+	modulate = Color(
+		INTERACTION_HIGHLIGHT_MODULATE.r,
+		INTERACTION_HIGHLIGHT_MODULATE.g,
+		INTERACTION_HIGHLIGHT_MODULATE.b,
+		_normal_modulate.a
+	) if value else _normal_modulate
+	scale = _normal_scale * INTERACTION_HIGHLIGHT_SCALE if value else _normal_scale
 	queue_redraw()
 
 

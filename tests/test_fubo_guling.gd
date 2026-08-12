@@ -91,9 +91,15 @@ func _test_scene_contract() -> void:
 	_check(level.get_node("World/WorldObjects/Keeper").position == Vector2(450, 475), "The keeper must stand at the house-front X.")
 	var prop_source := FileAccess.get_file_as_string("res://scripts/fubo_guling/fubo_world_prop.gd")
 	_check("ffe07a" not in prop_source, "The keeper interaction focus must not draw the rejected yellow ring.")
+	var keeper := level.get_node("World/WorldObjects/Keeper") as Node2D
+	var keeper_normal_modulate := keeper.modulate
+	var keeper_normal_scale := keeper.scale
 	level.call("_set_keeper_focus", true)
 	_check(level.get_node("Interface/HUD/PromptPanel").visible and "守岭人" in (level.get_node("Interface/HUD/PromptPanel/Prompt") as Label).text, "Removing the ring must preserve the keeper interaction prompt.")
+	_check(keeper.modulate.is_equal_approx(Color(1.35, 1.22, 0.72, keeper_normal_modulate.a)), "Keeper proximity must apply the shared scene-one/two gold highlight.")
+	_check(keeper.scale.is_equal_approx(keeper_normal_scale * 1.08), "Keeper proximity must apply the shared scene-one/two scale highlight.")
 	level.call("_set_keeper_focus", false)
+	_check(keeper.modulate.is_equal_approx(keeper_normal_modulate) and keeper.scale.is_equal_approx(keeper_normal_scale), "Leaving keeper range must restore its exact visual state.")
 	var fishing_station := level.get_node("World/WorldObjects/FishingStation") as Node2D
 	_check(fishing_station.position == Vector2(585, 835), "The fishing station must sit on the coast beside the dock.")
 	var fishing_sprite := fishing_station.get_node("Sprite") as Sprite2D

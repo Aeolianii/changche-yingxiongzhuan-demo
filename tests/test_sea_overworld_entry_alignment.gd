@@ -41,7 +41,7 @@ func _run() -> void:
 			continue
 		var shape_nodes := _location_trigger_shapes(location)
 		var expected_centers: Array = EXPECTED_ENTRY_CENTERS[location_name]
-		var expected_count := expected_centers.size() + (1 if location_name in ["伏波古岭", "珊湾渔链"] else 0)
+		var expected_count := expected_centers.size() + (1 if location_name == "珊湾渔链" else 0)
 		_expect(shape_nodes.size() == expected_count, "%s has the wrong number of interaction ranges." % location_name)
 		for expected_center in expected_centers:
 			var matched_shape: CollisionShape2D
@@ -62,7 +62,7 @@ func _run() -> void:
 	var fubo := _find_location(locations, "伏波古岭")
 	if fubo != null:
 		var primary := fubo.get_node("EntryTriggerShape") as CollisionShape2D
-		_expect(primary.shape is RectangleShape2D and primary.position.is_equal_approx(Vector2(0, 175)), "Fubo Ridge must retain its original lower entry.")
+		_expect(primary.shape is CircleShape2D and primary.position.is_equal_approx(Vector2(460, 445)), "Fubo Ridge must only allow landing at its lower-right dock.")
 	var shanwan := _find_location(locations, "珊湾渔链")
 	if shanwan != null:
 		var primary := shanwan.get_node("EntryTriggerShape") as CollisionShape2D

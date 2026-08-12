@@ -412,7 +412,7 @@ func _verify_production_entry_alignment(scene: Node) -> void:
 		var expected_centers: Array = expected_entry_centers[location_name]
 		var shape_nodes := _location_trigger_shapes(location)
 		var expected_shape_count := expected_centers.size()
-		if location_name in ["伏波古岭", "珊湾渔链"]:
+		if location_name == "珊湾渔链":
 			expected_shape_count += 1
 		_expect(shape_nodes.size() == expected_shape_count, "%s must expose the approved number of production-map entry ranges." % location_name)
 		for expected_center in expected_centers:
@@ -437,7 +437,7 @@ func _verify_production_entry_alignment(scene: Node) -> void:
 	var fubo := _find_location(locations, "伏波古岭")
 	if fubo != null:
 		var fubo_primary := fubo.get_node("EntryTriggerShape") as CollisionShape2D
-		_expect(fubo_primary.shape is RectangleShape2D and fubo_primary.position.is_equal_approx(Vector2(0, 175)), "Fubo Ridge must retain its original lower entry while adding the lower-right entry.")
+		_expect(fubo_primary.shape is CircleShape2D and fubo_primary.position.is_equal_approx(Vector2(460, 445)), "Fubo Ridge must only allow landing at its lower-right dock.")
 	var shanwan := _find_location(locations, "珊湾渔链")
 	if shanwan != null:
 		var shanwan_primary := shanwan.get_node("EntryTriggerShape") as CollisionShape2D

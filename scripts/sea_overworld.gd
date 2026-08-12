@@ -229,12 +229,12 @@ func _build_locations() -> void:
 		"伏波古岭",
 		Vector2(4260, 780),
 		110.0,
-		Vector2(440, 120),
-		Vector2(0, 175),
+		Vector2.ZERO,
+		Vector2.ZERO,
 		"进入伏波古岭",
 		Vector2.ZERO,
-		[],
 		[Vector2(460, 445)],
+		[],
 		FUBO_TRAVEL.FUBO_SCENE_PATH
 	)
 	_build_location(

@@ -14,6 +14,8 @@ func _run() -> void:
 	_test_seeded_items_are_reproducible()
 	_test_generated_catch_set()
 	_test_cast_catches_and_scores()
+	_test_landed_catch_is_removed()
+	_test_moving_catches_stay_inside_frame()
 	_test_heavy_catch_retracts_slower()
 	_test_target_can_be_reached()
 	_test_timeout_and_restart()
@@ -47,6 +49,25 @@ func _test_cast_catches_and_scores() -> void:
 	_run_until_swinging(game)
 	_check(game.get_score() == 55, "Landing a small fish must add its visible score.")
 	_check(game.get_state() == FISHING_SCRIPT.State.SWINGING, "Hook must resume swinging after landing a catch.")
+
+
+func _test_landed_catch_is_removed() -> void:
+	var game = FISHING_SCRIPT.new(17)
+	game.place_item_on_hook_path_for_test(0, 105.0, "small_fish")
+	game.cast_hook()
+	_run_until_swinging(game)
+	var items: Array[Dictionary] = game.get_items()
+	_check(not bool(items[0]["active"]), "A landed catch must leave the pool instead of randomly respawning.")
+
+
+func _test_moving_catches_stay_inside_frame() -> void:
+	var game = FISHING_SCRIPT.new(21)
+	game.place_moving_item_for_test(0, Vector2(61, 300), Vector2(-80, 0), "small_fish")
+	game.place_moving_item_for_test(1, Vector2(779, 340), Vector2(80, 0), "small_fish")
+	game.step(0.1)
+	var items: Array[Dictionary] = game.get_items()
+	_check(Vector2(items[0]["position"]).x >= FISHING_SCRIPT.ITEM_LEFT_BOUND and Vector2(items[0]["velocity"]).x > 0, "A left-edge catch must bounce inside the framed pool.")
+	_check(Vector2(items[1]["position"]).x <= FISHING_SCRIPT.ITEM_RIGHT_BOUND and Vector2(items[1]["velocity"]).x < 0, "A right-edge catch must bounce inside the framed pool.")
 
 
 func _test_heavy_catch_retracts_slower() -> void:
@@ -112,6 +133,8 @@ func _test_scene_contract() -> void:
 	_check(backdrop.texture != null and backdrop.texture.resource_path == "res://assets/fubo_guling/minigames/fishing/fishing_background_v1.png", "Fishing scene needs its dedicated generated coastal backdrop.")
 	var board = ui.get_node("Layout/FishingBoard")
 	_check(board.get_background_texture_path_for_test() == "res://assets/fubo_guling/minigames/fishing/fishing_background_v1.png", "The playfield must draw the generated fishing background.")
+	_check(board.get_hook_texture_path_for_test() == "res://assets/fubo_guling/minigames/fishing/fishing_hook_v1.png", "The playfield must use the generated ink-pixel fishing hook.")
+	_check(board.clip_contents, "The framed fishing board must clip all moving artwork at its edges.")
 	var item_paths: Dictionary = board.get_item_texture_paths_for_test()
 	_check(item_paths.keys().all(func(kind): return FileAccess.file_exists(String(item_paths[kind]))), "Every moving catch must use an existing generated sprite.")
 	_check(item_paths.keys().all(func(kind): return String(item_paths[kind]).ends_with("_v1.png")), "Moving catches must use the approved generated asset pass.")

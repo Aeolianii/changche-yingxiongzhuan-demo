@@ -52,6 +52,7 @@ The production prompt must preserve the following meaning:
 - 生成方式：Codex 内置生图；精灵先生成在纯色洋红抠图底上，再使用 imagegen 技能附带的 `remove_chroma_key.py` 做软边透明化、收边与去色溢，最后以最近邻方式规整尺寸。
 - 背景：`assets/fubo_guling/minigames/fishing/fishing_background_v1.png`，840×520。岭南海岛浅滩、顶部中央木码头、由浅玉色过渡至深青色海水；中央约七成水域留空，边缘仅保留克制的水草、礁石和水流纹理；无鱼获、人物、钩线、文字和 UI。
 - 移动精灵：`small_yellow_croaker_v1.png`（黄花鱼）、`large_grouper_v1.png`（大石斑）、`blue_green_crab_v1.png`（青蟹）、`sea_rock_v1.png`（低价值岩石）。四者均为独立透明 PNG，使用清晰深墨轮廓与成组像素块，不烘焙水面、阴影和场景。
+- 鱼钩：`fishing_hook_v1.png`，传统锻铁鱼钩与短麻绳结的独立透明精灵；使用深墨铁色、暖灰高光和清晰倒刺，替换原先的程序绘制白色弧线钩。
 - 运行规则：背景和精灵只负责美术表现；生成素材不决定碰撞、分值或移动参数。鱼、蟹和岩石的速度、负重、命中半径继续由 `FuboFishingGame` 统一配置。
 - 界面复用：右上“暂时离开”使用既有 `assets/ui/sea_overworld/sea_map_return_brush_v1.png`，不重复生成同功能笔触。
 
@@ -62,6 +63,7 @@ The production prompt must preserve the following meaning:
 - 大石斑：单条粗壮贵重石斑、朝右完整侧身、朱红与焦橙鳞片、米白腹部、深墨轮廓、纯洋红背景；禁止场景和额外物件。
 - 青蟹：单只完整青蟹、略俯视的游戏视角、双螯八足、青玉与蓝绿色甲壳、纯洋红背景；禁止水、植物和额外生物。
 - 岩石：单块可钩取的沉重海底岩石、深灰绿色、赭色矿脉和少量藤壶、纯洋红背景；禁止沙地、水草、额外石块和阴影。
+- 鱼钩：单枚竖向手工锻铁鱼钩，顶部连接一小段打结旧麻绳，倒刺向右上方，水墨像素风、纯洋红背景；禁止鱼竿、鱼饵、浮漂、水花、岸景、文字和额外鱼钩。
 
 ## Legacy modular plan (superseded)
 

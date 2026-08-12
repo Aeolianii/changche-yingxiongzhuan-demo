@@ -22,6 +22,8 @@ const MAX_ANGLE := deg_to_rad(66.0)
 const SWING_SPEED := 1.42
 const EXTEND_SPEED := 520.0
 const RETRACT_SPEED := 430.0
+const ITEM_LEFT_BOUND := 60.0
+const ITEM_RIGHT_BOUND := 780.0
 const ITEM_KINDS := [
 	"small_fish", "small_fish", "small_fish", "small_fish",
 	"big_fish", "big_fish", "crab", "crab", "rock", "rock",
@@ -163,6 +165,15 @@ func place_item_on_hook_path_for_test(index: int, distance: float, kind: String 
 	_items[index] = item
 
 
+func place_moving_item_for_test(index: int, position: Vector2, velocity: Vector2, kind: String = "small_fish") -> void:
+	if index < 0 or index >= _items.size() or not ITEM_DATA.has(kind):
+		return
+	var item := _make_item(kind)
+	item["position"] = position
+	item["velocity"] = velocity
+	_items[index] = item
+
+
 func _check_hook_collision() -> void:
 	var hook_position := get_hook_position()
 	for index in _items.size():
@@ -183,7 +194,9 @@ func _finish_retract() -> void:
 		var kind := String(caught["kind"])
 		var value := int(caught["value"])
 		_score += value
-		_items[_caught_index] = _make_item(kind)
+		caught["active"] = false
+		caught["caught"] = false
+		_items[_caught_index] = caught
 		catch_landed.emit(kind, value)
 	else:
 		_empty_casts += 1
@@ -204,11 +217,12 @@ func _update_items(delta: float) -> void:
 		if not bool(item["active"]):
 			continue
 		var position := Vector2(item["position"]) + Vector2(item["velocity"]) * delta
-		var radius := float(item["radius"])
-		if position.x < 48.0 - radius:
-			position.x = 792.0 + radius
-		elif position.x > 792.0 + radius:
-			position.x = 48.0 - radius
+		if position.x < ITEM_LEFT_BOUND:
+			position.x = ITEM_LEFT_BOUND
+			item["velocity"] = Vector2(absf(Vector2(item["velocity"]).x), 0.0)
+		elif position.x > ITEM_RIGHT_BOUND:
+			position.x = ITEM_RIGHT_BOUND
+			item["velocity"] = Vector2(-absf(Vector2(item["velocity"]).x), 0.0)
 		item["position"] = position
 
 
@@ -220,7 +234,7 @@ func _make_item(kind: String) -> Dictionary:
 		"value": int(data["value"]),
 		"weight": float(data["weight"]),
 		"radius": float(data["radius"]),
-		"position": Vector2(_rng.randf_range(75.0, 765.0), _rng.randf_range(205.0, 485.0)),
+		"position": Vector2(_rng.randf_range(ITEM_LEFT_BOUND, ITEM_RIGHT_BOUND), _rng.randf_range(205.0, 480.0)),
 		"velocity": Vector2(float(data["speed"]) * direction, 0.0),
 		"active": true,
 		"caught": false,

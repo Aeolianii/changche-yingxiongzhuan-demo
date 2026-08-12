@@ -4,6 +4,7 @@ extends Control
 signal cast_requested
 
 const FISHING_BACKGROUND := preload("res://assets/fubo_guling/minigames/fishing/fishing_background_v1.png")
+const FISHING_HOOK := preload("res://assets/fubo_guling/minigames/fishing/fishing_hook_v1.png")
 const ITEM_TEXTURES := {
 	"small_fish": preload("res://assets/fubo_guling/minigames/fishing/small_yellow_croaker_v1.png"),
 	"big_fish": preload("res://assets/fubo_guling/minigames/fishing/large_grouper_v1.png"),
@@ -45,7 +46,7 @@ func flash_catch() -> void:
 
 func _draw() -> void:
 	var frame := Rect2(Vector2(4, 4), size - Vector2(8, 8))
-	draw_texture_rect(FISHING_BACKGROUND, Rect2(Vector2.ZERO, size), false)
+	draw_texture_rect(FISHING_BACKGROUND, frame, false)
 	if game == null:
 		return
 	_draw_items()
@@ -56,10 +57,10 @@ func _draw() -> void:
 
 func _draw_rope_and_hook() -> void:
 	var hook := game.get_hook_position()
-	draw_line(FuboFishingGame.PIVOT, hook, OUTLINE, 5.0, false)
-	draw_line(FuboFishingGame.PIVOT, hook, ROPE, 2.0, false)
-	draw_line(hook, hook + Vector2(0, 13), Color("c8d6c9"), 4.0, false)
-	draw_arc(hook + Vector2(8, 15), 11.0, PI * 0.45, PI * 1.55, 12, Color("e7eee0"), 4.0, false)
+	var hook_attachment := hook - Vector2(0, 33)
+	draw_line(FuboFishingGame.PIVOT, hook_attachment, OUTLINE, 5.0, false)
+	draw_line(FuboFishingGame.PIVOT, hook_attachment, ROPE, 2.0, false)
+	draw_texture_rect(FISHING_HOOK, Rect2(hook - Vector2(18, 35), Vector2(36, 52)), false)
 
 
 func _draw_items() -> void:
@@ -77,6 +78,8 @@ func _draw_items() -> void:
 		var draw_size: Vector2 = ITEM_DRAW_SIZES.get(kind, Vector2(64, 48))
 		if texture == null:
 			continue
+		position.x = clampf(position.x, 4.0 + draw_size.x * 0.5, size.x - 4.0 - draw_size.x * 0.5)
+		position.y = clampf(position.y, 4.0 + draw_size.y * 0.5, size.y - 4.0 - draw_size.y * 0.5)
 		if facing == 0.0:
 			facing = 1.0
 		draw_set_transform(position, 0.0, Vector2(facing, 1.0))
@@ -86,6 +89,10 @@ func _draw_items() -> void:
 
 func get_background_texture_path_for_test() -> String:
 	return FISHING_BACKGROUND.resource_path
+
+
+func get_hook_texture_path_for_test() -> String:
+	return FISHING_HOOK.resource_path
 
 
 func get_item_texture_paths_for_test() -> Dictionary:

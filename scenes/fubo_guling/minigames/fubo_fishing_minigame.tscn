@@ -88,6 +88,7 @@ texture_filter = 1
 custom_minimum_size = Vector2(840, 520)
 layout_mode = 2
 mouse_filter = 0
+clip_contents = true
 script = ExtResource("3")
 
 [node name="ActionButton" type="Button" parent="Layout"]

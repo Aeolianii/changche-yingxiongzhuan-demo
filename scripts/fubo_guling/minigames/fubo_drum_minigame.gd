@@ -2,6 +2,7 @@ class_name FuboDrumMinigame
 extends "res://scripts/fubo_guling/minigames/fubo_minigame_base.gd"
 
 const DRUM_SCRIPT := preload("res://scripts/fubo_guling/fubo_drum_memory.gd")
+const EXIT_BUTTON_BRUSH := preload("res://assets/ui/sea_overworld/sea_map_return_brush_v1.png")
 const DRUM_NAMES := ["大鼓", "堂鼓", "鼓边"]
 
 @onready var round_label: Label = $Layout/RoundLabel
@@ -13,6 +14,7 @@ const DRUM_NAMES := ["大鼓", "堂鼓", "鼓边"]
 @onready var audio_players: Array[AudioStreamPlayer] = [$AudioLow, $AudioMid, $AudioRim]
 @onready var fail_audio: AudioStreamPlayer = $AudioFail
 @onready var resume_countdown: Label = $ResumeCountdown
+@onready var exit_button: Button = $ExitButton
 
 var _game: FuboDrumMemory
 var _started_ms := 0
@@ -30,11 +32,12 @@ func _ready() -> void:
 	game_id = "drum"
 	_started_ms = Time.get_ticks_msec()
 	_game = DRUM_SCRIPT.new()
+	_apply_exit_button_style()
 	for index in drum_buttons.size():
 		drum_buttons[index].pressed.connect(_submit_drum.bind(index))
 	drum_stage.drum_pressed.connect(_submit_drum)
 	ready_button.pressed.connect(_begin_player_turn)
-	$ExitButton.pressed.connect(request_exit)
+	exit_button.pressed.connect(request_exit)
 	resume_countdown.visible = false
 	ready_button.visible = false
 	beat_track.reset()
@@ -247,6 +250,32 @@ func _set_drums_enabled(enabled: bool) -> void:
 	drum_stage.set_input_enabled(enabled)
 	for button in drum_buttons:
 		button.disabled = not enabled
+
+
+func _apply_exit_button_style() -> void:
+	exit_button.focus_mode = Control.FOCUS_NONE
+	exit_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	exit_button.add_theme_font_size_override("font_size", 19)
+	exit_button.add_theme_color_override("font_color", Color("f4ead0"))
+	exit_button.add_theme_color_override("font_hover_color", Color("f6d987"))
+	exit_button.add_theme_color_override("font_pressed_color", Color("f6d987"))
+	exit_button.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.02, 1.0))
+	exit_button.add_theme_constant_override("outline_size", 4)
+	exit_button.add_theme_stylebox_override("normal", _exit_brush_style(Color.WHITE))
+	exit_button.add_theme_stylebox_override("hover", _exit_brush_style(Color(1.0, 0.94, 0.78, 1.0)))
+	exit_button.add_theme_stylebox_override("pressed", _exit_brush_style(Color(0.72, 0.76, 0.72, 1.0)))
+	exit_button.add_theme_stylebox_override("disabled", _exit_brush_style(Color(0.5, 0.5, 0.5, 0.65)))
+
+
+func _exit_brush_style(modulate: Color) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = EXIT_BUTTON_BRUSH
+	style.modulate_color = modulate
+	style.content_margin_left = 26.0
+	style.content_margin_right = 26.0
+	style.content_margin_top = 12.0
+	style.content_margin_bottom = 12.0
+	return style
 
 
 func _resume_after_focus() -> void:

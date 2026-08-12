@@ -65,6 +65,13 @@ The production prompt must preserve the following meaning:
 - 岩石：单块可钩取的沉重海底岩石、深灰绿色、赭色矿脉和少量藤壶、纯洋红背景；禁止沙地、水草、额外石块和阴影。
 - 鱼钩：单枚竖向手工锻铁鱼钩，顶部连接一小段打结旧麻绳，倒刺向右上方，水墨像素风、纯洋红背景；禁止鱼竿、鱼饵、浮漂、水花、岸景、文字和额外鱼钩。
 
+## 2026-08-12 敲鼓小游戏背景
+
+- 生成方式：Codex 内置生图；生成完整不透明环境图后，按鼓台实际尺寸机械裁切并以最近邻缩放为 1020×356。
+- 运行文件：`assets/fubo_guling/minigames/drum/drum_training_yard_background_v1.png`。
+- 提示词约束：空旷的古代岭南海防校场，前中景为平整红土训练场，后方低矮灰砖垛墙，远处为湿润青绿山岭、榕竹与少量浅青海湾；水墨像素 RPG 风；视平线集中在上方、中央下方留空用于叠放三面鼓；只生成环境，禁止鼓、鼓架、人物、兵器、靶子、按键牌、进度条、UI、文字、标志和水印。
+- 运行边界：背景不包含三面鼓和任何 UI；鼓、鼓架、点击范围与敲击反馈继续由 Godot 独立绘制，以便后续微调。
+
 ## Legacy modular plan (superseded)
 
 The module lists and generated sheets below record previous prototypes only. They are not the active composition plan and must not be assembled into the next map. Keep them until the replacement background has passed visual review; deletion is a separate cleanup decision.

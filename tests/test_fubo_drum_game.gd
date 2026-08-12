@@ -88,6 +88,8 @@ func _test_scene_contract() -> void:
 	var stage = scene.get_node("Layout/DrumStage")
 	_check(stage is FuboDrumStage, "Drum scene must have a visible clickable pixel-art court.")
 	_check(stage.drum_texture != null and stage.drum_texture.resource_path == "res://assets/fubo_guling/generated/modular/drum.png", "Drum stage must use the existing transparent Chinese war-drum art.")
+	_check(stage.get_background_texture_path_for_test() == "res://assets/fubo_guling/minigames/drum/drum_training_yard_background_v1.png", "The three drums must stand over the dedicated generated training-yard background.")
+	_check(stage.clip_contents, "The generated drum-stage background and effects must stay inside the gold frame.")
 	var drum_rects: Array[Rect2] = stage.get_drum_rects_for_test()
 	_check(drum_rects.size() == 3 and drum_rects[0].size.x > drum_rects[1].size.x and drum_rects[1].size.x > drum_rects[2].size.x, "The three visible drums need distinct sizes and hierarchy.")
 	var clicked := [-1]
@@ -112,7 +114,8 @@ func _test_scene_contract() -> void:
 	_check(not scene.has_node("ExitConfirm"), "Drum exit must not use a second confirmation dialog.")
 	var exit_button: Button = scene.get_node("ExitButton")
 	_check(exit_button.text == "返回古岭", "The exit action must clearly describe where it goes.")
-	_check(exit_button.has_theme_stylebox_override("normal") and exit_button.has_theme_stylebox_override("hover") and exit_button.has_theme_stylebox_override("pressed"), "The return action must look like a clickable bronze-framed button, not floating text.")
+	var exit_style := exit_button.get_theme_stylebox("normal")
+	_check(exit_style is StyleBoxTexture and exit_style.texture.resource_path == "res://assets/ui/sea_overworld/sea_map_return_brush_v1.png", "The return action must reuse the shared ink-brush backing.")
 	var exit_count := [0]
 	scene.exit_requested.connect(func(): exit_count[0] += 1)
 	exit_button.pressed.emit()

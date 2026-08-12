@@ -6,15 +6,10 @@ signal drum_pressed(index: int)
 @export var drum_texture: Texture2D
 
 const INK := Color("253c39")
-const SKY := Color("b9dfcc")
-const WALL := Color("9a9b83")
-const WALL_LIGHT := Color("c2bda0")
-const EARTH := Color("b8613d")
-const EARTH_LIGHT := Color("d18153")
 const WOOD := Color("684027")
 const GOLD := Color("f6d36a")
 const VERMILION := Color("bd3f35")
-const TEAL := Color("287d7b")
+const DRUM_STAGE_BACKGROUND := preload("res://assets/fubo_guling/minigames/drum/drum_training_yard_background_v1.png")
 
 var input_enabled := false
 var _active_drum := -1
@@ -66,61 +61,17 @@ func get_drum_rects_for_test() -> Array[Rect2]:
 	return _get_drum_rects()
 
 
+func get_background_texture_path_for_test() -> String:
+	return DRUM_STAGE_BACKGROUND.resource_path
+
+
 func _draw() -> void:
 	var frame := Rect2(Vector2(4, 4), size - Vector2(8, 8))
-	draw_rect(frame, SKY, true)
-	_draw_distant_hills()
-	_draw_garrison_wall()
-	draw_rect(Rect2(4, 142, size.x - 8, size.y - 146), EARTH, true)
-	_draw_earth_courses()
-	_draw_side_banners()
+	draw_texture_rect(DRUM_STAGE_BACKGROUND, frame, false)
 	_draw_drum_platforms()
 	_draw_drums()
 	draw_rect(frame, Color("d7bd72"), false, 5.0)
 	draw_rect(frame.grow(-7), INK, false, 2.0)
-
-
-func _draw_distant_hills() -> void:
-	var left_hill := PackedVector2Array([
-		Vector2(4, 104), Vector2(4, 72), Vector2(68, 45), Vector2(132, 64),
-		Vector2(198, 40), Vector2(282, 82), Vector2(342, 54), Vector2(410, 104),
-	])
-	var right_hill := PackedVector2Array([
-		Vector2(size.x - 410, 104), Vector2(size.x - 340, 55), Vector2(size.x - 270, 78),
-		Vector2(size.x - 190, 42), Vector2(size.x - 120, 66), Vector2(size.x - 54, 46),
-		Vector2(size.x - 4, 72), Vector2(size.x - 4, 104),
-	])
-	draw_colored_polygon(left_hill, Color("4f8a68"))
-	draw_colored_polygon(right_hill, Color("3f7b62"))
-
-
-func _draw_garrison_wall() -> void:
-	draw_rect(Rect2(4, 92, size.x - 8, 54), INK, true)
-	draw_rect(Rect2(4, 96, size.x - 8, 45), WALL, true)
-	for x in range(14, int(size.x - 16), 54):
-		draw_rect(Rect2(x, 99, 46, 17), WALL_LIGHT, true)
-		draw_line(Vector2(x + 23, 118), Vector2(x + 23, 138), Color("6f756a"), 3.0, false)
-	for x in range(22, int(size.x - 16), 86):
-		draw_rect(Rect2(x, 76, 52, 20), INK, true)
-		draw_rect(Rect2(x + 5, 80, 42, 16), Color("65736b"), true)
-
-
-func _draw_earth_courses() -> void:
-	for y in range(175, int(size.y - 15), 42):
-		for x in range(20 + (y % 3) * 12, int(size.x - 20), 92):
-			draw_line(Vector2(x, y), Vector2(x + 38, y), EARTH_LIGHT, 3.0, false)
-
-
-func _draw_side_banners() -> void:
-	for data in [[84.0, VERMILION], [size.x - 84.0, TEAL]]:
-		var x := float(data[0])
-		var color: Color = data[1]
-		draw_rect(Rect2(x - 4, 84, 8, 235), WOOD, true)
-		draw_colored_polygon(PackedVector2Array([
-			Vector2(x + 4, 96), Vector2(x + 74 if x < size.x * 0.5 else x - 74, 118),
-			Vector2(x + 4, 145),
-		]), color)
-		draw_circle(Vector2(x, 80), 9.0, GOLD)
 
 
 func _draw_drum_platforms() -> void:

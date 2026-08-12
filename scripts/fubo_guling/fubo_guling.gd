@@ -26,11 +26,12 @@ const CAMERA_ZOOM := Vector2(1.15, 1.15)
 const KEEPER_POSITION := Vector2(450, 475)
 const INTERACTION_RADIUS := 76.0
 const DIALOGUE_LINES := [
-	"年轻人，码头旁海岸正是鱼群回游的时候。",
-	"去岸边鱼竿处试试摆钩捕鱼，满载后再去校场。",
-	"校场的守军还会以三面鼓考验你的耳力。",
+	"此地名唤伏波古岭。岛上军民感念伏波将军马援南征靖边、开道安民之功，故以伏波为名，世代纪念。",
+	"如今伏波岛扼守海道，倭寇时有窥伺；岛上军士昼夜巡哨，校场鼓令也不敢荒废。",
+	"你若初来，可先往码头旁海岸垂钓，熟悉潮汐。鱼竿鱼篓已经备好，随时都可下钩。",
+	"待收竿之后，再去古校场听令回鼓。边地传令，全凭耳准手稳，切莫误了军机。",
 ]
-const KEEPER_IDLE_LINE := "倭寇之乱什么时候才能平定啊……"
+const KEEPER_IDLE_LINE := "倭患一日未靖，这伏波岛的烽火便一日不可松懈啊……"
 
 @onready var world: Node2D = $World
 @onready var player: CharacterBody2D = $World/WorldObjects/Player

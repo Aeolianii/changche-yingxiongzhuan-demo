@@ -2,6 +2,11 @@ class_name FuboWorldProp
 extends Node2D
 
 const INTERACTION_HIGHLIGHT := preload("res://scripts/ui/interaction_highlight.gd")
+const KEEPER_IDLE_ANIMATION := &"idle_down"
+const KEEPER_IDLE_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/characters/soldier/standard/idle/down/1.png"),
+	preload("res://assets/characters/soldier/standard/idle/down/2.png"),
+]
 
 @export_enum("keeper", "house", "storage", "tree", "gate", "pool", "drum", "flag", "barrier", "stele") var kind := "tree"
 @export var prop_size := Vector2(100, 80)
@@ -13,6 +18,33 @@ const INTERACTION_HIGHLIGHT := preload("res://scripts/ui/interaction_highlight.g
 @export var art_texture: Texture2D
 @export var art_scale := Vector2.ONE
 @export var art_offset := Vector2.ZERO
+
+var _animated_art: AnimatedSprite2D
+
+
+func _ready() -> void:
+	if kind == "keeper" and art_texture != null:
+		_setup_keeper_idle_animation()
+	queue_redraw()
+
+
+func _setup_keeper_idle_animation() -> void:
+	var frames := SpriteFrames.new()
+	frames.remove_animation(&"default")
+	frames.add_animation(KEEPER_IDLE_ANIMATION)
+	frames.set_animation_loop(KEEPER_IDLE_ANIMATION, true)
+	frames.set_animation_speed(KEEPER_IDLE_ANIMATION, 4.0)
+	for texture in KEEPER_IDLE_TEXTURES:
+		frames.add_frame(KEEPER_IDLE_ANIMATION, texture)
+	_animated_art = AnimatedSprite2D.new()
+	_animated_art.name = "AnimatedSprite2D"
+	_animated_art.sprite_frames = frames
+	_animated_art.position = Vector2(0.0, -art_texture.get_height() * art_scale.y * 0.5) + art_offset
+	_animated_art.scale = art_scale
+	_animated_art.use_parent_material = true
+	add_child(_animated_art)
+	_animated_art.play(KEEPER_IDLE_ANIMATION)
+
 
 func set_state(value: int) -> void:
 	state = value
@@ -27,7 +59,8 @@ func set_highlighted(value: bool) -> void:
 
 func _draw() -> void:
 	if art_texture != null:
-		_draw_generated_art()
+		if _animated_art == null:
+			_draw_generated_art()
 		if kind == "gate":
 			_draw_gate_indicator()
 		elif kind == "pool" and state > 0:

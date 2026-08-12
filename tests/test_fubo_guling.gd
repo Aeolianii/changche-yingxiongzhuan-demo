@@ -92,6 +92,12 @@ func _test_scene_contract() -> void:
 	var prop_source := FileAccess.get_file_as_string("res://scripts/fubo_guling/fubo_world_prop.gd")
 	_check("ffe07a" not in prop_source, "The keeper interaction focus must not draw the rejected yellow ring.")
 	var keeper := level.get_node("World/WorldObjects/Keeper") as Node2D
+	var keeper_sprite := keeper.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	_check(keeper_sprite != null and keeper_sprite.is_playing() and keeper_sprite.animation == &"idle_down", "The keeper must reuse the soldier idle-down animation.")
+	if keeper_sprite != null:
+		_check(keeper_sprite.sprite_frames.get_frame_count(&"idle_down") == 2 and is_equal_approx(keeper_sprite.sprite_frames.get_animation_speed(&"idle_down"), 4.0), "The keeper idle must reuse both soldier frames at the shared four FPS speed.")
+		_check(keeper_sprite.sprite_frames.get_frame_texture(&"idle_down", 0).resource_path == "res://assets/characters/soldier/standard/idle/down/1.png" and keeper_sprite.sprite_frames.get_frame_texture(&"idle_down", 1).resource_path == "res://assets/characters/soldier/standard/idle/down/2.png", "The keeper idle must use the existing soldier textures without duplicated art.")
+		_check(keeper_sprite.use_parent_material, "The animated keeper sprite must inherit the shared proximity outline.")
 	var keeper_normal_modulate := keeper.modulate
 	var keeper_normal_scale := keeper.scale
 	level.call("_set_keeper_focus", true)
@@ -178,7 +184,7 @@ func _test_scene_contract() -> void:
 	var keeper_dialogue := level.get_node("Interface/KeeperDialogue") as FieldEventDialogue
 	var keeper_dialogue_text := keeper_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
 	var keeper_options := keeper_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
-	_check(keeper_dialogue.visible and "倭寇之乱什么时候才能平定" in keeper_dialogue_text.text, "Keeper must remain interactable with a fixed line after the story dialogue.")
+	_check(keeper_dialogue.visible and "倭患一日未靖" in keeper_dialogue_text.text and "伏波岛" in keeper_dialogue_text.text, "Keeper must remain interactable with an in-character fixed line after the story dialogue.")
 	_check(keeper_options.get_child_count() == 1 and (keeper_options.get_child(0) as Button).text == "无事", "Repeated keeper dialogue must provide one 无事 exit option.")
 	(keeper_options.get_child(0) as Button).pressed.emit()
 	_check(not keeper_dialogue.visible and level.get_node("World/WorldObjects/Player").controls_enabled, "Choosing 无事 must close the repeated keeper dialogue and restore control.")

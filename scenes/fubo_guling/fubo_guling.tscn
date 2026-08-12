@@ -40,7 +40,7 @@ radius = 50.0
 radius = 91.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_sea_return"]
-radius = 55.0
+radius = 64.0
 
 [node name="FuboGuling" type="Node2D" unique_id=579197751]
 script = ExtResource("1_xewfn")
@@ -183,7 +183,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("29_p58l7")
 
-[node name="CompletionCutscene" parent="Interface" instance=ExtResource("35_completion_cutscene")]
+[node name="CompletionCutscene" parent="Interface" unique_id=212031276 instance=ExtResource("35_completion_cutscene")]
 
 [node name="World" type="Node2D" parent="." unique_id=1095094591]
 
@@ -290,7 +290,7 @@ shape = SubResource("CircleShape2D_fishing_station_body")
 [node name="Boundary" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/WalkableBoundary" unique_id=544021498]
 position = Vector2(1, -1)
 build_mode = 1
-polygon = PackedVector2Array(1070, 55, 1120, 58, 1190, 78, 1240, 86, 1285, 120, 1330, 137, 1320, 217, 1260, 263, 1190, 309, 1070, 320, 1050, 389, 1020, 491, 980, 589, 930, 640, 860, 642, 800, 663, 760, 731, 755, 811, 775, 857, 810, 903, 810, 937, 770, 977, 730, 989, 680, 971, 620, 926, 570, 880, 550, 768, 515, 800, 480, 808, 420, 823, 350, 868, 275, 918, 200, 943, 150, 898, 95, 868, 175, 838, 250, 788, 320, 738, 380, 688, 470, 663, 470, 629, 440, 606, 410, 606, 385, 549, 365, 457, 380, 434, 420, 406, 460, 377, 485, 383, 500, 400, 505, 457, 530, 514, 575, 571, 620, 589, 720, 589, 770, 571, 830, 537, 870, 491, 900, 411, 930, 320, 960, 194, 950, 149, 965, 109, 1010, 74)
+polygon = PackedVector2Array(1070, 55, 1120, 58, 1190, 78, 1240, 86, 1285, 120, 1330, 137, 1351, 229, 1280, 288, 1210, 338, 1109, 366, 1056, 401, 1020, 491, 980, 589, 930, 640, 886, 672, 823, 702, 760, 731, 755, 811, 775, 857, 810, 903, 868, 970, 784, 1018, 730, 989, 680, 971, 620, 926, 570, 880, 550, 768, 515, 800, 480, 808, 420, 823, 350, 868, 275, 918, 255, 933, 175, 882, 128, 849, 169, 832, 250, 788, 320, 738, 380, 688, 470, 663, 470, 629, 440, 606, 410, 606, 385, 549, 365, 457, 380, 434, 417, 413, 459, 396, 484, 390, 500, 400, 505, 457, 530, 514, 575, 571, 620, 589, 720, 589, 769, 586, 835, 558, 870, 491, 900, 411, 930, 320, 960, 194, 950, 149, 965, 109, 1010, 74)
 
 [node name="Triggers" type="Node2D" parent="World" unique_id=236146207]
 

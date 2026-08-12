@@ -4,6 +4,7 @@ signal close_requested
 
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 const MAP_FOG_SOFT_EDGE_SHADER := preload("res://shaders/sea_map_fog_soft_edge.gdshader")
+const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
 const SEA_MAP_SCROLL_FRAME := preload("res://assets/ui/sea_overworld/sea_map_scroll_frame_v1.png")
 const SEA_MAP_RETURN_BRUSH := preload("res://assets/ui/sea_overworld/sea_map_return_brush_v1.png")
 
@@ -230,7 +231,6 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 		child.free()
 	var chunks := map_chunks
 	var content_scale := _map_content_rect.size.x / _world_size.x
-	var water_noise := _create_water_noise_texture(0.045, 4, 0.55)
 	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)
 	for index in range(chunks.size()):
 		var chunk_data: Dictionary = chunks[index]
@@ -253,7 +253,8 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 		blend_material.set_shader_parameter("fade_from_top", bool(chunk_data.get("fade_from_top", false)))
 		blend_material.set_shader_parameter("world_origin", chunk_rect.position)
 		blend_material.set_shader_parameter("world_size", chunk_rect.size)
-		blend_material.set_shader_parameter("waterNoise", water_noise)
+		blend_material.set_shader_parameter("waterNoise", distortion_noise)
+		blend_material.set_shader_parameter("waterFlowTexture", SEA_FLOW_TEXTURE)
 		blend_material.set_shader_parameter("waterDistortionNoise", distortion_noise)
 		map_texture.material = blend_material
 		_map_texture_layer.add_child(map_texture)

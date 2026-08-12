@@ -39,6 +39,8 @@ func _test_seeded_items_are_reproducible() -> void:
 func _test_generated_catch_set() -> void:
 	_check("rock" in FISHING_SCRIPT.ITEM_KINDS, "Fishing must use the generated sea rock as its junk catch.")
 	_check(not "boot" in FISHING_SCRIPT.ITEM_KINDS, "The old prototype boot must no longer spawn.")
+	_check(FISHING_SCRIPT.PIVOT == Vector2(420, 76), "The hook rope must start from the shore-side pier instead of open water.")
+	_check(FISHING_SCRIPT.PIVOT.y + FISHING_SCRIPT.MAX_LENGTH >= 500.0, "The shore-side hook must still reach the bottom fishing lane.")
 
 
 func _test_cast_catches_and_scores() -> void:

@@ -14,9 +14,9 @@ enum State {
 
 const TARGET_SCORE := 500
 const ROUND_SECONDS := 60.0
-const PIVOT := Vector2(420, 142)
+const PIVOT := Vector2(420, 76)
 const REST_LENGTH := 40.0
-const MAX_LENGTH := 360.0
+const MAX_LENGTH := 426.0
 const MIN_ANGLE := deg_to_rad(-66.0)
 const MAX_ANGLE := deg_to_rad(66.0)
 const SWING_SPEED := 1.42

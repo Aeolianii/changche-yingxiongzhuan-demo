@@ -98,9 +98,19 @@ func _test_scene_contract() -> void:
 	_check(fishing_station.position == Vector2(585, 835), "The fishing station must sit on the coast beside the dock.")
 	var fishing_sprite := fishing_station.get_node("Sprite") as Sprite2D
 	_check(fishing_sprite.texture != null and fishing_sprite.texture.resource_path == "res://assets/fubo_guling/generated/fishing_station_v1.png", "The coastal fishing station must use the generated rod-and-bucket art.")
-	_check(level.get_node("World/Triggers/FishingTrigger").position == Vector2(585, 835), "The fishing trigger must move from the dock to the coastal fishing station.")
+	var fishing_body := level.get_node("World/Collision/FishingStationBody") as StaticBody2D
+	var fishing_body_shape := (fishing_body.get_node("Shape") as CollisionShape2D).shape as CircleShape2D
+	_check(fishing_body.position == Vector2(585, 810) and is_equal_approx(fishing_body_shape.radius, 36.0), "The fishing station must have a rough editable circular collision body.")
+	var collision_probe_player := level.get_node("World/WorldObjects/Player") as CharacterBody2D
+	collision_probe_player.global_position = Vector2(650, 810)
+	var fishing_collision := collision_probe_player.move_and_collide(Vector2(-80, 0))
+	_check(fishing_collision != null and fishing_collision.get_collider() == fishing_body, "The rough fishing-station circle must physically block the player.")
+	collision_probe_player.global_position = Vector2(220, 868)
+	_check(level.get_node("World/Triggers/FishingTrigger").position == fishing_body.position, "The fishing trigger must surround the coastal fishing collision body.")
 	_check(level.get_node("World/Triggers/SchoolTrigger").position == Vector2(1110, 330), "The drum trigger must sit below the drum at the annotated X.")
 	_check(level.get_node("World/Triggers/FishingTrigger/Shape").shape is CircleShape2D, "Fishing gameplay must be entered through a trigger area.")
+	var fishing_trigger_shape := (level.get_node("World/Triggers/FishingTrigger/Shape") as CollisionShape2D).shape as CircleShape2D
+	_check(is_equal_approx(fishing_trigger_shape.radius, 110.0) and fishing_trigger_shape.radius > fishing_body_shape.radius, "The fishing interaction range must form a generous ring around the prop collision.")
 	_check(level.get_node("World/Triggers/SchoolTrigger/Shape").shape is CircleShape2D, "School gameplay must be entered through a trigger area.")
 	var sea_return := level.get_node_or_null("World/Triggers/SeaReturnTrigger") as Area2D
 	_check(sea_return != null, "The dock must expose a sea-map return trigger.")
@@ -127,13 +137,18 @@ func _test_scene_contract() -> void:
 	level.finish_keeper_dialogue_for_test()
 	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Keeper dialogue must only unlock coastal fishing.")
 	_check(fishing_station.call("is_available_for_test"), "The fishing rod must sparkle once fishing becomes available.")
-	level.call("_on_fishing_body_entered", level.get_node("World/WorldObjects/Player"))
+	var player := level.get_node("World/WorldObjects/Player") as CharacterBody2D
+	player.global_position = Vector2(650, 810)
+	player.velocity = Vector2.ZERO
+	await physics_frame
+	await process_frame
+	_check(str(level.get("_pending_trigger")) == "fishing" and level.get_node("Interface/HUD/PromptPanel").visible, "Entering the physical interaction ring must arm coastal fishing.")
 	_check(fishing_station.call("is_highlighted_for_test"), "Approaching the fishing rod must apply the shared interaction highlight.")
 	_check(fishing_sprite.modulate.is_equal_approx(Color(1.35, 1.22, 0.72, 1.0)) and fishing_sprite.scale.is_equal_approx(Vector2.ONE * 1.08), "Fishing highlight must match scene one and scene two.")
-	level.call("_on_trigger_body_exited", level.get_node("World/WorldObjects/Player"), "fishing")
+	level.call("_on_trigger_body_exited", player, "fishing")
 	_check(not fishing_station.call("is_highlighted_for_test"), "Leaving the fishing station must clear its highlight.")
 	_check(level.get_node("Interface/MinigameHost").active_minigame == null, "Keeper dialogue must not open fishing directly.")
-	level.call("_on_fishing_body_entered", level.get_node("World/WorldObjects/Player"))
+	level.call("_on_fishing_body_entered", player)
 	prompt_button.pressed.emit()
 	var host = level.get_node("Interface/MinigameHost")
 	_check(host.active_minigame != null and host.active_minigame.game_id == "fishing", "The shared interaction button must open coastal fishing.")

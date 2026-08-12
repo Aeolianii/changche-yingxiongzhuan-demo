@@ -36,7 +36,7 @@ func _run() -> void:
 	for _index in 3:
 		level.call("_advance_dialogue")
 	_check(level.call("_is_stable_save_state"), "Fubo fishing-available exploration must be saveable.")
-	var fishing_entry_position := Vector2(620, 810)
+	var fishing_entry_position := Vector2(665, 810)
 	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = fishing_entry_position
 	level.call("trigger_fishing_for_test")
 	var host := level.get_node("Interface/MinigameHost")
@@ -47,6 +47,7 @@ func _run() -> void:
 	_check(host.active_minigame == null and global_hud.visible, "Leaving a Fubo minigame must restore the global HUD.")
 	var restored_position := (level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position
 	_check(restored_position == fishing_entry_position, "Leaving coastal fishing must restore the position used to enter it: expected %s, got %s." % [fishing_entry_position, restored_position])
+	_check(str(level.get("_pending_trigger")) == "fishing" and prompt.visible, "Returning inside the fishing ring must immediately restore its interaction.")
 	_check(level.call("_is_stable_save_state"), "Leaving a Fubo minigame must restore a saveable exploration state.")
 	level.set("_transitioning", true)
 	_check(not level.call("_is_stable_save_state"), "Fubo loading transitions must not be saveable.")

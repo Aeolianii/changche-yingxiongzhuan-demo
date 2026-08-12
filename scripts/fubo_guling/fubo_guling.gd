@@ -350,6 +350,7 @@ func _unlock_fishing_location() -> void:
 	phase = Phase.FISHING_AVAILABLE
 	_sync_fishing_station()
 	_refresh_exploration_hud()
+	_refresh_minigame_interaction.call_deferred()
 
 
 func _on_fishing_body_entered(body: Node) -> void:
@@ -488,6 +489,16 @@ func _on_minigame_cancelled(game_id: String) -> void:
 	prompt_panel.visible = false
 	_sync_fishing_station()
 	_refresh_exploration_hud()
+	_refresh_minigame_interaction.call_deferred()
+
+
+func _refresh_minigame_interaction() -> void:
+	if _transitioning or minigame_host.active_minigame != null:
+		return
+	if phase == Phase.FISHING_AVAILABLE and fishing_trigger.overlaps_body(player):
+		_on_fishing_body_entered(player)
+	elif phase == Phase.DRUM_AVAILABLE and school_trigger.overlaps_body(player):
+		_on_school_body_entered(player)
 
 
 func _on_viewpoint_body_entered(body: Node) -> void:

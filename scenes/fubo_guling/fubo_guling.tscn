@@ -33,7 +33,10 @@ radius = 68.0
 radius = 55.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_avxio"]
-radius = 62.0
+radius = 110.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_fishing_station_body"]
+radius = 36.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_sea_return"]
 radius = 55.0
@@ -285,6 +288,13 @@ collision_mask = 0
 shape = SubResource("RectangleShape2D_88otk")
 disabled = true
 
+[node name="FishingStationBody" type="StaticBody2D" parent="World/Collision"]
+position = Vector2(585, 810)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Collision/FishingStationBody"]
+shape = SubResource("CircleShape2D_fishing_station_body")
+
 [node name="BlockedRegions" type="Node2D" parent="World/Collision" unique_id=1079472491]
 
 [node name="WalkableBoundary" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=767887569]
@@ -310,7 +320,9 @@ collision_layer = 0
 shape = SubResource("CircleShape2D_o7m5c")
 
 [node name="FishingTrigger" type="Area2D" parent="World/Triggers" unique_id=1435280955]
-position = Vector2(585, 835)
+position = Vector2(585, 810)
+collision_layer = 0
+collision_mask = 1
 
 [node name="Shape" type="CollisionShape2D" parent="World/Triggers/FishingTrigger" unique_id=1179949765]
 shape = SubResource("CircleShape2D_avxio")

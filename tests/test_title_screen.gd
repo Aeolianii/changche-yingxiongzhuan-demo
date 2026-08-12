@@ -105,6 +105,7 @@ func _verify_continue_game() -> void:
 
 func _verify_new_game_preserves_save() -> void:
 	var save_before := FileAccess.get_file_as_string(TEST_SAVE_PATH)
+	game_state.call("set_sea_fog_state", {"version": 1, "revealed_bits": "AQ=="})
 	var title := await _open_title()
 	(title.get_node("%NewGameButton") as Button).pressed.emit()
 	await process_frame
@@ -112,6 +113,7 @@ func _verify_new_game_preserves_save() -> void:
 	_expect(current_scene != null and current_scene.scene_file_path == "res://scenes/palace/palace_demo.tscn", "New game must enter the palace opening scene.")
 	_expect(FileAccess.file_exists(TEST_SAVE_PATH), "New game must not delete the existing save.")
 	_expect(FileAccess.get_file_as_string(TEST_SAVE_PATH) == save_before, "New game must not rewrite the existing save.")
+	_expect((game_state.call("get_sea_fog_state") as Dictionary).is_empty(), "New game must clear runtime chart exploration without touching the disk save.")
 	if current_scene != null and current_scene.scene_file_path == "res://scenes/palace/palace_demo.tscn":
 		root.get_node("ExplorationUI").emit_signal("return_title_requested")
 		await process_frame

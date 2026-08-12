@@ -2,7 +2,7 @@ extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SALT_MERCHANT_PORTRAIT_PATH := "res://assets/sea_overworld/portraits/大地图私盐商人.png"
-const SALT_MERCHANT_POSITION := Vector2(2180, 1400)
+const SALT_MERCHANT_POSITION := Vector2(2200, 1500)
 const RESULT_SCREENSHOT_PATH := "res://.godot/sea_overworld_salt_merchant_result_preview.png"
 
 var failures: Array[String] = []

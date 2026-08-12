@@ -86,6 +86,12 @@
 | 旁白显隐 | 查看急报、圣旨和完成旁白 | 推进文本 | 只显示水墨正文底板，不残留上一位人物立绘或姓名 | passed / Scene1 portrait runtime |
 | 对话操作精简 | 查看所有对话状态 | 检查界面控件 | 保留继续与剧情选项，不出现自动播放或长按跳过 | passed / ink dialogue static + runtime 1 |
 | 海上月相时钟 | 进入海上大地图 | 静止后持续航行，观察左上月面 | 静止时相位不变；航行时从新月连续经过上弦至满月，阶段名同步更新 | passed / sea overworld lunar runtime + render 1 |
+| 海图初始迷雾 | 新游戏从场景二进入海上大地图 | 检查出生画面四角，再打开右下完整海图查看远端四区 | 左上大陆全部点亮，玩家出生视野矩形内无黑色边角；大陆外远端海域全黑且地点名称隐藏 | passed / fog runtime + OpenGL render 2 |
+| 航行永久揭示 | 从南海军港沿任意航道持续航行后折返 | 对比航行画面与完整海图 | 点亮范围覆盖相机完整可见矩形（含四角），走过航线保持可见且两处遮罩一致 | passed / fog runtime + OpenGL render 2 |
+| 海图迷雾圆润边缘 | 航行揭示两段相邻海域后打开完整海图 | 对比航行画面和海图探索边缘 | 航行视野仍完整明亮；海图上的直角转折变为轻微圆角与窄幅柔边，未探索地点仍隐藏 | passed / map-only fog shader + OpenGL render 1 |
+| 海图迷雾不规则边缘 | 打开已揭示多段航线的完整海图 | 检查水平、垂直边缘与转角 | 探索轮廓有稳定的小幅凹凸和错落，无规则长直边、闪烁或内部透明噪点；航行视野仍全亮 | passed / deterministic ink noise + OpenGL render 1 |
+| 海图迷雾持久化 | 揭示一段远离军港的航线 | 返回场景二后再出海，并分别保存、读取 | 已揭示航线保持可见；旧存档无迷雾字段时只初始化军港视野 | passed / fog persistence + main-flow save runtime 1 |
+| 县令海图任务 | 完成驻地巡视后首次与县令会谈，再完成操练并重复交谈 | 检查对白、任务栏和任务界面 | 首次说明水师久疏操练与海情未明；任务为“探索海域，完善海图”；第二次以后仍使用既有出海询问和选项 | passed / dialogue patrol + round-trip runtime 1 |
 | 月相暂停与恢复 | 海上航行中 | 分别打开任务、完整海图或系统菜单再关闭 | 阻断界面打开时月相暂停，关闭后继续从原相位推进 | passed / sea overworld lunar runtime 1 |
 | 右下海图入口 | 进入海上大地图 | 点击右下缩小的菱形海图按钮并关闭完整海图 | 完整海图正常打开关闭，左上月相与左侧任务栏不被替换或遮挡 | passed / sea overworld lunar runtime + render 1 |
 | 东部海域连续航行 | 从旧海图中央向东航行 | 穿过原图右缘并继续移动 | 画面无空白或明显硬接缝，船只、相机和月相继续正常运行 | passed / sea overworld runtime + combined map render 1 |
@@ -124,8 +130,15 @@
 | v4 完整海图检查 | 打开右下海图并查看完整二乘二区域 | 核对 A/B/C/D 分块、15 个标签、玩家标记及四区接缝 | 四张 v3 生产分块无明显硬接缝；标签齐全且 B/D 职责正确，玩家标记位置同步 | passed / full-map render + runtime |
 | D 区双地点简化 | 查看右下敌方核心海域并打开完整海图 | 核对红湾卫所、南澳商港及原东极秘岛位置 | D 区只显示两个地点；东极秘岛标签和入口已删除，南澳城塞碰撞仍完整 | passed / D2 runtime + full-map render |
 | 水墨像素展开海图 UI | 打开右下完整海图 | 检查卷轴背景、中央地图、标题、返回按钮与底部区域 | 透明卷轴框完整显示；详细地图落在中央内框；引擎文字清晰；底部旧说明已删除 | passed / headless assertion + OpenGL render |
+| 岭南海图返回笔触 | 打开右下完整海图 | 检查右上按钮并点击“返回” | 规则长方形替换为透明像素水墨笔触；“返回”二字居中清晰；点击后恢复航行 | passed / generated brush asset + OpenGL render 1 |
 | v4 原始分辨率截图 | 查看 A/B/C/D、中央接缝和完整海图 1344×896 截图 | 检查接缝、标签、入口、船只可达性和视觉层级 | 无明显硬接缝；标签齐全；月环港朝左；中央和南澳港外水面开阔 | passed / Task 5 visual review |
 | v4 存档与场景二往返 | 运行主流程存档与 Scene2 海图往返测试 | 恢复海图位置/月相并完成出海、返港 | 清水位置恢复准确；返港提示和任务状态正确 | passed / Task 5 save + round-trip regression |
+| A 区军港与渔村交换 | 打开完整海图并驶近 A 区两处聚落 | 核对西南半圆港湾、东北大陆码头及两处地名 | 南海军港显示在半圆港湾；川山渔村显示在大陆码头；海图地名已同步交换 | passed / headless assertions + Vulkan full-map render |
+| 南海军港半圆交互与出生 | 新开大地图或从场景二出海 | 检查半圆港湾内五段弧形入口、出生水面和返港提示 | 玩家出生在 `(760,1130)` 清水区并立即处于南海军港范围；五段入口均可达；返港流程通过 | passed / sea-overworld + Scene2 round-trip runtime |
+| 川山渔村下方码头入口 | 从东北大陆聚落下方水面靠近 | 在矩形码头水面触发地点提示 | 船只不压静态碰撞，显示“川山渔村”并可尝试进入 | passed / location interaction runtime |
+| 岭南海图标题下移 | 打开完整海图 | 检查顶部牌匾内标题位置 | 标题 Y 坐标为 `102`，比上一版继续下移且未超出牌匾安全区 | passed / headless assertion + Vulkan render |
+| 川山红点码头校正 | 将船驶到用户截图红点并打开完整海图 | 核对小码头入口和川山渔村标签 | `(1470,680)` 可触发川山渔村；标签上移到房屋区 `(1080,430)`，不压住水面当前位置标记 | passed / screenshot alignment + runtime + Vulkan render |
+| 海图碰撞编辑器场景化 | 未运行游戏时打开 `sea_overworld.tscn` 并展开 `World/WorldCollision` | 核对节点数量、类型、几何和独立 Shape，再运行海图 | 编辑器显示 14 个可编辑多边形与 18 个可独立编辑圆形；逐项几何完全匹配迁移前基准；运行后仍为 32 个且航路无回归 | passed / packed-scene geometry contract + editor load + runtime 2 modes |
 
 ## 手动觐见与任务指引验收
 
@@ -197,6 +210,7 @@
 | 2026-08-10 / sea map scroll UI render 1 | Codex | 完整海图替换为生成式水墨像素展开海图框，详细地图嵌入中央，删除底部说明 | PNG Alpha/尺寸检查、地图专项 headless/OpenGL、1344×896 完整海图截图 | 交付用户试玩 |
 | 2026-08-10 / sea overworld D2 simplification 1 | Codex | 删除无独立岛体的东极秘岛，D 区改为红湾卫所与南澳商港两层结构 | 15 地点专项 headless/OpenGL、完整海图与 D 区截图 | 交付用户试玩 |
 | 2026-08-11 / young naval protagonist render 1 | Codex | 第一幕和第二幕的旧 LPC 主角已替换为原生 64×64 年轻中国水师将领，待机与行走统一四方向每方向 4 帧 | 32 帧哈希/目录检查、两幕动画帧运行断言、点击移动与第二幕对白回归、1344×896 Vulkan 皇宫截图 | 交付用户试玩 |
+| 2026-08-10 / sea fog initial visibility 2 | Codex | 左上大陆改为默认已知，出生与航行时按平滑相机真实可见矩形完整揭示，屏幕四角和边缘不再残留黑色迷雾 | 大陆逐单元断言、相机四角断言、1344×896 OpenGL 航行与完整海图截图 | 交付用户试玩 |
 
 ## 伏波古岭码头专项验收（2026-08-11）
 

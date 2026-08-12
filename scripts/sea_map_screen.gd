@@ -5,8 +5,8 @@ signal close_requested
 const SEA_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 const MAP_FOG_SOFT_EDGE_SHADER := preload("res://shaders/sea_map_fog_soft_edge.gdshader")
-const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
 const SEA_MAP_SCROLL_FRAME := preload("res://assets/ui/sea_overworld/sea_map_scroll_frame_v1.png")
+const SEA_MAP_RETURN_BRUSH := preload("res://assets/ui/sea_overworld/sea_map_return_brush_v1.png")
 
 const GOLD := Color(0.73, 0.59, 0.32, 1.0)
 const GOLD_BRIGHT := Color(0.96, 0.83, 0.52, 1.0)
@@ -91,7 +91,7 @@ func _build_interface() -> void:
 
 	var title := _make_label("岭 南 海 图", 27, TEXT_LIGHT)
 	title.name = "Title"
-	title.position = Vector2(460, 92)
+	title.position = Vector2(460, 102)
 	title.size = Vector2(360, 60)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -101,16 +101,20 @@ func _build_interface() -> void:
 
 	var close_button := Button.new()
 	close_button.name = "CloseButton"
-	close_button.position = Vector2(1080, 84)
-	close_button.size = Vector2(100, 48)
+	close_button.position = Vector2(1054, 80)
+	close_button.size = Vector2(160, 64)
 	close_button.text = "返回"
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	close_button.add_theme_font_size_override("font_size", 18)
+	close_button.add_theme_font_size_override("font_size", 20)
 	close_button.add_theme_color_override("font_color", TEXT_LIGHT)
-	close_button.add_theme_stylebox_override("normal", _panel_style(Color(0.05, 0.08, 0.075, 0.96), GOLD, 2, 4))
-	close_button.add_theme_stylebox_override("hover", _panel_style(Color(0.12, 0.22, 0.19, 0.98), GOLD_BRIGHT, 2, 4))
-	close_button.add_theme_stylebox_override("pressed", _panel_style(Color(0.03, 0.05, 0.05, 1.0), GOLD_BRIGHT, 2, 4))
+	close_button.add_theme_color_override("font_hover_color", GOLD_BRIGHT)
+	close_button.add_theme_color_override("font_pressed_color", GOLD_BRIGHT)
+	close_button.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.02, 1.0))
+	close_button.add_theme_constant_override("outline_size", 4)
+	close_button.add_theme_stylebox_override("normal", _brush_button_style(Color.WHITE))
+	close_button.add_theme_stylebox_override("hover", _brush_button_style(Color(1.0, 0.94, 0.78, 1.0)))
+	close_button.add_theme_stylebox_override("pressed", _brush_button_style(Color(0.72, 0.76, 0.72, 1.0)))
 	close_button.pressed.connect(close_requested.emit)
 	panel.add_child(close_button)
 
@@ -229,6 +233,7 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 	if chunks.is_empty():
 		chunks = [{"texture": SEA_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, _world_size)}]
 	var content_scale := _map_content_rect.size.x / _world_size.x
+	var water_noise := _create_water_noise_texture(0.045, 4, 0.55)
 	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)
 	for index in range(chunks.size()):
 		var chunk_data: Dictionary = chunks[index]
@@ -251,8 +256,7 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 		blend_material.set_shader_parameter("fade_from_top", bool(chunk_data.get("fade_from_top", false)))
 		blend_material.set_shader_parameter("world_origin", chunk_rect.position)
 		blend_material.set_shader_parameter("world_size", chunk_rect.size)
-		blend_material.set_shader_parameter("waterNoise", distortion_noise)
-		blend_material.set_shader_parameter("waterFlowTexture", SEA_FLOW_TEXTURE)
+		blend_material.set_shader_parameter("waterNoise", water_noise)
 		blend_material.set_shader_parameter("waterDistortionNoise", distortion_noise)
 		map_texture.material = blend_material
 		_map_texture_layer.add_child(map_texture)
@@ -302,4 +306,15 @@ func _panel_style(background: Color, border: Color, border_width: int, radius: i
 	style.shadow_color = Color(0, 0, 0, 0.48)
 	style.shadow_size = 7
 	style.shadow_offset = Vector2(2, 3)
+	return style
+
+
+func _brush_button_style(modulate: Color) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = SEA_MAP_RETURN_BRUSH
+	style.modulate_color = modulate
+	style.content_margin_left = 28.0
+	style.content_margin_right = 28.0
+	style.content_margin_top = 14.0
+	style.content_margin_bottom = 14.0
 	return style

@@ -1,7 +1,6 @@
 extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
-const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
 const SCREENSHOT_PATH := "res://.godot/sea_overworld_preview.png"
 const MOVEMENT_SCREENSHOT_PATH := "res://.godot/sea_overworld_movement_preview.png"
 const STOPPED_SCREENSHOT_PATH := "res://.godot/sea_overworld_stopped_preview.png"
@@ -13,8 +12,8 @@ const C_ZONE_SCREENSHOT_PATH := "res://.godot/sea_overworld_c_zone_preview.png"
 const D_ZONE_SCREENSHOT_PATH := "res://.godot/sea_overworld_d_zone_preview.png"
 const CENTRAL_SEAM_SCREENSHOT_PATH := "res://.godot/sea_overworld_central_seam_preview.png"
 const EXPECTED_LOCATIONS := {
-	"南海军港": Vector2(1080, 650),
-	"川山渔村": Vector2(480, 1040),
+	"南海军港": Vector2(480, 1040),
+	"川山渔村": Vector2(1080, 650),
 	"东湾水寨": Vector2(2040, 520),
 	"青屿秘境": Vector2(2380, 540),
 	"沧门礁堡": Vector2(2780, 1080),
@@ -27,12 +26,12 @@ const EXPECTED_LOCATIONS := {
 	"白沙渔岛": Vector2(1460, 2460),
 	"玄潮古屿": Vector2(2100, 2240),
 	"红湾卫所": Vector2(2980, 1760),
-	"南澳商港": Vector2(4380, 2460),
+	"倭寇营地": Vector2(4380, 2460),
 }
 const A_LOCATIONS := ["南海军港", "川山渔村", "东湾水寨", "青屿秘境"]
 const B_LOCATIONS := ["沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]
 const C_LOCATIONS := ["澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿"]
-const D_LOCATIONS := ["红湾卫所", "南澳商港"]
+const D_LOCATIONS := ["红湾卫所", "倭寇营地"]
 const NAVIGATION_ROUTES := {
 	"A_TO_B": [Vector2(1500, 800), Vector2(2100, 800), Vector2(2388, 800), Vector2(2700, 800), Vector2(3050, 800)],
 	"A_TO_C": [Vector2(1700, 1050), Vector2(1700, 1292), Vector2(1700, 1500), Vector2(1550, 1750), Vector2(1400, 1950)],
@@ -49,6 +48,89 @@ const LAND_COLLISION_PROBES := [
 	Vector2(3500, 1150), Vector2(620, 1650), Vector2(850, 2250), Vector2(1650, 2400),
 	Vector2(2220, 2340), Vector2(3050, 1950), Vector2(3600, 2300), Vector2(4300, 2100),
 ]
+var EXPECTED_COLLISION_POLYGONS := {
+	"NorthwestCoast": PackedVector2Array([
+		Vector2(0, 0), Vector2(1810, 0), Vector2(1780, 100), Vector2(1650, 145),
+		Vector2(1530, 205), Vector2(1470, 310), Vector2(1510, 430), Vector2(1650, 520),
+		Vector2(1710, 610), Vector2(1600, 675), Vector2(1450, 650), Vector2(1320, 720),
+		Vector2(1180, 690), Vector2(1040, 735), Vector2(880, 725), Vector2(720, 770),
+		Vector2(570, 800), Vector2(470, 880), Vector2(445, 970), Vector2(330, 1040),
+		Vector2(180, 1030), Vector2(0, 1090),
+	]),
+	"EastBaySandbar": PackedVector2Array([
+		Vector2(1710, 620), Vector2(1830, 565), Vector2(2010, 590), Vector2(2135, 670),
+		Vector2(2040, 715), Vector2(1830, 705),
+	]),
+	"QingyuPagodaIsland": PackedVector2Array([
+		Vector2(2260, 495), Vector2(2380, 425), Vector2(2490, 475), Vector2(2515, 600),
+		Vector2(2420, 650), Vector2(2290, 610),
+	]),
+	"CangmenFortress": PackedVector2Array([
+		Vector2(2490, 1050), Vector2(2630, 950), Vector2(2860, 945), Vector2(2995, 1040),
+		Vector2(3010, 1195), Vector2(2900, 1280), Vector2(2660, 1280), Vector2(2500, 1190),
+	]),
+	"CangmenDock": PackedVector2Array([
+		Vector2(2370, 1165), Vector2(2525, 1095), Vector2(2580, 1160), Vector2(2450, 1230),
+	]),
+	"WulanVillageIsland": PackedVector2Array([
+		Vector2(3185, 700), Vector2(3290, 650), Vector2(3430, 680), Vector2(3500, 760),
+		Vector2(3410, 825), Vector2(3240, 800),
+	]),
+	"FuboRidge": PackedVector2Array([
+		Vector2(3860, 735), Vector2(3970, 665), Vector2(4170, 700), Vector2(4390, 820),
+		Vector2(4710, 935), Vector2(4780, 1035), Vector2(4560, 1080), Vector2(4350, 1010),
+		Vector2(4140, 950), Vector2(3950, 895),
+	]),
+	"ShanwanMountain": PackedVector2Array([
+		Vector2(3260, 1040), Vector2(3440, 940), Vector2(3620, 1020), Vector2(3810, 1180),
+		Vector2(3700, 1330), Vector2(3440, 1390), Vector2(3230, 1290),
+	]),
+	"ChenghaiLighthouse": PackedVector2Array([
+		Vector2(500, 1510), Vector2(640, 1460), Vector2(760, 1570), Vector2(785, 1790),
+		Vector2(680, 1880), Vector2(520, 1850), Vector2(440, 1700),
+	]),
+	"LongmenStronghold": PackedVector2Array([
+		Vector2(540, 2150), Vector2(720, 2070), Vector2(980, 2090), Vector2(1175, 2230),
+		Vector2(1120, 2390), Vector2(850, 2440), Vector2(580, 2340),
+	]),
+	"BaishaSandbar": PackedVector2Array([
+		Vector2(1360, 2370), Vector2(1550, 2270), Vector2(1810, 2260), Vector2(1990, 2375),
+		Vector2(1890, 2490), Vector2(1590, 2535), Vector2(1380, 2475),
+	]),
+	"RedBayMountain": PackedVector2Array([
+		Vector2(2820, 1800), Vector2(2990, 1710), Vector2(3170, 1780), Vector2(3370, 1970),
+		Vector2(3310, 2160), Vector2(3140, 2240), Vector2(2920, 2190), Vector2(2740, 2040),
+	]),
+	"NanaoWestWall": PackedVector2Array([
+		Vector2(3510, 2260), Vector2(3680, 2140), Vector2(3790, 2280), Vector2(3650, 2410),
+		Vector2(3510, 2440),
+	]),
+	"NanaoCitadel": PackedVector2Array([
+		Vector2(3690, 2080), Vector2(3860, 1920), Vector2(4250, 1820), Vector2(4540, 1940),
+		Vector2(4720, 2160), Vector2(4680, 2360), Vector2(4550, 2480), Vector2(4250, 2460),
+		Vector2(4130, 2350), Vector2(4000, 2350), Vector2(3900, 2270), Vector2(3730, 2300),
+	]),
+}
+var EXPECTED_COLLISION_CIRCLES := {
+	"SouthHarborWestRock": {"position": Vector2(350, 1020), "radius": 105.0},
+	"SouthHarborNorthwestWall": {"position": Vector2(500, 925), "radius": 120.0},
+	"SouthHarborNorthWall": {"position": Vector2(700, 885), "radius": 115.0},
+	"SouthHarborNortheastWall": {"position": Vector2(930, 900), "radius": 125.0},
+	"SouthHarborEastWall": {"position": Vector2(1160, 985), "radius": 145.0},
+	"SouthHarborEastRock": {"position": Vector2(1360, 1090), "radius": 115.0},
+	"MoonHarborNorthwest": {"position": Vector2(3380, 400), "radius": 120.0},
+	"MoonHarborNorth": {"position": Vector2(3500, 300), "radius": 110.0},
+	"MoonHarborCrown": {"position": Vector2(3650, 285), "radius": 120.0},
+	"MoonHarborEast": {"position": Vector2(3780, 365), "radius": 130.0},
+	"MoonHarborSoutheast": {"position": Vector2(3810, 510), "radius": 125.0},
+	"MoonHarborSouth": {"position": Vector2(3690, 600), "radius": 105.0},
+	"XuanchaoWestReef": {"position": Vector2(1980, 2395), "radius": 38.0},
+	"XuanchaoMainReef": {"position": Vector2(2220, 2340), "radius": 58.0},
+	"XuanchaoSouthReef": {"position": Vector2(2130, 2460), "radius": 34.0},
+	"CentralNorthReef": {"position": Vector2(1950, 1585), "radius": 38.0},
+	"CentralEastReef": {"position": Vector2(2310, 1840), "radius": 34.0},
+	"ShanwanOuterReef": {"position": Vector2(3970, 1240), "radius": 46.0},
+}
 
 var failures: Array[String] = []
 
@@ -63,6 +145,7 @@ func _run() -> void:
 		game_state.call("clear_pending_scene_state")
 	root.set_meta("sea_overworld_lunar_day", 0.0)
 	var scene := SEA_SCENE.instantiate()
+	_verify_serialized_collision_tree(scene)
 	root.add_child(scene)
 	current_scene = scene
 	await process_frame
@@ -70,7 +153,7 @@ func _run() -> void:
 
 	_verify_assets()
 	_verify_location_layout(scene)
-	_verify_fubo_return_contract(scene)
+	await _verify_production_entry_alignment(scene)
 	await _verify_shared_exploration_hud(scene)
 	await _verify_keyboard_movement(scene)
 	await _verify_location_interaction(scene)
@@ -90,6 +173,45 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	quit(1)
+
+
+func _verify_serialized_collision_tree(scene: Node) -> void:
+	var world_collision := scene.get_node("World/WorldCollision") as StaticBody2D
+	_expect(world_collision.get_child_count() == 32, "Packed sea-overworld scene must serialize exactly 32 world-collision nodes before runtime startup.")
+	_expect(world_collision.collision_layer == 1 and world_collision.collision_mask == 1, "Serialized world collision must retain layer 1 and mask 1.")
+	_expect(EXPECTED_COLLISION_POLYGONS.size() == 14 and EXPECTED_COLLISION_CIRCLES.size() == 18, "Collision geometry contract must contain fourteen polygons and eighteen circles.")
+	for collision_name in EXPECTED_COLLISION_POLYGONS:
+		var node := world_collision.get_node_or_null(collision_name) as CollisionPolygon2D
+		_expect(node != null, "Serialized collision polygon %s is missing or has the wrong type." % collision_name)
+		if node != null:
+			_expect(_packed_vectors_equal(node.polygon, EXPECTED_COLLISION_POLYGONS[collision_name]), "Serialized collision polygon %s does not match its approved vertices." % collision_name)
+	var circle_shape_ids: Dictionary = {}
+	for collision_name in EXPECTED_COLLISION_CIRCLES:
+		var node := world_collision.get_node_or_null(collision_name) as CollisionShape2D
+		_expect(node != null, "Serialized circle collision %s is missing or has the wrong node type." % collision_name)
+		if node == null:
+			continue
+		var circle := node.shape as CircleShape2D
+		var expected: Dictionary = EXPECTED_COLLISION_CIRCLES[collision_name]
+		_expect(circle != null, "Serialized collision %s must use CircleShape2D." % collision_name)
+		_expect(node.position.is_equal_approx(expected["position"] as Vector2), "Serialized circle collision %s moved from its approved center." % collision_name)
+		if circle != null:
+			_expect(is_equal_approx(circle.radius, float(expected["radius"])), "Serialized circle collision %s changed radius." % collision_name)
+			var shape_id := circle.get_instance_id()
+			_expect(not circle_shape_ids.has(shape_id), "Circle collision %s must own an independent editable Shape resource." % collision_name)
+			circle_shape_ids[shape_id] = collision_name
+	var source_code := (scene.get_script() as Script).get_source_code()
+	_expect("_build_world_collisions" not in source_code, "Sea-overworld script must not retain runtime world-collision generation.")
+	_expect("_add_polygon_blocker" not in source_code and "_add_circle_blocker" not in source_code, "Sea-overworld script must not retain obsolete static-collision builder helpers.")
+
+
+func _packed_vectors_equal(actual: PackedVector2Array, expected: PackedVector2Array) -> bool:
+	if actual.size() != expected.size():
+		return false
+	for index in range(actual.size()):
+		if not actual[index].is_equal_approx(expected[index]):
+			return false
+	return true
 
 
 func _verify_assets() -> void:
@@ -152,7 +274,13 @@ func _verify_assets() -> void:
 	var b_background := current_scene.get_node("World/EastBackground") as Sprite2D
 	var c_background := current_scene.get_node("World/CBackground") as Sprite2D
 	var d_background := current_scene.get_node("World/DBackground") as Sprite2D
+	var a_background := current_scene.get_node("World/Background") as Sprite2D
+	_expect(a_background.material is ShaderMaterial, "A map chunk must use animated water shading.")
+	_expect((a_background.material as ShaderMaterial).get_shader_parameter("world_origin") == Vector2.ZERO, "A water animation must start at the world origin.")
+	_expect((a_background.material as ShaderMaterial).get_shader_parameter("waterNoise") is NoiseTexture2D, "Overworld water must use the same seamless surface-noise approach as Scene 2.")
+	_expect((a_background.material as ShaderMaterial).get_shader_parameter("waterDistortionNoise") is NoiseTexture2D, "Overworld water must use Scene 2-style flow distortion noise.")
 	_expect(b_background.material is ShaderMaterial, "B map chunk must use alpha seam blending.")
+	_expect((b_background.material as ShaderMaterial).get_shader_parameter("world_origin") == Vector2(2388, 0), "B water animation must align with world coordinates.")
 	_expect(c_background.material is ShaderMaterial and bool((c_background.material as ShaderMaterial).get_shader_parameter("fade_from_top")), "C map chunk must fade from its north edge.")
 	_expect(not bool((c_background.material as ShaderMaterial).get_shader_parameter("fade_from_left")), "C map chunk must not fade from its west edge.")
 	_expect(d_background.material is ShaderMaterial and bool((d_background.material as ShaderMaterial).get_shader_parameter("fade_from_left")), "D map chunk must fade from its west edge.")
@@ -212,44 +340,111 @@ func _verify_location_layout(scene: Node) -> void:
 		_expect(_is_water_clear(_find_clear_entry_point(qingyu), 19.0), "Qingyu south-side entry must remain reachable open water.")
 		var qingyu_map_offset := qingyu.get_meta("map_label_offset", Vector2.ZERO) as Vector2
 		_expect(qingyu_map_offset.x > 0.0 and qingyu_map_offset.y < 0.0, "Qingyu full-map label must be offset to the pagoda island's upper-right.")
+	var white_sand := _find_location(locations, "白沙渔岛")
+	if white_sand != null:
+		var white_sand_shape := white_sand.get_node("EntryTriggerShape") as CollisionShape2D
+		_expect(white_sand_shape.shape is RectangleShape2D, "White Sand fishing island must use a dedicated rectangular dock entry.")
+		_expect(white_sand_shape.position.x > 0.0 and white_sand_shape.position.y > 0.0, "White Sand dock entry must stay southeast of the island center.")
+		_expect(_is_water_clear(white_sand.global_position + white_sand_shape.position, 19.0), "White Sand dock entry must remain reachable open water.")
+	var xuanchao := _find_location(locations, "玄潮古屿")
+	if xuanchao != null:
+		var xuanchao_shapes := _location_trigger_shapes(xuanchao)
+		_expect(xuanchao_shapes.size() == 3, "Xuanchao ancient reefs must expose exactly three directional entry points.")
+		var trigger_offsets := xuanchao.get_meta("entry_trigger_offsets", []) as Array
+		_expect(trigger_offsets.size() == 3, "Xuanchao directional entry metadata must list north, south and east points.")
+		if trigger_offsets.size() == 3:
+			_expect((trigger_offsets[0] as Vector2).y < 0.0, "Xuanchao first entry point must sit north of the reefs.")
+			_expect((trigger_offsets[1] as Vector2).y > 0.0, "Xuanchao second entry point must sit south of the reefs.")
+			_expect((trigger_offsets[2] as Vector2).x > 0.0, "Xuanchao third entry point must sit east of the reefs.")
+		for shape_node in xuanchao_shapes:
+			_expect(_is_water_clear(xuanchao.global_position + shape_node.position, 19.0), "Every Xuanchao directional entry point must remain reachable open water.")
+		_expect(not _trigger_contains_point(xuanchao, Vector2(1880, 2395)), "Xuanchao must not expose a west-side entry toward White Sand fishing island.")
+		var xuanchao_map_offset := xuanchao.get_meta("map_label_offset", Vector2.ZERO) as Vector2
+		_expect(xuanchao_map_offset.x > 0.0 and xuanchao_map_offset.y > 0.0, "Xuanchao full-map label must be offset to the reefs' lower-right.")
 	var script_constants := (scene.get_script() as Script).get_script_constant_map()
 	var spawn := script_constants.get("SOUTH_SEA_HARBOR_SPAWN", Vector2.ZERO) as Vector2
 	var south_harbor := _find_location(locations, "南海军港")
-	_expect(_is_water_clear(spawn, 19.0), "South Sea harbor spawn must remain outside static collision.")
+	var chuanshan := _find_location(locations, "川山渔村")
+	var sea_player := scene.get_node("World/Player") as CharacterBody2D
+	_expect(_is_water_clear(spawn, 19.0, sea_player), "South Sea harbor spawn must remain outside static collision.")
 	_expect(south_harbor != null and _trigger_contains_point(south_harbor, spawn), "South Sea harbor spawn must still activate its entry trigger.")
-	var fubo := _find_location(locations, "伏波古岭")
-	_expect(fubo != null and str(fubo.get_meta("target_scene_path", "")) == FUBO_TRAVEL.FUBO_SCENE_PATH, "Fubo must point to its real island scene.")
-	_expect(fubo != null and str(fubo.get_meta("entry_message", "")) == "进入伏波古岭", "Fubo must no longer use coming-soon copy.")
+	_expect(sea_player.global_position.is_equal_approx(spawn), "A fresh sea map must start inside South Sea Harbor's crescent basin.")
+	if south_harbor != null:
+		var harbor_shapes := _location_trigger_shapes(south_harbor)
+		_expect(harbor_shapes.size() == 5, "South Sea Harbor must follow the crescent basin with five entry segments.")
+		for shape_node in harbor_shapes:
+			_expect(shape_node.shape is CircleShape2D, "Every South Sea Harbor crescent entry segment must be circular.")
+			_expect(_is_water_clear(south_harbor.global_position + shape_node.position, 19.0), "Every South Sea Harbor crescent entry segment must sit on navigable basin water.")
+		var harbor_offsets := south_harbor.get_meta("entry_trigger_offsets", []) as Array
+		if harbor_offsets.size() == 5:
+			_expect((harbor_offsets[0] as Vector2).y > (harbor_offsets[2] as Vector2).y and (harbor_offsets[4] as Vector2).y > (harbor_offsets[2] as Vector2).y, "South Sea Harbor entry segments must form a shallow crescent inside the basin.")
+	if chuanshan != null:
+		var chuanshan_shape := chuanshan.get_node("EntryTriggerShape") as CollisionShape2D
+		_expect(chuanshan_shape.shape is CircleShape2D and chuanshan_shape.position.is_equal_approx(Vector2(390, 30)), "Chuanshan fishing village must use the screenshot-marked southeast dock point.")
+		_expect((chuanshan.global_position + chuanshan_shape.position).is_equal_approx(Vector2(1470, 680)), "Chuanshan's entry center must match the red current-position marker at the small dock.")
+		_expect(_is_water_clear(chuanshan.global_position + chuanshan_shape.position, 19.0), "Chuanshan's lower dock entry must remain reachable open water.")
+		var chuanshan_map_offset := chuanshan.get_meta("map_label_offset", Vector2.ZERO) as Vector2
+		_expect(chuanshan_map_offset.is_equal_approx(Vector2(0, -220)), "Chuanshan's full-map label must move upward onto the mainland houses.")
 
 
-func _verify_fubo_return_contract(scene: Node) -> void:
-	if not scene.has_method("_consume_fubo_return") or not scene.has_method("_restore_fubo_return"):
-		_expect(false, "Sea overworld must expose Fubo return consume and restore helpers.")
-		return
-	var original_context := FUBO_TRAVEL.make_context(
-		(scene.get_node("World/Player") as CharacterBody2D).global_position,
-		int(scene.get_node("World/Player").call("save_facing_index")),
-		int(scene.get("_exploration_stage")),
-		float(scene.get("_lunar_day"))
-	)
-	var expected_context := FUBO_TRAVEL.make_context(Vector2(4210, 1135), 2, 3, 8.5)
-	root.set_meta(FUBO_TRAVEL.RETURN_REQUEST_META, true)
-	root.set_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, expected_context)
-	var consumed: Dictionary = scene.call("_consume_fubo_return")
-	_expect(consumed == expected_context, "Fubo return context must be consumed intact.")
-	_expect(not root.has_meta(FUBO_TRAVEL.RETURN_REQUEST_META) and not root.has_meta(FUBO_TRAVEL.RETURN_CONTEXT_META), "Consumed Fubo return metadata must be removed.")
-	scene.call("_restore_fubo_return", consumed)
+func _verify_production_entry_alignment(scene: Node) -> void:
+	var locations := get_nodes_in_group("sea_location")
 	var player := scene.get_node("World/Player") as CharacterBody2D
-	_expect(player.global_position.is_equal_approx(Vector2(4210, 1135)), "Fubo return must restore the ship position.")
-	_expect(int(player.call("save_facing_index")) == 2, "Fubo return must restore ship facing.")
-	_expect(int(scene.get("_exploration_stage")) == 3, "Fubo return must restore exploration stage.")
-	_expect(is_equal_approx(float(scene.get("_lunar_day")), 8.5), "Fubo return must restore lunar day.")
-	root.set_meta(FUBO_TRAVEL.RETURN_REQUEST_META, true)
-	root.set_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, {"ship_position": Vector2(INF, 0)})
-	var invalid_context: Dictionary = scene.call("_consume_fubo_return")
-	scene.call("_restore_fubo_return", invalid_context)
-	_expect(player.global_position.is_equal_approx(FUBO_TRAVEL.FALLBACK_SEA_POSITION), "Invalid Fubo return data must use the approved safe sea position.")
-	scene.call("_restore_fubo_return", original_context)
+	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
+	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
+	var expected_entry_centers := {
+		"东湾水寨": [Vector2(2180, 760)],
+		"雾岚群岛": [Vector2(3475, 830)],
+		"伏波古岭": [Vector2(4720, 1225)],
+		"珊湾渔链": [Vector2(3180, 1370)],
+		"澄海灯岛": [
+			Vector2(670, 1390), Vector2(870, 1450), Vector2(930, 1680), Vector2(900, 1900),
+			Vector2(660, 1980), Vector2(420, 1910), Vector2(380, 1700), Vector2(430, 1480),
+		],
+		"红湾卫所": [Vector2(3360, 2190)],
+		"倭寇营地": [Vector2(3750, 2600)],
+	}
+	for location_name in expected_entry_centers:
+		var location := _find_location(locations, location_name)
+		_expect(location != null, "%s must exist for production-entry alignment verification." % location_name)
+		if location == null:
+			continue
+		var expected_centers: Array = expected_entry_centers[location_name]
+		var shape_nodes := _location_trigger_shapes(location)
+		var expected_shape_count := expected_centers.size()
+		if location_name in ["伏波古岭", "珊湾渔链"]:
+			expected_shape_count += 1
+		_expect(shape_nodes.size() == expected_shape_count, "%s must expose the approved number of production-map entry ranges." % location_name)
+		for expected_center in expected_centers:
+			var matched_shape: CollisionShape2D
+			for shape_node in shape_nodes:
+				if (location.global_position + shape_node.position).is_equal_approx(expected_center as Vector2):
+					matched_shape = shape_node
+					break
+			_expect(matched_shape != null, "%s is missing its approved entry at %s." % [location_name, expected_center])
+			if matched_shape == null:
+				continue
+			_expect(matched_shape.shape is CircleShape2D, "%s's dock/directional entry must use a focused circular range." % location_name)
+			_expect(_is_water_clear(expected_center as Vector2, 19.0, player), "%s entry at %s must sit on navigable water." % [location_name, expected_center])
+			player.global_position = Vector2(1800, 1200)
+			for _frame in range(2):
+				await physics_frame
+			player.global_position = expected_center as Vector2
+			for _frame in range(3):
+				await physics_frame
+			_expect(prompt.visible and location_name in location_label.text, "%s entry at %s must activate the correct prompt." % [location_name, expected_center])
+
+	var fubo := _find_location(locations, "伏波古岭")
+	if fubo != null:
+		var fubo_primary := fubo.get_node("EntryTriggerShape") as CollisionShape2D
+		_expect(fubo_primary.shape is RectangleShape2D and fubo_primary.position.is_equal_approx(Vector2(0, 175)), "Fubo Ridge must retain its original lower entry while adding the lower-right entry.")
+	var shanwan := _find_location(locations, "珊湾渔链")
+	if shanwan != null:
+		var shanwan_primary := shanwan.get_node("EntryTriggerShape") as CollisionShape2D
+		_expect(shanwan_primary.shape is RectangleShape2D and shanwan_primary.position.is_equal_approx(Vector2(250, 160)), "Shanwan fishing chain must retain its original lower-right entry while adding the lower-left entry.")
+	player.global_position = Vector2(1800, 1200)
+	for _frame in range(3):
+		await physics_frame
 
 
 func _verify_shared_exploration_hud(scene: Node) -> void:
@@ -259,7 +454,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	var main_objective := hud.get_node("QuestTracker/MainQuest/Objective") as Label
 	var side_task := hud.get_node("QuestTracker/SideQuest/TaskName") as Label
 	_expect(hud.visible, "Sea overworld must reuse the shared exploration HUD from scenes one and two.")
-	_expect(main_task.text == "探索大地图" and "WASD" in main_objective.text, "Sea overworld tracker must start with the map-exploration task.")
+	_expect(main_task.text == "探索海域，完善海图" and "点击进入按钮" in main_objective.text, "Spawning inside South Sea Harbor must advance the chart-exploration task to the location-entry step.")
 	_expect(side_task.text == "海上见闻", "Sea overworld must replace the shared HUD's old placeholder side task.")
 	_expect(scene.get_node_or_null("UI/Root/TitlePanel") == null and scene.get_node_or_null("UI/Root/HelpPanel") == null, "Old sea-map title and help panels must be removed.")
 	_expect(scene.get_node_or_null("UI/Root/ToastPanel") == null, "Old sea-map toast UI must be replaced by the shared HUD toast.")
@@ -270,7 +465,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	var quest_screen := hud.get_node("QuestScreen") as Control
 	var selected_title := quest_screen.get_node("SelectedQuestTitle") as RichTextLabel
 	var steps := quest_screen.get_node("QuestStepsScroll/QuestSteps") as VBoxContainer
-	_expect(quest_screen.visible and "探索大地图" in selected_title.text, "Shared quest screen must open on the sea-map exploration task.")
+	_expect(quest_screen.visible and "探索海域，完善海图" in selected_title.text, "Shared quest screen must open on the chart-exploration task.")
 	_expect(steps.get_child_count() == 4, "Explore-map quest must display its four-step task flow.")
 	_expect("奉诏入殿" not in selected_title.text and "巡视水师驻地" not in selected_title.text, "Sea-map quest screen must not show scene-one or scene-two task names.")
 	if DisplayServer.get_name() != "headless":
@@ -318,6 +513,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	await process_frame
 	var map_screen := hud.get_node("SeaMapScreen") as Control
 	var map_panel := map_screen.get_node("MapPanel") as Panel
+	var map_title := map_panel.get_node("Title") as Label
 	var generated_scroll_frame := map_panel.get_node("GeneratedScrollFrame") as TextureRect
 	var map_viewport := map_panel.get_node("MapViewport") as Control
 	var map_texture_layer := map_screen.get_node("MapPanel/MapViewport/MapTextureLayer") as Control
@@ -332,6 +528,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	_expect(generated_scroll_frame.texture.resource_path.ends_with("sea_map_scroll_frame_v1.png"), "Full sea map must use the generated ink-pixel chart scroll frame.")
 	_expect(map_viewport.size.is_equal_approx(Vector2(870, 510)), "Detailed map content must sit inside the scroll's central safe area.")
 	_expect(map_panel.get_node_or_null("Hint") == null, "Full sea map must not retain the old bottom explanatory caption.")
+	_expect(is_equal_approx(map_title.position.y, 102.0), "The Lingnan sea-map title must move farther down inside its plaque.")
 	_expect(not player.controls_enabled, "Opening the full map must pause sea-map movement.")
 	var paused_lunar_day := float(root.get_meta("sea_overworld_lunar_day", 0.0))
 	Input.action_press("move_right")
@@ -353,6 +550,9 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 	var location_names: Array[String] = []
 	var east_bay_map_label: Label
 	var qingyu_map_label: Label
+	var xuanchao_map_label: Label
+	var south_harbor_map_label: Label
+	var chuanshan_map_label: Label
 	for location_label in location_layer.get_children():
 		var label := location_label as Label
 		location_names.append(label.text)
@@ -360,11 +560,21 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 			east_bay_map_label = label
 		elif "青屿秘境" in label.text:
 			qingyu_map_label = label
-	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
+		elif "玄潮古屿" in label.text:
+			xuanchao_map_label = label
+		elif "南海军港" in label.text:
+			south_harbor_map_label = label
+		elif "川山渔村" in label.text:
+			chuanshan_map_label = label
+	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "倭寇营地", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
-	for hidden_name in ["茶叶商船", "岭南商船", "私盐商船", "漂流木箱"]:
+	_expect(location_names.all(func(text: String) -> bool: return "南澳商港" not in text), "Full map must not retain the retired South Australia merchant-port name.")
+	for hidden_name in ["茶叶商船", "私盐商船", "岭南商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
 	_expect(qingyu_map_label != null and (qingyu_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2800, 400)), "Qingyu full-map label must align to the pagoda island's upper-right.")
+	_expect(xuanchao_map_label != null and (xuanchao_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2620, 2600)), "Xuanchao full-map label must sit at the reefs' lower-right.")
+	_expect(south_harbor_map_label != null and (south_harbor_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(480, 1040)), "South Sea Harbor's full-map name must move to the southwest crescent harbor.")
+	_expect(chuanshan_map_label != null and (chuanshan_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(1080, 430)), "Chuanshan's full-map name must move upward onto the northeast mainland houses.")
 	if east_bay_map_label != null and qingyu_map_label != null:
 		var east_bay_label_center := east_bay_map_label.position + east_bay_map_label.size * 0.5
 		var qingyu_label_center := qingyu_map_label.position + qingyu_map_label.size * 0.5
@@ -395,7 +605,7 @@ func _verify_keyboard_movement(scene: Node) -> void:
 	_expect(wake.visible, "Moving ship must show the animated wake layer.")
 	_expect(float(root.get_meta("sea_overworld_lunar_day", 0.0)) > starting_lunar_day, "Sailing must advance lunar time.")
 	var task_objective := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
-	_expect("靠近任意岛屿" in task_objective.text, "First map-exploration step must advance after sailing.")
+	_expect("点击进入按钮" in task_objective.text, "Sailing from the harbor spawn must not regress the location-entry task step.")
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		var screenshot_error := root.get_texture().get_image().save_png(MOVEMENT_SCREENSHOT_PATH)
@@ -453,7 +663,7 @@ func _verify_location_interaction(scene: Node) -> void:
 	await process_frame
 	_expect(toast.visible and "该地点即将开放" in toast_label.text, "Enter button must show the location coming-soon message.")
 	_expect("接触海上的船只" in task_objective.text, "Trying to enter an island must advance the explore-map task flow.")
-	player.global_position = Vector2(2200, 1500)
+	player.global_position = Vector2(1800, 1200)
 	for _frame in range(4):
 		await physics_frame
 	await process_frame
@@ -469,14 +679,13 @@ func _verify_location_interaction(scene: Node) -> void:
 	_expect(east_bay != null, "East Bay stronghold trigger is missing.")
 	if east_bay != null:
 		var east_bay_shape_node := east_bay.get_node("EntryTriggerShape") as CollisionShape2D
-		var east_bay_shape := east_bay_shape_node.shape as RectangleShape2D
-		_expect(east_bay_shape != null and east_bay_shape.size.x >= 400.0, "East Bay must retain a broad dock-side rectangular entry.")
-		_expect(east_bay_shape_node.position.y > 0.0, "East Bay entry range must stay on the island's front side.")
+		_expect(east_bay_shape_node.shape is CircleShape2D, "East Bay must use a focused circular dock entry.")
+		_expect((east_bay.global_position + east_bay_shape_node.position).is_equal_approx(Vector2(2180, 760)), "East Bay entry range must align to the island's lower dock.")
 		player.global_position = _find_clear_entry_point(east_bay)
 		for _frame in range(3):
 			await physics_frame
 		_expect(prompt.visible and "东湾水寨" in location_label.text, "East Bay entry must remain reachable from open water.")
-	player.global_position = Vector2(2200, 1500)
+	player.global_position = Vector2(1800, 1200)
 	for _frame in range(3):
 		await physics_frame
 	_expect(qingyu != null, "Qingyu secret realm trigger is missing.")
@@ -492,23 +701,50 @@ func _verify_location_interaction(scene: Node) -> void:
 func _verify_b_expansion(scene: Node) -> void:
 	var b_locations := _collect_region_locations(B_LOCATIONS, "B")
 	_expect(b_locations.size() == 5, "B must contain five upper-right water-combat locations.")
-	var placeholder_locations: Array[Area2D] = []
-	for location in b_locations:
-		if str(location.get_meta("location_name", "")) != "伏波古岭":
-			placeholder_locations.append(location)
-	await _verify_region_interactions(scene, placeholder_locations, "月环商港", B_ZONE_SCREENSHOT_PATH)
+	await _verify_region_interactions(scene, b_locations, "月环商港", B_ZONE_SCREENSHOT_PATH)
 
 
 func _verify_c_expansion(scene: Node) -> void:
 	var c_locations := _collect_region_locations(C_LOCATIONS, "C")
 	_expect(c_locations.size() == 4, "C must contain four lower-left frontier locations.")
+	await _verify_c_directional_entries(scene, c_locations)
 	await _verify_region_interactions(scene, c_locations, "龙门海寨", C_ZONE_SCREENSHOT_PATH)
+
+
+func _verify_c_directional_entries(scene: Node, c_locations: Array[Area2D]) -> void:
+	var player := scene.get_node("World/Player") as CharacterBody2D
+	var prompt := scene.get_node("UI/Root/InteractionPrompt") as Control
+	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
+	var xuanchao := _find_location(c_locations, "玄潮古屿")
+	var white_sand := _find_location(c_locations, "白沙渔岛")
+	if xuanchao != null:
+		for shape_node in _location_trigger_shapes(xuanchao):
+			player.global_position = Vector2(1800, 2100)
+			for _frame in range(2):
+				await physics_frame
+			player.global_position = xuanchao.global_position + shape_node.position
+			for _frame in range(3):
+				await physics_frame
+			_expect(prompt.visible and "玄潮古屿" in location_label.text, "Each Xuanchao north/south/east entry point must activate the location prompt.")
+		player.global_position = Vector2(1880, 2395)
+		for _frame in range(3):
+			await physics_frame
+		_expect(not prompt.visible or "玄潮古屿" not in location_label.text, "The west side of Xuanchao must not activate its location prompt.")
+	if white_sand != null:
+		player.global_position = Vector2(1800, 2100)
+		for _frame in range(2):
+			await physics_frame
+		var dock_shape := white_sand.get_node("EntryTriggerShape") as CollisionShape2D
+		player.global_position = white_sand.global_position + dock_shape.position
+		for _frame in range(3):
+			await physics_frame
+		_expect(prompt.visible and "白沙渔岛" in location_label.text, "White Sand's south dock entry point must activate the location prompt.")
 
 
 func _verify_d_expansion(scene: Node) -> void:
 	var d_locations := _collect_region_locations(D_LOCATIONS, "D")
 	_expect(d_locations.size() == 2, "D must contain two lower-right enemy-core locations matching the two visible islands.")
-	await _verify_region_interactions(scene, d_locations, "南澳商港", D_ZONE_SCREENSHOT_PATH)
+	await _verify_region_interactions(scene, d_locations, "倭寇营地", D_ZONE_SCREENSHOT_PATH)
 
 
 func _collect_region_locations(names: Array, region_name: String) -> Array[Area2D]:
@@ -520,7 +756,10 @@ func _collect_region_locations(names: Array, region_name: String) -> Array[Area2
 		if location == null:
 			continue
 		region_locations.append(location)
-		if expected_name != "伏波古岭":
+		if expected_name == "伏波古岭":
+			_expect(str(location.get_meta("entry_message", "")) == "进入伏波古岭", "Fubo Ridge must retain its playable entry message.")
+			_expect(str(location.get_meta("target_scene_path", "")).ends_with("fubo_guling.tscn"), "Fubo Ridge must retain its playable scene target.")
+		else:
 			_expect(str(location.get_meta("entry_message", "")) == "该岛屿即将开放", "%s must use the island coming-soon message." % expected_name)
 	return region_locations
 
@@ -532,7 +771,7 @@ func _verify_region_interactions(scene: Node, locations: Array[Area2D], preview_
 	var location_label := scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
 	var toast_label := root.get_node("ExplorationUI/HUD/ComingSoonToast/Message") as Label
 	for location in locations:
-		player.global_position = Vector2(2200, 1500)
+		player.global_position = Vector2(1800, 1200)
 		for _frame in range(3):
 			await physics_frame
 		player.global_position = _find_clear_entry_point(location)
@@ -540,6 +779,8 @@ func _verify_region_interactions(scene: Node, locations: Array[Area2D], preview_
 			await physics_frame
 		var location_name := str(location.get_meta("location_name", ""))
 		_expect(prompt.visible and location_name in location_label.text, "%s must expose its entry prompt from collision-free water." % location_name)
+		if not str(location.get_meta("target_scene_path", "")).is_empty():
+			continue
 		enter_button.pressed.emit()
 		await process_frame
 		_expect(location_name in toast_label.text and "该岛屿即将开放" in toast_label.text, "%s must show the island coming-soon toast." % location_name)
@@ -557,14 +798,14 @@ func _verify_region_interactions(scene: Node, locations: Array[Area2D], preview_
 			var screenshot_error := root.get_texture().get_image().save_png(screenshot_path)
 			_expect(screenshot_error == OK, "%s preview screenshot could not be saved." % preview_name)
 
-	player.global_position = Vector2(2200, 1500)
+	player.global_position = Vector2(1800, 1200)
 	for _frame in range(3):
 		await physics_frame
 
 
 func _verify_navigation_collisions(scene: Node) -> void:
 	var world_collision := scene.get_node("World/WorldCollision") as StaticBody2D
-	_expect(world_collision.get_child_count() == 32, "Production map must build the approved 32 named coastline/island blockers.")
+	_expect(world_collision.get_child_count() == 32, "Production map must retain the approved 32 serialized coastline/island blockers without runtime duplication.")
 	for collision_child in world_collision.get_children():
 		_expect(not collision_child.name.is_empty(), "Every production collision component must have a diagnostic name.")
 		_expect("wreck" not in collision_child.name.to_lower(), "The decorative central wreck must not receive collision.")
@@ -581,7 +822,7 @@ func _verify_navigation_collisions(scene: Node) -> void:
 					break
 	for land_point in LAND_COLLISION_PROBES:
 		_expect(not _is_water_clear(land_point, 2.0), "Major visible land at %s must block navigation." % land_point)
-	for water_point in [Vector2(1300, 850), Vector2(3200, 440), Vector2(2150, 1720), Vector2(4280, 2640)]:
+	for water_point in [Vector2(880, 1170), Vector2(3200, 440), Vector2(2150, 1720), Vector2(4280, 2640)]:
 		_expect(_is_water_clear(water_point, 19.0), "Required spawn/harbor/wreck water at %s must remain clear." % water_point)
 	for location in get_nodes_in_group("sea_location"):
 		_expect(_is_water_clear(_find_clear_entry_point(location as Area2D), 19.0), "%s entry must retain reachable water." % location.get_meta("location_name"))
@@ -606,26 +847,28 @@ func _capture_central_seam(scene: Node) -> void:
 func _verify_auto_triggers(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var toast_label := root.get_node("ExplorationUI/HUD/ComingSoonToast/Message") as Label
-	var generic_ship := scene.get_node("World/WorldMarkers/ShipTrigger1") as Area2D
-	player.global_position = Vector2(1240, 1120)
-	await physics_frame
-	player.global_position = generic_ship.global_position
-	await physics_frame
-	await physics_frame
-	_expect("该船只开发中" in toast_label.text, "Touching the generic sea-map ship must show its development placeholder.")
-
-	var crate := scene.get_node("World/WorldMarkers/DriftEvent") as Area2D
-	player.global_position = Vector2(1240, 1120)
-	await physics_frame
-	player.global_position = crate.global_position
-	await physics_frame
-	await physics_frame
 	var event_dialogue := scene.get_node("UI/FieldEventDialogue") as Control
-	_expect(event_dialogue.visible, "Touching the drifting crate must open the soldier choice dialogue.")
-	var option_box := event_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
-	if option_box.get_child_count() == 2:
-		(option_box.get_child(1) as Button).pressed.emit()
-		await process_frame
+	var triggers := get_nodes_in_group("sea_auto_trigger")
+	var saw_event := false
+	var saw_ship := false
+	for trigger_node in triggers:
+		var trigger := trigger_node as Area2D
+		player.global_position = Vector2(1240, 1120)
+		await physics_frame
+		player.global_position = trigger.global_position
+		await physics_frame
+		await physics_frame
+		var kind := str(trigger.get_meta("trigger_kind"))
+		if kind == "ship":
+			saw_ship = saw_ship or "该船只开发中" in toast_label.text
+		elif kind == "event":
+			saw_event = saw_event or event_dialogue.visible
+			var option_box := event_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
+			if option_box.get_child_count() == 2:
+				(option_box.get_child(1) as Button).pressed.emit()
+				await process_frame
+	_expect(saw_ship, "Touching a sea-map ship must automatically show its development placeholder.")
+	_expect(saw_event, "Touching the drifting crate must open the soldier choice dialogue.")
 	var task_objective := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
 	_expect(task_objective.text == "继续探索岭南海域", "Sea target contact must finish the prototype exploration task flow.")
 
@@ -679,17 +922,27 @@ func _find_clear_entry_point(area: Area2D) -> Vector2:
 
 
 func _trigger_contains_point(area: Area2D, point: Vector2) -> bool:
-	var shape_node := area.get_node("EntryTriggerShape") as CollisionShape2D
-	var local_point := point - area.global_position - shape_node.position
-	if shape_node.shape is RectangleShape2D:
-		var half_size := (shape_node.shape as RectangleShape2D).size * 0.5
-		return absf(local_point.x) <= half_size.x and absf(local_point.y) <= half_size.y
-	if shape_node.shape is CircleShape2D:
-		return local_point.length() <= (shape_node.shape as CircleShape2D).radius
+	for shape_node in _location_trigger_shapes(area):
+		var local_point := point - area.global_position - shape_node.position
+		if shape_node.shape is RectangleShape2D:
+			var half_size := (shape_node.shape as RectangleShape2D).size * 0.5
+			if absf(local_point.x) <= half_size.x and absf(local_point.y) <= half_size.y:
+				return true
+		elif shape_node.shape is CircleShape2D:
+			if local_point.length() <= (shape_node.shape as CircleShape2D).radius:
+				return true
 	return false
 
 
-func _is_water_clear(point: Vector2, radius: float) -> bool:
+func _location_trigger_shapes(area: Area2D) -> Array[CollisionShape2D]:
+	var shape_nodes: Array[CollisionShape2D] = []
+	for child in area.get_children():
+		if child is CollisionShape2D:
+			shape_nodes.append(child as CollisionShape2D)
+	return shape_nodes
+
+
+func _is_water_clear(point: Vector2, radius: float, excluded_body: CollisionObject2D = null) -> bool:
 	var shape := CircleShape2D.new()
 	shape.radius = radius
 	var query := PhysicsShapeQueryParameters2D.new()
@@ -698,6 +951,8 @@ func _is_water_clear(point: Vector2, radius: float) -> bool:
 	query.collision_mask = 1
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
+	if excluded_body != null:
+		query.exclude = [excluded_body.get_rid()]
 	return root.world_2d.direct_space_state.intersect_shape(query, 1).is_empty()
 
 

@@ -24,7 +24,7 @@
 | 水墨像素海图图标 | `assets/ui/icons/hud_map_v1.png` | 128×128 | 透明PNG；放置于原人物头像的菱形框中 |
 | 岭南海域双向加载图 | `assets/ui/loading/lingnan_sea_loading_v1.png` | 1536×1024 | 3:2全屏背景；文字由 Godot 叠加，可复用于进入大地图与返回南海军港 |
 | 水墨像素月面 | `assets/ui/sea_overworld/moon_clock_moon.png` | 256×256 | 透明PNG；作为左上月相时钟的着色器纹理，不包含外框或文字 |
-| 漂流木箱 | `assets/sprites/sea_overworld/drifting_supply_crate_v1.png` | 512×512 | 透明PNG；大地图一次性随机事件视觉，只包含木箱与贴身漂浮物，不烘焙地点文字 |
+| 漂流木箱 | `assets/sprites/sea_overworld/drifting_supply_crate_v1.png` | 512×512 | 透明PNG；大地图一次性随机事件视觉，只包含木箱与少量贴身漂浮物，不烘焙地点文字；SHA-256 `D000E49495FFEF5744A268E9A0371BF25FF7BE1129CE379D5C0565471623F037` |
 | 水墨像素展开海图框 | `assets/ui/sea_overworld/sea_map_scroll_frame_v1.png` | 1536×1024 | 透明PNG；完整海图使用 `1280×853` 卷轴框，中央 `870×510` 安全区承载运行时地图；SHA-256 `DAF01DAE53DB4503A37DF6F07E76124554587908D27ADF5D0DB9DE4CDA2BBC74` |
 | 大地图阶段一构图灰模 v1 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png` | 1672×941 | 历史构图；B 为敌方核心、D 为群岛水战区，不接入游戏 |
 | 大地图阶段一构图灰模 v2 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` | 1672×941 | 历史构图；B 右上为群岛水战区、D 右下为敌方核心海域，不接入游戏 |
@@ -445,6 +445,23 @@ Scene/backdrop: perfectly flat solid #ff00ff chroma-key background for local bac
 Constraints: no text, characters, letters, numbers, labels, icons, compass rose, ships, islands or map content in the central safe area; no watermark; no Western fantasy ornament; do not use #ff00ff in the scroll.
 ```
 
+### 4.21 漂流木箱
+
+内置生图模式：图像生成。生成时使用纯绿色键控背景，通过 imagegen 技能附带工具去底并缩放为 `512×512` 透明 PNG；“漂流木箱”、对话和资源提示全部由 Godot 逻辑处理，不烘焙进图片。
+
+```text
+Use case: stylized-concept
+Asset type: production pixel-art sea-overworld event sprite for a Chinese wuxia RPG
+Primary request: create exactly one compact ancient wooden supply crate drifting at sea, viewed from the same top-down oblique angle as a classic Chinese RPG overworld; the closed crate is slightly tilted, with dark wet wood planks, aged bronze corner bands, short frayed rope, one or two tiny pieces of seaweed and a very small tight rim of pale cyan foam touching the crate so it feels grounded and dimensional on blue-green water
+Style/medium: crisp hand-painted pixel art with restrained Chinese ink-wash dry-brush texture, stair-stepped nearest-neighbor edges, muted colors, readable at small overworld scale, matching the project's ancient maritime map
+Composition/framing: one centered isolated crate, strong three-quarter silhouette, compact attached foam only, generous even padding
+Lighting/mood: soft upper-left coastal light with restrained highlights and a darker lower-right side for depth; weathered but valuable, not broken
+Color palette: dark umber and tea-brown wood, near-black ink seams, muted antique bronze, desaturated pale-cyan foam; do not use bright saturated colors
+Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for local background removal
+Constraints: background must be one uniform #00ff00 with no gradient, texture, shadow or floor plane; do not use #00ff00 in the subject; no words, Chinese characters, letters, numbers, labels, UI, icon frame, ocean background, large water patch, treasure glow, coins, weapons, people, ships, extra crates, logo or watermark
+Avoid: photorealism, smooth vector art, Western fantasy treasure chest, open lid, oversized foam, detached splash particles
+```
+
 ## 5. 当前使用边界
 
 ### 高清分层重制（2026-08-10，进行中）
@@ -457,6 +474,6 @@ Constraints: no text, characters, letters, numbers, labels, icons, compass rose,
 
 高清地点不得统一套用“圆形岩石底座”。材质与轮廓按功能分配：川山渔村、珊湾渔链和白沙渔岛使用低矮沙滩、浅滩、少量红树林或零散低岩；月环商港等商港使用低沙岸与人工石码头混合；东湾水寨、沧门礁堡、红湾卫所等军事地点允许使用裸岩和几何防波堤；澄海灯岛、伏波古岭、玄潮古屿等垂直地标或遗迹使用自然峭壁与破碎岩架；雾岚群岛等自然地点混合岩岸、沙湾与植被。不同地点必须从底部材质和外轮廓上即可区分职责。
 
-这些素材服务于初版移动、地点提示和占位触发验证。当前不要求真实进入岛屿、播放海战或实现拟真航海环境；地图文字、地点名称、“进入 · E”和“开发中”提示继续由Godot界面控件绘制，不烘焙进图片。
+这些素材服务于初版移动、地点提示、占位触发与漂流木箱一次性事件。当前除伏波古岭外不要求真实进入岛屿，也不在大地图播放完整海战或实现拟真航海环境；地图文字、地点名称、“进入 · E”、对话选项和资源提示继续由 Godot 界面控件绘制，不烘焙进图片。
 
 当前运行时地点分布已简化为 A4/B5/C4/D2，共 15 个地点；东极秘岛因生产图中没有独立岛体而删除。上方 v1～v4 生图提示词中的 D3/16 地点描述仅保留为当时的生成历史记录，不代表当前运行时配置。

@@ -24,7 +24,7 @@ func _run() -> void:
 	scene_two.set("_patrol_task_stage", 5)
 	scene_two.call("_update_task_hud")
 	var task_name := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label
-	_expect(task_name.text == "和县令对话探索岭南海域", "Post-drill Scene2 task was not prepared for sea departure.")
+	_expect(task_name.text == "探索海域，完善海图", "Post-drill Scene2 task was not prepared for sea departure.")
 
 	var loading := scene_two.get_node("UI/SceneLoadingTransition") as SceneLoadingTransition
 	_expect(is_equal_approx(loading.minimum_duration, 1.0), "Scene loading transition must default to a one-second minimum duration.")
@@ -52,7 +52,7 @@ func _run() -> void:
 		_finish()
 		return
 	var sea_player := sea_scene.get_node("World/Player") as CharacterBody2D
-	_expect(sea_player.global_position.is_equal_approx(Vector2(1300, 850)), "Sea-overworld entry must spawn on the collision-free water in front of South Sea Harbor.")
+	_expect(sea_player.global_position.is_equal_approx(Vector2(880, 1170)), "Sea-overworld entry must use main's collision-free South Sea Harbor spawn.")
 	await physics_frame
 	await physics_frame
 	var prompt := sea_scene.get_node("UI/Root/InteractionPrompt") as Control
@@ -75,7 +75,7 @@ func _run() -> void:
 	await physics_frame
 	var returned_task := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label
 	var returned_objective := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
-	_expect(returned_task.text == "和县令对话探索岭南海域", "Returning to Scene2 must preserve the completed patrol-and-drill task state.")
+	_expect(returned_task.text == "探索海域，完善海图", "Returning to Scene2 must preserve the completed patrol-and-drill task state.")
 	_expect(returned_objective.text == "与广州县令交谈，选择是否立即出发", "Returning to Scene2 must not restore patrol or drill objectives.")
 	_expect(not (returned_scene.get_node("UI/DialoguePanel") as Control).visible, "Returning from the sea must not replay the Scene2 arrival dialogue.")
 	_expect(int(returned_scene.get("_patrol_task_stage")) == 5, "Returning from the sea must restore the post-drill task stage.")
@@ -88,7 +88,7 @@ func _run() -> void:
 	var quest_screen := hud.get_node("QuestScreen") as Control
 	var selected_title := quest_screen.get_node("SelectedQuestTitle") as RichTextLabel
 	var steps := quest_screen.get_node("QuestStepsScroll/QuestSteps") as VBoxContainer
-	_expect(quest_screen.visible and "和县令对话探索岭南海域" in selected_title.text, "Returned Scene2 quest screen must retain the sea-exploration task.")
+	_expect(quest_screen.visible and "探索海域，完善海图" in selected_title.text, "Returned Scene2 quest screen must retain the sea-exploration task.")
 	_expect(steps.get_child_count() == 3, "Sea-exploration quest screen must show completed patrol, completed drill, and departure steps.")
 
 	_finish()

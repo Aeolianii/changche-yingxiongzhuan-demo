@@ -1,7 +1,7 @@
 extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
-const SOUTH_SEA_HARBOR_SPAWN := Vector2(1300, 850)
+const SOUTH_SEA_HARBOR_SPAWN := Vector2(880, 1170)
 const FAR_WATERS := Vector2(4380, 2460)
 const FOG_CELL_SIZE := 16.0
 const WORLD_SCREENSHOT_PATH := "res://.godot/sea_fog_world_preview.png"
@@ -78,18 +78,21 @@ func _run() -> void:
 	_expect(float(map_fog_material.get_shader_parameter("edge_warp_texels")) >= 4.0, "Full sea map fog must visibly warp straight exploration edges.")
 	_expect(float(map_fog_material.get_shader_parameter("edge_irregularity")) >= 0.3, "Full sea map fog must vary its edge threshold with stable ink noise.")
 	var close_button := map_screen.get_node("MapPanel/CloseButton") as Button
+	var close_button_style := close_button.get_theme_stylebox("normal") as StyleBoxTexture
 	_expect(close_button.text == "返回", "Sea-map brush button must display the exact Return label.")
+	_expect(close_button.size.is_equal_approx(Vector2(160, 64)), "Sea-map brush button must provide a larger text-safe click area.")
+	_expect(close_button_style != null and close_button_style.texture.resource_path.ends_with("sea_map_return_brush_v1.png"), "Sea-map Return button must use the generated ink-brush texture instead of a rectangular panel.")
 
 	var south_harbor_label: Label
-	var distant_port_label: Label
+	var pirate_camp_label: Label
 	for location_label in map_screen.get_node("MapPanel/MapViewport/MapLocationLayer").get_children():
 		var label := location_label as Label
 		if "南海军港" in label.text:
 			south_harbor_label = label
-		elif "南澳商港" in label.text:
-			distant_port_label = label
+		elif "倭寇营地" in label.text:
+			pirate_camp_label = label
 	_expect(south_harbor_label != null and south_harbor_label.visible, "Revealed South Sea Harbor name must appear on the full chart.")
-	_expect(distant_port_label != null and not distant_port_label.visible, "Unexplored distant-port name must stay hidden.")
+	_expect(pirate_camp_label != null and not pirate_camp_label.visible, "Unexplored pirate-camp name must stay hidden.")
 	_expect(map_screen.get_node("MapPanel/MapViewport/PlayerMarker").visible, "Current-position marker must remain visible above fog.")
 	if DisplayServer.get_name() != "headless":
 		await process_frame

@@ -408,6 +408,13 @@ func _verify_palace_visibility() -> void:
 	var player := palace.get_node("YSortedCharacters/Player")
 	var interaction_button := palace.get_node("UI/Overlay/InteractionButton") as TextureButton
 	_expect(not hud.visible, "Palace opening dialogue must hide the exploration HUD.")
+	var opening_position: Vector2 = player.global_position
+	Input.action_press("move_right")
+	await physics_frame
+	await physics_frame
+	Input.action_release("move_right")
+	_expect(not player.controls_enabled, "Palace opening narration must disable player controls.")
+	_expect(player.global_position.distance_to(opening_position) < 0.5, "Palace player must not move during opening narration.")
 	_expect(interaction_button.texture_normal.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_v1.png", "Scene one interaction must use the ink-wash normal button asset.")
 	_expect(interaction_button.texture_pressed.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png", "Scene one interaction must use the ink-wash pressed button asset.")
 	_expect(interaction_button.size.is_equal_approx(Vector2(300.0, 74.0)), "Scene one ink-wash interaction button must preserve its source aspect ratio.")
@@ -464,8 +471,9 @@ func _verify_palace_visibility() -> void:
 		_expect(screenshot_error == OK, "Exploration HUD preview screenshot could not be saved.")
 
 	dialogue.show()
-	palace.call("_refresh_exploration_hud")
+	await process_frame
 	_expect(not hud.visible, "Palace dialogue must hide the exploration HUD.")
+	_expect(not player.controls_enabled, "Palace character dialogue must disable player controls.")
 	palace.queue_free()
 	await process_frame
 

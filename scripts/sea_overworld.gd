@@ -14,7 +14,6 @@ const C_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong
 const D_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v3.png")
 const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
-const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
 const MAP_CHUNK_SIZE := Vector2(2508, 1412)
 const MAP_CHUNK_OVERLAP := 120.0
 const B_MAP_ORIGIN := Vector2(MAP_CHUNK_SIZE.x - MAP_CHUNK_OVERLAP, 0)
@@ -27,7 +26,7 @@ const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
 const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
-const SOUTH_SEA_HARBOR_SPAWN := Vector2(1300, 850)
+const SOUTH_SEA_HARBOR_SPAWN := Vector2(880, 1170)
 const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
 
@@ -69,11 +68,11 @@ func _ready() -> void:
 	exploration_hud = _exploration_ui.call("acquire", self, &"sea_overworld") as Control
 	_saved_scene_state = _consume_saved_scene_state()
 	_fubo_return_context = _consume_fubo_return()
+	var restoring_saved_state := not _saved_scene_state.is_empty()
 	if _saved_scene_state.is_empty() and not _returning_from_fubo:
 		_entered_from_scene_two = _consume_scene_two_entry_flag()
 	_build_background_chunks()
 	_configure_world_bounds()
-	_build_world_collisions()
 	_build_locations()
 	_build_auto_triggers()
 	_event_dialogue = FIELD_EVENT_DIALOGUE_SCENE.instantiate() as FieldEventDialogue
@@ -99,7 +98,7 @@ func _ready() -> void:
 	interaction_prompt.hide()
 	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
 	$UI.add_child(_loading_transition)
-	if _entered_from_scene_two:
+	if not restoring_saved_state and not _returning_from_fubo:
 		player.global_position = SOUTH_SEA_HARBOR_SPAWN
 		_activate_south_sea_harbor_spawn()
 	camera.reset_smoothing()
@@ -175,125 +174,127 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_enter_active_location()
 			get_viewport().set_input_as_handled()
 
-func _build_world_collisions() -> void:
-	# Northwest mainland follows the visible shoreline while leaving every dock approach in water.
-	_add_polygon_blocker("NorthwestCoast", PackedVector2Array([
-		Vector2(0, 0), Vector2(1810, 0), Vector2(1780, 100), Vector2(1650, 145),
-		Vector2(1530, 205), Vector2(1470, 310), Vector2(1510, 430), Vector2(1650, 520),
-		Vector2(1710, 610), Vector2(1600, 675), Vector2(1450, 650), Vector2(1320, 720),
-		Vector2(1180, 690), Vector2(1040, 735), Vector2(880, 725), Vector2(720, 770),
-		Vector2(570, 800), Vector2(470, 880), Vector2(445, 970), Vector2(330, 1040),
-		Vector2(180, 1030), Vector2(0, 1090),
-	]))
-
-	# A-zone crescent village: short round segments preserve the open basin and southern landing water.
-	_add_circle_blocker("ChuanshanWestRock", Vector2(350, 1020), 105.0)
-	_add_circle_blocker("ChuanshanNorthwestWall", Vector2(500, 925), 120.0)
-	_add_circle_blocker("ChuanshanNorthWall", Vector2(700, 885), 115.0)
-	_add_circle_blocker("ChuanshanNortheastWall", Vector2(930, 900), 125.0)
-	_add_circle_blocker("ChuanshanEastWall", Vector2(1160, 985), 145.0)
-	_add_circle_blocker("ChuanshanEastRock", Vector2(1360, 1090), 115.0)
-
-	_add_polygon_blocker("EastBaySandbar", PackedVector2Array([
-		Vector2(1710, 620), Vector2(1830, 565), Vector2(2010, 590), Vector2(2135, 670),
-		Vector2(2040, 715), Vector2(1830, 705),
-	]))
-	_add_polygon_blocker("QingyuPagodaIsland", PackedVector2Array([
-		Vector2(2260, 495), Vector2(2380, 425), Vector2(2490, 475), Vector2(2515, 600),
-		Vector2(2420, 650), Vector2(2290, 610),
-	]))
-
-	# B-zone landmarks use separate hulls so the moon harbor and central water gate remain open.
-	_add_polygon_blocker("CangmenFortress", PackedVector2Array([
-		Vector2(2490, 1050), Vector2(2630, 950), Vector2(2860, 945), Vector2(2995, 1040),
-		Vector2(3010, 1195), Vector2(2900, 1280), Vector2(2660, 1280), Vector2(2500, 1190),
-	]))
-	_add_polygon_blocker("CangmenDock", PackedVector2Array([
-		Vector2(2370, 1165), Vector2(2525, 1095), Vector2(2580, 1160), Vector2(2450, 1230),
-	]))
-	_add_circle_blocker("MoonHarborNorthwest", Vector2(3380, 400), 120.0)
-	_add_circle_blocker("MoonHarborNorth", Vector2(3500, 300), 110.0)
-	_add_circle_blocker("MoonHarborCrown", Vector2(3650, 285), 120.0)
-	_add_circle_blocker("MoonHarborEast", Vector2(3780, 365), 130.0)
-	_add_circle_blocker("MoonHarborSoutheast", Vector2(3810, 510), 125.0)
-	_add_circle_blocker("MoonHarborSouth", Vector2(3690, 600), 105.0)
-	_add_polygon_blocker("WulanVillageIsland", PackedVector2Array([
-		Vector2(3185, 700), Vector2(3290, 650), Vector2(3430, 680), Vector2(3500, 760),
-		Vector2(3410, 825), Vector2(3240, 800),
-	]))
-	_add_polygon_blocker("FuboRidge", PackedVector2Array([
-		Vector2(3860, 735), Vector2(3970, 665), Vector2(4170, 700), Vector2(4390, 820),
-		Vector2(4710, 935), Vector2(4780, 1035), Vector2(4560, 1080), Vector2(4350, 1010),
-		Vector2(4140, 950), Vector2(3950, 895),
-	]))
-	_add_polygon_blocker("ShanwanMountain", PackedVector2Array([
-		Vector2(3260, 1040), Vector2(3440, 940), Vector2(3620, 1020), Vector2(3810, 1180),
-		Vector2(3700, 1330), Vector2(3440, 1390), Vector2(3230, 1290),
-	]))
-
-	# C-zone silhouettes are inset from foam and docks to keep landings reachable.
-	_add_polygon_blocker("ChenghaiLighthouse", PackedVector2Array([
-		Vector2(500, 1510), Vector2(640, 1460), Vector2(760, 1570), Vector2(785, 1790),
-		Vector2(680, 1880), Vector2(520, 1850), Vector2(440, 1700),
-	]))
-	_add_polygon_blocker("LongmenStronghold", PackedVector2Array([
-		Vector2(540, 2150), Vector2(720, 2070), Vector2(980, 2090), Vector2(1175, 2230),
-		Vector2(1120, 2390), Vector2(850, 2440), Vector2(580, 2340),
-	]))
-	_add_polygon_blocker("BaishaSandbar", PackedVector2Array([
-		Vector2(1360, 2370), Vector2(1550, 2270), Vector2(1810, 2260), Vector2(1990, 2375),
-		Vector2(1890, 2490), Vector2(1590, 2535), Vector2(1380, 2475),
-	]))
-	_add_circle_blocker("XuanchaoWestReef", Vector2(1980, 2395), 38.0)
-	_add_circle_blocker("XuanchaoMainReef", Vector2(2220, 2340), 58.0)
-	_add_circle_blocker("XuanchaoSouthReef", Vector2(2130, 2460), 34.0)
-
-	# D-zone keeps the western approach and south-facing final-port basin clear.
-	_add_polygon_blocker("RedBayMountain", PackedVector2Array([
-		Vector2(2820, 1800), Vector2(2990, 1710), Vector2(3170, 1780), Vector2(3370, 1970),
-		Vector2(3310, 2160), Vector2(3140, 2240), Vector2(2920, 2190), Vector2(2740, 2040),
-	]))
-	_add_polygon_blocker("NanaoWestWall", PackedVector2Array([
-		Vector2(3510, 2260), Vector2(3680, 2140), Vector2(3790, 2280), Vector2(3650, 2410),
-		Vector2(3510, 2440),
-	]))
-	_add_polygon_blocker("NanaoCitadel", PackedVector2Array([
-		Vector2(3690, 2080), Vector2(3860, 1920), Vector2(4250, 1820), Vector2(4540, 1940),
-		Vector2(4720, 2160), Vector2(4680, 2360), Vector2(4550, 2480), Vector2(4250, 2460),
-		Vector2(4130, 2350), Vector2(4000, 2350), Vector2(3900, 2270), Vector2(3730, 2300),
-	]))
-
-	# Only visually solid micro-reefs block movement; the central wreck is intentionally decorative.
-	_add_circle_blocker("CentralNorthReef", Vector2(1950, 1585), 38.0)
-	_add_circle_blocker("CentralEastReef", Vector2(2310, 1840), 34.0)
-	_add_circle_blocker("ShanwanOuterReef", Vector2(3970, 1240), 46.0)
-
-
 func _build_locations() -> void:
-	_build_location("南海军港", Vector2(1080, 650), 238.0, Vector2(480, 130), Vector2(0, 250))
-	_build_location("川山渔村", Vector2(480, 1040), 170.0, Vector2(320, 110), Vector2(0, 160))
-	_build_location("东湾水寨", Vector2(2040, 520), 225.0, Vector2(440, 120), Vector2(0, 180))
+	_build_location(
+		"南海军港",
+		Vector2(480, 1040),
+		110.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该地点即将开放",
+		Vector2.ZERO,
+		[Vector2(20, 90), Vector2(120, 20), Vector2(280, -10), Vector2(440, 30), Vector2(570, 120)]
+	)
+	_build_location(
+		"川山渔村",
+		Vector2(1080, 650),
+		95.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该地点即将开放",
+		Vector2(0, -220),
+		[Vector2(390, 30)]
+	)
+	_build_location(
+		"东湾水寨",
+		Vector2(2040, 520),
+		105.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该地点即将开放",
+		Vector2.ZERO,
+		[Vector2(140, 240)]
+	)
 	_build_location("青屿秘境", Vector2(2380, 540), 145.0, Vector2(260, 100), Vector2(0, 170), "该地点即将开放", Vector2(420, -140))
 
 	_build_location("沧门礁堡", Vector2(2780, 1080), 190.0, Vector2(320, 120), Vector2(-360, 140), "该岛屿即将开放")
 	_build_location("月环商港", Vector2(3650, 360), 250.0, Vector2(480, 150), Vector2(-300, 80), "该岛屿即将开放")
-	_build_location("雾岚群岛", Vector2(3070, 850), 165.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
-	_build_location("伏波古岭", Vector2(4260, 780), 220.0, Vector2(440, 120), Vector2(0, 175), "进入伏波古岭", Vector2.ZERO, FUBO_TRAVEL.FUBO_SCENE_PATH)
-	_build_location("珊湾渔链", Vector2(3670, 1150), 155.0, Vector2(260, 100), Vector2(250, 160), "该岛屿即将开放")
+	_build_location(
+		"雾岚群岛",
+		Vector2(3070, 850),
+		95.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[Vector2(405, -20)]
+	)
+	_build_location(
+		"伏波古岭",
+		Vector2(4260, 780),
+		110.0,
+		Vector2(440, 120),
+		Vector2(0, 175),
+		"进入伏波古岭",
+		Vector2.ZERO,
+		[],
+		[Vector2(460, 445)],
+		FUBO_TRAVEL.FUBO_SCENE_PATH
+	)
+	_build_location(
+		"珊湾渔链",
+		Vector2(3670, 1150),
+		110.0,
+		Vector2(260, 100),
+		Vector2(250, 160),
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[],
+		[Vector2(-490, 220)]
+	)
 
-	_build_location("澄海灯岛", Vector2(480, 1680), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location(
+		"澄海灯岛",
+		Vector2(480, 1680),
+		85.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[
+			Vector2(190, -290), Vector2(390, -230), Vector2(450, 0), Vector2(420, 220),
+			Vector2(180, 300), Vector2(-60, 230), Vector2(-100, 20), Vector2(-50, -200),
+		]
+	)
 	_build_location("龙门海寨", Vector2(860, 2260), 210.0, Vector2(400, 120), Vector2(0, 190), "该岛屿即将开放")
-	_build_location("白沙渔岛", Vector2(1460, 2460), 180.0, Vector2(360, 110), Vector2(0, 135), "该岛屿即将开放")
-	_build_location("玄潮古屿", Vector2(2100, 2240), 155.0, Vector2.ZERO, Vector2.ZERO, "该岛屿即将开放")
+	_build_location("白沙渔岛", Vector2(1460, 2460), 180.0, Vector2(300, 120), Vector2(180, 140), "该岛屿即将开放")
+	_build_location(
+		"玄潮古屿",
+		Vector2(2100, 2240),
+		110.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2(520, 360),
+		[Vector2(100, -60), Vector2(100, 360), Vector2(420, 180)]
+	)
 
-	_build_location("红湾卫所", Vector2(2980, 1760), 190.0, Vector2(360, 120), Vector2(-160, 170), "该岛屿即将开放")
-	_build_location("南澳商港", Vector2(4380, 2460), 280.0, Vector2(560, 150), Vector2(-100, 180), "该岛屿即将开放")
+	_build_location(
+		"红湾卫所",
+		Vector2(2980, 1760),
+		130.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[Vector2(380, 430)]
+	)
+	_build_location(
+		"倭寇营地",
+		Vector2(4380, 2460),
+		120.0,
+		Vector2.ZERO,
+		Vector2.ZERO,
+		"该岛屿即将开放",
+		Vector2.ZERO,
+		[Vector2(-630, 140)]
+	)
 
 
 func _build_auto_triggers() -> void:
 	_build_ship_trigger("茶叶商船", Vector2(1370, 760), 0)
 	_build_ship_trigger("岭南商船", Vector2(2600, 760), 1)
-	_build_ship_trigger("私盐商船", Vector2(2180, 1400), 0, "SaltMerchantShip", 48.0)
+	_build_ship_trigger("私盐商船", Vector2(2200, 1500), 0, "SaltMerchantShip", 48.0)
 	_build_event_trigger("漂流木箱", Vector2(1300, 1700))
 
 
@@ -329,7 +330,7 @@ func _build_fog_of_war() -> void:
 	_reveal_initial_known_land()
 	if saved_fog_state.is_empty():
 		_fog_of_war.call("reveal_at", SOUTH_SEA_HARBOR_SPAWN)
-	_fog_of_war.call("reveal_at", player.global_position)
+	_fog_of_war.reveal_at(player.global_position)
 	_store_fog_state()
 
 
@@ -354,11 +355,12 @@ func _store_fog_state() -> void:
 
 
 func _build_background_chunks() -> void:
+	var water_noise := _create_water_noise_texture(0.045, 4, 0.55)
 	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)
-	_configure_background_chunk("Background", A_MAP_TEXTURE, Vector2.ZERO, -100, false, false, distortion_noise)
-	_configure_background_chunk("EastBackground", B_MAP_TEXTURE, B_MAP_ORIGIN, -99, true, false, distortion_noise)
-	_configure_background_chunk("CBackground", C_MAP_TEXTURE, C_MAP_ORIGIN, -98, false, true, distortion_noise)
-	_configure_background_chunk("DBackground", D_MAP_TEXTURE, D_MAP_ORIGIN, -97, true, true, distortion_noise)
+	_configure_background_chunk("Background", A_MAP_TEXTURE, Vector2.ZERO, -100, false, false, water_noise, distortion_noise)
+	_configure_background_chunk("EastBackground", B_MAP_TEXTURE, B_MAP_ORIGIN, -99, true, false, water_noise, distortion_noise)
+	_configure_background_chunk("CBackground", C_MAP_TEXTURE, C_MAP_ORIGIN, -98, false, true, water_noise, distortion_noise)
+	_configure_background_chunk("DBackground", D_MAP_TEXTURE, D_MAP_ORIGIN, -97, true, true, water_noise, distortion_noise)
 
 
 func _create_water_noise_texture(frequency: float, octaves: int, gain: float) -> NoiseTexture2D:
@@ -375,7 +377,7 @@ func _create_water_noise_texture(frequency: float, octaves: int, gain: float) ->
 	return texture
 
 
-func _configure_background_chunk(node_name: String, texture: Texture2D, origin: Vector2, draw_order: int, fade_from_left: bool, fade_from_top: bool, distortion_noise: Texture2D) -> void:
+func _configure_background_chunk(node_name: String, texture: Texture2D, origin: Vector2, draw_order: int, fade_from_left: bool, fade_from_top: bool, water_noise: Texture2D, distortion_noise: Texture2D) -> void:
 	var background := $World.get_node_or_null(node_name) as Sprite2D
 	if background == null:
 		background = Sprite2D.new()
@@ -393,8 +395,7 @@ func _configure_background_chunk(node_name: String, texture: Texture2D, origin: 
 	blend_material.set_shader_parameter("fade_from_top", fade_from_top)
 	blend_material.set_shader_parameter("world_origin", origin)
 	blend_material.set_shader_parameter("world_size", MAP_CHUNK_SIZE)
-	blend_material.set_shader_parameter("waterNoise", distortion_noise)
-	blend_material.set_shader_parameter("waterFlowTexture", SEA_FLOW_TEXTURE)
+	blend_material.set_shader_parameter("waterNoise", water_noise)
 	blend_material.set_shader_parameter("waterDistortionNoise", distortion_noise)
 	background.material = blend_material
 
@@ -424,6 +425,8 @@ func _build_location(
 	front_trigger_offset: Vector2 = Vector2.ZERO,
 	entry_message: String = "该地点即将开放",
 	map_label_offset: Vector2 = Vector2.ZERO,
+	entry_trigger_offsets: Array[Vector2] = [],
+	additional_entry_trigger_offsets: Array[Vector2] = [],
 	target_scene_path: String = ""
 ) -> void:
 	var area := Area2D.new()
@@ -437,25 +440,51 @@ func _build_location(
 	area.set_meta("front_trigger_offset", front_trigger_offset)
 	area.set_meta("entry_message", entry_message)
 	area.set_meta("map_label_offset", map_label_offset)
+	area.set_meta("entry_trigger_offsets", entry_trigger_offsets)
+	area.set_meta("additional_entry_trigger_offsets", additional_entry_trigger_offsets)
 	area.set_meta("target_scene_path", target_scene_path)
 	area.add_to_group("sea_location")
 	world_markers.add_child(area)
 
+	if entry_trigger_offsets.is_empty():
+		_add_location_entry_trigger(area, "EntryTriggerShape", trigger_radius, front_trigger_size, front_trigger_offset)
+	else:
+		for index in range(entry_trigger_offsets.size()):
+			var shape_name := "EntryTriggerShape" if index == 0 else "EntryTriggerShape%d" % (index + 1)
+			_add_location_entry_trigger(area, shape_name, trigger_radius, Vector2.ZERO, entry_trigger_offsets[index])
+	for index in range(additional_entry_trigger_offsets.size()):
+		var shape_index: int = maxi(1, entry_trigger_offsets.size()) + index + 1
+		_add_location_entry_trigger(
+			area,
+			"EntryTriggerShape%d" % shape_index,
+			trigger_radius,
+			Vector2.ZERO,
+			additional_entry_trigger_offsets[index]
+		)
+
+	area.body_entered.connect(_on_location_body_entered.bind(area))
+	area.body_exited.connect(_on_location_body_exited.bind(area))
+
+
+func _add_location_entry_trigger(
+	area: Area2D,
+	shape_name: String,
+	trigger_radius: float,
+	trigger_size: Vector2,
+	trigger_offset: Vector2
+) -> void:
 	var shape_node := CollisionShape2D.new()
-	shape_node.name = "EntryTriggerShape"
-	if front_trigger_size != Vector2.ZERO:
+	shape_node.name = shape_name
+	shape_node.position = trigger_offset
+	if trigger_size != Vector2.ZERO:
 		var front_shape := RectangleShape2D.new()
-		front_shape.size = front_trigger_size
-		shape_node.position = front_trigger_offset
+		front_shape.size = trigger_size
 		shape_node.shape = front_shape
 	else:
 		var radial_shape := CircleShape2D.new()
 		radial_shape.radius = trigger_radius
 		shape_node.shape = radial_shape
 	area.add_child(shape_node)
-
-	area.body_entered.connect(_on_location_body_entered.bind(area))
-	area.body_exited.connect(_on_location_body_exited.bind(area))
 
 
 func _build_ship_trigger(ship_name: String, at: Vector2, atlas_column: int, node_name: String = "", trigger_radius: float = 82.0) -> void:
@@ -678,7 +707,8 @@ func _remove_drifting_crate() -> void:
 func _finish_tea_merchant_event() -> void:
 	_event_dialogue.hide_dialogue()
 	_resolve_tea_merchant_event()
-	_restore_controls_after_event()
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
 
 
 func _resolve_tea_merchant_event() -> void:
@@ -701,7 +731,8 @@ func _remove_tea_merchant_ship() -> void:
 func _finish_salt_merchant_event() -> void:
 	_event_dialogue.hide_dialogue()
 	_resolve_salt_merchant_event()
-	_restore_controls_after_event()
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
 
 
 func _resolve_salt_merchant_event() -> void:
@@ -723,10 +754,6 @@ func _remove_salt_merchant_ship() -> void:
 
 func _close_crate_dialogue() -> void:
 	_event_dialogue.hide_dialogue()
-	_restore_controls_after_event()
-
-
-func _restore_controls_after_event() -> void:
 	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
 	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
 
@@ -881,7 +908,7 @@ func _refresh_exploration_task() -> void:
 			objective = "接触海上的船只或漂流事件"
 		4:
 			objective = "继续探索岭南海域"
-	exploration_hud.call("set_main_task_progress", "探索大地图", objective, _exploration_stage)
+	exploration_hud.call("set_main_task_progress", "探索海域，完善海图", objective, _exploration_stage)
 
 
 func _on_hud_menu_visibility_changed(is_open: bool) -> void:
@@ -983,23 +1010,6 @@ func _vector_from_save(value: Variant, fallback: Vector2) -> Vector2:
 		return fallback
 	var restored := Vector2(float(value[0]), float(value[1]))
 	return restored if is_finite(restored.x) and is_finite(restored.y) else fallback
-
-
-func _add_polygon_blocker(node_name: String, points: PackedVector2Array) -> void:
-	var shape_node := CollisionPolygon2D.new()
-	shape_node.name = node_name
-	shape_node.polygon = points
-	world_collision.add_child(shape_node)
-
-
-func _add_circle_blocker(node_name: String, at: Vector2, radius: float) -> void:
-	var shape_node := CollisionShape2D.new()
-	shape_node.name = node_name
-	shape_node.position = at
-	var shape := CircleShape2D.new()
-	shape.radius = radius
-	shape_node.shape = shape
-	world_collision.add_child(shape_node)
 
 
 func _atlas_region(texture: Texture2D, columns: int, rows: int, column: int, row: int) -> AtlasTexture:

@@ -1,0 +1,38 @@
+# CHG-20260810 海图迷雾初始可见范围修正
+
+- 状态：done
+- 类型：海图探索 / 视觉修正
+- 日期：2026-08-10
+
+## 目标
+
+修正海上大地图首次进入时的迷雾边界：左上大陆作为水师已掌握的本土区域默认全部点亮；玩家出生及后续航行时，当前相机视野内不得残留黑色迷雾。
+
+## 范围
+
+- 初次进入、旧存档回退与已有存档恢复时，都将 `NorthwestCoast` 大陆碰撞轮廓内的区域标记为已揭示。
+- 玩家视野揭示形状使用当前相机可见世界矩形，不再使用内接椭圆；屏幕四角与边缘必须同时点亮。
+- 已揭示区域继续永久保留，并继续由航行画面与完整海图共用。
+- 只在运行时读取大陆碰撞轮廓，不改动当前未提交的 `sea_overworld.tscn`。
+
+## 验收检查
+
+1. 新游戏进入海上大地图后，画面四角及玩家出生视野内全部点亮。
+2. 完整海图左上大陆轮廓全部点亮，大陆外未探索海域仍保持黑色。
+3. 航行到新区域后，当前相机可见矩形全部点亮，矩形外仍保持迷雾。
+4. 返回场景二再出海及保存读取后，上述规则仍成立，既有航迹不丢失。
+
+## 预计文件
+
+- `scripts/sea_fog_of_war.gd`
+- `scripts/sea_overworld.gd`
+- `tests/test_sea_fog_of_war.gd`
+- `docs/design/sea-overworld-design.md`
+- `docs/tech/architecture.md`
+- `docs/qa/playtest.md`
+
+## 验证证据
+
+- `tests/test_sea_fog_of_war.gd` 在 Godot 4.7.1 headless 与 OpenGL Compatibility 模式均退出 0；断言覆盖左上大陆全部迷雾单元、出生点四角及平滑相机实际可见四角。
+- `tests/test_sea_fog_persistence.gd`、`tests/test_main_flow_save.gd`、`tests/test_scene_two_sea_link.gd` 均退出 0，确认跨场景与存档恢复无回归。
+- `.godot/sea_fog_world_preview.png` 原始分辨率复核确认出生画面全屏无黑色迷雾边条；`.godot/sea_fog_map_preview.png` 确认左上大陆完整点亮、其余未探索区域仍为黑色。

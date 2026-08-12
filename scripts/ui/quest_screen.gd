@@ -535,7 +535,7 @@ func _highlight_keywords(text_value: String, keywords: Array) -> String:
 
 
 func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dictionary:
-	if task_title == "探索大地图":
+	if task_title == "探索海域，完善海图" and _context_id == &"sea_overworld":
 		return _make_sea_overworld_main_task(progress_stage)
 	if task_title == "伏波古岭":
 		return _make_fubo_guling_main_task(progress_stage)
@@ -590,7 +590,7 @@ func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dict
 				},
 			],
 		}
-	if task_title == "和县令对话探索岭南海域":
+	if task_title == "探索海域，完善海图":
 		return {
 			"type": "主线",
 			"title": task_title,
@@ -733,7 +733,7 @@ func quest_context_for_test() -> StringName:
 func _make_sea_overworld_main_task(progress_stage: int) -> Dictionary:
 	return {
 		"type": "主线",
-		"title": "探索大地图",
+		"title": "探索海域，完善海图",
 		"objective": "使用WASD或方向键驾驶船只",
 		"description": "驾驶座船探索岭南海域，熟悉海上大地图的移动、地点接近、进入提示以及海上目标自动触发流程。",
 		"keywords": ["岭南海域", "海上大地图", "地点接近", "进入提示", "自动触发"],
@@ -779,7 +779,7 @@ func _make_completed_quests(task_title: String) -> Array[Dictionary]:
 		"巡视水师驻地": "奉诏入殿",
 		"筹备水师操练": "巡视水师驻地",
 		"参加水师操练": "筹备水师操练",
-		"和县令对话探索岭南海域": "参加水师操练",
+		"探索海域，完善海图": "参加水师操练",
 	}
 	var completed_quests: Array[Dictionary] = []
 	if not previous_by_current.has(task_title):

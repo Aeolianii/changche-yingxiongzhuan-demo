@@ -131,7 +131,7 @@ func reset_context(context_id: StringName) -> void:
 	if context_id == &"sea_overworld":
 		_sea_map_button_visible = true
 		_enable_sea_map_status()
-		_main_task_label.text = "探索大地图"
+		_main_task_label.text = "探索海域，完善海图"
 		_main_objective_label.text = "使用WASD或方向键驾驶船只"
 		if side_task != null:
 			side_task.text = "海上见闻"

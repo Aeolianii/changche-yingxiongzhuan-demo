@@ -137,6 +137,7 @@ func _verify_sea_restore() -> void:
 	_expect(int(scene.get("_exploration_stage")) == 3, "Sea overworld must restore its exploration stage.")
 	_expect(is_equal_approx(float(scene.get("_lunar_day")), 14.75), "Sea overworld must restore lunar progress.")
 	_expect("海上的船只" in (root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label).text, "Sea overworld must restore the stage-three objective.")
+	_expect((root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label).text == "探索海域，完善海图", "Sea overworld must restore main's chart-completion task title.")
 	(root.get_node("ExplorationUI/HUD").find_child("SaveGameButton", true, false) as Button).pressed.emit()
 	await process_frame
 	_expect(_saved_scene_path() == SEA_PATH, "Sea-overworld menu save signal must write a sea snapshot.")

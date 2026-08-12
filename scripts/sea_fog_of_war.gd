@@ -7,6 +7,7 @@ const STATE_VERSION := 1
 const CELL_SIZE := 16.0
 const WORLD_FOG_Z_INDEX := 40
 const VIEW_EDGE_FOG_INSET := 48.0
+const REVEAL_UPDATE_DISTANCE := 2.0
 const WORLD_FOG_SHADER := preload("res://shaders/sea_world_fog_edge.gdshader")
 
 var _world_size := Vector2.ONE
@@ -40,7 +41,7 @@ func setup(world_size: Vector2, camera_node: Camera2D, saved_state: Dictionary =
 func reveal_at(world_position: Vector2) -> bool:
 	if _fog_image == null or _camera == null:
 		return false
-	if world_position.distance_squared_to(_last_reveal_position) < pow(CELL_SIZE * 0.5, 2.0):
+	if world_position.distance_squared_to(_last_reveal_position) < pow(REVEAL_UPDATE_DISTANCE, 2.0):
 		return false
 	_last_reveal_position = world_position
 	var reveal_half_size := _get_camera_reveal_half_size()
@@ -72,7 +73,7 @@ func reveal_camera_view() -> bool:
 	var maximum_valid_center := Vector2(_camera.limit_right, _camera.limit_bottom) - half_vision
 	if camera_center.x < minimum_valid_center.x - _cell_world_size.x or camera_center.y < minimum_valid_center.y - _cell_world_size.y or camera_center.x > maximum_valid_center.x + _cell_world_size.x or camera_center.y > maximum_valid_center.y + _cell_world_size.y:
 		return false
-	var movement_threshold_squared := pow(CELL_SIZE * 0.5, 2.0)
+	var movement_threshold_squared := pow(REVEAL_UPDATE_DISTANCE, 2.0)
 	if camera_center.distance_squared_to(_last_camera_center) < movement_threshold_squared and camera_target.distance_squared_to(_last_camera_target) < movement_threshold_squared:
 		return false
 	_last_camera_center = camera_center

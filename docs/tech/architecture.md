@@ -15,7 +15,7 @@
 
 `Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操练覆盖层。
 
-`SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用横向拼接的广东海岸基础图与东部扩展图、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；东部扩展以 `World/EastBackground` 节点序列化在场景中，全部 14 个海岸多边形与 18 个圆形礁石碰撞也序列化在 `World/WorldCollision` 下，碰撞几何以提交 `3ac55ce` 为固定基线，便于在 Godot 2D 编辑器中直接查看和拖动。场景脚本只负责背景参数、动态地点/事件与运行时交互，不再生成静态世界碰撞。水师操练完成后可由场景二的广州县令对话进入，可从南海军港返回场景二，也可从伏波古岭入口进入真实岛屿场景。
+`SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用横向拼接的广东海岸基础图与东部扩展图、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；东部扩展以 `World/EastBackground` 节点序列化在场景中，全部 14 个海岸多边形与 18 个圆形礁石碰撞也序列化在 `World/WorldCollision` 下，碰撞几何与交互范围以提交 `3ac55ce` 为固定基线，海上自动目标统一使用半径 `82` 的触发范围，便于在 Godot 2D 编辑器中直接查看和拖动。场景脚本只负责背景参数、动态地点/事件与运行时交互，不再生成静态世界碰撞。水师操练完成后可由场景二的广州县令对话进入，可从南海军港返回场景二，也可从伏波古岭入口进入真实岛屿场景。
 
 海域探索迷雾由独立 `SeaFogOfWar` 组件在运行时创建。组件用低分辨率位图记录永久揭示单元，以当前 `Camera2D` 可见世界矩形在玩家航行路径上增量盖章，矩形覆盖相机视野的边缘与四角；初始化时还读取 `WorldCollision/NorthwestCoast` 的碰撞多边形，将左上大陆轮廓标记为默认已知。生成的黑色 Alpha 纹理同时供世界遮罩与 `SeaMapScreen` 使用。世界遮罩位于地点/事件之上、玩家船只之下，完整海图按同一位图隐藏未探索地图与地点名称。
 

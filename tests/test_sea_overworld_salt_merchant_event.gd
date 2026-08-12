@@ -57,7 +57,7 @@ func _verify_choice_branch(scene: Node, option_index: int, expected_detail: Stri
 		return
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var dialogue := scene.get_node("UI/FieldEventDialogue") as Control
-	player.global_position = salt_ship.global_position + Vector2(74, 0)
+	player.global_position = salt_ship.global_position + Vector2(110, 0)
 	for _frame in range(3):
 		await physics_frame
 	_expect(not dialogue.visible, "Salt merchant dialogue must not trigger before the player reaches the ship's immediate vicinity.")
@@ -106,7 +106,7 @@ func _verify_salt_ship_setup(scene: Node) -> Area2D:
 	var trigger_shapes := salt_ship.find_children("*", "CollisionShape2D", false, false)
 	var trigger_shape := trigger_shapes[0] as CollisionShape2D if not trigger_shapes.is_empty() else null
 	var trigger_circle := trigger_shape.shape as CircleShape2D if trigger_shape != null else null
-	_expect(trigger_circle != null and is_equal_approx(trigger_circle.radius, 48.0), "Salt merchant interaction radius must stay tightly wrapped around the ship.")
+	_expect(trigger_circle != null and is_equal_approx(trigger_circle.radius, 82.0), "Salt merchant interaction radius must follow the 3ac55ce sea-target baseline.")
 	var salt_sprite := salt_ship.get_node("ShipSprite") as Sprite2D
 	var tea_sprite := tea_ship.get_node("ShipSprite") as Sprite2D
 	var salt_texture := salt_sprite.texture as AtlasTexture

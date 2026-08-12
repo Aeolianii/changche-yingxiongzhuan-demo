@@ -294,7 +294,7 @@ func _build_locations() -> void:
 func _build_auto_triggers() -> void:
 	_build_ship_trigger("茶叶商船", Vector2(1370, 760), 0)
 	_build_ship_trigger("岭南商船", Vector2(2600, 760), 1)
-	_build_ship_trigger("私盐商船", Vector2(2200, 1500), 0, "SaltMerchantShip")
+	_build_ship_trigger("私盐商船", Vector2(2200, 1500), 0, "SaltMerchantShip", 48.0)
 	_build_event_trigger("漂流木箱", Vector2(1300, 1700))
 
 

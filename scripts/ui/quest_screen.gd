@@ -146,6 +146,7 @@ func set_main_task_progress(task_title: String, objective: String, progress_stag
 	_quests[0] = _make_main_quest_state(task_title, progress_stage, task_state)
 	_quests[0]["objective"] = objective
 	_completed_quests = _make_completed_quests(task_title)
+	_append_completed_side_quests(_task_state)
 	_selected_quest = 0
 	if is_instance_valid(_quest_choices):
 		_rebuild_quest_choices()
@@ -694,7 +695,7 @@ func _make_sea_overworld_quests(task_state := {}) -> Array[Dictionary]:
 		},
 	]
 	var fubo_state: Dictionary = task_state.get("fubo_side_quest", {}) if task_state is Dictionary else {}
-	if bool(fubo_state.get("accepted", false)):
+	if bool(fubo_state.get("accepted", false)) and not _is_fubo_side_quest_completed(fubo_state):
 		quests.append(_make_fubo_guling_main_task(
 			int(fubo_state.get("progress_stage", 0)),
 			bool(fubo_state.get("keeper_intro_completed", false))
@@ -748,6 +749,24 @@ func _make_fubo_guling_main_task(progress_stage: int, keeper_intro_completed := 
 			{"title": "登岭眺望南海", "description": "鼓令完成后登上观景台。", "keywords": ["观景台", "南海"], "completed": progress_stage >= 4, "expanded": progress_stage >= 3},
 		],
 	}
+
+
+func _append_completed_side_quests(task_state: Dictionary) -> void:
+	var fubo_state: Dictionary = task_state.get("fubo_side_quest", {})
+	if not bool(fubo_state.get("accepted", false)) or not _is_fubo_side_quest_completed(fubo_state):
+		return
+	var completed_fubo := _make_fubo_guling_main_task(4, bool(fubo_state.get("keeper_intro_completed", true)))
+	completed_fubo["objective"] = "已完成"
+	var completed_steps: Array = completed_fubo["steps"]
+	for step_value in completed_steps:
+		var step := step_value as Dictionary
+		step["completed"] = true
+		step["expanded"] = false
+	_completed_quests.append(completed_fubo)
+
+
+func _is_fubo_side_quest_completed(state: Dictionary) -> bool:
+	return bool(state.get("completed", false)) or int(state.get("progress_stage", 0)) >= 4
 
 
 func quest_context_for_test() -> StringName:

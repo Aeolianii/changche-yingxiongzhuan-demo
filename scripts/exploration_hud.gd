@@ -119,22 +119,32 @@ func _apply_tracked_side_quest(task_state: Variant) -> void:
 	if not task_state is Dictionary:
 		return
 	var state := task_state as Dictionary
+	if not state.has("tracked_side_quest"):
+		return
 	var tracked_id := StringName(str(state.get("tracked_side_quest", "")))
+	var side_entry := get_node_or_null("QuestTracker/SideQuest") as Panel
 	var side_task := get_node_or_null("QuestTracker/SideQuest/TaskName") as Label
 	var side_objective := get_node_or_null("QuestTracker/SideQuest/Objective") as Label
-	if side_task == null or side_objective == null:
+	if side_entry == null or side_task == null or side_objective == null:
 		return
+	side_entry.visible = false
 	if tracked_id == &"fubo_guling":
 		var fubo_state: Dictionary = state.get("fubo_side_quest", {})
-		if bool(fubo_state.get("accepted", false)):
+		if bool(fubo_state.get("accepted", false)) and not _is_fubo_side_quest_completed(fubo_state):
+			side_entry.visible = true
 			side_task.text = "伏波古岭"
 			side_objective.text = FUBO_QUEST_PROJECTION.current_step_title(
 				int(fubo_state.get("progress_stage", 0)),
 				bool(fubo_state.get("keeper_intro_completed", false))
 			)
 	elif tracked_id == &"sea_encounters":
+		side_entry.visible = true
 		side_task.text = "海上见闻"
 		side_objective.text = "接触海上的船只或漂流事件"
+
+
+func _is_fubo_side_quest_completed(state: Dictionary) -> bool:
+	return bool(state.get("completed", false)) or int(state.get("progress_stage", 0)) >= 4
 
 
 func reset_context(context_id: StringName) -> void:
@@ -150,6 +160,9 @@ func reset_context(context_id: StringName) -> void:
 		_main_objective_label.text = "前往标记地点推进剧情"
 	var side_task := get_node_or_null("QuestTracker/SideQuest/TaskName") as Label
 	var side_objective := get_node_or_null("QuestTracker/SideQuest/Objective") as Label
+	var side_entry := get_node_or_null("QuestTracker/SideQuest") as Panel
+	if side_entry != null:
+		side_entry.visible = true
 	if side_task != null:
 		side_task.text = "访查军港"
 	if side_objective != null:
@@ -625,6 +638,9 @@ func _build_quest_screen() -> void:
 func _on_side_quest_selected(quest_id: StringName, title: String, objective: String) -> void:
 	var side_task := get_node_or_null("QuestTracker/SideQuest/TaskName") as Label
 	var side_objective := get_node_or_null("QuestTracker/SideQuest/Objective") as Label
+	var side_entry := get_node_or_null("QuestTracker/SideQuest") as Panel
+	if side_entry != null:
+		side_entry.visible = true
 	if side_task != null:
 		side_task.text = title
 	if side_objective != null:

@@ -65,6 +65,56 @@ func _run() -> void:
 	var load_result: Dictionary = game_state.call("load_game")
 	_expect(bool(load_result.get("ok", false)) and bool(game_state.call("has_fubo_side_quest")), "Loading must restore the accepted Fubo side quest from world state.")
 	_expect(game_state.call("get_tracked_side_quest") == &"sea_encounters", "Loading must restore the side quest last selected in the quest screen.")
+	game_state.call("set_tracked_side_quest", &"fubo_guling")
+	game_state.call("set_fubo_side_quest_progress", 4, true)
+	var completed_state := game_state.call("get_fubo_side_quest_state") as Dictionary
+	_expect(bool(completed_state.get("completed", false)), "Fubo progress stage four must migrate into an explicit completed state.")
+	_expect(game_state.call("get_tracked_side_quest") == &"", "Completing Fubo must clear it from the tracked side-quest slot.")
+	_expect(str((game_state.get("_world_state") as Dictionary).get("tracked_side_quest", "stale")) == "", "Completing Fubo must clear the persisted tracked quest id, not only hide it at read time.")
+	game_state.call("set_tracked_side_quest", &"fubo_guling")
+	_expect(game_state.call("get_tracked_side_quest") == &"", "A completed Fubo quest must not be trackable again from stale UI state.")
+	scene.call("_refresh_exploration_task")
+	_expect(not hud.get_node("QuestTracker/SideQuest").visible, "Completing Fubo must hide it from the compact left tracker.")
+	var active_quests := quest_screen.get("_quests") as Array
+	var completed_quests := quest_screen.get("_completed_quests") as Array
+	var fubo_is_active := false
+	for quest_value in active_quests:
+		var quest := quest_value as Dictionary
+		if str(quest.get("id", "")) == "fubo_guling":
+			fubo_is_active = true
+			break
+	_expect(not fubo_is_active, "Completing Fubo must remove it from the active quest list.")
+	var archived_fubo: Dictionary = {}
+	for quest_value in completed_quests:
+		var quest := quest_value as Dictionary
+		if str(quest.get("id", "")) == "fubo_guling":
+			archived_fubo = quest
+			break
+	_expect(not archived_fubo.is_empty() and str(archived_fubo.get("objective", "")) == "已完成", "Completing Fubo must add it to the completed quest list.")
+	if not archived_fubo.is_empty():
+		var every_step_completed := true
+		for step_value in archived_fubo.get("steps", []):
+			if not bool((step_value as Dictionary).get("completed", false)):
+				every_step_completed = false
+				break
+		_expect(every_step_completed, "The archived Fubo quest must check every task-flow step.")
+	quest_screen.call("show_screen")
+	var sea_choice_after_completion := quest_screen.get_node("QuestChoices/QuestChoice1") as Button
+	sea_choice_after_completion.pressed.emit()
+	_expect(hud.get_node("QuestTracker/SideQuest").visible and (hud.get_node("QuestTracker/SideQuest/TaskName") as Label).text == "海上见闻", "Selecting another active side quest after Fubo completion must restore the compact tracker with that quest.")
+	var completed_save_result: Dictionary = game_state.call("save_game", "res://scenes/sea_overworld/sea_overworld.tscn", {})
+	_expect(bool(completed_save_result.get("ok", false)), "The archived Fubo quest must remain valid formal save data.")
+	game_state.call("reset_runtime_world_state")
+	var completed_load_result: Dictionary = game_state.call("load_game")
+	var restored_completed_state := game_state.call("get_fubo_side_quest_state") as Dictionary
+	_expect(bool(completed_load_result.get("ok", false)) and bool(restored_completed_state.get("completed", false)), "Loading must preserve the Fubo quest in its completed archive state.")
+	_expect(game_state.call("get_tracked_side_quest") == &"sea_encounters", "Loading an archived Fubo quest may restore another selected side quest, but must not restore Fubo to the tracker.")
+	game_state.set("_world_state", {
+		"fubo_side_quest": {"accepted": true, "progress_stage": 4, "keeper_intro_completed": true},
+		"tracked_side_quest": "fubo_guling",
+	})
+	_expect(bool((game_state.call("get_fubo_side_quest_state") as Dictionary).get("completed", false)), "Legacy stage-four saves must infer Fubo completion without a completed field.")
+	_expect(game_state.call("get_tracked_side_quest") == &"", "Legacy completed Fubo saves must ignore their stale tracked quest id.")
 
 	current_scene = null
 	scene.queue_free()

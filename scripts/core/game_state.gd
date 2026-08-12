@@ -108,28 +108,40 @@ func has_fubo_side_quest() -> bool:
 
 func set_fubo_side_quest_progress(progress_stage: int, keeper_intro_completed: bool) -> void:
 	var state := get_fubo_side_quest_state()
+	var normalized_stage := clampi(progress_stage, 0, 4)
 	state["accepted"] = true
-	state["progress_stage"] = clampi(progress_stage, 0, 4)
+	state["progress_stage"] = normalized_stage
 	state["keeper_intro_completed"] = keeper_intro_completed
+	state["completed"] = normalized_stage >= 4
 	_world_state["fubo_side_quest"] = state
+	if state["completed"] and StringName(str(_world_state.get("tracked_side_quest", ""))) == FUBO_SIDE_QUEST_ID:
+		_world_state["tracked_side_quest"] = ""
 
 
 func get_fubo_side_quest_state() -> Dictionary:
 	var raw_state: Variant = _world_state.get("fubo_side_quest", {})
 	var state := (raw_state as Dictionary).duplicate(true) if raw_state is Dictionary else {}
+	var progress_stage := clampi(int(state.get("progress_stage", 0)), 0, 4)
 	return {
 		"accepted": bool(state.get("accepted", false)),
-		"progress_stage": clampi(int(state.get("progress_stage", 0)), 0, 4),
+		"progress_stage": progress_stage,
 		"keeper_intro_completed": bool(state.get("keeper_intro_completed", false)),
+		"completed": bool(state.get("completed", progress_stage >= 4)) or progress_stage >= 4,
 	}
 
 
 func set_tracked_side_quest(quest_id: StringName) -> void:
+	if quest_id == FUBO_SIDE_QUEST_ID and bool(get_fubo_side_quest_state().get("completed", false)):
+		_world_state["tracked_side_quest"] = ""
+		return
 	_world_state["tracked_side_quest"] = String(quest_id)
 
 
 func get_tracked_side_quest() -> StringName:
-	return StringName(str(_world_state.get("tracked_side_quest", "")))
+	var tracked_id := StringName(str(_world_state.get("tracked_side_quest", "")))
+	if tracked_id == FUBO_SIDE_QUEST_ID and bool(get_fubo_side_quest_state().get("completed", false)):
+		return &""
+	return tracked_id
 
 
 func reset_runtime_world_state() -> void:

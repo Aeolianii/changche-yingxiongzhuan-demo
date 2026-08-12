@@ -86,7 +86,7 @@ func _test_scene_contract() -> void:
 	var boundary: CollisionPolygon2D = level.get_node("World/Collision/BlockedRegions/WalkableBoundary/Boundary")
 	_check(boundary.build_mode == 1 and boundary.polygon.size() >= 20, "The walkable boundary must use closed segment collision around the marked route.")
 	_check(level.get_node("World/WorldObjects/Player").position == Vector2(220, 868), "The player must spawn at the owner-marked dock cross.")
-	for dock_vertex in [Vector2(550, 768), Vector2(420, 823), Vector2(200, 943), Vector2(95, 868), Vector2(250, 788), Vector2(380, 688)]:
+	for dock_vertex in [Vector2(550, 768), Vector2(420, 823), Vector2(255, 933), Vector2(128, 849), Vector2(250, 788), Vector2(380, 688)]:
 		_check(boundary.polygon.has(dock_vertex), "The dock boundary must include approved vertex %s." % dock_vertex)
 	_check(not boundary.polygon.has(Vector2(260, 966)), "The old dock-tip boundary vertex must be removed.")
 	_check(level.get_node("World/WorldObjects/Keeper").position == Vector2(450, 475), "The keeper must stand at the house-front X.")
@@ -142,7 +142,7 @@ func _test_scene_contract() -> void:
 	if sea_return != null:
 		_check(sea_return.position == Vector2(235, 835), "The sea return trigger must sit at the approved dock tip.")
 		var sea_return_shape := (sea_return.get_node("Shape") as CollisionShape2D).shape as CircleShape2D
-		_check(sea_return_shape != null and is_equal_approx(sea_return_shape.radius, 55.0), "The sea return trigger must use the approved radius 55.")
+		_check(sea_return_shape != null and is_equal_approx(sea_return_shape.radius, 64.0), "The sea return trigger must retain the owner-adjusted radius 64.")
 		var fishing_shape := (level.get_node("World/Triggers/FishingTrigger/Shape") as CollisionShape2D).shape as CircleShape2D
 		_check(sea_return.position.distance_to(level.get_node("World/Triggers/FishingTrigger").position) > sea_return_shape.radius + fishing_shape.radius, "Sea return and fishing triggers must not overlap.")
 		_check(level.has_method("_on_sea_return_body_entered") and level.has_method("_return_to_sea_overworld"), "Fubo must implement explicit dock return behavior.")
@@ -216,7 +216,7 @@ func _test_scene_contract() -> void:
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Leaving repeat fishing must preserve the current story phase.")
 	_check(player.global_position == repeat_fishing_position, "Leaving repeat fishing must restore the position used to enter it.")
-	var drum_entry_position := Vector2(1095, 370)
+	var drum_entry_position := Vector2(950, 500)
 	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = drum_entry_position
 	level.call("_on_school_body_entered", player)
 	_check((level.get_node("Interface/HUD/PromptPanel/Prompt") as Label).text == "按 E / 空格 进入听令回鼓", "School interaction prompt must omit the redundant leave instruction.")
@@ -225,7 +225,8 @@ func _test_scene_contract() -> void:
 	host.active_minigame.exit_requested.emit()
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Leaving the drum minigame must restore its available phase.")
-	_check((level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position == drum_entry_position, "Leaving the drum minigame must restore the position used to enter it.")
+	var restored_drum_position := (level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position
+	_check(restored_drum_position == drum_entry_position, "Leaving the drum minigame must restore the position used to enter it: expected %s, got %s." % [drum_entry_position, restored_drum_position])
 	level.trigger_drum_for_test()
 	host.active_minigame.completed.emit({"game_id": "drum", "completed": true, "rating": "鼓点稳健", "mistakes": 1, "duration_ms": 1000})
 	await process_frame
@@ -246,6 +247,25 @@ func _test_scene_contract() -> void:
 	_check(player.controls_enabled and not completion_cutscene.visible, "Finishing the CG must restore scene control and hide the transition.")
 	_check(level.call("_is_stable_save_state"), "Completed Fubo exploration must be saveable.")
 	_check(fishing_station.call("is_available_for_test"), "Fishing must remain available after the side quest is complete.")
+	var game_state := root.get_node("GameState")
+	var completed_fubo_state := game_state.call("get_fubo_side_quest_state") as Dictionary
+	_check(bool(completed_fubo_state.get("completed", false)) and int(completed_fubo_state.get("progress_stage", 0)) == 4, "Finishing the CG must persistently complete the Fubo side quest.")
+	_check(game_state.call("get_tracked_side_quest") == &"", "A completed Fubo quest must be removed from the tracked side-quest slot.")
+	var global_hud := root.get_node("ExplorationUI/HUD") as Control
+	_check(not global_hud.get_node("QuestTracker/SideQuest").visible, "The completed Fubo quest must disappear from the compact left tracker.")
+	var quest_screen := global_hud.get_node("QuestScreen")
+	var active_quests := quest_screen.get("_quests") as Array
+	var completed_quests := quest_screen.get("_completed_quests") as Array
+	_check(not active_quests.any(func(quest: Dictionary) -> bool: return str(quest.get("id", "")) == "fubo_guling"), "The completed Fubo quest must leave the active quest list.")
+	var archived_fubo: Dictionary = {}
+	for quest_value in completed_quests:
+		var quest := quest_value as Dictionary
+		if str(quest.get("id", "")) == "fubo_guling":
+			archived_fubo = quest
+			break
+	_check(not archived_fubo.is_empty() and str(archived_fubo.get("objective", "")) == "已完成", "The completed tab must archive the Fubo quest with a completed objective.")
+	if not archived_fubo.is_empty():
+		_check((archived_fubo.get("steps", []) as Array).all(func(step: Dictionary) -> bool: return bool(step.get("completed", false))), "Every archived Fubo quest step must be checked.")
 	level.free()
 	await process_frame
 	await create_timer(0.55).timeout

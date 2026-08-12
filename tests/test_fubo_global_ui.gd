@@ -21,8 +21,9 @@ func _run() -> void:
 	_check(level.get_node_or_null("Interface/HUD/TitlePanel") == null, "Fubo must remove the old title rectangle.")
 	_check(level.get_node_or_null("Interface/HUD/FishingPanel") == null and level.get_node_or_null("Interface/HUD/DrumPanel") == null, "Fubo must remove old minigame status rectangles.")
 	_check((global_hud.get_node("QuestTracker/MainQuest/TaskName") as Label).text == "伏波古岭", "Fubo must project its task into the global tracker.")
-	var prompt := level.get_node("Interface/HUD/PromptPanel") as TextureRect
-	_check(prompt != null and prompt.texture != null and prompt.texture.resource_path.ends_with("interaction_button_ink_v1.png"), "Fubo prompt must use the existing ink interaction art.")
+	var prompt := level.get_node("Interface/HUD/PromptPanel") as TextureButton
+	_check(prompt != null and prompt.texture_normal != null and prompt.texture_normal.resource_path.ends_with("interaction_button_ink_v1.png"), "Fubo prompt must use the existing ink interaction art.")
+	_check(prompt.texture_pressed != null and prompt.texture_pressed.resource_path.ends_with("interaction_button_ink_active_v1.png"), "Fubo prompt must use the shared active interaction art.")
 	var dialogue := level.get_node("Interface/HUD/DialoguePanel") as TextureRect
 	_check(dialogue != null and dialogue.texture != null and dialogue.texture.resource_path.ends_with("ink_dialogue_backdrop.png"), "Fubo dialogue must use the shared ink backdrop.")
 	_check(level.has_node("Interface/HUD/DialoguePanel/SpeakerPlate"), "Fubo dialogue must use the shared speaker nameplate.")
@@ -42,6 +43,7 @@ func _run() -> void:
 		host.active_minigame.exit_requested.emit()
 		await process_frame
 	_check(host.active_minigame == null and global_hud.visible, "Leaving a Fubo minigame must restore the global HUD.")
+	_check((level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position == Vector2(220, 868), "Leaving coastal fishing must respawn the player at the dock.")
 	_check(level.call("_is_stable_save_state"), "Leaving a Fubo minigame must restore a saveable exploration state.")
 	level.set("_transitioning", true)
 	_check(not level.call("_is_stable_save_state"), "Fubo loading transitions must not be saveable.")

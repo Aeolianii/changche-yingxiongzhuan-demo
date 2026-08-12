@@ -26,8 +26,8 @@ const DOCK_SAFE_POSITION := Vector2(220, 868)
 const SCHOOL_SAFE_POSITION := Vector2(1030, 390)
 const INTERACTION_RADIUS := 76.0
 const DIALOGUE_LINES := [
-	"年轻人，码头外正是鱼群回游的时候。",
-	"回码头试试摆钩捕鱼，满载后再去校场。",
+	"年轻人，码头旁海岸正是鱼群回游的时候。",
+	"去岸边鱼竿处试试摆钩捕鱼，满载后再去校场。",
 	"校场的守军还会以三面鼓考验你的耳力。",
 ]
 
@@ -35,6 +35,7 @@ const DIALOGUE_LINES := [
 @onready var player: CharacterBody2D = $World/WorldObjects/Player
 @onready var camera: Camera2D = $World/WorldObjects/Player/Camera2D
 @onready var keeper: Node2D = $World/WorldObjects/Keeper
+@onready var fishing_station: FuboFishingStation = $World/WorldObjects/FishingStation
 @onready var school_barrier: Node2D = $World/WorldObjects/SchoolBarrier
 @onready var viewpoint_barrier: Node2D = $World/WorldObjects/ViewpointBarrier
 @onready var school_shape: CollisionShape2D = $World/Collision/SchoolBlocker/Shape
@@ -46,7 +47,7 @@ const DIALOGUE_LINES := [
 @onready var collision_debug: Node2D = $World/CollisionDebug
 @onready var minigame_host: FuboMinigameHost = $Interface/MinigameHost
 @onready var hud: Control = $Interface/HUD
-@onready var prompt_panel: TextureRect = $Interface/HUD/PromptPanel
+@onready var prompt_panel: TextureButton = $Interface/HUD/PromptPanel
 @onready var prompt_label: Label = $Interface/HUD/PromptPanel/Prompt
 @onready var dialogue_panel: TextureRect = $Interface/HUD/DialoguePanel
 @onready var speaker_label: Label = $Interface/HUD/DialoguePanel/Speaker
@@ -74,6 +75,7 @@ func _ready() -> void:
 	minigame_host.configure(world, exploration_hud if exploration_hud != null else hud, player)
 	minigame_host.minigame_finished.connect(_on_minigame_finished)
 	minigame_host.minigame_cancelled.connect(_on_minigame_cancelled)
+	prompt_panel.pressed.connect(_handle_interaction)
 	fishing_trigger.body_entered.connect(_on_fishing_body_entered)
 	fishing_trigger.body_exited.connect(_on_trigger_body_exited.bind("fishing"))
 	sea_return_trigger.body_entered.connect(_on_sea_return_body_entered)
@@ -214,6 +216,11 @@ func _apply_phase_world_state() -> void:
 	school_barrier.visible = not fishing_done
 	viewpoint_shape.disabled = drum_done
 	viewpoint_barrier.visible = not drum_done
+	_sync_fishing_station()
+
+
+func _sync_fishing_station() -> void:
+	fishing_station.set_available(phase == Phase.FISHING_AVAILABLE)
 
 
 func _show_save_message(success: bool, reason: String) -> void:
@@ -238,7 +245,7 @@ func _refresh_exploration_hud() -> void:
 	var progress_stage := 0
 	match phase:
 		Phase.FISHING_AVAILABLE, Phase.FISHING_ACTIVE:
-			objective = "返回码头，在岸边开始钓鱼"
+			objective = "前往码头旁海岸，在鱼竿处开始钓鱼"
 			progress_stage = 1
 		Phase.DRUM_AVAILABLE, Phase.DRUM_ACTIVE:
 			objective = "沿山路前往古校场，完成听令回鼓"
@@ -342,13 +349,15 @@ func _advance_dialogue() -> void:
 
 func _unlock_fishing_location() -> void:
 	phase = Phase.FISHING_AVAILABLE
+	_sync_fishing_station()
 	_refresh_exploration_hud()
 
 
 func _on_fishing_body_entered(body: Node) -> void:
 	if body == player and phase == Phase.FISHING_AVAILABLE:
 		_pending_trigger = "fishing"
-		prompt_label.text = "按 E / 空格 开始码头钓鱼；离开则暂不进入"
+		fishing_station.set_highlighted(true)
+		prompt_label.text = "按 E / 空格 开始海岸钓鱼"
 		prompt_panel.visible = true
 
 
@@ -371,6 +380,8 @@ func _on_trigger_body_exited(body: Node, trigger_id: String) -> void:
 	if body == player and _pending_trigger == trigger_id:
 		_pending_trigger = ""
 		prompt_panel.visible = false
+		if trigger_id == "fishing":
+			fishing_station.set_highlighted(false)
 
 
 func _return_to_sea_overworld() -> void:
@@ -406,6 +417,7 @@ func _open_fishing_minigame() -> bool:
 	if not minigame_host.open_minigame(FISHING_SCENE, "fishing"):
 		return false
 	phase = Phase.FISHING_ACTIVE
+	_sync_fishing_station()
 	_refresh_exploration_hud()
 	return true
 
@@ -436,6 +448,7 @@ func _complete_fishing(result: Dictionary) -> void:
 	if phase != Phase.FISHING_ACTIVE:
 		return
 	phase = Phase.DRUM_AVAILABLE
+	_sync_fishing_station()
 	school_shape.set_deferred("disabled", true)
 	school_barrier.visible = false
 	_refresh_exploration_hud()
@@ -464,6 +477,7 @@ func _on_minigame_cancelled(game_id: String) -> void:
 			player.global_position = SCHOOL_SAFE_POSITION
 	player.controls_enabled = true
 	prompt_panel.visible = false
+	_sync_fishing_station()
 	_refresh_exploration_hud()
 
 

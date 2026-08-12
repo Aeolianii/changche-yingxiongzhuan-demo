@@ -10,6 +10,9 @@
 [ext_resource type="Script" uid="uid://cny8xf0r0eepe" path="res://scripts/fubo_guling/minigames/fubo_minigame_host.gd" id="29_p58l7"]
 [ext_resource type="Texture2D" uid="uid://cofirowu5vner" path="res://assets/ui/dialogue/ink_dialogue_backdrop.png" id="30_dialogue"]
 [ext_resource type="Texture2D" uid="uid://d4fe3kc37c3kx" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="31_prompt"]
+[ext_resource type="Texture2D" uid="uid://d2w4jmas4pnol" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="32_prompt_active"]
+[ext_resource type="Texture2D" path="res://assets/fubo_guling/generated/fishing_station_v1.png" id="33_fishing_station"]
+[ext_resource type="Script" path="res://scripts/fubo_guling/fubo_fishing_station.gd" id="34_fishing_station"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_yewv4"]
 size = Vector2(18, 10)
@@ -49,25 +52,27 @@ offset_right = 1344.0
 offset_bottom = 896.0
 mouse_filter = 2
 
-[node name="PromptPanel" type="TextureRect" parent="Interface/HUD" unique_id=222740050]
+[node name="PromptPanel" type="TextureButton" parent="Interface/HUD" unique_id=222740050]
 visible = false
 texture_filter = 1
 layout_mode = 0
-offset_left = 322.0
-offset_top = 820.0
-offset_right = 1022.0
-offset_bottom = 872.0
-mouse_filter = 2
-texture = ExtResource("31_prompt")
-expand_mode = 1
-stretch_mode = 5
+offset_left = 522.0
+offset_top = 800.0
+offset_right = 822.0
+offset_bottom = 874.0
+texture_normal = ExtResource("31_prompt")
+texture_pressed = ExtResource("32_prompt_active")
+ignore_texture_size = true
+stretch_mode = 0
 
 [node name="Prompt" type="Label" parent="Interface/HUD/PromptPanel" unique_id=1409687728]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 4.0
-offset_right = 688.0
-offset_bottom = 48.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.8784314, 0.47843137, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
 theme_override_constants/shadow_offset_x = 2
@@ -216,6 +221,16 @@ prop_size = Vector2(60, 74)
 main_color = Color(0.23137255, 0.29411766, 0.32156864, 1)
 art_texture = ExtResource("10_qcq6o")
 
+[node name="FishingStation" type="Node2D" parent="World/WorldObjects"]
+position = Vector2(585, 835)
+script = ExtResource("34_fishing_station")
+
+[node name="Sprite" type="Sprite2D" parent="World/WorldObjects/FishingStation"]
+show_behind_parent = true
+texture_filter = 1
+position = Vector2(0, -88)
+texture = ExtResource("33_fishing_station")
+
 [node name="SchoolBarrier" type="Node2D" parent="World/WorldObjects" unique_id=190706852]
 visible = false
 texture_filter = 1
@@ -295,7 +310,7 @@ collision_layer = 0
 shape = SubResource("CircleShape2D_o7m5c")
 
 [node name="FishingTrigger" type="Area2D" parent="World/Triggers" unique_id=1435280955]
-position = Vector2(380, 790)
+position = Vector2(585, 835)
 
 [node name="Shape" type="CollisionShape2D" parent="World/Triggers/FishingTrigger" unique_id=1179949765]
 shape = SubResource("CircleShape2D_avxio")

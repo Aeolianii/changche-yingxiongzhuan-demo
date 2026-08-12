@@ -395,7 +395,7 @@ func _verify_production_entry_alignment(scene: Node) -> void:
 	var expected_entry_centers := {
 		"东湾水寨": [Vector2(2180, 760)],
 		"雾岚群岛": [Vector2(3475, 830)],
-		"伏波古岭": [Vector2(4720, 1225)],
+		"伏波古岭": [Vector2(4308, 1069)],
 		"珊湾渔链": [Vector2(3180, 1370)],
 		"澄海灯岛": [
 			Vector2(670, 1390), Vector2(870, 1450), Vector2(930, 1680), Vector2(900, 1900),
@@ -437,7 +437,7 @@ func _verify_production_entry_alignment(scene: Node) -> void:
 	var fubo := _find_location(locations, "伏波古岭")
 	if fubo != null:
 		var fubo_primary := fubo.get_node("EntryTriggerShape") as CollisionShape2D
-		_expect(fubo_primary.shape is CircleShape2D and fubo_primary.position.is_equal_approx(Vector2(460, 445)), "Fubo Ridge must only allow landing at its lower-right dock.")
+		_expect(fubo_primary.shape is CircleShape2D and fubo_primary.position.is_equal_approx(Vector2(48, 289)), "Fubo Ridge must allow landing at the shallow beach shown on its southeast shore.")
 	var shanwan := _find_location(locations, "珊湾渔链")
 	if shanwan != null:
 		var shanwan_primary := shanwan.get_node("EntryTriggerShape") as CollisionShape2D

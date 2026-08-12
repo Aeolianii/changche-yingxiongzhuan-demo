@@ -195,9 +195,12 @@ func _refresh_markers() -> void:
 	if is_instance_valid(_player) and is_instance_valid(_player_marker):
 		var marker_position := _map_position(_player.global_position)
 		_player_marker.position = Vector2(
-			clampf(marker_position.x, 20.0, MAP_VIEW_SIZE.x - 208.0),
+			clampf(marker_position.x, 20.0, MAP_VIEW_SIZE.x - 20.0),
 			clampf(marker_position.y, 22.0, MAP_VIEW_SIZE.y - 22.0)
 		)
+		var label_on_left := _player_marker.position.x + 18.0 + _player_name_label.size.x > MAP_VIEW_SIZE.x - 8.0
+		_player_name_label.position.x = -_player_name_label.size.x - 18.0 if label_on_left else 18.0
+		_player_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if label_on_left else HORIZONTAL_ALIGNMENT_LEFT
 
 
 func _map_position(world_position: Vector2) -> Vector2:

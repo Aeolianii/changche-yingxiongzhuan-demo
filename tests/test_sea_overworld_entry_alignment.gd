@@ -5,7 +5,7 @@ const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const EXPECTED_ENTRY_CENTERS := {
 	"东湾水寨": [Vector2(2180, 760)],
 	"雾岚群岛": [Vector2(3475, 830)],
-	"伏波古岭": [Vector2(4720, 1225)],
+	"伏波古岭": [Vector2(4308, 1069)],
 	"珊湾渔链": [Vector2(3180, 1370)],
 	"澄海灯岛": [
 		Vector2(670, 1390), Vector2(870, 1450), Vector2(930, 1680), Vector2(900, 1900),
@@ -62,7 +62,16 @@ func _run() -> void:
 	var fubo := _find_location(locations, "伏波古岭")
 	if fubo != null:
 		var primary := fubo.get_node("EntryTriggerShape") as CollisionShape2D
-		_expect(primary.shape is CircleShape2D and primary.position.is_equal_approx(Vector2(460, 445)), "Fubo Ridge must only allow landing at its lower-right dock.")
+		_expect(primary.shape is CircleShape2D and primary.position.is_equal_approx(Vector2(48, 289)), "Fubo Ridge must allow landing at the shallow beach shown on its southeast shore.")
+
+	var map_screen := root.get_node("ExplorationUI/HUD/SeaMapScreen") as Control
+	player.global_position = Vector2(4308, 1069)
+	map_screen.call("_refresh_markers")
+	var player_marker := map_screen.get_node("MapPanel/MapViewport/PlayerMarker") as Control
+	var player_label := player_marker.get_node("PlayerName") as Label
+	var expected_map_position := map_screen.call("_map_position", player.global_position) as Vector2
+	_expect(player_marker.position.is_equal_approx(expected_map_position), "The full-map current-position glyph must stay at the ship's true projected coordinates near Fubo Ridge.")
+	_expect(player_label.position.x < 0.0 and player_label.horizontal_alignment == HORIZONTAL_ALIGNMENT_RIGHT, "Near the chart's right edge, only the current-position text must flip left of the glyph.")
 	var shanwan := _find_location(locations, "珊湾渔链")
 	if shanwan != null:
 		var primary := shanwan.get_node("EntryTriggerShape") as CollisionShape2D

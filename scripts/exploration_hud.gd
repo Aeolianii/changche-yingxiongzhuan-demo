@@ -1,5 +1,7 @@
 extends Control
 
+const FUBO_QUEST_PROJECTION := preload("res://scripts/fubo_guling/fubo_quest_projection.gd")
+
 const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
 const EXPLORATION_STATUS_FRAME := preload("res://assets/ui/exploration_hud/player_status_frame.png")
 const EXPLORATION_QUEST_FRAME := preload("res://assets/ui/exploration_hud/quest_tracker_frame.png")
@@ -126,13 +128,10 @@ func _apply_tracked_side_quest(task_state: Variant) -> void:
 		var fubo_state: Dictionary = state.get("fubo_side_quest", {})
 		if bool(fubo_state.get("accepted", false)):
 			side_task.text = "伏波古岭"
-			side_objective.text = [
-				"巡视伏波古岭",
-				"巡视伏波古岭",
-				"前往古校场完成鼓令",
-				"登岭眺望南海",
-				"伏波古岭巡视完成",
-			][clampi(int(fubo_state.get("progress_stage", 0)), 0, 4)]
+			side_objective.text = FUBO_QUEST_PROJECTION.current_step_title(
+				int(fubo_state.get("progress_stage", 0)),
+				bool(fubo_state.get("keeper_intro_completed", false))
+			)
 	elif tracked_id == &"sea_encounters":
 		side_task.text = "海上见闻"
 		side_objective.text = "接触海上的船只或漂流事件"

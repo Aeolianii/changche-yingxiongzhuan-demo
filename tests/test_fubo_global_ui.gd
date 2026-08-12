@@ -24,8 +24,9 @@ func _run() -> void:
 	_check((global_hud.get_node("QuestTracker/SideQuest/TaskName") as Label).text == "伏波古岭", "Direct Fubo testing must automatically accept and track its side quest.")
 	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Fubo must expose fishing immediately on initial load.")
 	_check("巡视伏波古岭" in (global_hud.get_node("QuestTracker/MainQuest/Objective") as Label).text, "Fubo's main tracker must retain the sea-exploration framing.")
+	_check((global_hud.get_node("QuestTracker/SideQuest/Objective") as Label).text == "寻找守岭人", "The tracked Fubo objective must begin with the first incomplete quest-flow step.")
 	var quest_screen := global_hud.get_node("QuestScreen")
-	_check(str(quest_screen.get("_quests")[2]["objective"]) == "前往码头旁海岸，在鱼竿处开始钓鱼", "Initial Fubo side-quest detail must direct the player to fishing.")
+	_check(str(quest_screen.get("_quests")[2]["objective"]) == "寻找守岭人", "Initial Fubo side-quest detail must match the tracked first step.")
 	_check(not bool(quest_screen.get("_quests")[2]["steps"][0]["completed"]), "Landing on Fubo must not mark the keeper conversation complete.")
 	var prompt := level.get_node("Interface/HUD/PromptPanel") as TextureButton
 	_check(prompt != null and prompt.texture_normal != null and prompt.texture_normal.resource_path.ends_with("interaction_button_ink_v1.png"), "Fubo prompt must use the existing ink interaction art.")
@@ -63,6 +64,8 @@ func _run() -> void:
 	level.call("_advance_dialogue")
 	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE and level.call("is_keeper_intro_completed_for_test"), "Keeper dialogue must not gate or change the fishing phase.")
 	_check(bool(quest_screen.get("_quests")[2]["steps"][0]["completed"]), "Only completing the keeper's first dialogue may check the keeper quest step.")
+	_check((global_hud.get_node("QuestTracker/SideQuest/Objective") as Label).text == "码头摆钩钓鱼", "Completing the keeper dialogue must advance the tracker to the fishing step.")
+	_check(str(quest_screen.get("_quests")[2]["objective"]) == "码头摆钩钓鱼", "The quest detail must advance to fishing at the same time as the tracker.")
 	_check(level.call("_is_stable_save_state"), "Fubo fishing-available exploration must remain saveable after the keeper hint.")
 	var fishing_entry_position := Vector2(665, 810)
 	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = fishing_entry_position
@@ -74,8 +77,8 @@ func _run() -> void:
 		host.active_minigame.completed.emit({"game_id": "fishing", "completed": true, "rating": "渔获丰足", "mistakes": 0, "duration_ms": 1000})
 		await process_frame
 	_check(host.active_minigame == null and global_hud.visible, "Completing a Fubo minigame must restore the global HUD.")
-	_check((global_hud.get_node("QuestTracker/SideQuest/Objective") as Label).text == "前往古校场完成鼓令", "Fishing completion must dynamically advance the tracked side quest to the schoolyard.")
-	_check(str(quest_screen.get("_quests")[2]["objective"]) == "沿山路前往古校场", "Fishing completion must dynamically advance the side-quest detail to the schoolyard.")
+	_check((global_hud.get_node("QuestTracker/SideQuest/Objective") as Label).text == "完成古校场鼓令", "Fishing completion must dynamically advance the tracked side quest to the schoolyard.")
+	_check(str(quest_screen.get("_quests")[2]["objective"]) == "完成古校场鼓令", "Fishing completion must dynamically advance the side-quest detail to the same schoolyard step.")
 	_check(bool(quest_screen.get("_quests")[2]["steps"][1]["completed"]), "Fishing completion must check only the fishing quest step.")
 	var restored_position := (level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position
 	_check(restored_position == fishing_entry_position, "Leaving coastal fishing must restore the position used to enter it: expected %s, got %s." % [fishing_entry_position, restored_position])

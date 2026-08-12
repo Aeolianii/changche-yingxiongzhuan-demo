@@ -3,6 +3,7 @@ extends Control
 const QUEST_BACKGROUND := preload("res://assets/ui/quest_screen/quest_screen_background.png")
 const FUNCTION_BUTTON_FRAME := preload("res://assets/ui/exploration_hud/function_button.png")
 const RETURN_ICON := preload("res://assets/ui/icons/menu_return_title.png")
+const FUBO_QUEST_PROJECTION := preload("res://scripts/fubo_guling/fubo_quest_projection.gd")
 
 const GOLD := Color(0.73, 0.59, 0.32, 1.0)
 const GOLD_BRIGHT := Color(0.96, 0.78, 0.28, 1.0)
@@ -737,13 +738,7 @@ func _make_fubo_guling_main_task(progress_stage: int, keeper_intro_completed := 
 		"id": "fubo_guling",
 		"type": "支线",
 		"title": "伏波古岭",
-		"objective": [
-			"前往码头旁海岸，在鱼竿处开始钓鱼",
-			"前往码头旁海岸，在鱼竿处开始钓鱼",
-			"沿山路前往古校场",
-			"登上观景台眺望南海",
-			"行程完成",
-		][clampi(progress_stage, 0, 4)],
+		"objective": FUBO_QUEST_PROJECTION.current_step_title(progress_stage, keeper_intro_completed),
 		"description": "从码头登陆伏波古岭，拜访守岭人，完成码头渔获与古校场鼓令，最后登岭眺望南海。",
 		"keywords": ["伏波古岭", "守岭人", "码头渔获", "古校场", "南海"],
 		"steps": [

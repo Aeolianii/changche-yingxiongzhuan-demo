@@ -72,6 +72,8 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 ## Interfaces and invariants
 
+- 场景加载过场播放期间，共享 `ExplorationHUD` 必须保持隐藏；场景的逐帧 HUD 刷新必须把 `_transitioning` 视为不可见状态，不能让任务栏、功能按钮或海图入口穿透加载画面。目标场景完成初始化后，才按目标上下文恢复探索 HUD。
+
 - 2D 单平面，不实现高度系统。
 - 像素纹理使用最近邻过滤；LPC 角色保持原始 64×64 比例，第一幕皇帝保留 128×128 源帧并通过场景实例变换匹配 LPC 可见高度。
 - 一次性边界只用编辑器可见、可拖动的 `CollisionPolygon2D`。

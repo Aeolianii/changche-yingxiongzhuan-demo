@@ -21,6 +21,7 @@ func _run() -> void:
 	_check(level.get_node_or_null("Interface/HUD/TitlePanel") == null, "Fubo must remove the old title rectangle.")
 	_check(level.get_node_or_null("Interface/HUD/FishingPanel") == null and level.get_node_or_null("Interface/HUD/DrumPanel") == null, "Fubo must remove old minigame status rectangles.")
 	_check((global_hud.get_node("QuestTracker/MainQuest/TaskName") as Label).text == "伏波古岭", "Fubo must project its task into the global tracker.")
+	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Fubo must expose fishing immediately on initial load.")
 	var prompt := level.get_node("Interface/HUD/PromptPanel") as TextureButton
 	_check(prompt != null and prompt.texture_normal != null and prompt.texture_normal.resource_path.ends_with("interaction_button_ink_v1.png"), "Fubo prompt must use the existing ink interaction art.")
 	_check(prompt.texture_pressed != null and prompt.texture_pressed.resource_path.ends_with("interaction_button_ink_active_v1.png"), "Fubo prompt must use the shared active interaction art.")
@@ -36,7 +37,7 @@ func _run() -> void:
 	var notice_backdrop := level.get_node("Interface/HUD/Overlay/NoticeBackdrop") as TextureRect
 	_check(notice_backdrop != null and notice_backdrop.texture != null and notice_backdrop.texture.resource_path.ends_with("ink_dialogue_backdrop.png"), "Fubo notices must use an ink backdrop over a separate dimmer.")
 
-	_check(level.call("_is_stable_save_state"), "Fubo arrival exploration must be saveable.")
+	_check(level.call("_is_stable_save_state"), "Fubo initial fishing-available exploration must be saveable.")
 	level.call("_start_dialogue")
 	var keeper_portrait := dialogue.get_node("LargeTransparentPortrait") as TextureRect
 	_check(keeper_portrait.visible and keeper_portrait.texture != null and keeper_portrait.texture.resource_path == "res://assets/characters/soldier/picture.png", "Keeper dialogue must reuse the soldier portrait.")
@@ -47,7 +48,8 @@ func _run() -> void:
 	_check(dialogue.dialogue_label.text == "去岸边鱼竿处试试摆钩捕鱼，满载后再去校场。", "The shared continue option must advance keeper dialogue.")
 	for _index in 2:
 		level.call("_advance_dialogue")
-	_check(level.call("_is_stable_save_state"), "Fubo fishing-available exploration must be saveable.")
+	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE and level.call("is_keeper_intro_completed_for_test"), "Keeper dialogue must not gate or change the fishing phase.")
+	_check(level.call("_is_stable_save_state"), "Fubo fishing-available exploration must remain saveable after the keeper hint.")
 	var fishing_entry_position := Vector2(665, 810)
 	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = fishing_entry_position
 	level.call("trigger_fishing_for_test")

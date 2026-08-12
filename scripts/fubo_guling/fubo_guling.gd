@@ -53,13 +53,15 @@ const KEEPER_IDLE_LINE := "倭寇之乱什么时候才能平定啊……"
 @onready var overlay: ColorRect = $Interface/HUD/Overlay
 @onready var overlay_text: Label = $Interface/HUD/Overlay/OverlayText
 
-var phase := Phase.ARRIVAL
+var phase := Phase.FISHING_AVAILABLE
+var _keeper_intro_completed := false
 var _dialogue_index := -1
 var _keeper_focused := false
 var _pending_trigger := ""
 var _test_mode := false
 var _transitioning := false
 var _minigame_return_position := Vector2.ZERO
+var _fishing_return_phase := Phase.FISHING_AVAILABLE
 var _loading_transition: SceneLoadingTransition
 var dialogue_panel: FieldEventDialogue
 var exploration_hud: Control
@@ -165,7 +167,13 @@ func _on_save_requested() -> void:
 		_show_save_message(false, "write_failed")
 		return
 	var sea_context := get_tree().root.get_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, {}) as Dictionary
-	var snapshot := FUBO_SAVE_STATE.make_snapshot(player.global_position, str(player.get("facing")), phase, sea_context)
+	var snapshot := FUBO_SAVE_STATE.make_snapshot(
+		player.global_position,
+		str(player.get("facing")),
+		phase,
+		sea_context,
+		_keeper_intro_completed
+	)
 	if snapshot.is_empty():
 		_show_save_message(false, "invalid_scene_state")
 		return
@@ -224,6 +232,9 @@ func _restore_saved_scene_state(raw_snapshot: Dictionary) -> void:
 	player.set("facing", str(snapshot["player_facing"]))
 	player.call("set_move_direction", Vector2.ZERO)
 	phase = int(snapshot["phase"])
+	if phase == Phase.ARRIVAL:
+		phase = Phase.FISHING_AVAILABLE
+	_keeper_intro_completed = bool(snapshot.get("keeper_intro_completed", false))
 	_apply_phase_world_state()
 	var runtime_context := FUBO_SAVE_STATE.sea_context_for_runtime(snapshot.get("sea_return_context", {}))
 	if runtime_context.is_empty():
@@ -244,7 +255,11 @@ func _apply_phase_world_state() -> void:
 
 
 func _sync_fishing_station() -> void:
-	fishing_station.set_available(phase == Phase.FISHING_AVAILABLE)
+	fishing_station.set_available(_is_fishing_available())
+
+
+func _is_fishing_available() -> bool:
+	return phase in [Phase.FISHING_AVAILABLE, Phase.DRUM_AVAILABLE, Phase.VIEWPOINT_OPEN]
 
 
 func _show_save_message(success: bool, reason: String) -> void:
@@ -265,11 +280,14 @@ func _game_state() -> Node:
 func _refresh_exploration_hud() -> void:
 	if exploration_hud == null:
 		return
-	var objective := "沿山路寻找守岭人"
+	var objective := "码头旁鱼竿可随时钓鱼，也可询问守岭人"
 	var progress_stage := 0
 	match phase:
-		Phase.FISHING_AVAILABLE, Phase.FISHING_ACTIVE:
+		Phase.FISHING_AVAILABLE:
 			objective = "前往码头旁海岸，在鱼竿处开始钓鱼"
+			progress_stage = 1
+		Phase.FISHING_ACTIVE:
+			objective = "完成海岸摆钩钓鱼"
 			progress_stage = 1
 		Phase.DRUM_AVAILABLE, Phase.DRUM_ACTIVE:
 			objective = "沿山路前往古校场，完成听令回鼓"
@@ -351,7 +369,7 @@ func _set_keeper_focus(enabled: bool) -> void:
 func _start_dialogue() -> void:
 	player.controls_enabled = false
 	player.cancel_move_target()
-	if phase == Phase.ARRIVAL:
+	if not _keeper_intro_completed:
 		_dialogue_index = 0
 		_present_keeper_dialogue_line()
 	else:
@@ -367,15 +385,16 @@ func _start_dialogue() -> void:
 
 
 func _advance_dialogue() -> void:
-	if phase != Phase.ARRIVAL:
+	if _keeper_intro_completed:
 		_close_keeper_dialogue()
 		return
 	_dialogue_index += 1
 	if _dialogue_index < DIALOGUE_LINES.size():
 		_present_keeper_dialogue_line()
 		return
+	_keeper_intro_completed = true
 	_close_keeper_dialogue()
-	_unlock_fishing_location()
+	_refresh_minigame_interaction.call_deferred()
 
 
 func _close_keeper_dialogue() -> void:
@@ -385,15 +404,8 @@ func _close_keeper_dialogue() -> void:
 	_refresh_exploration_hud()
 
 
-func _unlock_fishing_location() -> void:
-	phase = Phase.FISHING_AVAILABLE
-	_sync_fishing_station()
-	_refresh_exploration_hud()
-	_refresh_minigame_interaction.call_deferred()
-
-
 func _on_fishing_body_entered(body: Node) -> void:
-	if body == player and phase == Phase.FISHING_AVAILABLE:
+	if body == player and _is_fishing_available():
 		_pending_trigger = "fishing"
 		fishing_station.set_highlighted(true)
 		prompt_label.text = "按 E / 空格 开始海岸钓鱼"
@@ -449,9 +461,10 @@ func _return_to_sea_overworld() -> void:
 
 
 func _open_fishing_minigame() -> bool:
-	if phase != Phase.FISHING_AVAILABLE:
+	if not _is_fishing_available():
 		return false
 	var entry_position := player.global_position
+	_fishing_return_phase = phase
 	_pending_trigger = ""
 	prompt_panel.visible = false
 	if not minigame_host.open_minigame(FISHING_SCENE, "fishing"):
@@ -490,13 +503,15 @@ func _on_minigame_finished(result: Dictionary) -> void:
 func _complete_fishing(result: Dictionary) -> void:
 	if phase != Phase.FISHING_ACTIVE:
 		return
-	phase = Phase.DRUM_AVAILABLE
+	var first_completion := _fishing_return_phase in [Phase.ARRIVAL, Phase.FISHING_AVAILABLE]
+	phase = Phase.DRUM_AVAILABLE if first_completion else _fishing_return_phase
 	_sync_fishing_station()
-	school_shape.set_deferred("disabled", true)
-	school_barrier.visible = false
+	if first_completion:
+		school_shape.set_deferred("disabled", true)
+		school_barrier.visible = false
 	_refresh_exploration_hud()
 	if not _test_mode:
-		_show_notice("渔获满舱\n可以前往古校场", 1.8)
+		_show_notice("渔获满舱\n可以前往古校场" if first_completion else "渔获满舱\n收竿归岸", 1.8)
 
 
 func _complete_drum(_result: Dictionary) -> void:
@@ -514,7 +529,7 @@ func _on_minigame_cancelled(game_id: String) -> void:
 	var should_restore_position := true
 	match game_id:
 		"fishing":
-			phase = Phase.FISHING_AVAILABLE
+			phase = _fishing_return_phase
 		"drum":
 			phase = Phase.DRUM_AVAILABLE
 		_:
@@ -534,7 +549,7 @@ func _on_minigame_cancelled(game_id: String) -> void:
 func _refresh_minigame_interaction() -> void:
 	if _transitioning or minigame_host.active_minigame != null:
 		return
-	if phase == Phase.FISHING_AVAILABLE and fishing_trigger.overlaps_body(player):
+	if _is_fishing_available() and fishing_trigger.overlaps_body(player):
 		_on_fishing_body_entered(player)
 	elif phase == Phase.DRUM_AVAILABLE and school_trigger.overlaps_body(player):
 		_on_school_body_entered(player)
@@ -609,7 +624,12 @@ func _add_shape_debug(physics_node: Node2D, shape_node: CollisionShape2D, blocke
 
 func finish_keeper_dialogue_for_test() -> void:
 	_test_mode = true
-	_unlock_fishing_location()
+	_keeper_intro_completed = true
+	_refresh_exploration_hud()
+
+
+func is_keeper_intro_completed_for_test() -> bool:
+	return _keeper_intro_completed
 
 
 func trigger_fishing_for_test() -> bool:

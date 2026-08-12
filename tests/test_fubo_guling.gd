@@ -67,7 +67,7 @@ func _test_scene_contract() -> void:
 	var level = FUBO_SCENE.instantiate()
 	root.add_child(level)
 	await process_frame
-	_check(level.get_phase_for_test() == 0, "Fubo scene must start in ARRIVAL phase.")
+	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Fubo scene must start with coastal fishing already available.")
 	_check(level.is_school_locked_for_test(), "The visible school fence must physically block the player before fishing is completed.")
 	_check(level.is_viewpoint_locked_for_test(), "The visible viewpoint fence must physically block the player before the drum game is completed.")
 	_check(level.get_node("World/WorldObjects").y_sort_enabled, "Dynamic characters must retain Y sorting.")
@@ -153,13 +153,26 @@ func _test_scene_contract() -> void:
 	_check(prompt_button.texture_normal.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_v1.png", "Fubo interaction must reuse the scene-one/two normal ink button.")
 	_check(prompt_button.texture_pressed.resource_path == "res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png", "Fubo interaction must reuse the scene-one/two active ink button.")
 	_check(prompt_button.size.is_equal_approx(Vector2(300.0, 74.0)), "Fubo interaction button must match the scene-one/two button size.")
-	_check(level.get_node("Interface/MinigameHost") is Control, "Map needs a full-screen minigame host.")
+	var early_host := level.get_node("Interface/MinigameHost")
+	_check(early_host is Control, "Map needs a full-screen minigame host.")
 	_check(level.get_node("Interface/MinigameHost").process_mode == Node.PROCESS_MODE_ALWAYS, "Minigame host must process input without pausing the SceneTree.")
+	_check(fishing_station.call("is_available_for_test"), "The fishing rod must sparkle and accept interaction from initial scene load.")
+	_check(level.trigger_fishing_for_test(), "Fishing must open before the player speaks to the keeper.")
+	_check(early_host.active_minigame != null and early_host.active_minigame.game_id == "fishing", "Initial fishing access must open the real fishing minigame.")
+	if early_host.active_minigame != null:
+		early_host.active_minigame.exit_requested.emit()
+		await process_frame
+	level.call("_on_trigger_body_exited", collision_probe_player, "fishing")
+	collision_probe_player.global_position = Vector2(450, 540)
+	await physics_frame
+	await process_frame
+	level.call("_on_trigger_body_exited", collision_probe_player, "sea_return")
+	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE and early_host.active_minigame == null, "Leaving early fishing must preserve its always-available state.")
 	_check(level.get_node("World/WorldObjects").get_child_count() <= 5, "Only the player, keeper and story barriers may remain as separate world objects.")
 	for baked_prop_name in ["House", "Storage", "TreeCourtyard", "TreePath", "TreeCanal", "CanalMarker", "Drum", "FlagYellow", "FlagRed", "FlagBlue", "Stele"]:
 		_check(not level.has_node("World/WorldObjects/" + baked_prop_name), "%s must be baked into the complete background." % baked_prop_name)
 	level.finish_keeper_dialogue_for_test()
-	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Keeper dialogue must only unlock coastal fishing.")
+	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE and level.is_keeper_intro_completed_for_test(), "Keeper dialogue must only mark its hint as heard without unlocking fishing.")
 	level.call("_set_keeper_focus", true)
 	level.call("_handle_interaction")
 	var keeper_dialogue := level.get_node("Interface/KeeperDialogue") as FieldEventDialogue
@@ -175,6 +188,7 @@ func _test_scene_contract() -> void:
 	player.velocity = Vector2.ZERO
 	await physics_frame
 	await process_frame
+	level.call("_on_fishing_body_entered", player)
 	_check(str(level.get("_pending_trigger")) == "fishing" and level.get_node("Interface/HUD/PromptPanel").visible, "Entering the physical interaction ring must arm coastal fishing.")
 	_check(fishing_station.call("is_highlighted_for_test"), "Approaching the fishing rod must apply the shared interaction highlight.")
 	_check(fishing_sprite.modulate.is_equal_approx(Color(1.35, 1.22, 0.72, 1.0)) and fishing_sprite.scale.is_equal_approx(Vector2.ONE * 1.08), "Fishing highlight must match scene one and scene two.")
@@ -190,6 +204,14 @@ func _test_scene_contract() -> void:
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Fishing completion must restore the map and unlock the school.")
 	_check(not level.is_school_locked_for_test() and not level.get_node("World/WorldObjects/SchoolBarrier").visible, "Completing fishing must remove both the school fence art and its collision.")
+	var repeat_fishing_position := Vector2(720, 805)
+	player.global_position = repeat_fishing_position
+	_check(level.trigger_fishing_for_test(), "Fishing must remain available after its first story completion.")
+	_check(host.active_minigame != null and host.active_minigame.game_id == "fishing", "Repeat fishing must open the real fishing minigame.")
+	host.active_minigame.exit_requested.emit()
+	await process_frame
+	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Leaving repeat fishing must preserve the current story phase.")
+	_check(player.global_position == repeat_fishing_position, "Leaving repeat fishing must restore the position used to enter it.")
 	var drum_entry_position := Vector2(1095, 370)
 	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = drum_entry_position
 	level.trigger_drum_for_test()

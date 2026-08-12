@@ -23,6 +23,13 @@ func _initialize() -> void:
 	contradictory["drum_completed"] = true
 	_check(SAVE_STATE.decode_snapshot(contradictory).is_empty(), "Contradictory completion flags must be rejected.")
 
+	var intro_heard := SAVE_STATE.make_snapshot(Vector2(420, 820), "left", 1, sea_context, true)
+	_check(intro_heard.get("keeper_intro_completed", false), "Fubo snapshots must preserve whether the optional keeper hint was heard.")
+	_check(SAVE_STATE.decode_snapshot(intro_heard) == intro_heard, "The optional keeper hint state must round-trip.")
+	var legacy_fishing_available := intro_heard.duplicate(true)
+	legacy_fishing_available.erase("keeper_intro_completed")
+	_check(SAVE_STATE.decode_snapshot(legacy_fishing_available).get("keeper_intro_completed", false), "Legacy phase-one saves must infer that the old required keeper dialogue was completed.")
+
 	for unstable_phase in [2, 4, 6]:
 		_check(SAVE_STATE.make_snapshot(Vector2.ZERO, "down", unstable_phase, {}).is_empty(), "Unstable phase %d must not be saved." % unstable_phase)
 	_check(SAVE_STATE.make_snapshot(Vector2(INF, 0), "down", 0, {}).is_empty(), "Non-finite positions must be rejected.")

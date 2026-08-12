@@ -55,8 +55,8 @@ func _exit_tree() -> void:
 
 | Phase | 主任务 | 当前目标 |
 |---|---|---|
-| `ARRIVAL` | 伏波古岭 | 沿山路寻找守岭人 |
-| `FISHING_AVAILABLE` | 码头渔获 | 返回码头，开始摆钩钓鱼 |
+| `ARRIVAL` | 伏波古岭 | 旧存档兼容态，载入后转为可钓鱼 |
+| `FISHING_AVAILABLE` | 码头渔获 | 码头旁可随时钓鱼，也可询问守岭人 |
 | `DRUM_AVAILABLE` | 古校场鼓令 | 沿山路前往古校场 |
 | `VIEWPOINT_OPEN` | 登岭望海 | 登上观景台眺望南海 |
 | `COMPLETE` | 伏波古岭 | 行程完成 |
@@ -88,15 +88,17 @@ res://scenes/fubo_guling/fubo_guling.tscn
 	"phase": int,
 	"fishing_completed": bool,
 	"drum_completed": bool,
+	"keeper_intro_completed": bool,
 	"sea_return_context": Dictionary,
 }
 ```
 
 保存规则：
 
-- 仅 `ARRIVAL`、`FISHING_AVAILABLE`、`DRUM_AVAILABLE`、`VIEWPOINT_OPEN` 的自由移动状态可保存。
+- 新流程从 `FISHING_AVAILABLE` 开始；`ARRIVAL` 仅保留为旧存档兼容值，载入后立即转为可钓鱼状态。`FISHING_AVAILABLE`、`DRUM_AVAILABLE`、`VIEWPOINT_OPEN` 的自由移动状态可保存。
 - 对话、钓鱼/鼓令小游戏、加载切场、完成覆盖层或其他输入锁定状态返回 `unstable_scene`，不覆盖旧存档。
 - `fishing_completed` 与 `drum_completed` 必须和 `phase` 一致；写入和读取均校验，矛盾或非法数据返回 `invalid_scene_state`，不部分恢复。
+- `keeper_intro_completed` 独立记录玩家是否听过守岭人的首次玩法提示，不影响钓鱼入口；缺少该字段的旧 `FISHING_AVAILABLE` 存档按已听取处理。
 - `sea_return_context` 使用 `FuboTravelSession.decode_context()` 校验。有效数据在读取岛屿后重新写回 SceneTree 会话元数据，使码头返航仍恢复原船位；无效或缺失数据允许载入岛屿，但返航使用既有安全海图回退点。
 - 读取只重建稳定地图状态，不恢复对话行号、小游戏计时、鼓谱、鱼群、提示计时器或加载动画。
 

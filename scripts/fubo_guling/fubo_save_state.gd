@@ -6,8 +6,16 @@ const STABLE_PHASES := [0, 1, 3, 5]
 const FACINGS := ["up", "left", "down", "right"]
 
 
-static func make_snapshot(player_position: Vector2, player_facing: String, phase: int, sea_return_context: Dictionary) -> Dictionary:
+static func make_snapshot(
+	player_position: Vector2,
+	player_facing: String,
+	phase: int,
+	sea_return_context: Dictionary,
+	keeper_intro_completed := false
+) -> Dictionary:
 	if not _is_finite_position(player_position) or player_facing not in FACINGS or phase not in STABLE_PHASES:
+		return {}
+	if typeof(keeper_intro_completed) != TYPE_BOOL:
 		return {}
 	var completion := completion_for_phase(phase)
 	return {
@@ -16,6 +24,7 @@ static func make_snapshot(player_position: Vector2, player_facing: String, phase
 		"phase": phase,
 		"fishing_completed": completion[0],
 		"drum_completed": completion[1],
+		"keeper_intro_completed": keeper_intro_completed,
 		"sea_return_context": _encode_sea_context(sea_return_context),
 	}
 
@@ -39,6 +48,9 @@ static func decode_snapshot(value: Variant) -> Dictionary:
 		return {}
 	if typeof(snapshot["fishing_completed"]) != TYPE_BOOL or typeof(snapshot["drum_completed"]) != TYPE_BOOL:
 		return {}
+	var keeper_intro_completed: Variant = snapshot.get("keeper_intro_completed", phase != 0)
+	if typeof(keeper_intro_completed) != TYPE_BOOL:
+		return {}
 	var completion := completion_for_phase(phase)
 	if bool(snapshot["fishing_completed"]) != completion[0] or bool(snapshot["drum_completed"]) != completion[1]:
 		return {}
@@ -48,6 +60,7 @@ static func decode_snapshot(value: Variant) -> Dictionary:
 		"phase": phase,
 		"fishing_completed": completion[0],
 		"drum_completed": completion[1],
+		"keeper_intro_completed": keeper_intro_completed,
 		"sea_return_context": _decode_and_encode_sea_context(snapshot.get("sea_return_context", {})),
 	}
 

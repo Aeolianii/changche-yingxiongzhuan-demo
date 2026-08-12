@@ -37,7 +37,10 @@ func _run() -> void:
 	var departure_started_at := Time.get_ticks_msec()
 	(option_box.get_child(0) as Button).pressed.emit()
 	_expect(loading.visible and (loading.get_node("LoadingText") as Label).text == "正在进入大地图", "Scene2 departure must show the enter-overworld loading message immediately.")
+	var shared_hud := root.get_node("ExplorationUI/HUD") as Control
+	_expect(not shared_hud.is_visible_in_tree(), "Shared exploration HUD must hide as soon as the enter-overworld transition starts.")
 	await create_timer(0.25).timeout
+	_expect(not shared_hud.is_visible_in_tree(), "Shared exploration HUD must remain hidden while the enter-overworld loading screen is visible.")
 	if DisplayServer.get_name() != "headless":
 		var screenshot_error := root.get_texture().get_image().save_png(LOADING_SCREENSHOT_PATH)
 		_expect(screenshot_error == OK, "Lingnan loading preview screenshot could not be saved.")

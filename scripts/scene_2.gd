@@ -1214,7 +1214,11 @@ func _close_drill_overlay() -> void:
 func _refresh_exploration_hud() -> void:
 	if _exploration_hud == null or _dialogue_panel == null or _drill_overlay == null:
 		return
-	var is_free_exploration := not _dialogue_panel.visible and not _drill_overlay.visible
+	var is_free_exploration := (
+		not _transitioning
+		and not _dialogue_panel.visible
+		and not _drill_overlay.visible
+	)
 	_exploration_hud.call("set_exploration_visible", is_free_exploration)
 
 

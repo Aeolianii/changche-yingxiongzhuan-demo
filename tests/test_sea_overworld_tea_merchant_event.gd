@@ -155,8 +155,8 @@ func _verify_initial_dialogue(scene: Node, dialogue: Control, player: CharacterB
 	var option_box := _option_box(dialogue)
 	_expect(option_box.get_child_count() == 2, "Tea merchant dialogue must show exactly two choices.")
 	if option_box.get_child_count() == 2:
-		_expect((option_box.get_child(0) as Button).text == "购买龙井茶", "First tea merchant choice must purchase Longjing tea.")
-		_expect((option_box.get_child(1) as Button).text == "不购买", "Second tea merchant choice must decline the purchase.")
+		_expect((option_box.get_child(0) as Button).text == "购买龙井茶  ▶", "First tea merchant choice must be arrow-marked purchase Longjing tea.")
+		_expect((option_box.get_child(1) as Button).text == "不购买  ▶", "Second tea merchant choice must be arrow-marked decline purchase.")
 
 
 func _option_box(dialogue: Control) -> VBoxContainer:

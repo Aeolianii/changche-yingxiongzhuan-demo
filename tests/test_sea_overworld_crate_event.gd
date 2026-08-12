@@ -187,8 +187,8 @@ func _verify_initial_dialogue(dialogue: Control, player: CharacterBody2D, sea_ma
 	var option_box := _option_box(dialogue)
 	_expect(option_box.get_child_count() == 2, "Crate report must show exactly two choices.")
 	if option_box.get_child_count() == 2:
-		_expect((option_box.get_child(0) as Button).text == "打捞上来", "First crate choice must be salvage.")
-		_expect((option_box.get_child(1) as Button).text == "置之不理", "Second crate choice must be ignore.")
+		_expect((option_box.get_child(0) as Button).text == "打捞上来  ▶", "First crate choice must be arrow-marked salvage.")
+		_expect((option_box.get_child(1) as Button).text == "置之不理  ▶", "Second crate choice must be arrow-marked ignore.")
 
 
 func _option_box(dialogue: Control) -> VBoxContainer:

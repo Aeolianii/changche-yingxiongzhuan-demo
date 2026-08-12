@@ -7,6 +7,7 @@ const DIALOGUE_BACKGROUND := preload("res://assets/ui/dialogue/ink_dialogue_back
 const DIALOGUE_NAMEPLATE := preload("res://assets/ui/dialogue/ink_speaker_nameplate.png")
 const DEFAULT_DIALOGUE_MIN_HEIGHT := 62.0
 const COMPACT_DIALOGUE_MIN_HEIGHT := 34.0
+const OPTION_ARROW_SUFFIX := "  ▶"
 
 @onready var paper_panel: PanelContainer = $FullWidthPaperDialogueBox
 @onready var dialogue_margin: MarginContainer = $FullWidthPaperDialogueBox/DialogueMargin
@@ -80,7 +81,7 @@ func _apply_scene_two_styles() -> void:
 func _add_option(text_value: String, option_id: StringName) -> void:
 	var button := Button.new()
 	button.name = "Option%s" % option_box.get_child_count()
-	button.text = text_value
+	button.text = _option_text_with_arrow(text_value)
 	button.custom_minimum_size = Vector2(620, 28)
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 20)
@@ -96,6 +97,11 @@ func _add_option(text_value: String, option_id: StringName) -> void:
 		button.add_theme_stylebox_override(state, _create_option_style(Color.TRANSPARENT))
 	button.pressed.connect(option_selected.emit.bind(option_id))
 	option_box.add_child(button)
+
+
+func _option_text_with_arrow(text_value: String) -> String:
+	var clean_text := text_value.strip_edges()
+	return clean_text if clean_text.ends_with("▶") else clean_text + OPTION_ARROW_SUFFIX
 
 
 func _create_option_style(background_color: Color) -> StyleBoxFlat:

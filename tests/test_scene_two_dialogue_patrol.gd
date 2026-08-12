@@ -50,7 +50,7 @@ func _run() -> void:
 	_expect("1/2" in objective.text, "First unique soldier report must advance patrol progress to one of two.")
 
 	await _interact_with("World/Actors/Npcs/MagistrateLeftGuard")
-	_expect(option_box.get_child_count() == 1 and (option_box.get_child(0) as Button).text == "无事", "A soldier must remain available for fixed dialogue with one 无事 exit after reporting.")
+	_expect(option_box.get_child_count() == 1 and (option_box.get_child(0) as Button).text == "无事  ▶", "A soldier must remain available for fixed dialogue with one arrow-marked 无事 exit after reporting.")
 	await _press_option(0)
 	_expect("1/2" in objective.text, "Repeated soldier dialogue must not advance patrol progress twice.")
 
@@ -83,8 +83,8 @@ func _run() -> void:
 	_expect((scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text == "将军是否要巡视一下岭南海域？", "Magistrate must ask whether the player wants to inspect Lingnan waters.")
 	_expect(option_box.get_child_count() == 2, "Sea-departure dialogue must provide exactly two choices.")
 	if option_box.get_child_count() == 2:
-		_expect((option_box.get_child(0) as Button).text == "立即出发", "First sea-departure choice must be 立即出发.")
-		_expect((option_box.get_child(1) as Button).text == "稍后再说", "Second sea-departure choice must be 稍后再说.")
+		_expect((option_box.get_child(0) as Button).text == "立即出发  ▶", "First sea-departure choice must be arrow-marked 立即出发.")
+		_expect((option_box.get_child(1) as Button).text == "稍后再说  ▶", "Second sea-departure choice must be arrow-marked 稍后再说.")
 	await _press_option(1)
 	_expect(not dialogue_panel.visible and task_name.text == "探索海域，完善海图", "Choosing 稍后再说 must keep the chart-completion task available.")
 
@@ -129,6 +129,7 @@ func _interact_with(actor_path: String) -> void:
 func _complete_soldier_report(actor_path: String) -> void:
 	await _interact_with(actor_path)
 	await _press_option(0)
+	_expect(next_button.visible and next_button.text.ends_with("▶"), "Scene2 scripted continue/finish controls must retain the option arrow.")
 	var line_before_echo := (scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text
 	await _press_space(true)
 	var line_after_echo := (scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text

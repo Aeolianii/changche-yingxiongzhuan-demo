@@ -928,7 +928,7 @@ func _configure_magistrate_dialogue() -> void:
 
 func _add_dialogue_option(text_value: String, action: Callable) -> void:
 	var button := Button.new()
-	button.text = text_value
+	button.text = _dialogue_option_text(text_value)
 	button.custom_minimum_size = Vector2(620, 28)
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 20)
@@ -944,6 +944,11 @@ func _add_dialogue_option(text_value: String, action: Callable) -> void:
 		button.add_theme_stylebox_override(state, _create_option_style(Color.TRANSPARENT))
 	button.pressed.connect(action)
 	_option_box.add_child(button)
+
+
+func _dialogue_option_text(text_value: String) -> String:
+	var clean_text := text_value.strip_edges()
+	return clean_text if clean_text.ends_with("▶") else clean_text + "  ▶"
 
 
 func _create_option_style(background_color: Color) -> StyleBoxFlat:
@@ -1109,7 +1114,7 @@ func _show_dialogue_line() -> void:
 	_dialogue_label.text = text_value
 	_portrait_label.text = fallback
 	_set_portrait(portrait_path, fallback, is_commander)
-	_next_dialogue_button.text = "结束" if _dialogue_index == _active_scripted_dialogues.size() - 1 else "继续"
+	_next_dialogue_button.text = _dialogue_option_text("结束" if _dialogue_index == _active_scripted_dialogues.size() - 1 else "继续")
 
 
 func _consume_scene_entry_flag(meta_name: StringName) -> bool:
@@ -1154,7 +1159,7 @@ func _show_arrival_dialogue_line() -> void:
 	var portrait_dir := "protagonist" if is_commander else "soldier"
 	var portrait_path := _find_image_in_asset_directory("%s/%s" % [ASSET_ROOT, portrait_dir], "picture.png")
 	_set_portrait(portrait_path, "帅" if is_commander else "副", is_commander)
-	_next_dialogue_button.text = "开始巡视" if _arrival_dialogue_index == _arrival_dialogues.size() - 1 else "继续"
+	_next_dialogue_button.text = _dialogue_option_text("开始巡视" if _arrival_dialogue_index == _arrival_dialogues.size() - 1 else "继续")
 
 
 func _activate_arrival_task() -> void:

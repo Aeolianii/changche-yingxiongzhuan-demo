@@ -129,9 +129,9 @@ func _verify_initial_dialogue(scene: Node, dialogue: Control, player: CharacterB
 	var option_box := _option_box(dialogue)
 	_expect(option_box.get_child_count() == 3, "Salt merchant dialogue must show exactly three choices.")
 	if option_box.get_child_count() == 3:
-		_expect((option_box.get_child(0) as Button).text == "查扣私盐", "First salt merchant choice must confiscate private salt.")
-		_expect((option_box.get_child(1) as Button).text == "收下贿赂", "Second salt merchant choice must accept the bribe.")
-		_expect((option_box.get_child(2) as Button).text == "放行商船", "Third salt merchant choice must release the ship.")
+		_expect((option_box.get_child(0) as Button).text == "查扣私盐  ▶", "First salt merchant choice must be arrow-marked confiscation.")
+		_expect((option_box.get_child(1) as Button).text == "收下贿赂  ▶", "Second salt merchant choice must be arrow-marked bribe acceptance.")
+		_expect((option_box.get_child(2) as Button).text == "放行商船  ▶", "Third salt merchant choice must be arrow-marked release.")
 
 
 func _verify_resolved_state_restore(scene: Node) -> void:

@@ -186,7 +186,7 @@ func _test_scene_contract() -> void:
 	var keeper_dialogue_text := keeper_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
 	var keeper_options := keeper_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
 	_check(keeper_dialogue.visible and "倭患一日未靖" in keeper_dialogue_text.text and "伏波岛" in keeper_dialogue_text.text, "Keeper must remain interactable with an in-character fixed line after the story dialogue.")
-	_check(keeper_options.get_child_count() == 1 and (keeper_options.get_child(0) as Button).text == "无事", "Repeated keeper dialogue must provide one 无事 exit option.")
+	_check(keeper_options.get_child_count() == 1 and (keeper_options.get_child(0) as Button).text == "无事  ▶", "Repeated keeper dialogue must provide one arrow-marked 无事 exit option.")
 	(keeper_options.get_child(0) as Button).pressed.emit()
 	_check(not keeper_dialogue.visible and level.get_node("World/WorldObjects/Player").controls_enabled, "Choosing 无事 must close the repeated keeper dialogue and restore control.")
 	_check(fishing_station.call("is_available_for_test"), "The fishing rod must sparkle once fishing becomes available.")

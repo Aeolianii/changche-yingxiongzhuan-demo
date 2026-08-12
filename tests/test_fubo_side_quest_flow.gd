@@ -39,7 +39,7 @@ func _run() -> void:
 	_expect("海域东北方" in dialogue.dialogue_label.text and "防倭寇" in dialogue.dialogue_label.text, "The soldier report must identify Fubo's northeast position and anti-pirate duty.")
 	_expect(dialogue.option_box.get_child_count() == 1, "The Fubo report must expose one acknowledgement option.")
 	var accept_button := dialogue.option_box.get_child(0) as Button
-	_expect(accept_button.text == "收到，我会前去巡视。", "The protagonist must acknowledge the Fubo assignment with the requested response.")
+	_expect(accept_button.text == "收到，我会前去巡视。  ▶", "The protagonist must acknowledge the Fubo assignment with an arrow-marked response.")
 	accept_button.pressed.emit()
 	await process_frame
 

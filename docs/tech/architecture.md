@@ -51,7 +51,7 @@ Scene2 的 `FullWidthPaperDialogueBox` 继续作为正文和选项的布局容�
 
 角色交互视觉遵循统一契约：目标进入有效交互半径时，只通过共享 `interaction_outline.gdshader` 绘制贴合人物像素轮廓的暖金亮边，不修改人物 `modulate`、原始颜色或尺寸，同时显示屏幕底部中央 `300×74` 水墨 `TextureButton`。按钮普通态与按下态分别使用 `assets/ui/sea_overworld/interaction_button_ink_v1.png` 和 `interaction_button_ink_active_v1.png`；键盘 `E` / 空格与按钮点击必须进入同一交互处理函数。离开半径、打开阻断界面或切换状态时，必须移除描边、恢复人物原材质并隐藏按钮；禁止人物突然放大、整体变色或另画脚底圆环。场景一、场景二和伏波古岭守岭人均遵守此契约。
 
-角色对白复用场景一确立的全宽水墨视觉契约。场景二、海图事件和伏波古岭直接实例化 `scenes/ui/field_event_dialogue.tscn`（`FieldEventDialogue`）：底部 `1344×300` 水墨底板、24px 描边正文、右侧 `440×520` 大立绘、右下 `260×58` 笔刷姓名牌及透明底文字选项。场景脚本只调用 `present()`、监听 `option_selected` 并在结束时调用 `hide_dialogue()`，不得复制另一套近似节点。伏波古岭守岭人复用 `assets/characters/soldier/picture.png`，姓名牌显示“守岭人”；鼠标“继续”与键盘推进共享同一 `_advance_dialogue()` 流程。
+角色对白复用场景一确立的全宽水墨视觉契约。场景二、海图事件和伏波古岭使用同一套底部 `1344×300` 水墨底板、24px 描边正文、右侧 `440×520` 大立绘、右下 `260×58` 笔刷姓名牌及透明底文字选项；所有可点击选项与继续/结束按钮统一追加 `▶`，以明确区分正文和玩家操作。海图事件与伏波古岭直接实例化 `scenes/ui/field_event_dialogue.tscn`（`FieldEventDialogue`），场景脚本只调用 `present()`、监听 `option_selected` 并在结束时调用 `hide_dialogue()`。伏波古岭守岭人复用 `assets/characters/soldier/picture.png`，姓名牌显示“守岭人”；鼠标“继续”与键盘推进共享同一 `_advance_dialogue()` 流程。
 
 留在可探索场景中的 NPC 不因一次任务对白完成而永久失去交互。剧情阶段结束后，NPC 继续显示相同的描边与底部交互按钮，再次交谈时播放符合其身份的固定闲聊，并提供单个“无事”选项退出；该闲聊不得重复推进任务或发放奖励。伏波守岭人的固定台词为“倭患一日未靖，这伏波岛的烽火便一日不可松懈啊……”。
 

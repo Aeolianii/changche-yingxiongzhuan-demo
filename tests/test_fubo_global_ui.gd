@@ -24,16 +24,28 @@ func _run() -> void:
 	var prompt := level.get_node("Interface/HUD/PromptPanel") as TextureButton
 	_check(prompt != null and prompt.texture_normal != null and prompt.texture_normal.resource_path.ends_with("interaction_button_ink_v1.png"), "Fubo prompt must use the existing ink interaction art.")
 	_check(prompt.texture_pressed != null and prompt.texture_pressed.resource_path.ends_with("interaction_button_ink_active_v1.png"), "Fubo prompt must use the shared active interaction art.")
-	var dialogue := level.get_node("Interface/HUD/DialoguePanel") as TextureRect
-	_check(dialogue != null and dialogue.texture != null and dialogue.texture.resource_path.ends_with("ink_dialogue_backdrop.png"), "Fubo dialogue must use the shared ink backdrop.")
-	_check(level.has_node("Interface/HUD/DialoguePanel/SpeakerPlate"), "Fubo dialogue must use the shared speaker nameplate.")
+	var dialogue := level.get_node("Interface/KeeperDialogue") as FieldEventDialogue
+	_check(dialogue != null and not level.has_node("Interface/HUD/DialoguePanel"), "Fubo must replace its bespoke dialogue panel with the shared field dialogue.")
+	var paper_panel := dialogue.get_node("FullWidthPaperDialogueBox") as PanelContainer
+	var paper_style := paper_panel.get_theme_stylebox("panel") as StyleBoxTexture
+	_check(paper_panel.position == Vector2(0, 596) and paper_panel.size == Vector2(1344, 300), "Keeper dialogue must match the scene-one/two full-width layout.")
+	_check(paper_style != null and paper_style.texture.resource_path.ends_with("ink_dialogue_backdrop.png"), "Keeper dialogue must use the shared ink backdrop.")
+	var name_plate := dialogue.get_node("NamePlate") as PanelContainer
+	var name_style := name_plate.get_theme_stylebox("panel") as StyleBoxTexture
+	_check(name_plate.position == Vector2(1060, 830) and name_style != null and name_style.texture.resource_path.ends_with("ink_speaker_nameplate.png"), "Keeper dialogue must use the scene-two ink nameplate position and art.")
 	var notice_backdrop := level.get_node("Interface/HUD/Overlay/NoticeBackdrop") as TextureRect
 	_check(notice_backdrop != null and notice_backdrop.texture != null and notice_backdrop.texture.resource_path.ends_with("ink_dialogue_backdrop.png"), "Fubo notices must use an ink backdrop over a separate dimmer.")
 
 	_check(level.call("_is_stable_save_state"), "Fubo arrival exploration must be saveable.")
 	level.call("_start_dialogue")
+	var keeper_portrait := dialogue.get_node("LargeTransparentPortrait") as TextureRect
+	_check(keeper_portrait.visible and keeper_portrait.texture != null and keeper_portrait.texture.resource_path == "res://assets/characters/soldier/picture.png", "Keeper dialogue must reuse the soldier portrait.")
+	_check((dialogue.get_node("NamePlate/SpeakerLabel") as Label).text == "守岭人", "The shared nameplate must identify the keeper.")
+	_check(dialogue.option_box.get_child_count() == 1 and (dialogue.option_box.get_child(0) as Button).text == "继续  ▶", "Keeper dialogue must expose the shared clickable continue option.")
 	_check(not level.call("_is_stable_save_state"), "Fubo dialogue must not be saveable.")
-	for _index in 3:
+	(dialogue.option_box.get_child(0) as Button).pressed.emit()
+	_check(dialogue.dialogue_label.text == "去岸边鱼竿处试试摆钩捕鱼，满载后再去校场。", "The shared continue option must advance keeper dialogue.")
+	for _index in 2:
 		level.call("_advance_dialogue")
 	_check(level.call("_is_stable_save_state"), "Fubo fishing-available exploration must be saveable.")
 	var fishing_entry_position := Vector2(665, 810)

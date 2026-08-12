@@ -3,6 +3,8 @@ extends Node2D
 
 const FISHING_SCENE := preload("res://scenes/fubo_guling/minigames/fubo_fishing_minigame.tscn")
 const DRUM_SCENE := preload("res://scenes/fubo_guling/minigames/fubo_drum_minigame.tscn")
+const FIELD_EVENT_DIALOGUE_SCENE := preload("res://scenes/ui/field_event_dialogue.tscn")
+const KEEPER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
 const FUBO_SAVE_STATE := preload("res://scripts/fubo_guling/fubo_save_state.gd")
@@ -47,9 +49,6 @@ const DIALOGUE_LINES := [
 @onready var hud: Control = $Interface/HUD
 @onready var prompt_panel: TextureButton = $Interface/HUD/PromptPanel
 @onready var prompt_label: Label = $Interface/HUD/PromptPanel/Prompt
-@onready var dialogue_panel: TextureRect = $Interface/HUD/DialoguePanel
-@onready var speaker_label: Label = $Interface/HUD/DialoguePanel/Speaker
-@onready var dialogue_label: Label = $Interface/HUD/DialoguePanel/Dialogue
 @onready var overlay: ColorRect = $Interface/HUD/Overlay
 @onready var overlay_text: Label = $Interface/HUD/Overlay/OverlayText
 
@@ -61,12 +60,14 @@ var _test_mode := false
 var _transitioning := false
 var _minigame_return_position := Vector2.ZERO
 var _loading_transition: SceneLoadingTransition
+var dialogue_panel: FieldEventDialogue
 var exploration_hud: Control
 var _exploration_ui: Node
 
 
 func _ready() -> void:
 	_configure_camera()
+	_initialize_keeper_dialogue()
 	_exploration_ui = get_node_or_null("/root/ExplorationUI")
 	if _exploration_ui != null:
 		exploration_hud = _exploration_ui.call("acquire", self, &"fubo_guling") as Control
@@ -83,13 +84,33 @@ func _ready() -> void:
 	school_trigger.body_exited.connect(_on_trigger_body_exited.bind("drum"))
 	viewpoint_trigger.body_entered.connect(_on_viewpoint_body_entered)
 	prompt_panel.visible = false
-	dialogue_panel.visible = false
 	overlay.visible = false
 	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
 	$Interface.add_child(_loading_transition)
 	_build_collision_debug()
 	_restore_saved_scene_state(_consume_saved_scene_state())
 	_refresh_exploration_hud()
+
+
+func _initialize_keeper_dialogue() -> void:
+	var old_panel := get_node_or_null("Interface/HUD/DialoguePanel")
+	if old_panel != null:
+		old_panel.queue_free()
+	dialogue_panel = FIELD_EVENT_DIALOGUE_SCENE.instantiate() as FieldEventDialogue
+	dialogue_panel.name = "KeeperDialogue"
+	dialogue_panel.z_index = 50
+	$Interface.add_child(dialogue_panel)
+	dialogue_panel.option_selected.connect(_on_keeper_dialogue_option_selected)
+
+
+func _present_keeper_dialogue_line() -> void:
+	var options: Array[Dictionary] = [{"id": &"continue", "text": "继续  ▶"}]
+	dialogue_panel.present("守岭人", DIALOGUE_LINES[_dialogue_index], KEEPER_PORTRAIT, options)
+
+
+func _on_keeper_dialogue_option_selected(option_id: StringName) -> void:
+	if option_id == &"continue":
+		_advance_dialogue()
 
 
 func _exit_tree() -> void:
@@ -329,9 +350,7 @@ func _start_dialogue() -> void:
 	_dialogue_index = 0
 	player.controls_enabled = false
 	player.cancel_move_target()
-	speaker_label.text = "守岭人"
-	dialogue_label.text = DIALOGUE_LINES[0]
-	dialogue_panel.visible = true
+	_present_keeper_dialogue_line()
 	prompt_panel.visible = false
 	_refresh_exploration_hud()
 
@@ -339,9 +358,9 @@ func _start_dialogue() -> void:
 func _advance_dialogue() -> void:
 	_dialogue_index += 1
 	if _dialogue_index < DIALOGUE_LINES.size():
-		dialogue_label.text = DIALOGUE_LINES[_dialogue_index]
+		_present_keeper_dialogue_line()
 		return
-	dialogue_panel.visible = false
+	dialogue_panel.hide_dialogue()
 	player.controls_enabled = true
 	_unlock_fishing_location()
 

@@ -89,6 +89,7 @@ func _ready() -> void:
 	$Interface.add_child(_loading_transition)
 	_build_collision_debug()
 	_restore_saved_scene_state(_consume_saved_scene_state())
+	_apply_phase_world_state()
 	_refresh_exploration_hud()
 
 

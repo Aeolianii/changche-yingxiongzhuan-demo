@@ -68,8 +68,8 @@ func _test_scene_contract() -> void:
 	root.add_child(level)
 	await process_frame
 	_check(level.get_phase_for_test() == 0, "Fubo scene must start in ARRIVAL phase.")
-	_check(not level.is_school_locked_for_test(), "The owner-marked walkable road must not be physically blocked before the fishing game.")
-	_check(not level.is_viewpoint_locked_for_test(), "The owner-marked walkable road must not be physically blocked before the drum game.")
+	_check(level.is_school_locked_for_test(), "The visible school fence must physically block the player before fishing is completed.")
+	_check(level.is_viewpoint_locked_for_test(), "The visible viewpoint fence must physically block the player before the drum game is completed.")
 	_check(level.get_node("World/WorldObjects").y_sort_enabled, "Dynamic characters must retain Y sorting.")
 	var camera: Camera2D = level.get_node("World/WorldObjects/Player/Camera2D")
 	_check(camera.limit_right == 1536, "Camera right limit must match the approved background width.")
@@ -106,17 +106,33 @@ func _test_scene_contract() -> void:
 	_check(fishing_sprite.texture != null and fishing_sprite.texture.resource_path == "res://assets/fubo_guling/generated/fishing_station_v1.png", "The coastal fishing station must use the generated rod-and-bucket art.")
 	var fishing_body := level.get_node("World/Collision/FishingStationBody") as StaticBody2D
 	var fishing_body_shape := (fishing_body.get_node("Shape") as CollisionShape2D).shape as CircleShape2D
-	_check(fishing_body.position == Vector2(585, 810) and is_equal_approx(fishing_body_shape.radius, 36.0), "The fishing station must have a rough editable circular collision body.")
+	_check(fishing_body.position == Vector2(585, 810) and is_equal_approx(fishing_body_shape.radius, 47.0), "The fishing station must retain the owner-adjusted circular collision body.")
 	var collision_probe_player := level.get_node("World/WorldObjects/Player") as CharacterBody2D
 	collision_probe_player.global_position = Vector2(650, 810)
 	var fishing_collision := collision_probe_player.move_and_collide(Vector2(-80, 0))
 	_check(fishing_collision != null and fishing_collision.get_collider() == fishing_body, "The rough fishing-station circle must physically block the player.")
+	var drum_body := level.get_node_or_null("World/Collision/DrumBody") as StaticBody2D
+	var drum_shape := (drum_body.get_node("Shape") as CollisionShape2D).shape as CircleShape2D
+	_check(drum_body.position == Vector2(1132, 247) and is_equal_approx(drum_shape.radius, 32.0), "The baked drum must have a rough editable circular collision body.")
+	collision_probe_player.global_position = Vector2(1132, 300)
+	var drum_collision := collision_probe_player.move_and_collide(Vector2(0, -80))
+	_check(drum_collision != null and drum_collision.get_collider() == drum_body, "The rough drum circle must physically block the player.")
+	var school_blocker := level.get_node("World/Collision/SchoolBlocker") as StaticBody2D
+	var school_normal := Vector2(-sin(school_blocker.rotation), cos(school_blocker.rotation))
+	collision_probe_player.global_position = school_blocker.global_position + school_normal * 70.0
+	var school_collision := collision_probe_player.move_and_collide(-school_normal * 120.0)
+	_check(school_collision != null and school_collision.get_collider() == school_blocker, "The school fence rectangle must physically block the player while visible.")
+	var viewpoint_blocker := level.get_node("World/Collision/ViewpointBlocker") as StaticBody2D
+	var viewpoint_normal := Vector2(-sin(viewpoint_blocker.rotation), cos(viewpoint_blocker.rotation))
+	collision_probe_player.global_position = viewpoint_blocker.global_position + viewpoint_normal * 70.0
+	var viewpoint_collision := collision_probe_player.move_and_collide(-viewpoint_normal * 120.0)
+	_check(viewpoint_collision != null and viewpoint_collision.get_collider() == viewpoint_blocker, "The viewpoint fence rectangle must physically block the player while visible.")
 	collision_probe_player.global_position = Vector2(220, 868)
 	_check(level.get_node("World/Triggers/FishingTrigger").position == fishing_body.position, "The fishing trigger must surround the coastal fishing collision body.")
 	_check(level.get_node("World/Triggers/SchoolTrigger").position == Vector2(1110, 330), "The drum trigger must sit below the drum at the annotated X.")
 	_check(level.get_node("World/Triggers/FishingTrigger/Shape").shape is CircleShape2D, "Fishing gameplay must be entered through a trigger area.")
 	var fishing_trigger_shape := (level.get_node("World/Triggers/FishingTrigger/Shape") as CollisionShape2D).shape as CircleShape2D
-	_check(is_equal_approx(fishing_trigger_shape.radius, 110.0) and fishing_trigger_shape.radius > fishing_body_shape.radius, "The fishing interaction range must form a generous ring around the prop collision.")
+	_check(is_equal_approx(fishing_trigger_shape.radius, 91.0) and fishing_trigger_shape.radius > fishing_body_shape.radius, "The fishing interaction range must retain the owner-adjusted ring around the prop collision.")
 	_check(level.get_node("World/Triggers/SchoolTrigger/Shape").shape is CircleShape2D, "School gameplay must be entered through a trigger area.")
 	var sea_return := level.get_node_or_null("World/Triggers/SeaReturnTrigger") as Area2D
 	_check(sea_return != null, "The dock must expose a sea-map return trigger.")
@@ -162,6 +178,7 @@ func _test_scene_contract() -> void:
 	host.active_minigame.completed.emit({"game_id": "fishing", "completed": true, "rating": "渔获丰足", "mistakes": 0, "duration_ms": 1000})
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Fishing completion must restore the map and unlock the school.")
+	_check(not level.is_school_locked_for_test() and not level.get_node("World/WorldObjects/SchoolBarrier").visible, "Completing fishing must remove both the school fence art and its collision.")
 	var drum_entry_position := Vector2(1095, 370)
 	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = drum_entry_position
 	level.trigger_drum_for_test()
@@ -174,6 +191,7 @@ func _test_scene_contract() -> void:
 	host.active_minigame.completed.emit({"game_id": "drum", "completed": true, "rating": "鼓点稳健", "mistakes": 1, "duration_ms": 1000})
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.VIEWPOINT_OPEN and host.active_minigame == null, "Drum completion must restore the map and open the viewpoint.")
+	_check(not level.is_viewpoint_locked_for_test() and not level.get_node("World/WorldObjects/ViewpointBarrier").visible, "Completing the drum game must remove both the viewpoint fence art and its collision.")
 	level.free()
 	await process_frame
 	await create_timer(0.55).timeout

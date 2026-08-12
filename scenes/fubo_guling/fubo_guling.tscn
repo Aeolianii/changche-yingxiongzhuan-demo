@@ -11,8 +11,8 @@
 [ext_resource type="Texture2D" uid="uid://cofirowu5vner" path="res://assets/ui/dialogue/ink_dialogue_backdrop.png" id="30_dialogue"]
 [ext_resource type="Texture2D" uid="uid://d4fe3kc37c3kx" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="31_prompt"]
 [ext_resource type="Texture2D" uid="uid://d2w4jmas4pnol" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="32_prompt_active"]
-[ext_resource type="Texture2D" path="res://assets/fubo_guling/generated/fishing_station_v1.png" id="33_fishing_station"]
-[ext_resource type="Script" path="res://scripts/fubo_guling/fubo_fishing_station.gd" id="34_fishing_station"]
+[ext_resource type="Texture2D" uid="uid://creavmnshu75m" path="res://assets/fubo_guling/generated/fishing_station_v1.png" id="33_fishing_station"]
+[ext_resource type="Script" uid="uid://cm22osuq25apn" path="res://scripts/fubo_guling/fubo_fishing_station.gd" id="34_fishing_station"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_yewv4"]
 size = Vector2(18, 10)
@@ -26,17 +26,20 @@ size = Vector2(82, 42)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_88otk"]
 size = Vector2(76, 38)
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_fishing_station_body"]
+radius = 47.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_drum_body"]
+radius = 32.0
+
 [sub_resource type="CircleShape2D" id="CircleShape2D_qs51d"]
-radius = 68.0
+radius = 59.008472
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_o7m5c"]
-radius = 55.0
+radius = 50.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_avxio"]
-radius = 110.0
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_fishing_station_body"]
-radius = 36.0
+radius = 91.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_sea_return"]
 radius = 55.0
@@ -75,7 +78,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.8784314, 0.47843137, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
 theme_override_constants/shadow_offset_x = 2
@@ -224,18 +226,17 @@ prop_size = Vector2(60, 74)
 main_color = Color(0.23137255, 0.29411766, 0.32156864, 1)
 art_texture = ExtResource("10_qcq6o")
 
-[node name="FishingStation" type="Node2D" parent="World/WorldObjects"]
+[node name="FishingStation" type="Node2D" parent="World/WorldObjects" unique_id=722454668]
 position = Vector2(585, 835)
 script = ExtResource("34_fishing_station")
 
-[node name="Sprite" type="Sprite2D" parent="World/WorldObjects/FishingStation"]
+[node name="Sprite" type="Sprite2D" parent="World/WorldObjects/FishingStation" unique_id=369967614]
 show_behind_parent = true
 texture_filter = 1
 position = Vector2(0, -88)
 texture = ExtResource("33_fishing_station")
 
 [node name="SchoolBarrier" type="Node2D" parent="World/WorldObjects" unique_id=190706852]
-visible = false
 texture_filter = 1
 position = Vector2(960, 465)
 rotation = -0.22
@@ -247,7 +248,6 @@ art_texture = ExtResource("22_5dl1x")
 art_scale = Vector2(0.7, 0.7)
 
 [node name="ViewpointBarrier" type="Node2D" parent="World/WorldObjects" unique_id=2114486465]
-visible = false
 texture_filter = 1
 position = Vector2(1250, 160)
 rotation = -0.18
@@ -277,7 +277,6 @@ collision_mask = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Collision/SchoolBlocker" unique_id=1195475284]
 shape = SubResource("RectangleShape2D_eyqv8")
-disabled = true
 
 [node name="ViewpointBlocker" type="StaticBody2D" parent="World/Collision" unique_id=919584238]
 position = Vector2(1250, 160)
@@ -286,13 +285,19 @@ collision_mask = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Collision/ViewpointBlocker" unique_id=288587626]
 shape = SubResource("RectangleShape2D_88otk")
-disabled = true
 
-[node name="FishingStationBody" type="StaticBody2D" parent="World/Collision"]
+[node name="DrumBody" type="StaticBody2D" parent="World/Collision"]
+position = Vector2(1132, 247)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Collision/DrumBody"]
+shape = SubResource("CircleShape2D_drum_body")
+
+[node name="FishingStationBody" type="StaticBody2D" parent="World/Collision" unique_id=1066939967]
 position = Vector2(585, 810)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape2D" parent="World/Collision/FishingStationBody"]
+[node name="Shape" type="CollisionShape2D" parent="World/Collision/FishingStationBody" unique_id=1835292061]
 shape = SubResource("CircleShape2D_fishing_station_body")
 
 [node name="BlockedRegions" type="Node2D" parent="World/Collision" unique_id=1079472491]
@@ -300,6 +305,7 @@ shape = SubResource("CircleShape2D_fishing_station_body")
 [node name="WalkableBoundary" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=767887569]
 
 [node name="Boundary" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/WalkableBoundary" unique_id=544021498]
+position = Vector2(1, -1)
 build_mode = 1
 polygon = PackedVector2Array(1070, 55, 1120, 58, 1190, 78, 1240, 86, 1285, 120, 1330, 137, 1320, 217, 1260, 263, 1190, 309, 1070, 320, 1050, 389, 1020, 491, 980, 589, 930, 640, 860, 642, 800, 663, 760, 731, 755, 811, 775, 857, 810, 903, 810, 937, 770, 977, 730, 989, 680, 971, 620, 926, 570, 880, 550, 768, 515, 800, 480, 808, 420, 823, 350, 868, 275, 918, 200, 943, 150, 898, 95, 868, 175, 838, 250, 788, 320, 738, 380, 688, 470, 663, 470, 629, 440, 606, 410, 606, 385, 549, 365, 457, 380, 434, 420, 406, 460, 377, 485, 383, 500, 400, 505, 457, 530, 514, 575, 571, 620, 589, 720, 589, 770, 571, 830, 537, 870, 491, 900, 411, 930, 320, 960, 194, 950, 149, 965, 109, 1010, 74)
 
@@ -310,6 +316,7 @@ position = Vector2(1110, 330)
 collision_layer = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Triggers/SchoolTrigger" unique_id=1850016409]
+position = Vector2(22, -83)
 shape = SubResource("CircleShape2D_qs51d")
 
 [node name="ViewpointTrigger" type="Area2D" parent="World/Triggers" unique_id=13324334]
@@ -317,14 +324,15 @@ position = Vector2(1290, 105)
 collision_layer = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Triggers/ViewpointTrigger" unique_id=1482719123]
+position = Vector2(-32, 74)
 shape = SubResource("CircleShape2D_o7m5c")
 
 [node name="FishingTrigger" type="Area2D" parent="World/Triggers" unique_id=1435280955]
 position = Vector2(585, 810)
 collision_layer = 0
-collision_mask = 1
 
 [node name="Shape" type="CollisionShape2D" parent="World/Triggers/FishingTrigger" unique_id=1179949765]
+position = Vector2(28, -15)
 shape = SubResource("CircleShape2D_avxio")
 
 [node name="SeaReturnTrigger" type="Area2D" parent="World/Triggers" unique_id=1204877489]

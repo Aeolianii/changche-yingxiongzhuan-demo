@@ -14,9 +14,9 @@ enum State {
 
 const TARGET_SCORE := 500
 const ROUND_SECONDS := 60.0
-const PIVOT := Vector2(420, 48)
-const REST_LENGTH := 52.0
-const MAX_LENGTH := 455.0
+const PIVOT := Vector2(420, 142)
+const REST_LENGTH := 40.0
+const MAX_LENGTH := 360.0
 const MIN_ANGLE := deg_to_rad(-66.0)
 const MAX_ANGLE := deg_to_rad(66.0)
 const SWING_SPEED := 1.42
@@ -24,13 +24,13 @@ const EXTEND_SPEED := 520.0
 const RETRACT_SPEED := 430.0
 const ITEM_KINDS := [
 	"small_fish", "small_fish", "small_fish", "small_fish",
-	"big_fish", "big_fish", "crab", "crab", "boot", "boot",
+	"big_fish", "big_fish", "crab", "crab", "rock", "rock",
 ]
 const ITEM_DATA := {
 	"small_fish": {"value": 55, "weight": 1.0, "radius": 20.0, "speed": 34.0},
 	"big_fish": {"value": 130, "weight": 2.7, "radius": 30.0, "speed": 22.0},
 	"crab": {"value": 85, "weight": 1.8, "radius": 23.0, "speed": 16.0},
-	"boot": {"value": 10, "weight": 3.2, "radius": 21.0, "speed": 10.0},
+	"rock": {"value": 10, "weight": 3.2, "radius": 21.0, "speed": 10.0},
 }
 
 var _rng := RandomNumberGenerator.new()
@@ -220,7 +220,7 @@ func _make_item(kind: String) -> Dictionary:
 		"value": int(data["value"]),
 		"weight": float(data["weight"]),
 		"radius": float(data["radius"]),
-		"position": Vector2(_rng.randf_range(75.0, 765.0), _rng.randf_range(165.0, 485.0)),
+		"position": Vector2(_rng.randf_range(75.0, 765.0), _rng.randf_range(205.0, 485.0)),
 		"velocity": Vector2(float(data["speed"]) * direction, 0.0),
 		"active": true,
 		"caught": false,

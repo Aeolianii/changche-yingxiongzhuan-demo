@@ -47,6 +47,22 @@ The production prompt must preserve the following meaning:
 
 > One complete 3:2 top-down three-quarter pixel-art RPG background for an ancient Chinese Lingnan coastal garrison, bright fresh and polished, crisp clustered pixels, clear turquoise South China Sea only at the landing edge, vegetation-covered low rolling lateritic hills, visible red-brown earth cuts, and one continuous lighter compacted red-earth critical path from dock to guard house, canal, training yard and lookout. The path stays about 144–192 pixels wide, smooth, low-noise and visibly brighter than blocked terrain; every local view reveals its continuation or the next landmark. Use light grey brick, blue-grey tiled roofs, small wok-ear or plain hard-gable houses, banyan, lychee and bamboo, a narrow stone-lined canal embedded in a red-soil slope, open red-earth military training yard with Chinese drum and plain flags, and a low sea-view beacon terrace. Stone is sparse and functional, limited to the dock, canal lining, foundations and a few natural outcrops. Shape boundaries with dark grass edges, low earth banks, tree masses and occasional building walls, never decorative timber fencing. Keep path centers and interaction clearings free of crates, rocks, posts, flowers and crossing lines. A local walkable scene, not a whole-island overview; land and winding roads continue toward the image edges. Spacious clean walkable ground sized for a 64×64 character, small-to-medium architecture, stable orthographic perspective, short soft shadows, refined but uncluttered detail. No characters, text, UI, logo, watermark, full island silhouette, ocean ring, giant buildings, generic Jiangnan garden compound, ornate sweeping eaves, tall stone tower, grey cliffs, rock forest, continuous stone ramparts, decorative timber fences, scattered rubble, cluttered path, Japanese shrine, Southeast Asian temple, northern imperial palace, tropical resort, isometric 3D, dark realistic rendering, painterly blur or antialiasing.
 
+## 2026-08-12 钓鱼小游戏素材
+
+- 生成方式：Codex 内置生图；精灵先生成在纯色洋红抠图底上，再使用 imagegen 技能附带的 `remove_chroma_key.py` 做软边透明化、收边与去色溢，最后以最近邻方式规整尺寸。
+- 背景：`assets/fubo_guling/minigames/fishing/fishing_background_v1.png`，840×520。岭南海岛浅滩、顶部中央木码头、由浅玉色过渡至深青色海水；中央约七成水域留空，边缘仅保留克制的水草、礁石和水流纹理；无鱼获、人物、钩线、文字和 UI。
+- 移动精灵：`small_yellow_croaker_v1.png`（黄花鱼）、`large_grouper_v1.png`（大石斑）、`blue_green_crab_v1.png`（青蟹）、`sea_rock_v1.png`（低价值岩石）。四者均为独立透明 PNG，使用清晰深墨轮廓与成组像素块，不烘焙水面、阴影和场景。
+- 运行规则：背景和精灵只负责美术表现；生成素材不决定碰撞、分值或移动参数。鱼、蟹和岩石的速度、负重、命中半径继续由 `FuboFishingGame` 统一配置。
+- 界面复用：右上“暂时离开”使用既有 `assets/ui/sea_overworld/sea_map_return_brush_v1.png`，不重复生成同功能笔触。
+
+### 生图提示词约束
+
+- 背景：古代岭南伏波岛海岸钓鱼小游戏；水墨像素 RPG 风；横向侧视玩法区域；顶部中央旧木码头；浅玉色、青绿、深蓝绿分层海水；中央开放、边缘少量水下石块与水草；禁止鱼获、钩线、人物、文字、UI、现代物件和水印。
+- 黄花鱼：单条小型黄花鱼、朝右完整侧身、赭金鳞片、深墨轮廓、纯洋红背景；禁止水、气泡、额外鱼和阴影。
+- 大石斑：单条粗壮贵重石斑、朝右完整侧身、朱红与焦橙鳞片、米白腹部、深墨轮廓、纯洋红背景；禁止场景和额外物件。
+- 青蟹：单只完整青蟹、略俯视的游戏视角、双螯八足、青玉与蓝绿色甲壳、纯洋红背景；禁止水、植物和额外生物。
+- 岩石：单块可钩取的沉重海底岩石、深灰绿色、赭色矿脉和少量藤壶、纯洋红背景；禁止沙地、水草、额外石块和阴影。
+
 ## Legacy modular plan (superseded)
 
 The module lists and generated sheets below record previous prototypes only. They are not the active composition plan and must not be assembled into the next map. Keep them until the replacement background has passed visual review; deletion is a separate cleanup decision.

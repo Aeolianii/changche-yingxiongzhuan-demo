@@ -12,6 +12,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_test_seeded_items_are_reproducible()
+	_test_generated_catch_set()
 	_test_cast_catches_and_scores()
 	_test_heavy_catch_retracts_slower()
 	_test_target_can_be_reached()
@@ -31,6 +32,11 @@ func _test_seeded_items_are_reproducible() -> void:
 	var second = FISHING_SCRIPT.new(20260811)
 	_check(first.get_items() == second.get_items(), "Identical seeds must reproduce fishing catches.")
 	_check(first.get_score() == 0 and first.get_time_left() == 60.0, "Fishing must start at zero score with sixty seconds.")
+
+
+func _test_generated_catch_set() -> void:
+	_check("rock" in FISHING_SCRIPT.ITEM_KINDS, "Fishing must use the generated sea rock as its junk catch.")
+	_check(not "boot" in FISHING_SCRIPT.ITEM_KINDS, "The old prototype boot must no longer spawn.")
 
 
 func _test_cast_catches_and_scores() -> void:
@@ -103,7 +109,15 @@ func _test_scene_contract() -> void:
 	_check(ui.get_node("Layout/FishingBoard").custom_minimum_size == Vector2(840, 520), "Fishing must reserve a large visible playfield.")
 	_check(ui.get_node("Layout/ActionButton") is Button, "Fishing needs a clear on-screen cast button.")
 	var backdrop: TextureRect = ui.get_node("BackdropArt")
-	_check(backdrop.texture != null and backdrop.texture.resource_path == "res://assets/fubo_guling/backgrounds/fubo_guling_complete.png", "Fishing scene needs the approved pixel-art environment backdrop.")
+	_check(backdrop.texture != null and backdrop.texture.resource_path == "res://assets/fubo_guling/minigames/fishing/fishing_background_v1.png", "Fishing scene needs its dedicated generated coastal backdrop.")
+	var board = ui.get_node("Layout/FishingBoard")
+	_check(board.get_background_texture_path_for_test() == "res://assets/fubo_guling/minigames/fishing/fishing_background_v1.png", "The playfield must draw the generated fishing background.")
+	var item_paths: Dictionary = board.get_item_texture_paths_for_test()
+	_check(item_paths.keys().all(func(kind): return FileAccess.file_exists(String(item_paths[kind]))), "Every moving catch must use an existing generated sprite.")
+	_check(item_paths.keys().all(func(kind): return String(item_paths[kind]).ends_with("_v1.png")), "Moving catches must use the approved generated asset pass.")
+	var exit_button: Button = ui.get_node("ExitButton")
+	var exit_style := exit_button.get_theme_stylebox("normal")
+	_check(exit_style is StyleBoxTexture and exit_style.texture.resource_path == "res://assets/ui/sea_overworld/sea_map_return_brush_v1.png", "The leave action must reuse the shared ink-brush backing.")
 	var accept_event := InputEventAction.new()
 	accept_event.action = "ui_accept"
 	accept_event.pressed = true

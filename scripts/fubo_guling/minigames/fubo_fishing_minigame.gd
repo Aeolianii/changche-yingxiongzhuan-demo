@@ -2,11 +2,12 @@ class_name FuboFishingMinigame
 extends "res://scripts/fubo_guling/minigames/fubo_minigame_base.gd"
 
 const FISHING_GAME := preload("res://scripts/fubo_guling/fubo_fishing_game.gd")
+const EXIT_BUTTON_BRUSH := preload("res://assets/ui/sea_overworld/sea_map_return_brush_v1.png")
 const CATCH_NAMES := {
 	"small_fish": "黄花鱼",
 	"big_fish": "大石斑",
 	"crab": "青蟹",
-	"boot": "旧靴子",
+	"rock": "海底岩石",
 }
 
 @onready var board: FuboFishingBoard = $Layout/FishingBoard
@@ -14,6 +15,7 @@ const CATCH_NAMES := {
 @onready var timer_label: Label = $Layout/Info/Timer
 @onready var action_button: Button = $Layout/ActionButton
 @onready var status_label: Label = $Layout/Status
+@onready var exit_button: Button = $ExitButton
 
 var _game: FuboFishingGame
 var _started_ms := 0
@@ -26,9 +28,10 @@ func _ready() -> void:
 	_started_ms = Time.get_ticks_msec()
 	_game = FISHING_GAME.new()
 	board.game = _game
+	_apply_exit_button_style()
 	board.cast_requested.connect(_perform_action)
 	action_button.pressed.connect(_perform_action)
-	$ExitButton.pressed.connect(_request_exit)
+	exit_button.pressed.connect(_request_exit)
 	_game.catch_landed.connect(_on_catch_landed)
 	_game.empty_hook_returned.connect(_on_empty_hook_returned)
 	_refresh_hud()
@@ -108,8 +111,34 @@ func _request_exit() -> void:
 		return
 	_exiting = true
 	action_button.disabled = true
-	$ExitButton.disabled = true
+	exit_button.disabled = true
 	exit_requested.emit()
+
+
+func _apply_exit_button_style() -> void:
+	exit_button.focus_mode = Control.FOCUS_NONE
+	exit_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	exit_button.add_theme_font_size_override("font_size", 19)
+	exit_button.add_theme_color_override("font_color", Color("f4ead0"))
+	exit_button.add_theme_color_override("font_hover_color", Color("f6d987"))
+	exit_button.add_theme_color_override("font_pressed_color", Color("f6d987"))
+	exit_button.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.02, 1.0))
+	exit_button.add_theme_constant_override("outline_size", 4)
+	exit_button.add_theme_stylebox_override("normal", _exit_brush_style(Color.WHITE))
+	exit_button.add_theme_stylebox_override("hover", _exit_brush_style(Color(1.0, 0.94, 0.78, 1.0)))
+	exit_button.add_theme_stylebox_override("pressed", _exit_brush_style(Color(0.72, 0.76, 0.72, 1.0)))
+	exit_button.add_theme_stylebox_override("disabled", _exit_brush_style(Color(0.5, 0.5, 0.5, 0.65)))
+
+
+func _exit_brush_style(modulate: Color) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = EXIT_BUTTON_BRUSH
+	style.modulate_color = modulate
+	style.content_margin_left = 26.0
+	style.content_margin_right = 26.0
+	style.content_margin_top = 12.0
+	style.content_margin_bottom = 12.0
+	return style
 
 
 func cast_for_test() -> bool:

@@ -47,6 +47,7 @@ func _run() -> void:
 	_expect(is_equal_approx(float(fog.call("get_view_edge_fog_inset")), 48.0), "World exploration must reserve only a narrow 48-pixel fog strip at unexplored viewport edges.")
 	var reveal_center := Vector2(2500, 1350)
 	fog.call("reveal_at", reveal_center)
+	_expect(int(fog.call("get_pending_reveal_fade_count_for_test")) > 0, "Newly explored fog cells must fade out over time instead of disappearing in one frame.")
 	_expect(float(fog.call("get_explored_ratio")) > initial_ratio, "Sailing into new waters must increase chart completion.")
 	_expect(bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.45, 0))), "A point inside the camera-width reveal footprint must be visible.")
 	_expect(not bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.49, 0))), "An unexplored direction must retain fog only near the viewport's outer edge.")

@@ -343,8 +343,8 @@ func _build_fog_of_war() -> void:
 	_fog_of_war.connect("state_changed", _store_fog_state)
 	_reveal_initial_known_land()
 	if saved_fog_state.is_empty():
-		_fog_of_war.call("reveal_at", SOUTH_SEA_HARBOR_SPAWN)
-	_fog_of_war.reveal_at(player.global_position)
+		_fog_of_war.call("reveal_at", SOUTH_SEA_HARBOR_SPAWN, true)
+	_fog_of_war.call("reveal_at", player.global_position, true)
 	_store_fog_state()
 
 
@@ -356,7 +356,7 @@ func _reveal_initial_known_land() -> void:
 	var world_polygon := PackedVector2Array()
 	for local_point in northwest_coast.polygon:
 		world_polygon.append(world.to_local(northwest_coast.to_global(local_point)))
-	_fog_of_war.call("reveal_polygon", world_polygon)
+	_fog_of_war.call("reveal_polygon", world_polygon, true)
 
 
 func _store_fog_state() -> void:

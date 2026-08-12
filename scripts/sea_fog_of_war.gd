@@ -8,6 +8,7 @@ const CELL_SIZE := 16.0
 const WORLD_FOG_Z_INDEX := 40
 const VIEW_EDGE_FOG_INSET := 48.0
 const REVEAL_UPDATE_DISTANCE := 2.0
+const REVEAL_FADE_DURATION := 0.16
 const WORLD_FOG_SHADER := preload("res://shaders/sea_world_fog_edge.gdshader")
 
 var _world_size := Vector2.ONE
@@ -21,6 +22,7 @@ var _world_overlay: Sprite2D
 var _last_reveal_position := Vector2(INF, INF)
 var _last_camera_center := Vector2(INF, INF)
 var _last_camera_target := Vector2(INF, INF)
+var _fading_cell_alpha: Dictionary = {}
 
 
 func setup(world_size: Vector2, camera_node: Camera2D, saved_state: Dictionary = {}) -> void:
@@ -36,19 +38,42 @@ func setup(world_size: Vector2, camera_node: Camera2D, saved_state: Dictionary =
 	_restore_state(saved_state)
 	_build_texture()
 	_build_world_overlay()
+	_fading_cell_alpha.clear()
+	set_process(false)
 
 
-func reveal_at(world_position: Vector2) -> bool:
+func _process(delta: float) -> void:
+	if _fading_cell_alpha.is_empty():
+		set_process(false)
+		return
+	var alpha_step := delta / REVEAL_FADE_DURATION
+	for cell_index_value in _fading_cell_alpha.keys():
+		var cell_index := int(cell_index_value)
+		var current_alpha := float(_fading_cell_alpha[cell_index])
+		var next_alpha := move_toward(current_alpha, 0.0, alpha_step)
+		var cell_x := cell_index % _grid_size.x
+		var cell_y := floori(float(cell_index) / float(_grid_size.x))
+		_fog_image.set_pixel(cell_x, cell_y, Color(0, 0, 0, next_alpha))
+		if next_alpha <= 0.001:
+			_fading_cell_alpha.erase(cell_index)
+		else:
+			_fading_cell_alpha[cell_index] = next_alpha
+	_fog_texture.update(_fog_image)
+	if _fading_cell_alpha.is_empty():
+		set_process(false)
+
+
+func reveal_at(world_position: Vector2, immediate := false) -> bool:
 	if _fog_image == null or _camera == null:
 		return false
 	if world_position.distance_squared_to(_last_reveal_position) < pow(REVEAL_UPDATE_DISTANCE, 2.0):
 		return false
 	_last_reveal_position = world_position
 	var reveal_half_size := _get_camera_reveal_half_size()
-	return _reveal_world_rect(world_position - reveal_half_size, world_position + reveal_half_size)
+	return _reveal_world_rect(world_position - reveal_half_size, world_position + reveal_half_size, immediate)
 
 
-func _reveal_world_rect(minimum_world: Vector2, maximum_world: Vector2) -> bool:
+func _reveal_world_rect(minimum_world: Vector2, maximum_world: Vector2, immediate := false) -> bool:
 	var minimum := _world_to_cell(minimum_world)
 	var maximum := _world_to_cell(maximum_world)
 	var changed := false
@@ -56,9 +81,9 @@ func _reveal_world_rect(minimum_world: Vector2, maximum_world: Vector2) -> bool:
 		for cell_x in range(minimum.x, maximum.x + 1):
 			var cell_index := cell_y * _grid_size.x + cell_x
 			if _set_revealed(cell_index):
-				_fog_image.set_pixel(cell_x, cell_y, Color(0, 0, 0, 0))
+				_queue_reveal_visual(cell_x, cell_y, cell_index, immediate)
 				changed = true
-	_commit_reveal(changed)
+	_commit_reveal(changed, immediate)
 	return changed
 
 
@@ -83,7 +108,7 @@ func reveal_camera_view() -> bool:
 	return _reveal_world_rect(minimum_center - reveal_half_size, maximum_center + reveal_half_size)
 
 
-func reveal_polygon(world_polygon: PackedVector2Array) -> bool:
+func reveal_polygon(world_polygon: PackedVector2Array, immediate := false) -> bool:
 	if _fog_image == null or world_polygon.size() < 3:
 		return false
 	var bounds := Rect2(world_polygon[0], Vector2.ZERO)
@@ -100,9 +125,9 @@ func reveal_polygon(world_polygon: PackedVector2Array) -> bool:
 				for padded_x in range(maxi(0, cell_x - 1), mini(_grid_size.x - 1, cell_x + 1) + 1):
 					var cell_index := padded_y * _grid_size.x + padded_x
 					if _set_revealed(cell_index):
-						_fog_image.set_pixel(padded_x, padded_y, Color(0, 0, 0, 0))
+						_queue_reveal_visual(padded_x, padded_y, cell_index, immediate)
 						changed = true
-	_commit_reveal(changed)
+	_commit_reveal(changed, immediate)
 	return changed
 
 
@@ -123,6 +148,10 @@ func get_vision_world_size() -> Vector2:
 
 func get_view_edge_fog_inset() -> float:
 	return VIEW_EDGE_FOG_INSET
+
+
+func get_pending_reveal_fade_count_for_test() -> int:
+	return _fading_cell_alpha.size()
 
 
 func _get_camera_reveal_half_size() -> Vector2:
@@ -215,6 +244,15 @@ func _set_revealed(cell_index: int) -> bool:
 	return true
 
 
+func _queue_reveal_visual(cell_x: int, cell_y: int, cell_index: int, immediate: bool) -> void:
+	if immediate:
+		_fading_cell_alpha.erase(cell_index)
+		_fog_image.set_pixel(cell_x, cell_y, Color(0, 0, 0, 0))
+		return
+	_fading_cell_alpha[cell_index] = _fog_image.get_pixel(cell_x, cell_y).a
+	set_process(true)
+
+
 func _cell_overlaps_polygon(cell: Vector2i, world_polygon: PackedVector2Array) -> bool:
 	var cell_rect := Rect2(Vector2(cell) * _cell_world_size, _cell_world_size)
 	var center := cell_rect.get_center()
@@ -229,8 +267,9 @@ func _cell_overlaps_polygon(cell: Vector2i, world_polygon: PackedVector2Array) -
 	return false
 
 
-func _commit_reveal(changed: bool) -> void:
+func _commit_reveal(changed: bool, immediate := false) -> void:
 	if not changed:
 		return
-	_fog_texture.update(_fog_image)
+	if immediate:
+		_fog_texture.update(_fog_image)
 	state_changed.emit()

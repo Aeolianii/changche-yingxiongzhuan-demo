@@ -21,16 +21,16 @@ size = Vector2(18, 10)
 size = Vector2(18, 16)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_eyqv8"]
-size = Vector2(82, 42)
+size = Vector2(57.98996, 29.362701)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_88otk"]
 size = Vector2(76, 38)
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_fishing_station_body"]
-radius = 47.0
-
 [sub_resource type="CircleShape2D" id="CircleShape2D_drum_body"]
 radius = 32.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_fishing_station_body"]
+radius = 47.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_qs51d"]
 radius = 59.008472
@@ -276,6 +276,8 @@ rotation = -0.22
 collision_mask = 0
 
 [node name="Shape" type="CollisionShape2D" parent="World/Collision/SchoolBlocker" unique_id=1195475284]
+position = Vector2(-2.0032349, -2.4974365)
+scale = Vector2(1.0000002, 1.0000002)
 shape = SubResource("RectangleShape2D_eyqv8")
 
 [node name="ViewpointBlocker" type="StaticBody2D" parent="World/Collision" unique_id=919584238]
@@ -286,11 +288,11 @@ collision_mask = 0
 [node name="Shape" type="CollisionShape2D" parent="World/Collision/ViewpointBlocker" unique_id=288587626]
 shape = SubResource("RectangleShape2D_88otk")
 
-[node name="DrumBody" type="StaticBody2D" parent="World/Collision"]
+[node name="DrumBody" type="StaticBody2D" parent="World/Collision" unique_id=122627216]
 position = Vector2(1132, 247)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape2D" parent="World/Collision/DrumBody"]
+[node name="Shape" type="CollisionShape2D" parent="World/Collision/DrumBody" unique_id=1394047936]
 shape = SubResource("CircleShape2D_drum_body")
 
 [node name="FishingStationBody" type="StaticBody2D" parent="World/Collision" unique_id=1066939967]

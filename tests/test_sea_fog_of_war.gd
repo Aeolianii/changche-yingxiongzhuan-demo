@@ -62,6 +62,7 @@ func _run() -> void:
 		var world_fog_material := world_overlay.material as ShaderMaterial
 		_expect(world_fog_material != null and world_fog_material.shader.resource_path.ends_with("sea_world_fog_edge.gdshader"), "World fog must soften the narrow unexplored edge instead of drawing a hard black line.")
 		_expect(float(world_fog_material.get_shader_parameter("blur_texels")) >= 2.0, "World edge fog must use the wider soft transition.")
+		_expect(float(world_fog_material.get_shader_parameter("edge_warp_texels")) >= 1.0, "World edge fog must warp the revealed rectangle into a stable irregular ink contour.")
 		_expect(float(world_fog_material.get_shader_parameter("fog_opacity")) <= 0.75, "World edge fog must stay gently translucent rather than covering the view with solid black.")
 
 	var hud := root.get_node("ExplorationUI/HUD") as Control

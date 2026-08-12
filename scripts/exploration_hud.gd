@@ -102,13 +102,13 @@ func set_main_task(task_title: String) -> void:
 		_quest_screen.call("set_main_task", task_title)
 
 
-func set_main_task_progress(task_title: String, objective: String, progress_stage: int) -> void:
+func set_main_task_progress(task_title: String, objective: String, progress_stage: int, task_state := {}) -> void:
 	if is_instance_valid(_main_task_label):
 		_main_task_label.text = task_title
 	if is_instance_valid(_main_objective_label):
 		_main_objective_label.text = objective
 	if is_instance_valid(_quest_screen):
-		_quest_screen.call("set_main_task_progress", task_title, objective, progress_stage)
+		_quest_screen.call("set_main_task_progress", task_title, objective, progress_stage, task_state)
 
 
 func reset_context(context_id: StringName) -> void:

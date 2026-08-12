@@ -68,7 +68,8 @@ func _test_scene_contract() -> void:
 	root.add_child(level)
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Fubo scene must start with coastal fishing already available.")
-	_check(level.is_school_locked_for_test(), "The visible school fence must physically block the player before fishing is completed.")
+	_check(level.is_school_locked_for_test(), "The decorative school fence must retain its local physical collision.")
+	_check(level.get_node("World/WorldObjects/SchoolBarrier").visible, "The decorative school fence must be visible from initial scene load.")
 	_check(level.is_viewpoint_locked_for_test(), "The visible viewpoint fence must physically block the player before the drum game is completed.")
 	_check(level.get_node("World/WorldObjects").y_sort_enabled, "Dynamic characters must retain Y sorting.")
 	var camera: Camera2D = level.get_node("World/WorldObjects/Player/Camera2D")
@@ -128,7 +129,7 @@ func _test_scene_contract() -> void:
 	var school_normal := Vector2(-sin(school_blocker.rotation), cos(school_blocker.rotation))
 	collision_probe_player.global_position = school_blocker.global_position + school_normal * 70.0
 	var school_collision := collision_probe_player.move_and_collide(-school_normal * 120.0)
-	_check(school_collision != null and school_collision.get_collider() == school_blocker, "The school fence rectangle must physically block the player while visible.")
+	_check(school_collision != null and school_collision.get_collider() == school_blocker, "The decorative school fence must retain collision while allowing the player to walk around it.")
 	var viewpoint_blocker := level.get_node("World/Collision/ViewpointBlocker") as StaticBody2D
 	var viewpoint_normal := Vector2(-sin(viewpoint_blocker.rotation), cos(viewpoint_blocker.rotation))
 	collision_probe_player.global_position = viewpoint_blocker.global_position + viewpoint_normal * 70.0
@@ -210,7 +211,8 @@ func _test_scene_contract() -> void:
 	host.active_minigame.completed.emit({"game_id": "fishing", "completed": true, "rating": "渔获丰足", "mistakes": 0, "duration_ms": 1000})
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Fishing completion must restore the map and unlock the school.")
-	_check(not level.is_school_locked_for_test() and not level.get_node("World/WorldObjects/SchoolBarrier").visible, "Completing fishing must remove both the school fence art and its collision.")
+	_check(level.is_school_locked_for_test() and level.get_node("World/WorldObjects/SchoolBarrier").visible, "Completing fishing must keep both the decorative school fence and its local collision unchanged.")
+	_check("渔获满舱，收竿归岸" in FileAccess.get_file_as_string("res://scripts/fubo_guling/fubo_guling.gd") and "渔获满舱，可以前往古校场" not in FileAccess.get_file_as_string("res://scripts/fubo_guling/fubo_guling.gd"), "Every fishing completion notice must only report the catch and return ashore.")
 	var repeat_fishing_position := Vector2(720, 805)
 	player.global_position = repeat_fishing_position
 	_check(level.trigger_fishing_for_test(), "Fishing must remain available after its first story completion.")

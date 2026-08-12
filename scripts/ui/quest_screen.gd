@@ -128,10 +128,10 @@ func set_main_task(task_title: String) -> void:
 		_refresh_quest_detail()
 
 
-func set_main_task_progress(task_title: String, objective: String, progress_stage: int) -> void:
+func set_main_task_progress(task_title: String, objective: String, progress_stage: int, task_state := {}) -> void:
 	if task_title.is_empty() or _quests.is_empty():
 		return
-	_quests[0] = _make_main_quest_state(task_title, progress_stage)
+	_quests[0] = _make_main_quest_state(task_title, progress_stage, task_state)
 	_quests[0]["objective"] = objective
 	_completed_quests = _make_completed_quests(task_title)
 	_selected_quest = 0
@@ -534,11 +534,11 @@ func _highlight_keywords(text_value: String, keywords: Array) -> String:
 	return highlighted
 
 
-func _make_main_quest_state(task_title: String, progress_stage: int = 0) -> Dictionary:
+func _make_main_quest_state(task_title: String, progress_stage: int = 0, task_state := {}) -> Dictionary:
 	if task_title == "探索海域，完善海图" and _context_id == &"sea_overworld":
 		return _make_sea_overworld_main_task(progress_stage)
 	if task_title == "伏波古岭":
-		return _make_fubo_guling_main_task(progress_stage)
+		return _make_fubo_guling_main_task(progress_stage, bool(task_state.get("keeper_intro_completed", false)))
 	if task_title == "奉诏入殿":
 		var default_main: Dictionary = QUESTS[0]
 		return default_main.duplicate(true)
@@ -704,13 +704,13 @@ func _make_fubo_guling_quests() -> Array[Dictionary]:
 	]
 
 
-func _make_fubo_guling_main_task(progress_stage: int) -> Dictionary:
+func _make_fubo_guling_main_task(progress_stage: int, keeper_intro_completed := false) -> Dictionary:
 	return {
 		"type": "主线",
 		"title": "伏波古岭",
 		"objective": [
-			"沿山路寻找守岭人",
-			"返回码头，开始摆钩钓鱼",
+			"前往码头旁海岸，在鱼竿处开始钓鱼",
+			"前往码头旁海岸，在鱼竿处开始钓鱼",
 			"沿山路前往古校场",
 			"登上观景台眺望南海",
 			"行程完成",
@@ -718,8 +718,8 @@ func _make_fubo_guling_main_task(progress_stage: int) -> Dictionary:
 		"description": "从码头登陆伏波古岭，拜访守岭人，完成码头渔获与古校场鼓令，最后登岭眺望南海。",
 		"keywords": ["伏波古岭", "守岭人", "码头渔获", "古校场", "南海"],
 		"steps": [
-			{"title": "寻找守岭人", "description": "沿红土山路前往房前，与守岭人交谈。", "keywords": ["红土山路", "守岭人"], "completed": progress_stage >= 1, "expanded": progress_stage == 0},
-			{"title": "码头摆钩钓鱼", "description": "回到码头完成摆钩钓鱼挑战。", "keywords": ["码头", "摆钩钓鱼"], "completed": progress_stage >= 2, "expanded": progress_stage == 1},
+			{"title": "寻找守岭人", "description": "沿红土山路前往房前，与守岭人交谈。", "keywords": ["红土山路", "守岭人"], "completed": keeper_intro_completed, "expanded": not keeper_intro_completed},
+			{"title": "码头摆钩钓鱼", "description": "前往码头旁海岸，在鱼竿处完成摆钩钓鱼。", "keywords": ["码头旁海岸", "鱼竿", "摆钩钓鱼"], "completed": progress_stage >= 2, "expanded": progress_stage < 2},
 			{"title": "完成古校场鼓令", "description": "前往古校场，听令后依次敲响三面战鼓。", "keywords": ["古校场", "三面战鼓"], "completed": progress_stage >= 3, "expanded": progress_stage == 2},
 			{"title": "登岭眺望南海", "description": "鼓令完成后登上观景台。", "keywords": ["观景台", "南海"], "completed": progress_stage >= 4, "expanded": progress_stage >= 3},
 		],

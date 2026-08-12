@@ -246,11 +246,10 @@ func _restore_saved_scene_state(raw_snapshot: Dictionary) -> void:
 
 
 func _apply_phase_world_state() -> void:
-	var fishing_done := phase >= Phase.DRUM_AVAILABLE
 	var drum_done := phase >= Phase.VIEWPOINT_OPEN
-	school_shape.disabled = fishing_done
-	school_barrier.visible = not fishing_done
-	viewpoint_shape.disabled = drum_done
+	school_shape.set_deferred("disabled", false)
+	school_barrier.visible = true
+	viewpoint_shape.set_deferred("disabled", drum_done)
 	viewpoint_barrier.visible = not drum_done
 	_sync_fishing_station()
 
@@ -299,7 +298,13 @@ func _refresh_exploration_hud() -> void:
 		Phase.COMPLETE:
 			objective = "伏波古岭行程完成"
 			progress_stage = 4
-	exploration_hud.call("set_main_task_progress", "伏波古岭", objective, progress_stage)
+	exploration_hud.call(
+		"set_main_task_progress",
+		"伏波古岭",
+		objective,
+		progress_stage,
+		{"keeper_intro_completed": _keeper_intro_completed}
+	)
 	var should_show := not _transitioning and not dialogue_panel.visible and not overlay.visible and minigame_host.active_minigame == null
 	exploration_hud.call("set_exploration_visible", should_show)
 
@@ -506,13 +511,10 @@ func _complete_fishing(result: Dictionary) -> void:
 		return
 	var first_completion := _fishing_return_phase in [Phase.ARRIVAL, Phase.FISHING_AVAILABLE]
 	phase = Phase.DRUM_AVAILABLE if first_completion else _fishing_return_phase
-	_sync_fishing_station()
-	if first_completion:
-		school_shape.set_deferred("disabled", true)
-		school_barrier.visible = false
+	_apply_phase_world_state()
 	_refresh_exploration_hud()
 	if not _test_mode:
-		_show_notice("渔获满舱，可以前往古校场" if first_completion else "渔获满舱，收竿归岸", 1.8)
+		_show_notice("渔获满舱，收竿归岸", 1.8)
 
 
 func _complete_drum(_result: Dictionary) -> void:

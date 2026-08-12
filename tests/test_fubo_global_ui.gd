@@ -22,6 +22,10 @@ func _run() -> void:
 	_check(level.get_node_or_null("Interface/HUD/FishingPanel") == null and level.get_node_or_null("Interface/HUD/DrumPanel") == null, "Fubo must remove old minigame status rectangles.")
 	_check((global_hud.get_node("QuestTracker/MainQuest/TaskName") as Label).text == "伏波古岭", "Fubo must project its task into the global tracker.")
 	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Fubo must expose fishing immediately on initial load.")
+	_check((global_hud.get_node("QuestTracker/MainQuest/Objective") as Label).text == "前往码头旁海岸，在鱼竿处开始钓鱼", "Initial Fubo task tracker must direct the player to available fishing.")
+	var quest_screen := global_hud.get_node("QuestScreen")
+	_check(str(quest_screen.get("_quests")[0]["objective"]) == "前往码头旁海岸，在鱼竿处开始钓鱼", "Initial Fubo quest detail must mirror the dynamic fishing objective.")
+	_check(not bool(quest_screen.get("_quests")[0]["steps"][0]["completed"]), "Landing on Fubo must not mark the keeper conversation complete.")
 	var prompt := level.get_node("Interface/HUD/PromptPanel") as TextureButton
 	_check(prompt != null and prompt.texture_normal != null and prompt.texture_normal.resource_path.ends_with("interaction_button_ink_v1.png"), "Fubo prompt must use the existing ink interaction art.")
 	_check(prompt.texture_pressed != null and prompt.texture_pressed.resource_path.ends_with("interaction_button_ink_active_v1.png"), "Fubo prompt must use the shared active interaction art.")
@@ -57,6 +61,7 @@ func _run() -> void:
 	_check("古校场听令回鼓" in dialogue.dialogue_label.text and "切莫误了军机" in dialogue.dialogue_label.text, "The keeper must connect fishing to the schoolyard drum task in a frontier voice.")
 	level.call("_advance_dialogue")
 	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE and level.call("is_keeper_intro_completed_for_test"), "Keeper dialogue must not gate or change the fishing phase.")
+	_check(bool(quest_screen.get("_quests")[0]["steps"][0]["completed"]), "Only completing the keeper's first dialogue may check the keeper quest step.")
 	_check(level.call("_is_stable_save_state"), "Fubo fishing-available exploration must remain saveable after the keeper hint.")
 	var fishing_entry_position := Vector2(665, 810)
 	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = fishing_entry_position
@@ -64,12 +69,16 @@ func _run() -> void:
 	var host := level.get_node("Interface/MinigameHost")
 	_check(host.active_minigame != null and not global_hud.visible, "Opening a Fubo minigame must hide the global HUD.")
 	if host.active_minigame != null:
-		host.active_minigame.exit_requested.emit()
+		level.set("_test_mode", true)
+		host.active_minigame.completed.emit({"game_id": "fishing", "completed": true, "rating": "渔获丰足", "mistakes": 0, "duration_ms": 1000})
 		await process_frame
-	_check(host.active_minigame == null and global_hud.visible, "Leaving a Fubo minigame must restore the global HUD.")
+	_check(host.active_minigame == null and global_hud.visible, "Completing a Fubo minigame must restore the global HUD.")
+	_check((global_hud.get_node("QuestTracker/MainQuest/Objective") as Label).text == "沿山路前往古校场，完成听令回鼓", "Fishing completion must dynamically advance the task tracker to the schoolyard.")
+	_check(str(quest_screen.get("_quests")[0]["objective"]) == "沿山路前往古校场，完成听令回鼓", "Fishing completion must dynamically advance the quest detail to the schoolyard.")
+	_check(bool(quest_screen.get("_quests")[0]["steps"][1]["completed"]), "Fishing completion must check only the fishing quest step.")
 	var restored_position := (level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position
 	_check(restored_position == fishing_entry_position, "Leaving coastal fishing must restore the position used to enter it: expected %s, got %s." % [fishing_entry_position, restored_position])
-	_check(str(level.get("_pending_trigger")) == "fishing" and prompt.visible, "Returning inside the fishing ring must immediately restore its interaction.")
+	_check(str(level.get("_pending_trigger")) == "fishing" and prompt.visible, "Completing inside the fishing ring must immediately restore its interaction.")
 	_check(level.call("_is_stable_save_state"), "Leaving a Fubo minigame must restore a saveable exploration state.")
 	level.set("_transitioning", true)
 	_check(not level.call("_is_stable_save_state"), "Fubo loading transitions must not be saveable.")

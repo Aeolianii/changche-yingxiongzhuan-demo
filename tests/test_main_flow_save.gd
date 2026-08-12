@@ -159,7 +159,7 @@ func _verify_fubo_restore() -> void:
 	_expect(int(scene.get("phase")) == 3, "Fubo must restore the stable DRUM_AVAILABLE phase.")
 	_expect(player.global_position.is_equal_approx(Vector2(902, 518)), "Fubo must restore the player position.")
 	_expect(str(player.get("facing")) == "left", "Fubo must restore the player facing.")
-	_expect(not scene.call("is_school_locked_for_test") and scene.call("is_viewpoint_locked_for_test"), "Fubo must derive its barrier state from saved progress.")
+	_expect(scene.call("is_school_locked_for_test") and (scene.get_node("World/WorldObjects/SchoolBarrier") as Node2D).visible and scene.call("is_viewpoint_locked_for_test"), "Fubo restore must retain the decorative school fence and keep the later viewpoint gate closed.")
 	_expect("古校场" in (root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label).text, "Fubo must restore its task projection.")
 	var restored_context := FUBO_TRAVEL.decode_context(root.get_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, {}))
 	_expect(not restored_context.is_empty() and (restored_context["ship_position"] as Vector2).is_equal_approx(Vector2(4260, 780)), "Fubo must restore its sea-return context.")

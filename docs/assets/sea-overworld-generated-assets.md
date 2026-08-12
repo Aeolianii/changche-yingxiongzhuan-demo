@@ -24,6 +24,7 @@
 | 水墨像素海图图标 | `assets/ui/icons/hud_map_v1.png` | 128×128 | 透明PNG；放置于原人物头像的菱形框中 |
 | 岭南海域双向加载图 | `assets/ui/loading/lingnan_sea_loading_v1.png` | 1536×1024 | 3:2全屏背景；文字由 Godot 叠加，可复用于进入大地图与返回南海军港 |
 | 水墨像素月面 | `assets/ui/sea_overworld/moon_clock_moon.png` | 256×256 | 透明PNG；作为左上月相时钟的着色器纹理，不包含外框或文字 |
+| 漂流木箱 | `assets/sprites/sea_overworld/drifting_supply_crate_v1.png` | 512×512 | 透明PNG；大地图一次性随机事件视觉，只包含木箱与贴身漂浮物，不烘焙地点文字 |
 | 水墨像素展开海图框 | `assets/ui/sea_overworld/sea_map_scroll_frame_v1.png` | 1536×1024 | 透明PNG；完整海图使用 `1280×853` 卷轴框，中央 `870×510` 安全区承载运行时地图；SHA-256 `DAF01DAE53DB4503A37DF6F07E76124554587908D27ADF5D0DB9DE4CDA2BBC74` |
 | 大地图阶段一构图灰模 v1 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png` | 1672×941 | 历史构图；B 为敌方核心、D 为群岛水战区，不接入游戏 |
 | 大地图阶段一构图灰模 v2 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` | 1672×941 | 历史构图；B 右上为群岛水战区、D 右下为敌方核心海域，不接入游戏 |

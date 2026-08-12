@@ -76,6 +76,13 @@ The production prompt must preserve the following meaning:
 
 The module lists and generated sheets below record previous prototypes only. They are not the active composition plan and must not be assembled into the next map. Keep them until the replacement background has passed visual review; deletion is a separate cleanup decision.
 
+## 2026-08-12 completion transition CG
+
+- Runtime file: `assets/fubo_guling/cutscenes/fubo_completion_cg_v1.png` (1536×1024, 3:2).
+- Generation path: built-in ImageGen, using the approved protagonist front/side/back pixel references and the existing bright Lingnan sea transition as visual references.
+- Runtime treatment: Godot overlays the exact title `伏波古岭` and subtitle `渔获满舱，鼓令已成`; the bitmap intentionally contains no generated text. `FuboCompletionCutscene` plays the image for four seconds with a slow 1.045× to 1.0× push, staggered caption fade-in and full fade-out.
+- Final prompt: `Preserve the approved first CG's bright late-afternoon Fubo Ancient Ridge environment, panoramic turquoise sea, layered green coves, bamboo framing, red-earth stone lookout, distant junk, basket, drumsticks, camera angle and right-side figure placement. Replace only the old warrior with the referenced chibi design translated into a handsome clean-shaven young adult of believable seven-head proportions: dark hair in the same round high bun, small gold-black crown, black-and-gold long court robe, gold bracers and deep-red cloak. Preserve the commanding rear three-quarter pose with both hands planted on the hips and elbows outward, facing the sea and sunset. Keep the open, bright polished Chinese pixel-art cinematic style and clean upper-center sky for engine text. No text, UI, city, dark border, chibi body, beard, helmet, gray hair, other people, photorealism or 3D.`
+
 ## Historical planned modules
 
 - Ground: grass/earth texture and coastal ground treatment.

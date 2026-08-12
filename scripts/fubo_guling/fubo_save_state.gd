@@ -2,7 +2,7 @@ class_name FuboSaveState
 extends RefCounted
 
 const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
-const STABLE_PHASES := [0, 1, 3, 5]
+const STABLE_PHASES := [0, 1, 3, 5, 6]
 const FACINGS := ["up", "left", "down", "right"]
 
 

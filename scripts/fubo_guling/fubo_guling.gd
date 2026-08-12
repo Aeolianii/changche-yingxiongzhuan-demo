@@ -51,6 +51,7 @@ const KEEPER_IDLE_LINE := "倭患一日未靖，这伏波岛的烽火便一日�
 @onready var prompt_label: Label = $Interface/HUD/PromptPanel/Prompt
 @onready var overlay: ColorRect = $Interface/HUD/Overlay
 @onready var overlay_text: Label = $Interface/HUD/Overlay/OverlayText
+@onready var completion_cutscene: FuboCompletionCutscene = $Interface/CompletionCutscene
 
 var phase := Phase.FISHING_AVAILABLE
 var _keeper_intro_completed := false
@@ -62,6 +63,7 @@ var _transitioning := false
 var _minigame_return_position := Vector2.ZERO
 var _fishing_return_phase := Phase.FISHING_AVAILABLE
 var _loading_transition: SceneLoadingTransition
+var _completion_return_position := Vector2.ZERO
 var dialogue_panel: FieldEventDialogue
 var exploration_hud: Control
 var _exploration_ui: Node
@@ -212,7 +214,7 @@ func _on_return_title_requested() -> void:
 
 
 func _is_stable_save_state() -> bool:
-	return phase in [Phase.ARRIVAL, Phase.FISHING_AVAILABLE, Phase.DRUM_AVAILABLE, Phase.VIEWPOINT_OPEN] and not _transitioning and not dialogue_panel.visible and not overlay.visible and minigame_host.active_minigame == null
+	return phase in [Phase.ARRIVAL, Phase.FISHING_AVAILABLE, Phase.DRUM_AVAILABLE, Phase.VIEWPOINT_OPEN, Phase.COMPLETE] and not _transitioning and not dialogue_panel.visible and not overlay.visible and minigame_host.active_minigame == null
 
 
 func _consume_saved_scene_state() -> Dictionary:
@@ -257,7 +259,7 @@ func _sync_fishing_station() -> void:
 
 
 func _is_fishing_available() -> bool:
-	return phase in [Phase.FISHING_AVAILABLE, Phase.DRUM_AVAILABLE, Phase.VIEWPOINT_OPEN]
+	return phase in [Phase.FISHING_AVAILABLE, Phase.DRUM_AVAILABLE, Phase.VIEWPOINT_OPEN, Phase.COMPLETE]
 
 
 func _show_save_message(success: bool, reason: String) -> void:
@@ -585,14 +587,28 @@ func _refresh_minigame_interaction() -> void:
 
 
 func _on_viewpoint_body_entered(body: Node) -> void:
-	if body != player or phase != Phase.VIEWPOINT_OPEN:
+	if body != player or phase != Phase.VIEWPOINT_OPEN or _transitioning:
 		return
-	phase = Phase.COMPLETE
+	_transitioning = true
+	_completion_return_position = player.global_position
+	_pending_trigger = ""
+	prompt_panel.visible = false
+	fishing_station.set_highlighted(false)
 	player.controls_enabled = false
 	player.cancel_move_target()
-	overlay_text.text = "伏波古岭\n渔获满舱，鼓令已成\n\n按 E / 空格 重新开始"
-	overlay.visible = true
+	player.velocity = Vector2.ZERO
 	_refresh_exploration_hud()
+	await completion_cutscene.play()
+	player.global_position = _completion_return_position
+	player.velocity = Vector2.ZERO
+	player.cancel_move_target()
+	player.call("set_move_direction", Vector2.ZERO)
+	phase = Phase.COMPLETE
+	_transitioning = false
+	player.controls_enabled = true
+	_sync_fishing_station()
+	_refresh_exploration_hud()
+	_refresh_minigame_interaction.call_deferred()
 
 
 func _show_notice(text_value: String, duration: float) -> void:
@@ -600,7 +616,7 @@ func _show_notice(text_value: String, duration: float) -> void:
 	overlay.visible = true
 	_refresh_exploration_hud()
 	await get_tree().create_timer(duration).timeout
-	if phase != Phase.COMPLETE and minigame_host.active_minigame == null:
+	if minigame_host.active_minigame == null:
 		overlay.visible = false
 		_refresh_exploration_hud()
 

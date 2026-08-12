@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://d2w4jmas4pnol" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="32_prompt_active"]
 [ext_resource type="Texture2D" uid="uid://creavmnshu75m" path="res://assets/fubo_guling/generated/fishing_station_v1.png" id="33_fishing_station"]
 [ext_resource type="Script" uid="uid://cm22osuq25apn" path="res://scripts/fubo_guling/fubo_fishing_station.gd" id="34_fishing_station"]
+[ext_resource type="PackedScene" path="res://scenes/fubo_guling/fubo_completion_cutscene.tscn" id="35_completion_cutscene"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_yewv4"]
 size = Vector2(18, 10)
@@ -181,6 +182,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("29_p58l7")
+
+[node name="CompletionCutscene" parent="Interface" instance=ExtResource("35_completion_cutscene")]
 
 [node name="World" type="Node2D" parent="." unique_id=1095094591]
 

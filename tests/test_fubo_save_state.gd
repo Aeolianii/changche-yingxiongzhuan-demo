@@ -8,7 +8,7 @@ var _failures: Array[String] = []
 
 func _initialize() -> void:
 	var sea_context := TRAVEL.make_context(Vector2(4260, 780), 2, 3, 14.75)
-	for stable_phase in [0, 1, 3, 5]:
+	for stable_phase in [0, 1, 3, 5, 6]:
 		var snapshot: Dictionary = SAVE_STATE.make_snapshot(Vector2(420, 820), "left", stable_phase, sea_context)
 		_check(not snapshot.is_empty(), "Stable phase %d must produce a snapshot." % stable_phase)
 		_check(SAVE_STATE.decode_snapshot(snapshot) == snapshot, "Stable phase %d must round-trip." % stable_phase)
@@ -30,7 +30,7 @@ func _initialize() -> void:
 	legacy_fishing_available.erase("keeper_intro_completed")
 	_check(SAVE_STATE.decode_snapshot(legacy_fishing_available).get("keeper_intro_completed", false), "Legacy phase-one saves must infer that the old required keeper dialogue was completed.")
 
-	for unstable_phase in [2, 4, 6]:
+	for unstable_phase in [2, 4]:
 		_check(SAVE_STATE.make_snapshot(Vector2.ZERO, "down", unstable_phase, {}).is_empty(), "Unstable phase %d must not be saved." % unstable_phase)
 	_check(SAVE_STATE.make_snapshot(Vector2(INF, 0), "down", 0, {}).is_empty(), "Non-finite positions must be rejected.")
 	_check(SAVE_STATE.make_snapshot(Vector2.ZERO, "diagonal", 0, {}).is_empty(), "Unknown facings must be rejected.")

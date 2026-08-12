@@ -231,6 +231,21 @@ func _test_scene_contract() -> void:
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.VIEWPOINT_OPEN and host.active_minigame == null, "Drum completion must restore the map and open the viewpoint.")
 	_check(not level.has_node("World/WorldObjects/ViewpointBarrier") and not level.has_node("World/Collision/ViewpointBlocker"), "Drum completion must not recreate the removed ladder-side fence.")
+	var completion_cutscene := level.get_node("Interface/CompletionCutscene") as FuboCompletionCutscene
+	_check(is_equal_approx(completion_cutscene.duration_seconds, 4.0), "The Fubo completion CG must run for four seconds.")
+	_check((completion_cutscene.get_node("Caption/Title") as Label).text == "伏波古岭", "The completion CG must show the approved first line.")
+	_check((completion_cutscene.get_node("Caption/Subtitle") as Label).text == "渔获满舱，鼓令已成", "The completion CG must show the approved second line.")
+	_check((completion_cutscene.get_node("CGImage") as TextureRect).texture.resource_path == "res://assets/fubo_guling/cutscenes/fubo_completion_cg_v1.png", "The completion transition must use the generated adult-protagonist overlook CG.")
+	completion_cutscene.duration_scale = 0.02
+	var completion_position := Vector2(1180, 210)
+	player.global_position = completion_position
+	level.call("_on_viewpoint_body_entered", player)
+	await create_timer(0.14).timeout
+	_check(level.get_phase_for_test() == level.Phase.COMPLETE, "The side quest must complete only after the four-second CG finishes.")
+	_check(player.global_position == completion_position, "The player must return to the exact pre-CG position.")
+	_check(player.controls_enabled and not completion_cutscene.visible, "Finishing the CG must restore scene control and hide the transition.")
+	_check(level.call("_is_stable_save_state"), "Completed Fubo exploration must be saveable.")
+	_check(fishing_station.call("is_available_for_test"), "Fishing must remain available after the side quest is complete.")
 	level.free()
 	await process_frame
 	await create_timer(0.55).timeout

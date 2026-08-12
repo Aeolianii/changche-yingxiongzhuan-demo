@@ -1,0 +1,89 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/fubo_guling/fubo_completion_cutscene.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/fubo_guling/cutscenes/fubo_completion_cg_v1.png" id="2_cg"]
+
+[node name="FuboCompletionCutscene" type="Control"]
+visible = false
+process_mode = 3
+z_index = 300
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.008, 0.009, 0.008, 1)
+
+[node name="CGImage" type="TextureRect" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("2_cg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="CGShade" type="ColorRect" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.015, 0.014, 0.01, 0.16)
+
+[node name="Caption" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.18
+anchor_top = 0.105
+anchor_right = 0.82
+anchor_bottom = 0.275
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Title" type="Label" parent="Caption"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.92, 0.74, 1)
+theme_override_colors/font_outline_color = Color(0.055, 0.04, 0.018, 0.98)
+theme_override_constants/outline_size = 8
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 46
+text = "伏波古岭"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Caption"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.88, 0.68, 1)
+theme_override_colors/font_outline_color = Color(0.055, 0.04, 0.018, 0.98)
+theme_override_constants/outline_size = 7
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 30
+text = "渔获满舱，鼓令已成"
+horizontal_alignment = 1
+vertical_alignment = 1

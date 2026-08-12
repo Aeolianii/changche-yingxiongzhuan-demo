@@ -2,7 +2,6 @@ class_name FuboFishingStation
 extends Node2D
 
 const HIGHLIGHT_MODULATE := Color(1.35, 1.22, 0.72, 1.0)
-const HIGHLIGHT_SCALE := 1.08
 const SPARKLE_POSITIONS := [
 	Vector2(-25, -139),
 	Vector2(17, -112),
@@ -44,7 +43,7 @@ func set_highlighted(value: bool) -> void:
 	if not is_node_ready():
 		return
 	sprite.modulate = HIGHLIGHT_MODULATE if _highlighted else _normal_modulate
-	sprite.scale = _normal_scale * HIGHLIGHT_SCALE if _highlighted else _normal_scale
+	sprite.scale = _normal_scale
 	queue_redraw()
 
 

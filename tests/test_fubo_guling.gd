@@ -197,7 +197,8 @@ func _test_scene_contract() -> void:
 	level.call("_on_fishing_body_entered", player)
 	_check(str(level.get("_pending_trigger")) == "fishing" and level.get_node("Interface/HUD/PromptPanel").visible, "Entering the physical interaction ring must arm coastal fishing.")
 	_check(fishing_station.call("is_highlighted_for_test"), "Approaching the fishing rod must apply the shared interaction highlight.")
-	_check(fishing_sprite.modulate.is_equal_approx(Color(1.35, 1.22, 0.72, 1.0)) and fishing_sprite.scale.is_equal_approx(Vector2.ONE * 1.08), "Fishing highlight must match scene one and scene two.")
+	_check(fishing_sprite.modulate.is_equal_approx(Color(1.35, 1.22, 0.72, 1.0)), "Fishing interaction must retain its gold highlight.")
+	_check(fishing_sprite.scale.is_equal_approx(Vector2.ONE), "Fishing interaction highlight must never enlarge the rod-and-bucket art.")
 	level.call("_on_trigger_body_exited", player, "fishing")
 	_check(not fishing_station.call("is_highlighted_for_test"), "Leaving the fishing station must clear its highlight.")
 	_check(level.get_node("Interface/MinigameHost").active_minigame == null, "Keeper dialogue must not open fishing directly.")
@@ -220,6 +221,8 @@ func _test_scene_contract() -> void:
 	_check(player.global_position == repeat_fishing_position, "Leaving repeat fishing must restore the position used to enter it.")
 	var drum_entry_position := Vector2(1095, 370)
 	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = drum_entry_position
+	level.call("_on_school_body_entered", player)
+	_check((level.get_node("Interface/HUD/PromptPanel/Prompt") as Label).text == "按 E / 空格 进入听令回鼓", "School interaction prompt must omit the redundant leave instruction.")
 	level.trigger_drum_for_test()
 	_check(host.active_minigame != null and host.active_minigame.game_id == "drum", "School trigger must open the drum minigame.")
 	host.active_minigame.exit_requested.emit()

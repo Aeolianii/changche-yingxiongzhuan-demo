@@ -424,7 +424,7 @@ func _on_sea_return_body_entered(body: Node) -> void:
 func _on_school_body_entered(body: Node) -> void:
 	if body == player and phase == Phase.DRUM_AVAILABLE:
 		_pending_trigger = "drum"
-		prompt_label.text = "按 E / 空格 进入听令回鼓；离开则暂不进入"
+		prompt_label.text = "按 E / 空格 进入听令回鼓"
 		prompt_panel.visible = true
 
 

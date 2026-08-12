@@ -41,7 +41,7 @@
 
 ## 可能修改文件
 
-- `assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png`
+- 已删除的旧版 B 区扩展背景
 - `shaders/map_chunk_blend.gdshader`
 - `scripts/sea_overworld.gd`
 - `scripts/sea_overworld_player.gd`

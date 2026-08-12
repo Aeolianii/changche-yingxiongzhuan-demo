@@ -2,7 +2,6 @@ extends Control
 
 signal close_requested
 
-const SEA_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 const MAP_FOG_SOFT_EDGE_SHADER := preload("res://shaders/sea_map_fog_soft_edge.gdshader")
 const SEA_MAP_SCROLL_FRAME := preload("res://assets/ui/sea_overworld/sea_map_scroll_frame_v1.png")
@@ -230,8 +229,6 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 	for child in _map_texture_layer.get_children():
 		child.free()
 	var chunks := map_chunks
-	if chunks.is_empty():
-		chunks = [{"texture": SEA_MAP_TEXTURE, "world_rect": Rect2(Vector2.ZERO, _world_size)}]
 	var content_scale := _map_content_rect.size.x / _world_size.x
 	var water_noise := _create_water_noise_texture(0.045, 4, 0.55)
 	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)

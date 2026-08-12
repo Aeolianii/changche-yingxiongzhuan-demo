@@ -42,7 +42,7 @@
 
 ## Implementation notes
 
-- Likely files/modules: `docs/design/sea-overworld-design.md`, `docs/assets/sea-overworld-generated-assets.md`, `docs/assets/sea-overworld-stage1-layout.md`, `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png`
+- Likely files/modules: `docs/design/sea-overworld-design.md`、`docs/assets/sea-overworld-generated-assets.md`、`docs/assets/sea-overworld-stage1-layout.md` 和当时的初版灰模。
 - Constraints and risks: 生图只作为构图草案，不能直接替代可碰撞、可交互的生产底图；生成图中的岛屿数量与细节可能存在轻微漂移，最终坐标以文档表格为准。
 
 ## Verification evidence
@@ -52,5 +52,5 @@
 
 ## Final reconciliation
 
-- Files changed: `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png`, `docs/assets/sea-overworld-stage1-layout.md`, `docs/assets/sea-overworld-generated-assets.md`, `docs/design/sea-overworld-design.md`, `docs/index.md`, 本变更记录。
+- Files changed: 当时的初版灰模、`docs/assets/sea-overworld-stage1-layout.md`、`docs/assets/sea-overworld-generated-assets.md`、`docs/design/sea-overworld-design.md`、`docs/index.md`、本变更记录。
 - Documented limitations/follow-ups: 生图中的建筑和小礁数量不作为最终设计；下一阶段按坐标草案重排四张生产背景，再同步地点、碰撞、海图标记和针对性测试。

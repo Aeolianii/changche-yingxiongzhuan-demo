@@ -42,7 +42,7 @@
 
 ## Implementation notes
 
-- Edit target: `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png`
+- Edit target: 当时的上一版灰模
 - Output: `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v4.png`
 - Constraints and risks: 局部生图编辑可能误改其他地点或生成新岛；验收时优先检查地点数量、旧位置清除、通航留白和右上视觉层级。
 

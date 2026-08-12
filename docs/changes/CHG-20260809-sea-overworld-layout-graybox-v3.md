@@ -11,7 +11,7 @@
 
 ## Scope
 
-- 保留 v1、v2 历史图，新增 `sea_overworld_stage1_graybox_v3.png`。
+- 当时保留前两版历史图并新增第三版灰模；这些旧图现已清理。
 - 保留 16 个地点及 A4、B5、C4、D3 的区域分配。
 - 北部 A/B 改为繁华贸易海域：港池、仓栈、多码头、人口密集、岛礁较少、航路开阔。
 - 南部 C/D 改为蛮荒危险海域：高山岛、破碎海岸、军事堡垒、海盗据点、礁群与曲折航线。
@@ -47,8 +47,8 @@
 
 ## Implementation notes
 
-- Edit target: `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png`
-- Output: `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png`
+- Edit target: 当时的上一版灰模
+- Output: 当时的第三版灰模
 - Constraints and risks: 生图可能改变现有岛屿的精确轮廓和局部位置；阶段一只验收宏观区域、功能造型、密度节奏和航路留白，不将建筑细节视为生产设计。
 
 ## Verification evidence
@@ -58,5 +58,5 @@
 
 ## Final reconciliation
 
-- Files changed: `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png`, `docs/assets/sea-overworld-stage1-layout.md`, `docs/assets/sea-overworld-generated-assets.md`, `docs/design/sea-overworld-design.md`, 本变更记录。
+- Files changed: 当时的第三版灰模、`docs/assets/sea-overworld-stage1-layout.md`、`docs/assets/sea-overworld-generated-assets.md`、`docs/design/sea-overworld-design.md`、本变更记录。
 - Documented limitations/follow-ups: v3 只锁定功能造型、南北气质、密度节奏和中央视觉元素；下一阶段需要将构图拆回四张生产分块，再校准地点、碰撞、海图标记和测试。

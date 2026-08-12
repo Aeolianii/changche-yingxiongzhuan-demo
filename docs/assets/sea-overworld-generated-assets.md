@@ -10,10 +10,6 @@
 
 | 素材 | 文件 | 尺寸 | 布局 |
 |---|---|---:|---|
-| 广东海岸原型海上地图（高清版） | `assets/backgrounds/sea_overworld/guangdong_sea_map_v2_hd.png` | 3344×1882 | 单张16:9背景；场景内以0.75倍显示，地图范围不变 |
-| B 区东部海域扩展 | `assets/backgrounds/sea_overworld/guangdong_east_sea_expansion_v1.png` | 3344×1882 | 三个大型地标岛；西侧纯海水衔接；场景内以0.75倍显示 |
-| C 区南部海域扩展（左侧疏散版） | `assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v2.png` | 3344×1882 | 四个大型地标岛分为左右两组；组间保留宽海峡；顶部衔接 A，最右侧预留 D；场景内以0.75倍显示 |
-| D 区东南海域扩展（海色匹配版） | `assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v2.png` | 3344×1882 | 海水匹配 B/C 色域；五个主岛复合体与障碍礁群颜色保持原图；场景内以0.75倍显示 |
 | 主角Q版四方向 | `assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png` | 1776×887 | 4列×1行，每格444×887 |
 | 玩家船只方向与状态 | `assets/sprites/sea_overworld/player_ship_4dir_states_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 | 可复用岛屿 | `assets/sprites/sea_overworld/island_locations_atlas_v1.png` | 1920×820 | 4列×1行，每格480×820 |
@@ -26,9 +22,6 @@
 | 水墨像素月面 | `assets/ui/sea_overworld/moon_clock_moon.png` | 256×256 | 透明PNG；作为左上月相时钟的着色器纹理，不包含外框或文字 |
 | 漂流木箱 | `assets/sprites/sea_overworld/drifting_supply_crate_v1.png` | 512×512 | 透明PNG；大地图一次性随机事件视觉，只包含木箱与少量贴身漂浮物，不烘焙地点文字；SHA-256 `D000E49495FFEF5744A268E9A0371BF25FF7BE1129CE379D5C0565471623F037` |
 | 水墨像素展开海图框 | `assets/ui/sea_overworld/sea_map_scroll_frame_v1.png` | 1536×1024 | 透明PNG；完整海图使用 `1280×853` 卷轴框，中央 `870×510` 安全区承载运行时地图；SHA-256 `DAF01DAE53DB4503A37DF6F07E76124554587908D27ADF5D0DB9DE4CDA2BBC74` |
-| 大地图阶段一构图灰模 v1 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png` | 1672×941 | 历史构图；B 为敌方核心、D 为群岛水战区，不接入游戏 |
-| 大地图阶段一构图灰模 v2 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` | 1672×941 | 历史构图；B 右上为群岛水战区、D 右下为敌方核心海域，不接入游戏 |
-| 大地图阶段一构图灰模 v3 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png` | 1672×941 | 历史构图；强化北部港贸、南部蛮荒军事和四类功能岛差异，不接入游戏 |
 | 大地图阶段一构图灰模 v4 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v4.png` | 1672×941 | 当前构图；将 B 区海防堡垒迁入中央偏右，缓解中央留白与右上地标竞争，不接入游戏 |
 
 ### 1.1 v4 生产运行时分块
@@ -209,7 +202,7 @@ Constraints: no text, labels, outer frame, diamond, scenery, characters, boats, 
 Use case: stylized-concept
 Asset type: production full-screen loading background for a Chinese wuxia pixel-art RPG.
 Primary request: Create one atmospheric maritime journey loading illustration showing a single small ancient Chinese command junk sailing between a fortified coastal harbor and open island-dotted sea, representing travel between South Sea Harbor and the Lingnan sea overworld.
-Input images: southbound_journey.png is the project's chapter-transition style reference for dense black ink-brush borders, antique parchment mood, and crisp pixel treatment; guangdong_sea_map_v2_hd.png is the subject and palette reference for the Lingnan coast, blue-green sea, islands, ancient harbor architecture, and ship scale. Do not copy the exact map layout.
+Input images: southbound_journey.png is the project's chapter-transition style reference for dense black ink-brush borders, antique parchment mood, and crisp pixel treatment; the approved Lingnan production chunks are the subject and palette reference for the coast, blue-green sea, islands, ancient harbor architecture, and ship scale. Do not copy the exact map layout.
 Style/medium: polished hand-painted pixel art with Chinese ink-wash influence, crisp stair-stepped edges, dark ink feathering around the frame, antique gold accents, muted blue-jade water, slightly dramatic but calm.
 Composition/framing: 3:2 landscape full-screen image; coastal harbor on the left-middle distance, open sea and small islands to the right, one command junk traveling along a subtle wake through the central third; keep a quiet darkened text-safe band across the lower center for engine-rendered loading text.
 Lighting/mood: late-afternoon coastal light, contemplative departure and return, readable silhouettes.

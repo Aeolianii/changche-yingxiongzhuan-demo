@@ -41,7 +41,7 @@
 
 ## Implementation notes
 
-- Likely files/modules: `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png` and the documents listed above.
+- Likely files/modules: 当时的旧版灰模和上述文档。
 - Constraints and risks: 生图可能改变 A/C 的局部细节；验收只要求其宏观体量和位置关系保持，不把生成建筑细节视为生产设计。
 
 ## Verification evidence
@@ -51,5 +51,5 @@
 
 ## Final reconciliation
 
-- Files changed: `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png`, `docs/assets/sea-overworld-stage1-layout.md`, `docs/assets/sea-overworld-generated-assets.md`, `docs/design/sea-overworld-design.md`, 本变更记录。
+- Files changed: 当时的旧版灰模、`docs/assets/sea-overworld-stage1-layout.md`、`docs/assets/sea-overworld-generated-assets.md`、`docs/design/sea-overworld-design.md`、本变更记录。
 - Documented limitations/follow-ups: v2 只锁定岛屿体量、位置和区域职责；下一阶段需要将构图拆回四张生产分块，并重新校准地点、碰撞、海图标记和测试。

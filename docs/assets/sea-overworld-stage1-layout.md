@@ -3,7 +3,6 @@
 - 状态：生产落图完成
 - 日期：2026-08-10
 - 当前灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v4.png`
-- 历史灰模图：`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v1.png`、`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v2.png`、`assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v3.png`
 - 适用范围：只确认岛屿体量、位置、密度、航道留白和跨分块联系
 - 非生产资源：不得直接替换 A/B/C/D 当前背景
 

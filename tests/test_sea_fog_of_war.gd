@@ -44,18 +44,12 @@ func _run() -> void:
 
 	var vision_size: Vector2 = fog.call("get_vision_world_size")
 	_expect(vision_size.is_equal_approx(Vector2(1344, 896)), "Fog reveal size must match the current Camera2D world viewport.")
-	for corner_sign: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
-		var corner_probe: Vector2 = SOUTH_SEA_HARBOR_SPAWN + corner_sign * vision_size * 0.49
-		_expect(bool(fog.call("is_world_position_revealed", corner_probe)), "Every corner inside the player's initial camera viewport must be revealed.")
-	var camera := scene.get_node("World/Player/Camera2D") as Camera2D
-	var camera_center := (scene.get_node("World") as Node2D).to_local(camera.get_screen_center_position())
-	for corner_sign: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
-		var corner_probe: Vector2 = camera_center + corner_sign * vision_size * 0.5
-		_expect(bool(fog.call("is_world_position_revealed", corner_probe)), "The smoothed Camera2D's actual visible corners must remain revealed.")
+	_expect(is_equal_approx(float(fog.call("get_view_edge_fog_inset")), 48.0), "World exploration must reserve only a narrow 48-pixel fog strip at unexplored viewport edges.")
 	var reveal_center := Vector2(2500, 1350)
 	fog.call("reveal_at", reveal_center)
 	_expect(float(fog.call("get_explored_ratio")) > initial_ratio, "Sailing into new waters must increase chart completion.")
 	_expect(bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.45, 0))), "A point inside the camera-width reveal footprint must be visible.")
+	_expect(not bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.49, 0))), "An unexplored direction must retain fog only near the viewport's outer edge.")
 	_expect(not bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.65, 0))), "A point outside the camera-width reveal footprint must remain hidden.")
 	_expect(bool(fog.call("is_world_position_revealed", SOUTH_SEA_HARBOR_SPAWN)), "Previously revealed harbor water must stay visible after sailing elsewhere.")
 
@@ -64,7 +58,9 @@ func _run() -> void:
 	_expect(world_overlay != null and world_overlay.texture != null, "FogOfWar must render a world-space black overlay texture.")
 	if world_overlay != null:
 		_expect(world_overlay.z_index < player.z_index, "World fog must render below the player ship.")
-		_expect(world_overlay.material == null, "World fog must keep the raw rectangular reveal so the full camera viewport stays bright.")
+		var world_fog_material := world_overlay.material as ShaderMaterial
+		_expect(world_fog_material != null and world_fog_material.shader.resource_path.ends_with("sea_world_fog_edge.gdshader"), "World fog must soften the narrow unexplored edge instead of drawing a hard black line.")
+		_expect(float(world_fog_material.get_shader_parameter("fog_opacity")) <= 0.9, "World edge fog must stay slightly translucent rather than covering the view with solid black.")
 
 	var hud := root.get_node("ExplorationUI/HUD") as Control
 	var map_button := hud.get_node("SeaMapStatus/MapButton") as Button

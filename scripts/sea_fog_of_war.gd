@@ -6,6 +6,8 @@ signal state_changed
 const STATE_VERSION := 1
 const CELL_SIZE := 16.0
 const WORLD_FOG_Z_INDEX := 40
+const VIEW_EDGE_FOG_INSET := 48.0
+const WORLD_FOG_SHADER := preload("res://shaders/sea_world_fog_edge.gdshader")
 
 var _world_size := Vector2.ONE
 var _grid_size := Vector2i.ONE
@@ -41,9 +43,8 @@ func reveal_at(world_position: Vector2) -> bool:
 	if world_position.distance_squared_to(_last_reveal_position) < pow(CELL_SIZE * 0.5, 2.0):
 		return false
 	_last_reveal_position = world_position
-	var vision_size := get_vision_world_size()
-	var half_vision := vision_size * 0.5
-	return _reveal_world_rect(world_position - half_vision - _cell_world_size, world_position + half_vision + _cell_world_size)
+	var reveal_half_size := _get_camera_reveal_half_size()
+	return _reveal_world_rect(world_position - reveal_half_size, world_position + reveal_half_size)
 
 
 func _reveal_world_rect(minimum_world: Vector2, maximum_world: Vector2) -> bool:
@@ -66,6 +67,7 @@ func reveal_camera_view() -> bool:
 	var camera_center := to_local(_camera.get_screen_center_position())
 	var camera_target := to_local(_camera.global_position)
 	var half_vision := get_vision_world_size() * 0.5
+	var reveal_half_size := _get_camera_reveal_half_size()
 	var minimum_valid_center := Vector2(_camera.limit_left, _camera.limit_top) + half_vision
 	var maximum_valid_center := Vector2(_camera.limit_right, _camera.limit_bottom) - half_vision
 	if camera_center.x < minimum_valid_center.x - _cell_world_size.x or camera_center.y < minimum_valid_center.y - _cell_world_size.y or camera_center.x > maximum_valid_center.x + _cell_world_size.x or camera_center.y > maximum_valid_center.y + _cell_world_size.y:
@@ -77,7 +79,7 @@ func reveal_camera_view() -> bool:
 	_last_camera_target = camera_target
 	var minimum_center := Vector2(minf(camera_center.x, camera_target.x), minf(camera_center.y, camera_target.y))
 	var maximum_center := Vector2(maxf(camera_center.x, camera_target.x), maxf(camera_center.y, camera_target.y))
-	return _reveal_world_rect(minimum_center - half_vision - _cell_world_size, maximum_center + half_vision + _cell_world_size)
+	return _reveal_world_rect(minimum_center - reveal_half_size, maximum_center + reveal_half_size)
 
 
 func reveal_polygon(world_polygon: PackedVector2Array) -> bool:
@@ -116,6 +118,18 @@ func get_vision_world_size() -> Vector2:
 	var viewport_size := _camera.get_viewport().get_visible_rect().size
 	var camera_zoom := Vector2(maxf(absf(_camera.zoom.x), 0.001), maxf(absf(_camera.zoom.y), 0.001))
 	return viewport_size / camera_zoom
+
+
+func get_view_edge_fog_inset() -> float:
+	return VIEW_EDGE_FOG_INSET
+
+
+func _get_camera_reveal_half_size() -> Vector2:
+	var half_vision := get_vision_world_size() * 0.5
+	return Vector2(
+		maxf(_cell_world_size.x, half_vision.x - VIEW_EDGE_FOG_INSET),
+		maxf(_cell_world_size.y, half_vision.y - VIEW_EDGE_FOG_INSET)
+	)
 
 
 func get_fog_texture() -> Texture2D:
@@ -159,6 +173,9 @@ func _build_world_overlay() -> void:
 	_world_overlay.scale = _world_size / Vector2(_grid_size)
 	_world_overlay.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_world_overlay.z_index = WORLD_FOG_Z_INDEX
+	var fog_material := ShaderMaterial.new()
+	fog_material.shader = WORLD_FOG_SHADER
+	_world_overlay.material = fog_material
 	add_child(_world_overlay)
 
 

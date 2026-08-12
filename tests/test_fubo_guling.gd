@@ -70,7 +70,7 @@ func _test_scene_contract() -> void:
 	_check(level.get_phase_for_test() == level.Phase.FISHING_AVAILABLE, "Fubo scene must start with coastal fishing already available.")
 	_check(level.is_school_locked_for_test(), "The decorative school fence must retain its local physical collision.")
 	_check(level.get_node("World/WorldObjects/SchoolBarrier").visible, "The decorative school fence must be visible from initial scene load.")
-	_check(level.is_viewpoint_locked_for_test(), "The visible viewpoint fence must physically block the player before the drum game is completed.")
+	_check(not level.has_node("World/WorldObjects/ViewpointBarrier") and not level.has_node("World/Collision/ViewpointBlocker"), "The ladder-side viewpoint fence and its invisible collision must be removed.")
 	_check(level.get_node("World/WorldObjects").y_sort_enabled, "Dynamic characters must retain Y sorting.")
 	var camera: Camera2D = level.get_node("World/WorldObjects/Player/Camera2D")
 	_check(camera.limit_right == 1536, "Camera right limit must match the approved background width.")
@@ -130,11 +130,6 @@ func _test_scene_contract() -> void:
 	collision_probe_player.global_position = school_blocker.global_position + school_normal * 70.0
 	var school_collision := collision_probe_player.move_and_collide(-school_normal * 120.0)
 	_check(school_collision != null and school_collision.get_collider() == school_blocker, "The decorative school fence must retain collision while allowing the player to walk around it.")
-	var viewpoint_blocker := level.get_node("World/Collision/ViewpointBlocker") as StaticBody2D
-	var viewpoint_normal := Vector2(-sin(viewpoint_blocker.rotation), cos(viewpoint_blocker.rotation))
-	collision_probe_player.global_position = viewpoint_blocker.global_position + viewpoint_normal * 70.0
-	var viewpoint_collision := collision_probe_player.move_and_collide(-viewpoint_normal * 120.0)
-	_check(viewpoint_collision != null and viewpoint_collision.get_collider() == viewpoint_blocker, "The viewpoint fence rectangle must physically block the player while visible.")
 	collision_probe_player.global_position = Vector2(220, 868)
 	_check(level.get_node("World/Triggers/FishingTrigger").position == fishing_body.position, "The fishing trigger must surround the coastal fishing collision body.")
 	_check(level.get_node("World/Triggers/SchoolTrigger").position == Vector2(1110, 330), "The drum trigger must sit below the drum at the annotated X.")
@@ -235,7 +230,7 @@ func _test_scene_contract() -> void:
 	host.active_minigame.completed.emit({"game_id": "drum", "completed": true, "rating": "鼓点稳健", "mistakes": 1, "duration_ms": 1000})
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.VIEWPOINT_OPEN and host.active_minigame == null, "Drum completion must restore the map and open the viewpoint.")
-	_check(not level.is_viewpoint_locked_for_test() and not level.get_node("World/WorldObjects/ViewpointBarrier").visible, "Completing the drum game must remove both the viewpoint fence art and its collision.")
+	_check(not level.has_node("World/WorldObjects/ViewpointBarrier") and not level.has_node("World/Collision/ViewpointBlocker"), "Drum completion must not recreate the removed ladder-side fence.")
 	level.free()
 	await process_frame
 	await create_timer(0.55).timeout

@@ -23,9 +23,6 @@ size = Vector2(18, 16)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_eyqv8"]
 size = Vector2(57.98996, 29.362701)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_88otk"]
-size = Vector2(76, 38)
-
 [sub_resource type="CircleShape2D" id="CircleShape2D_drum_body"]
 radius = 32.0
 
@@ -247,17 +244,6 @@ main_color = Color(0.6117647, 0.28627452, 0.22352941, 1)
 art_texture = ExtResource("22_5dl1x")
 art_scale = Vector2(0.7, 0.7)
 
-[node name="ViewpointBarrier" type="Node2D" parent="World/WorldObjects" unique_id=2114486465]
-texture_filter = 1
-position = Vector2(1250, 160)
-rotation = -0.18
-script = ExtResource("4_erm8w")
-kind = "barrier"
-prop_size = Vector2(110, 85)
-main_color = Color(0.6117647, 0.28627452, 0.22352941, 1)
-art_texture = ExtResource("22_5dl1x")
-art_scale = Vector2(0.65, 0.65)
-
 [node name="Foreground" type="Node2D" parent="World" unique_id=1061311423]
 z_index = 20
 
@@ -279,14 +265,6 @@ collision_mask = 0
 position = Vector2(-2.0032349, -2.4974365)
 scale = Vector2(1.0000002, 1.0000002)
 shape = SubResource("RectangleShape2D_eyqv8")
-
-[node name="ViewpointBlocker" type="StaticBody2D" parent="World/Collision" unique_id=919584238]
-position = Vector2(1250, 160)
-rotation = -0.18
-collision_mask = 0
-
-[node name="Shape" type="CollisionShape2D" parent="World/Collision/ViewpointBlocker" unique_id=288587626]
-shape = SubResource("RectangleShape2D_88otk")
 
 [node name="DrumBody" type="StaticBody2D" parent="World/Collision" unique_id=122627216]
 position = Vector2(1132, 247)

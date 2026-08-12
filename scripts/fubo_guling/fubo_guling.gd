@@ -39,9 +39,7 @@ const KEEPER_IDLE_LINE := "倭患一日未靖，这伏波岛的烽火便一日�
 @onready var keeper: Node2D = $World/WorldObjects/Keeper
 @onready var fishing_station: FuboFishingStation = $World/WorldObjects/FishingStation
 @onready var school_barrier: Node2D = $World/WorldObjects/SchoolBarrier
-@onready var viewpoint_barrier: Node2D = $World/WorldObjects/ViewpointBarrier
 @onready var school_shape: CollisionShape2D = $World/Collision/SchoolBlocker/Shape
-@onready var viewpoint_shape: CollisionShape2D = $World/Collision/ViewpointBlocker/Shape
 @onready var fishing_trigger: Area2D = $World/Triggers/FishingTrigger
 @onready var sea_return_trigger: Area2D = $World/Triggers/SeaReturnTrigger
 @onready var school_trigger: Area2D = $World/Triggers/SchoolTrigger
@@ -249,11 +247,8 @@ func _restore_saved_scene_state(raw_snapshot: Dictionary) -> void:
 
 
 func _apply_phase_world_state() -> void:
-	var drum_done := phase >= Phase.VIEWPOINT_OPEN
 	school_shape.set_deferred("disabled", false)
 	school_barrier.visible = true
-	viewpoint_shape.set_deferred("disabled", drum_done)
-	viewpoint_barrier.visible = not drum_done
 	_sync_fishing_station()
 
 
@@ -554,8 +549,6 @@ func _complete_drum(_result: Dictionary) -> void:
 	if phase != Phase.DRUM_ACTIVE:
 		return
 	phase = Phase.VIEWPOINT_OPEN
-	viewpoint_shape.set_deferred("disabled", true)
-	viewpoint_barrier.visible = false
 	_refresh_exploration_hud()
 	if not _test_mode:
 		_show_notice("三轮鼓令完成，观景台入口已开放", 1.8)
@@ -682,7 +675,3 @@ func get_phase_for_test() -> int:
 
 func is_school_locked_for_test() -> bool:
 	return not school_shape.disabled
-
-
-func is_viewpoint_locked_for_test() -> bool:
-	return not viewpoint_shape.disabled

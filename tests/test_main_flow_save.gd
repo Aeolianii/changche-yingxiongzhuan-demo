@@ -159,7 +159,7 @@ func _verify_fubo_restore() -> void:
 	_expect(int(scene.get("phase")) == 3, "Fubo must restore the stable DRUM_AVAILABLE phase.")
 	_expect(player.global_position.is_equal_approx(Vector2(902, 518)), "Fubo must restore the player position.")
 	_expect(str(player.get("facing")) == "left", "Fubo must restore the player facing.")
-	_expect(scene.call("is_school_locked_for_test") and (scene.get_node("World/WorldObjects/SchoolBarrier") as Node2D).visible and scene.call("is_viewpoint_locked_for_test"), "Fubo restore must retain the decorative school fence and keep the later viewpoint gate closed.")
+	_expect(scene.call("is_school_locked_for_test") and (scene.get_node("World/WorldObjects/SchoolBarrier") as Node2D).visible and not scene.has_node("World/WorldObjects/ViewpointBarrier"), "Fubo restore must retain the decorative school fence without recreating the removed ladder-side fence.")
 	_expect((root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label).text == "探索海域，完善海图", "Fubo must preserve the sea-exploration main task on restore.")
 	_expect("古校场" in (root.get_node("ExplorationUI/HUD/QuestTracker/SideQuest/Objective") as Label).text, "Fubo must restore its side-task projection.")
 	var restored_context := FUBO_TRAVEL.decode_context(root.get_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, {}))

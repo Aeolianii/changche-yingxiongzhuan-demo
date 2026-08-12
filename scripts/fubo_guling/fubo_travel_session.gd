@@ -12,13 +12,15 @@ static func make_context(
 	ship_position: Vector2,
 	facing_index: int,
 	exploration_stage: int,
-	lunar_day: float
+	lunar_day: float,
+	sea_event_state: Dictionary = {}
 ) -> Dictionary:
 	return {
 		"ship_position": ship_position,
 		"facing_index": maxi(0, facing_index),
 		"exploration_stage": clampi(exploration_stage, 0, 4),
 		"lunar_day": maxf(0.0, lunar_day),
+		"sea_event_state": sea_event_state.duplicate(true),
 	}
 
 
@@ -49,4 +51,7 @@ static func decode_context(value: Variant) -> Dictionary:
 	if not is_finite(lunar_day) or lunar_day < 0.0:
 		return {}
 
-	return make_context(ship_position, int(facing_value), int(exploration_value), lunar_day)
+	var sea_event_state_value: Variant = context.get("sea_event_state", {})
+	if not sea_event_state_value is Dictionary:
+		return {}
+	return make_context(ship_position, int(facing_value), int(exploration_value), lunar_day, sea_event_state_value)

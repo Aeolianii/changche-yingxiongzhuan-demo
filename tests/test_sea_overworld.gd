@@ -362,7 +362,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 			qingyu_map_label = label
 	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "南澳商港", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
-	for hidden_name in ["近海渔船", "岭南商船", "漂流木箱"]:
+	for hidden_name in ["茶叶商船", "岭南商船", "私盐商船", "漂流木箱"]:
 		_expect(location_names.all(func(text: String) -> bool: return hidden_name not in text), "Full map must not display NPC ships or random events.")
 	_expect(qingyu_map_label != null and (qingyu_map_label.get_meta("world_position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(2800, 400)), "Qingyu full-map label must align to the pagoda island's upper-right.")
 	if east_bay_map_label != null and qingyu_map_label != null:
@@ -606,23 +606,26 @@ func _capture_central_seam(scene: Node) -> void:
 func _verify_auto_triggers(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var toast_label := root.get_node("ExplorationUI/HUD/ComingSoonToast/Message") as Label
-	var triggers := get_nodes_in_group("sea_auto_trigger")
-	var saw_event := false
-	var saw_ship := false
-	for trigger_node in triggers:
-		var trigger := trigger_node as Area2D
-		player.global_position = Vector2(1240, 1120)
-		await physics_frame
-		player.global_position = trigger.global_position
-		await physics_frame
-		await physics_frame
-		var kind := str(trigger.get_meta("trigger_kind"))
-		if kind == "ship":
-			saw_ship = saw_ship or "该船只开发中" in toast_label.text
-		elif kind == "event":
-			saw_event = saw_event or "该事件开发中" in toast_label.text
-	_expect(saw_ship, "Touching a sea-map ship must automatically show its development placeholder.")
-	_expect(saw_event, "Touching a sea event must automatically show its development placeholder.")
+	var generic_ship := scene.get_node("World/WorldMarkers/ShipTrigger1") as Area2D
+	player.global_position = Vector2(1240, 1120)
+	await physics_frame
+	player.global_position = generic_ship.global_position
+	await physics_frame
+	await physics_frame
+	_expect("该船只开发中" in toast_label.text, "Touching the generic sea-map ship must show its development placeholder.")
+
+	var crate := scene.get_node("World/WorldMarkers/DriftEvent") as Area2D
+	player.global_position = Vector2(1240, 1120)
+	await physics_frame
+	player.global_position = crate.global_position
+	await physics_frame
+	await physics_frame
+	var event_dialogue := scene.get_node("UI/FieldEventDialogue") as Control
+	_expect(event_dialogue.visible, "Touching the drifting crate must open the soldier choice dialogue.")
+	var option_box := event_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
+	if option_box.get_child_count() == 2:
+		(option_box.get_child(1) as Button).pressed.emit()
+		await process_frame
 	var task_objective := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
 	_expect(task_objective.text == "继续探索岭南海域", "Sea target contact must finish the prototype exploration task flow.")
 

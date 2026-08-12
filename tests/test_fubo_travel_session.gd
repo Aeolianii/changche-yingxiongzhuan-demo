@@ -12,6 +12,8 @@ func _initialize() -> void:
 func _run() -> void:
 	var context := TRAVEL.make_context(Vector2(4210, 1135), 2, 3, 8.5)
 	_check(TRAVEL.decode_context(context) == context, "Valid Fubo travel context must round-trip.")
+	var event_context := TRAVEL.make_context(Vector2(4210, 1135), 2, 3, 8.5, {"crate_event_resolved": true})
+	_check(TRAVEL.decode_context(event_context) == event_context, "Fubo travel context must preserve sea-event state.")
 	_check(TRAVEL.decode_context({"ship_position": Vector2(INF, 0)}).is_empty(), "Non-finite ship positions must be rejected.")
 	_check(TRAVEL.decode_context({
 		"ship_position": Vector2(4210, 1135),

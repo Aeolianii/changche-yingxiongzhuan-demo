@@ -95,6 +95,7 @@ func _start_new_game() -> void:
 	var game_state := _game_state()
 	if game_state != null:
 		game_state.call("clear_pending_scene_state")
+		game_state.call("reset_runtime_world_state")
 	var change_error := get_tree().change_scene_to_file(PALACE_SCENE)
 	if change_error == OK:
 		return

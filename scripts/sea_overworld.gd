@@ -1,7 +1,13 @@
 extends Node2D
 
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
+const DRIFTING_CRATE_TEXTURE := preload("res://assets/sprites/sea_overworld/drifting_supply_crate_v1.png")
+const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
+const TEA_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图茶叶商人.png")
+const SALT_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图私盐商人.png")
+const FIELD_EVENT_DIALOGUE_SCENE := preload("res://scenes/ui/field_event_dialogue.tscn")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
+const SEA_FOG_OF_WAR_SCRIPT := preload("res://scripts/sea_fog_of_war.gd")
 const A_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_a_v3.png")
 const B_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_b_v3.png")
 const C_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v3.png")
@@ -24,8 +30,6 @@ const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
 const SOUTH_SEA_HARBOR_SPAWN := Vector2(1300, 850)
 const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
-
-const PAPER := Color(0.95, 0.9, 0.75, 1.0)
 
 @onready var player: SeaOverworldPlayer = $World/Player
 @onready var camera: Camera2D = $World/Player/Camera2D
@@ -50,6 +54,14 @@ var _lunar_day := 0.0
 var _saved_scene_state: Dictionary = {}
 var _fubo_return_context: Dictionary = {}
 var _returning_from_fubo := false
+var _event_dialogue: FieldEventDialogue
+var _active_drifting_crate: Area2D
+var _crate_event_resolved := false
+var _active_tea_merchant_ship: Area2D
+var _tea_merchant_event_resolved := false
+var _active_salt_merchant_ship: Area2D
+var _salt_merchant_event_resolved := false
+var _fog_of_war: Node2D
 
 
 func _ready() -> void:
@@ -64,11 +76,15 @@ func _ready() -> void:
 	_build_world_collisions()
 	_build_locations()
 	_build_auto_triggers()
+	_event_dialogue = FIELD_EVENT_DIALOGUE_SCENE.instantiate() as FieldEventDialogue
+	$UI.add_child(_event_dialogue)
+	_event_dialogue.option_selected.connect(_on_event_dialogue_option_selected)
+	_event_dialogue.visibility_changed.connect(_on_event_dialogue_visibility_changed)
 	player.connect("sailed", _on_player_sailed)
 	enter_button.pressed.connect(_enter_active_location)
 	_connect_global_hud_signals()
 	exploration_hud.call("set_quest_context", &"sea_overworld")
-	_configure_sea_map_hud()
+	_on_event_dialogue_visibility_changed()
 	if not _saved_scene_state.is_empty():
 		_restore_saved_scene_state(_saved_scene_state)
 		_saved_scene_state.clear()
@@ -86,6 +102,9 @@ func _ready() -> void:
 	if _entered_from_scene_two:
 		player.global_position = SOUTH_SEA_HARBOR_SPAWN
 		_activate_south_sea_harbor_spawn()
+	camera.reset_smoothing()
+	_build_fog_of_war()
+	_configure_sea_map_hud()
 
 
 func _exit_tree() -> void:
@@ -123,6 +142,8 @@ func _process(delta: float) -> void:
 		var visual := _floating_visuals[index]
 		if is_instance_valid(visual):
 			visual.position.y = sin(_float_elapsed * 2.1 + index * 0.9) * 2.0
+	if is_instance_valid(_fog_of_war):
+		_fog_of_war.call("reveal_camera_view")
 
 
 func _on_player_sailed(delta: float) -> void:
@@ -130,6 +151,8 @@ func _on_player_sailed(delta: float) -> void:
 		return
 	if _exploration_stage == 0:
 		_advance_exploration_stage(1)
+	if is_instance_valid(_fog_of_war):
+		_fog_of_war.call("reveal_camera_view")
 	_lunar_day += delta / SECONDS_PER_LUNAR_DAY
 	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
 	exploration_hud.call("set_lunar_day", _lunar_day)
@@ -137,6 +160,8 @@ func _on_player_sailed(delta: float) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if _transitioning:
+		return
+	if _event_dialogue != null and _event_dialogue.visible:
 		return
 	if bool(exploration_hud.call("is_menu_open")):
 		return
@@ -266,8 +291,9 @@ func _build_locations() -> void:
 
 
 func _build_auto_triggers() -> void:
-	_build_ship_trigger("近海渔船", Vector2(1650, 1170), 0)
+	_build_ship_trigger("茶叶商船", Vector2(1370, 760), 0)
 	_build_ship_trigger("岭南商船", Vector2(2600, 760), 1)
+	_build_ship_trigger("私盐商船", Vector2(2180, 1400), 0, "SaltMerchantShip", 48.0)
 	_build_event_trigger("漂流木箱", Vector2(1300, 1700))
 
 
@@ -287,7 +313,44 @@ func _configure_sea_map_hud() -> void:
 		{"texture": C_MAP_TEXTURE, "world_rect": Rect2(C_MAP_ORIGIN, MAP_CHUNK_SIZE), "fade_from_left": false, "fade_from_top": true},
 		{"texture": D_MAP_TEXTURE, "world_rect": Rect2(D_MAP_ORIGIN, MAP_CHUNK_SIZE), "fade_from_left": true, "fade_from_top": true},
 	]
-	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations, map_chunks)
+	exploration_hud.call("configure_sea_map", player, MAP_SIZE, map_locations, map_chunks, _fog_of_war)
+
+
+func _build_fog_of_war() -> void:
+	_fog_of_war = SEA_FOG_OF_WAR_SCRIPT.new() as Node2D
+	_fog_of_war.name = "FogOfWar"
+	$World.add_child(_fog_of_war)
+	var saved_fog_state: Dictionary = {}
+	var game_state := _game_state()
+	if game_state != null and game_state.has_method("get_sea_fog_state"):
+		saved_fog_state = game_state.call("get_sea_fog_state") as Dictionary
+	_fog_of_war.call("setup", MAP_SIZE, camera, saved_fog_state)
+	_fog_of_war.connect("state_changed", _store_fog_state)
+	_reveal_initial_known_land()
+	if saved_fog_state.is_empty():
+		_fog_of_war.call("reveal_at", SOUTH_SEA_HARBOR_SPAWN)
+	_fog_of_war.call("reveal_at", player.global_position)
+	_store_fog_state()
+
+
+func _reveal_initial_known_land() -> void:
+	var northwest_coast := world_collision.get_node_or_null("NorthwestCoast") as CollisionPolygon2D
+	if northwest_coast == null:
+		return
+	var world := $World as Node2D
+	var world_polygon := PackedVector2Array()
+	for local_point in northwest_coast.polygon:
+		world_polygon.append(world.to_local(northwest_coast.to_global(local_point)))
+	_fog_of_war.call("reveal_polygon", world_polygon)
+
+
+func _store_fog_state() -> void:
+	if not is_instance_valid(_fog_of_war):
+		return
+	var game_state := _game_state()
+	if game_state == null or not game_state.has_method("set_sea_fog_state"):
+		return
+	game_state.call("set_sea_fog_state", _fog_of_war.call("serialize_state"))
 
 
 func _build_background_chunks() -> void:
@@ -395,8 +458,9 @@ func _build_location(
 	area.body_exited.connect(_on_location_body_exited.bind(area))
 
 
-func _build_ship_trigger(ship_name: String, at: Vector2, atlas_column: int) -> void:
-	var area := _make_auto_trigger("ShipTrigger%d" % atlas_column, at, ship_name, "ship")
+func _build_ship_trigger(ship_name: String, at: Vector2, atlas_column: int, node_name: String = "", trigger_radius: float = 82.0) -> void:
+	var trigger_name := node_name if not node_name.is_empty() else "ShipTrigger%d" % atlas_column
+	var area := _make_auto_trigger(trigger_name, at, ship_name, "ship", trigger_radius)
 	var sprite := Sprite2D.new()
 	sprite.name = "ShipSprite"
 	sprite.texture = _atlas_region(EVENT_SHIPS_ATLAS, 4, 1, atlas_column, 0)
@@ -414,30 +478,16 @@ func _build_event_trigger(event_name: String, at: Vector2) -> void:
 	visual.z_index = 18
 	area.add_child(visual)
 
-	var diamond := Polygon2D.new()
-	diamond.polygon = PackedVector2Array([Vector2(0, -15), Vector2(18, 0), Vector2(0, 15), Vector2(-18, 0)])
-	diamond.color = Color(0.82, 0.57, 0.2, 0.96)
-	visual.add_child(diamond)
-
-	var center := Polygon2D.new()
-	center.polygon = PackedVector2Array([Vector2(-8, -6), Vector2(8, -6), Vector2(8, 6), Vector2(-8, 6)])
-	center.color = Color(0.31, 0.18, 0.08, 1.0)
-	visual.add_child(center)
-
-	var label := Label.new()
-	label.text = event_name
-	label.position = Vector2(-72, 22)
-	label.size = Vector2(144, 28)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 17)
-	label.add_theme_color_override("font_color", PAPER)
-	label.add_theme_color_override("font_outline_color", Color(0.01, 0.02, 0.02, 0.96))
-	label.add_theme_constant_override("outline_size", 5)
-	visual.add_child(label)
+	var crate_sprite := Sprite2D.new()
+	crate_sprite.name = "CrateSprite"
+	crate_sprite.texture = DRIFTING_CRATE_TEXTURE
+	crate_sprite.scale = Vector2(0.22, 0.22)
+	crate_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	visual.add_child(crate_sprite)
 	_floating_visuals.append(visual)
 
 
-func _make_auto_trigger(node_name: String, at: Vector2, display_name: String, trigger_kind: String) -> Area2D:
+func _make_auto_trigger(node_name: String, at: Vector2, display_name: String, trigger_kind: String, trigger_radius: float = 82.0) -> Area2D:
 	var area := Area2D.new()
 	area.name = node_name
 	area.position = at
@@ -450,7 +500,7 @@ func _make_auto_trigger(node_name: String, at: Vector2, display_name: String, tr
 
 	var shape_node := CollisionShape2D.new()
 	var shape := CircleShape2D.new()
-	shape.radius = 82.0
+	shape.radius = trigger_radius
 	shape_node.shape = shape
 	area.add_child(shape_node)
 	area.body_entered.connect(_on_auto_trigger_body_entered.bind(area))
@@ -484,11 +534,207 @@ func _on_auto_trigger_body_entered(body: Node2D, area: Area2D) -> void:
 		return
 	var display_name := str(area.get_meta("display_name", "海上目标"))
 	var trigger_kind := str(area.get_meta("trigger_kind", "event"))
+	if trigger_kind == "ship" and display_name == "私盐商船":
+		_open_salt_merchant_event(area)
+		return
+	if trigger_kind == "ship" and display_name == "茶叶商船":
+		_open_tea_merchant_event(area)
+		return
+	if trigger_kind == "event" and display_name == "漂流木箱":
+		_open_drifting_crate_event(area)
+		return
 	if trigger_kind == "ship":
 		_show_toast("%s · 该船只开发中" % display_name)
 	else:
 		_show_toast("%s · 该事件开发中" % display_name)
 	_advance_exploration_stage(4)
+
+
+func _open_drifting_crate_event(area: Area2D) -> void:
+	if _crate_event_resolved or (_event_dialogue != null and _event_dialogue.visible):
+		return
+	_active_drifting_crate = area
+	area.set_deferred("monitoring", false)
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_event_dialogue.present(
+		"水师士兵",
+		"禀将军！前方海面发现一只漂流而来的木箱，箱体尚且完整，是否命人打捞？",
+		SOLDIER_PORTRAIT,
+		[
+			{"id": &"salvage", "text": "打捞上来"},
+			{"id": &"ignore", "text": "置之不理"},
+		]
+	)
+
+
+func _open_tea_merchant_event(area: Area2D) -> void:
+	if _tea_merchant_event_resolved or (_event_dialogue != null and _event_dialogue.visible):
+		return
+	_active_tea_merchant_ship = area
+	area.set_deferred("monitoring", false)
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_event_dialogue.present(
+		"茶叶商人",
+		"将军，这是姑苏新产的龙井茶。我们沿途遭遇风暴，船只受损，急需银钱修缮。还望将军购买一些茶叶，助我们渡过难关。",
+		TEA_MERCHANT_PORTRAIT,
+		[
+			{"id": &"buy_longjing_tea", "text": "购买龙井茶"},
+			{"id": &"decline_longjing_tea", "text": "不购买"},
+		]
+	)
+
+
+func _open_salt_merchant_event(area: Area2D) -> void:
+	if _salt_merchant_event_resolved or (_event_dialogue != null and _event_dialogue.visible):
+		return
+	_active_salt_merchant_ship = area
+	area.set_deferred("monitoring", false)
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_event_dialogue.present(
+		"私盐商人",
+		"将军，小船只是寻常行商，装的都是沿海急需的盐货。若将军肯通融，我们愿奉上一份薄礼……",
+		SALT_MERCHANT_PORTRAIT,
+		[
+			{"id": &"seize_private_salt", "text": "查扣私盐"},
+			{"id": &"accept_salt_bribe", "text": "收下贿赂"},
+			{"id": &"release_salt_ship", "text": "放行商船"},
+		]
+	)
+
+
+func _on_event_dialogue_option_selected(option_id: StringName) -> void:
+	match option_id:
+		&"salvage":
+			_resolve_drifting_crate_event()
+			_event_dialogue.present(
+				"水师士兵",
+				"禀将军，木箱已经打捞完毕，所得物资如下：\n金石 +100　　木材 +100　　银钱 +1000",
+				SOLDIER_PORTRAIT,
+				[{"id": &"continue", "text": "收下物资，继续航行"}]
+			)
+		&"ignore":
+			_resolve_drifting_crate_event()
+			_close_crate_dialogue()
+		&"continue":
+			_close_crate_dialogue()
+		&"buy_longjing_tea":
+			_event_dialogue.present(
+				"茶叶商人",
+				"多谢将军相助！",
+				TEA_MERCHANT_PORTRAIT,
+				[{"id": &"finish_tea_trade", "text": "收下龙井茶，继续航行"}],
+				"银钱 -1000　　获得商品：[color=#f2c45c]龙井茶[/color]"
+			)
+		&"decline_longjing_tea", &"finish_tea_trade":
+			_finish_tea_merchant_event()
+		&"seize_private_salt":
+			_event_dialogue.present(
+				"私盐商人",
+				"官爷饶命！这些盐货都交由水师处置。",
+				SALT_MERCHANT_PORTRAIT,
+				[{"id": &"finish_salt_event", "text": "收缴货物，继续航行"}],
+				"查获物品：[color=#f2c45c]私盐[/color]"
+			)
+		&"accept_salt_bribe":
+			_event_dialogue.present(
+				"私盐商人",
+				"多谢将军高抬贵手，这点薄礼还请笑纳。",
+				SALT_MERCHANT_PORTRAIT,
+				[{"id": &"finish_salt_event", "text": "收下银钱，继续航行"}],
+				"银钱 +800"
+			)
+		&"release_salt_ship":
+			_event_dialogue.present(
+				"私盐商人",
+				"多谢将军通融，我们这便离开。",
+				SALT_MERCHANT_PORTRAIT,
+				[{"id": &"finish_salt_event", "text": "继续航行"}],
+				"商船离开，无事发生"
+			)
+		&"finish_salt_event":
+			_finish_salt_merchant_event()
+
+
+func _resolve_drifting_crate_event() -> void:
+	if _crate_event_resolved:
+		return
+	_crate_event_resolved = true
+	_remove_drifting_crate()
+	_advance_exploration_stage(4)
+
+
+func _remove_drifting_crate() -> void:
+	var crate := _active_drifting_crate
+	if not is_instance_valid(crate):
+		crate = world_markers.get_node_or_null("DriftEvent") as Area2D
+	if is_instance_valid(crate):
+		crate.queue_free()
+	_active_drifting_crate = null
+
+
+func _finish_tea_merchant_event() -> void:
+	_event_dialogue.hide_dialogue()
+	_resolve_tea_merchant_event()
+	_restore_controls_after_event()
+
+
+func _resolve_tea_merchant_event() -> void:
+	if _tea_merchant_event_resolved:
+		return
+	_tea_merchant_event_resolved = true
+	_remove_tea_merchant_ship()
+	_advance_exploration_stage(4)
+
+
+func _remove_tea_merchant_ship() -> void:
+	var merchant_ship := _active_tea_merchant_ship
+	if not is_instance_valid(merchant_ship):
+		merchant_ship = world_markers.get_node_or_null("ShipTrigger0") as Area2D
+	if is_instance_valid(merchant_ship):
+		merchant_ship.queue_free()
+	_active_tea_merchant_ship = null
+
+
+func _finish_salt_merchant_event() -> void:
+	_event_dialogue.hide_dialogue()
+	_resolve_salt_merchant_event()
+	_restore_controls_after_event()
+
+
+func _resolve_salt_merchant_event() -> void:
+	if _salt_merchant_event_resolved:
+		return
+	_salt_merchant_event_resolved = true
+	_remove_salt_merchant_ship()
+	_advance_exploration_stage(4)
+
+
+func _remove_salt_merchant_ship() -> void:
+	var merchant_ship := _active_salt_merchant_ship
+	if not is_instance_valid(merchant_ship):
+		merchant_ship = world_markers.get_node_or_null("SaltMerchantShip") as Area2D
+	if is_instance_valid(merchant_ship):
+		merchant_ship.queue_free()
+	_active_salt_merchant_ship = null
+
+
+func _close_crate_dialogue() -> void:
+	_event_dialogue.hide_dialogue()
+	_restore_controls_after_event()
+
+
+func _restore_controls_after_event() -> void:
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
+
+
+func _on_event_dialogue_visibility_changed() -> void:
+	if _event_dialogue == null:
+		return
+	exploration_hud.call("set_sea_map_button_visible", not _event_dialogue.visible)
 
 
 func _enter_active_location() -> void:
@@ -510,12 +756,14 @@ func _enter_location_scene(scene_path: String, loading_text: String) -> void:
 	if _transitioning:
 		return
 	_transitioning = true
+	_store_fog_state()
 	var scene_root := get_tree().root
 	scene_root.set_meta(FUBO_TRAVEL.RETURN_CONTEXT_META, FUBO_TRAVEL.make_context(
 		player.global_position,
 		int(player.call("save_facing_index")),
 		_exploration_stage,
-		_lunar_day
+		_lunar_day,
+		_current_event_state()
 	))
 	player.controls_enabled = false
 	interaction_prompt.hide()
@@ -536,6 +784,7 @@ func _return_to_scene_two() -> void:
 	if _transitioning:
 		return
 	_transitioning = true
+	_store_fog_state()
 	player.controls_enabled = false
 	interaction_prompt.hide()
 	exploration_hud.call("set_exploration_visible", false)
@@ -583,7 +832,31 @@ func _restore_fubo_return(context: Dictionary) -> void:
 		player.call("restore_facing_index", int(restored["facing_index"]))
 		_exploration_stage = int(restored["exploration_stage"])
 		_lunar_day = float(restored["lunar_day"])
+		_restore_event_state(restored.get("sea_event_state", {}))
 	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
+
+
+func _current_event_state() -> Dictionary:
+	return {
+		"crate_event_resolved": _crate_event_resolved,
+		"tea_merchant_event_resolved": _tea_merchant_event_resolved,
+		"salt_merchant_event_resolved": _salt_merchant_event_resolved,
+	}
+
+
+func _restore_event_state(value: Variant) -> void:
+	if not value is Dictionary:
+		return
+	var state := value as Dictionary
+	_crate_event_resolved = bool(state.get("crate_event_resolved", false))
+	_tea_merchant_event_resolved = bool(state.get("tea_merchant_event_resolved", false))
+	_salt_merchant_event_resolved = bool(state.get("salt_merchant_event_resolved", false))
+	if _crate_event_resolved:
+		_remove_drifting_crate()
+	if _tea_merchant_event_resolved:
+		_remove_tea_merchant_ship()
+	if _salt_merchant_event_resolved:
+		_remove_salt_merchant_ship()
 
 
 func _show_toast(message: String) -> void:
@@ -614,25 +887,30 @@ func _refresh_exploration_task() -> void:
 func _on_hud_menu_visibility_changed(is_open: bool) -> void:
 	if _exploration_ui.call("current_owner") != self:
 		return
-	player.controls_enabled = not is_open
-	interaction_prompt.visible = not is_open and not _active_location_name.is_empty()
+	var dialogue_open := _event_dialogue != null and _event_dialogue.visible
+	player.controls_enabled = not is_open and not dialogue_open
+	interaction_prompt.visible = not is_open and not dialogue_open and not _active_location_name.is_empty()
 
 
 func _on_save_requested() -> void:
 	if _exploration_ui.call("current_owner") != self:
 		return
-	if _transitioning:
+	if _transitioning or (_event_dialogue != null and _event_dialogue.visible):
 		_show_save_message(false, "unstable_scene")
 		return
 	var game_state := _game_state()
 	if game_state == null:
 		_show_save_message(false, "write_failed")
 		return
+	_store_fog_state()
 	var snapshot := {
 		"player_position": _vector_to_save(player.global_position),
 		"facing_index": int(player.call("save_facing_index")),
 		"exploration_stage": _exploration_stage,
 		"lunar_day": _lunar_day,
+		"crate_event_resolved": _crate_event_resolved,
+		"tea_merchant_event_resolved": _tea_merchant_event_resolved,
+		"salt_merchant_event_resolved": _salt_merchant_event_resolved,
 	}
 	var result: Dictionary = game_state.call("save_game", SCENE_PATH, snapshot)
 	_show_save_message(bool(result.get("ok", false)), str(result.get("reason", "")))
@@ -679,6 +957,7 @@ func _restore_saved_scene_state(snapshot: Dictionary) -> void:
 	player.call("restore_facing_index", int(snapshot.get("facing_index", 0)))
 	_exploration_stage = clampi(int(snapshot.get("exploration_stage", 0)), 0, 4)
 	_lunar_day = maxf(0.0, float(snapshot.get("lunar_day", 0.0)))
+	_restore_event_state(snapshot)
 	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
 
 

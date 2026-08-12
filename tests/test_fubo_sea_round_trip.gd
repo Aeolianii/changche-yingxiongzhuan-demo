@@ -33,6 +33,12 @@ func _run() -> void:
 	ship.call("restore_facing_index", 2)
 	sea.set("_exploration_stage", 4)
 	sea.set("_lunar_day", 8.5)
+	sea.set("_crate_event_resolved", true)
+	sea.set("_tea_merchant_event_resolved", true)
+	sea.set("_salt_merchant_event_resolved", true)
+	var fog_probe := Vector2(3000, 1500)
+	var sea_fog := sea.get_node("World/FogOfWar")
+	sea_fog.call("reveal_at", fog_probe)
 	root.set_meta("sea_overworld_lunar_day", 8.5)
 	var expected_position := ship.global_position
 	for _frame in range(3):
@@ -71,6 +77,11 @@ func _run() -> void:
 		_check(int(returned_ship.call("save_facing_index")) == 2, "Sea return must restore the pre-landing facing.")
 		_check(int(returned_sea.get("_exploration_stage")) == 4, "Sea return must restore exploration progress.")
 		_check(is_equal_approx(float(returned_sea.get("_lunar_day")), 8.5), "Sea return must restore lunar progress.")
+		_check(returned_sea.get_node_or_null("World/WorldMarkers/DriftEvent") == null, "Sea return must preserve the resolved drifting-crate state.")
+		_check(returned_sea.get_node_or_null("World/WorldMarkers/ShipTrigger0") == null, "Sea return must preserve the resolved tea-merchant state.")
+		_check(returned_sea.get_node_or_null("World/WorldMarkers/SaltMerchantShip") == null, "Sea return must preserve the resolved salt-merchant state.")
+		var returned_fog := returned_sea.get_node("World/FogOfWar")
+		_check(bool(returned_fog.call("is_world_position_revealed", fog_probe)), "Sea return must preserve the explored fog route.")
 	_check(not root.has_meta(TRAVEL.RETURN_REQUEST_META) and not root.has_meta(TRAVEL.RETURN_CONTEXT_META), "Round-trip metadata must be consumed after returning.")
 	_finish()
 

@@ -22,8 +22,6 @@ enum Phase {
 const MAP_SIZE := Vector2i(1536, 1024)
 const CAMERA_ZOOM := Vector2(1.15, 1.15)
 const KEEPER_POSITION := Vector2(450, 475)
-const DOCK_SAFE_POSITION := Vector2(220, 868)
-const SCHOOL_SAFE_POSITION := Vector2(1030, 390)
 const INTERACTION_RADIUS := 76.0
 const DIALOGUE_LINES := [
 	"年轻人，码头旁海岸正是鱼群回游的时候。",
@@ -61,6 +59,7 @@ var _keeper_focused := false
 var _pending_trigger := ""
 var _test_mode := false
 var _transitioning := false
+var _minigame_return_position := Vector2.ZERO
 var _loading_transition: SceneLoadingTransition
 var exploration_hud: Control
 var _exploration_ui: Node
@@ -412,10 +411,12 @@ func _return_to_sea_overworld() -> void:
 func _open_fishing_minigame() -> bool:
 	if phase != Phase.FISHING_AVAILABLE:
 		return false
+	var entry_position := player.global_position
 	_pending_trigger = ""
 	prompt_panel.visible = false
 	if not minigame_host.open_minigame(FISHING_SCENE, "fishing"):
 		return false
+	_minigame_return_position = entry_position
 	phase = Phase.FISHING_ACTIVE
 	_sync_fishing_station()
 	_refresh_exploration_hud()
@@ -425,10 +426,12 @@ func _open_fishing_minigame() -> bool:
 func _open_drum_minigame() -> bool:
 	if phase != Phase.DRUM_AVAILABLE:
 		return false
+	var entry_position := player.global_position
 	_pending_trigger = ""
 	prompt_panel.visible = false
 	if not minigame_host.open_minigame(DRUM_SCENE, "drum"):
 		return false
+	_minigame_return_position = entry_position
 	phase = Phase.DRUM_ACTIVE
 	_refresh_exploration_hud()
 	return true
@@ -468,13 +471,19 @@ func _complete_drum(_result: Dictionary) -> void:
 
 
 func _on_minigame_cancelled(game_id: String) -> void:
+	var should_restore_position := true
 	match game_id:
 		"fishing":
 			phase = Phase.FISHING_AVAILABLE
-			player.global_position = DOCK_SAFE_POSITION
 		"drum":
 			phase = Phase.DRUM_AVAILABLE
-			player.global_position = SCHOOL_SAFE_POSITION
+		_:
+			should_restore_position = false
+	if should_restore_position:
+		player.global_position = _minigame_return_position
+		player.velocity = Vector2.ZERO
+		player.cancel_move_target()
+		player.call("set_move_direction", Vector2.ZERO)
 	player.controls_enabled = true
 	prompt_panel.visible = false
 	_sync_fishing_station()

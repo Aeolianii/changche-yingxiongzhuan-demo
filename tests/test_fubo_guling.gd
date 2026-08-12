@@ -141,8 +141,15 @@ func _test_scene_contract() -> void:
 	host.active_minigame.completed.emit({"game_id": "fishing", "completed": true, "rating": "渔获丰足", "mistakes": 0, "duration_ms": 1000})
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Fishing completion must restore the map and unlock the school.")
+	var drum_entry_position := Vector2(1095, 370)
+	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = drum_entry_position
 	level.trigger_drum_for_test()
 	_check(host.active_minigame != null and host.active_minigame.game_id == "drum", "School trigger must open the drum minigame.")
+	host.active_minigame.exit_requested.emit()
+	await process_frame
+	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Leaving the drum minigame must restore its available phase.")
+	_check((level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position == drum_entry_position, "Leaving the drum minigame must restore the position used to enter it.")
+	level.trigger_drum_for_test()
 	host.active_minigame.completed.emit({"game_id": "drum", "completed": true, "rating": "鼓点稳健", "mistakes": 1, "duration_ms": 1000})
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.VIEWPOINT_OPEN and host.active_minigame == null, "Drum completion must restore the map and open the viewpoint.")

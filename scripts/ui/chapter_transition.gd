@@ -3,9 +3,10 @@ extends Control
 
 signal transition_finished
 
-const BASE_DURATION_SECONDS := 1.5
+const BASE_DURATION_SECONDS := 4.47
+const EXTENDED_DURATION_SECONDS := BASE_DURATION_SECONDS + 1.5
 
-@export_range(0.1, 10.0, 0.1) var duration_seconds := BASE_DURATION_SECONDS
+@export_range(0.1, 10.0, 0.01) var duration_seconds := EXTENDED_DURATION_SECONDS
 @export_range(0.01, 4.0, 0.01) var duration_scale := 1.0
 
 @onready var backdrop: ColorRect = $Backdrop
@@ -31,20 +32,20 @@ func play() -> void:
 	journey_image.pivot_offset = journey_image.size * 0.5
 
 	journey_image.scale = Vector2(1.035, 1.035)
-	create_tween().tween_property(journey_image, "scale", Vector2.ONE, _duration(BASE_DURATION_SECONDS))
+	create_tween().tween_property(journey_image, "scale", Vector2.ONE, _duration(4.4))
 	var journey_in := create_tween().set_parallel(true)
-	journey_in.tween_property(journey_image, "modulate:a", 1.0, _duration(0.2))
-	journey_in.tween_property(journey_shade, "modulate:a", 1.0, _duration(0.2))
+	journey_in.tween_property(journey_image, "modulate:a", 1.0, _duration(0.62))
+	journey_in.tween_property(journey_shade, "modulate:a", 1.0, _duration(0.62))
 	await journey_in.finished
 
 	await _show_journey_caption("诏令既下，星夜南驰。")
 	await _show_journey_caption("越千山，渡长河，抵南疆。")
-	await _pause(0.08)
+	await _pause(0.35)
 
 	var journey_out := create_tween().set_parallel(true)
-	journey_out.tween_property(journey_image, "modulate:a", 0.0, _duration(0.36))
-	journey_out.tween_property(journey_shade, "modulate:a", 0.0, _duration(0.36))
-	journey_out.tween_property(journey_text, "modulate:a", 0.0, _duration(0.2))
+	journey_out.tween_property(journey_image, "modulate:a", 0.0, _duration(0.48))
+	journey_out.tween_property(journey_shade, "modulate:a", 0.0, _duration(0.48))
+	journey_out.tween_property(journey_text, "modulate:a", 0.0, _duration(0.28))
 	await journey_out.finished
 
 	transition_finished.emit()
@@ -69,11 +70,11 @@ func _show_journey_caption(caption: String) -> void:
 	journey_text.text = caption
 	journey_text.modulate.a = 0.0
 	var fade_in := create_tween()
-	fade_in.tween_property(journey_text, "modulate:a", 1.0, _duration(0.1))
+	fade_in.tween_property(journey_text, "modulate:a", 1.0, _duration(0.3))
 	await fade_in.finished
-	await _pause(0.25)
+	await _pause(0.95)
 	var fade_out := create_tween()
-	fade_out.tween_property(journey_text, "modulate:a", 0.0, _duration(0.08))
+	fade_out.tween_property(journey_text, "modulate:a", 0.0, _duration(0.26))
 	await fade_out.finished
 
 

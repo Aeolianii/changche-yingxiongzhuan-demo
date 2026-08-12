@@ -41,8 +41,8 @@ func _verify_transition(skip_wait: bool, wait_seconds: float, label: String) -> 
 	current_scene = scene_one
 	await process_frame
 	var chapter_transition := scene_one.get_node("UI/Overlay/ChapterTransition")
-	if not is_equal_approx(float(chapter_transition.get("duration_seconds")), 1.5):
-		failures.append("Scene1-to-Scene2 transition duration must be configured to 1.5 seconds.")
+	if not is_equal_approx(float(chapter_transition.get("duration_seconds")), 5.97):
+		failures.append("Scene1-to-Scene2 transition must extend its original duration by 1.5 seconds.")
 	chapter_transition.set("duration_scale", 0.03)
 
 	# Enter the final documented state without replaying the full dialogue chain.

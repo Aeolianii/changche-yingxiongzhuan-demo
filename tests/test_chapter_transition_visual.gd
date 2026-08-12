@@ -13,12 +13,12 @@ func _run() -> void:
 	root.add_child(canvas)
 	var transition := CHAPTER_TRANSITION.instantiate() as Control
 	canvas.add_child(transition)
-	if not is_equal_approx(float(transition.get("duration_seconds")), 1.5):
-		push_error("Scene1-to-Scene2 chapter transition must last 1.5 seconds.")
+	if not is_equal_approx(float(transition.get("duration_seconds")), 5.97):
+		push_error("Scene1-to-Scene2 chapter transition must extend its original duration by 1.5 seconds.")
 		quit(1)
 		return
 	transition.call("play")
-	await create_timer(0.55).timeout
+	await create_timer(2.75).timeout
 	await process_frame
 
 	var journey_image := transition.get_node("JourneyImage") as TextureRect

@@ -6,6 +6,7 @@ signal menu_visibility_changed(is_open: bool)
 signal save_requested
 signal load_requested
 signal return_title_requested
+signal side_quest_tracked(quest_id: StringName)
 
 var _hud: Control
 var _owner_ref: WeakRef
@@ -25,6 +26,7 @@ func _ready() -> void:
 	_hud.save_requested.connect(_on_hud_save_requested)
 	_hud.load_requested.connect(_on_hud_load_requested)
 	_hud.return_title_requested.connect(_on_hud_return_title_requested)
+	_hud.side_quest_tracked.connect(_on_hud_side_quest_tracked)
 	_hud.call("set_exploration_visible", false)
 
 
@@ -85,3 +87,8 @@ func _on_hud_load_requested() -> void:
 func _on_hud_return_title_requested() -> void:
 	if _has_current_owner():
 		return_title_requested.emit()
+
+
+func _on_hud_side_quest_tracked(quest_id: StringName) -> void:
+	if _has_current_owner():
+		side_quest_tracked.emit(quest_id)

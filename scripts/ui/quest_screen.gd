@@ -86,8 +86,13 @@ var _detail_title: RichTextLabel
 var _detail_description: RichTextLabel
 var _steps_container: VBoxContainer
 var _context_id := &"palace"
+var _task_state: Dictionary = {}
+var _main_task_title := "奉诏入殿"
+var _main_task_objective := "前往标记地点推进剧情"
+var _main_progress_stage := 0
 
 signal close_requested
+signal side_quest_selected(quest_id: StringName, title: String, objective: String)
 
 
 func _ready() -> void:
@@ -131,6 +136,12 @@ func set_main_task(task_title: String) -> void:
 func set_main_task_progress(task_title: String, objective: String, progress_stage: int, task_state := {}) -> void:
 	if task_title.is_empty() or _quests.is_empty():
 		return
+	_main_task_title = task_title
+	_main_task_objective = objective
+	_main_progress_stage = progress_stage
+	_task_state = (task_state as Dictionary).duplicate(true) if task_state is Dictionary else {}
+	if _context_id in [&"sea_overworld", &"fubo_guling"]:
+		_quests = _make_sea_overworld_quests(_task_state)
 	_quests[0] = _make_main_quest_state(task_title, progress_stage, task_state)
 	_quests[0]["objective"] = objective
 	_completed_quests = _make_completed_quests(task_title)
@@ -144,10 +155,10 @@ func set_quest_context(context_id: StringName) -> void:
 	_context_id = context_id
 	match context_id:
 		&"sea_overworld":
-			_quests = _make_sea_overworld_quests()
+			_quests = _make_sea_overworld_quests(_task_state)
 			_completed_quests.clear()
 		&"fubo_guling":
-			_quests = _make_fubo_guling_quests()
+			_quests = _make_sea_overworld_quests(_task_state)
 			_completed_quests.clear()
 		_:
 			_quests.clear()
@@ -394,6 +405,13 @@ func _select_quest(quest_index: int) -> void:
 	_selected_quest = quest_index
 	_refresh_quest_selectors()
 	_refresh_quest_detail()
+	var quest := _visible_quests()[quest_index]
+	if not _show_completed and str(quest.get("type", "")) == "支线":
+		side_quest_selected.emit(
+			StringName(str(quest.get("id", ""))),
+			str(quest.get("title", "")),
+			str(quest.get("objective", ""))
+		)
 
 
 func _refresh_quest_selectors() -> void:
@@ -535,7 +553,7 @@ func _highlight_keywords(text_value: String, keywords: Array) -> String:
 
 
 func _make_main_quest_state(task_title: String, progress_stage: int = 0, task_state := {}) -> Dictionary:
-	if task_title == "探索海域，完善海图" and _context_id == &"sea_overworld":
+	if task_title == "探索海域，完善海图" and _context_id in [&"sea_overworld", &"fubo_guling"]:
 		return _make_sea_overworld_main_task(progress_stage)
 	if task_title == "伏波古岭":
 		return _make_fubo_guling_main_task(progress_stage, bool(task_state.get("keeper_intro_completed", false)))
@@ -646,10 +664,11 @@ func _make_main_quest_state(task_title: String, progress_stage: int = 0, task_st
 	}
 
 
-func _make_sea_overworld_quests() -> Array[Dictionary]:
-	return [
+func _make_sea_overworld_quests(task_state := {}) -> Array[Dictionary]:
+	var quests: Array[Dictionary] = [
 		_make_sea_overworld_main_task(0),
 		{
+			"id": "sea_encounters",
 			"type": "支线",
 			"title": "海上见闻",
 			"objective": "接触海上的船只或漂流事件",
@@ -673,6 +692,15 @@ func _make_sea_overworld_quests() -> Array[Dictionary]:
 			],
 		},
 	]
+	var fubo_state: Dictionary = task_state.get("fubo_side_quest", {}) if task_state is Dictionary else {}
+	if bool(fubo_state.get("accepted", false)):
+		quests.append(_make_fubo_guling_main_task(
+			int(fubo_state.get("progress_stage", 0)),
+			bool(fubo_state.get("keeper_intro_completed", false))
+		))
+	quests[0] = _make_sea_overworld_main_task(_main_progress_stage)
+	quests[0]["objective"] = _main_task_objective
+	return quests
 
 
 func _make_fubo_guling_quests() -> Array[Dictionary]:
@@ -706,7 +734,8 @@ func _make_fubo_guling_quests() -> Array[Dictionary]:
 
 func _make_fubo_guling_main_task(progress_stage: int, keeper_intro_completed := false) -> Dictionary:
 	return {
-		"type": "主线",
+		"id": "fubo_guling",
+		"type": "支线",
 		"title": "伏波古岭",
 		"objective": [
 			"前往码头旁海岸，在鱼竿处开始钓鱼",

@@ -65,6 +65,7 @@ signal menu_visibility_changed(is_open: bool)
 signal save_requested
 signal load_requested
 signal return_title_requested
+signal side_quest_tracked(quest_id: StringName)
 
 
 func _ready() -> void:
@@ -109,6 +110,32 @@ func set_main_task_progress(task_title: String, objective: String, progress_stag
 		_main_objective_label.text = objective
 	if is_instance_valid(_quest_screen):
 		_quest_screen.call("set_main_task_progress", task_title, objective, progress_stage, task_state)
+	_apply_tracked_side_quest(task_state)
+
+
+func _apply_tracked_side_quest(task_state: Variant) -> void:
+	if not task_state is Dictionary:
+		return
+	var state := task_state as Dictionary
+	var tracked_id := StringName(str(state.get("tracked_side_quest", "")))
+	var side_task := get_node_or_null("QuestTracker/SideQuest/TaskName") as Label
+	var side_objective := get_node_or_null("QuestTracker/SideQuest/Objective") as Label
+	if side_task == null or side_objective == null:
+		return
+	if tracked_id == &"fubo_guling":
+		var fubo_state: Dictionary = state.get("fubo_side_quest", {})
+		if bool(fubo_state.get("accepted", false)):
+			side_task.text = "伏波古岭"
+			side_objective.text = [
+				"巡视伏波古岭",
+				"巡视伏波古岭",
+				"前往古校场完成鼓令",
+				"登岭眺望南海",
+				"伏波古岭巡视完成",
+			][clampi(int(fubo_state.get("progress_stage", 0)), 0, 4)]
+	elif tracked_id == &"sea_encounters":
+		side_task.text = "海上见闻"
+		side_objective.text = "接触海上的船只或漂流事件"
 
 
 func reset_context(context_id: StringName) -> void:
@@ -592,7 +619,18 @@ func _build_quest_screen() -> void:
 	_quest_screen = QUEST_SCREEN_SCENE.instantiate() as Control
 	_quest_screen.name = "QuestScreen"
 	_quest_screen.connect("close_requested", _close_quest_screen)
+	_quest_screen.connect("side_quest_selected", _on_side_quest_selected)
 	add_child(_quest_screen)
+
+
+func _on_side_quest_selected(quest_id: StringName, title: String, objective: String) -> void:
+	var side_task := get_node_or_null("QuestTracker/SideQuest/TaskName") as Label
+	var side_objective := get_node_or_null("QuestTracker/SideQuest/Objective") as Label
+	if side_task != null:
+		side_task.text = title
+	if side_objective != null:
+		side_objective.text = objective
+	side_quest_tracked.emit(quest_id)
 
 
 func _build_map_screen() -> void:

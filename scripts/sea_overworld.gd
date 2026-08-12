@@ -30,6 +30,8 @@ const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
 const SOUTH_SEA_HARBOR_SPAWN := Vector2(880, 1170)
 const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
+const FUBO_QUEST_TRIGGER_POSITION := Vector2(4260, 780)
+const FUBO_QUEST_TRIGGER_RADIUS := 760.0
 
 @onready var player: SeaOverworldPlayer = $World/Player
 @onready var camera: Camera2D = $World/Player/Camera2D
@@ -61,6 +63,7 @@ var _active_tea_merchant_ship: Area2D
 var _tea_merchant_event_resolved := false
 var _active_salt_merchant_ship: Area2D
 var _salt_merchant_event_resolved := false
+var _fubo_quest_dialogue_open := false
 var _fog_of_war: Node2D
 
 
@@ -120,6 +123,7 @@ func _connect_global_hud_signals() -> void:
 		[&"save_requested", Callable(self, "_on_save_requested")],
 		[&"load_requested", Callable(self, "_on_load_requested")],
 		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+		[&"side_quest_tracked", Callable(self, "_on_side_quest_tracked")],
 	]:
 		if not _exploration_ui.is_connected(binding[0], binding[1]):
 			_exploration_ui.connect(binding[0], binding[1])
@@ -131,6 +135,7 @@ func _disconnect_global_hud_signals() -> void:
 		[&"save_requested", Callable(self, "_on_save_requested")],
 		[&"load_requested", Callable(self, "_on_load_requested")],
 		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+		[&"side_quest_tracked", Callable(self, "_on_side_quest_tracked")],
 	]:
 		if _exploration_ui.is_connected(binding[0], binding[1]):
 			_exploration_ui.disconnect(binding[0], binding[1])
@@ -297,6 +302,14 @@ func _build_auto_triggers() -> void:
 	_build_ship_trigger("岭南商船", Vector2(2600, 760), 1)
 	_build_ship_trigger("私盐商船", Vector2(2200, 1500), 0, "SaltMerchantShip", 48.0)
 	_build_event_trigger("漂流木箱", Vector2(1300, 1700))
+	var fubo_quest_trigger := _make_auto_trigger(
+		"FuboQuestTrigger",
+		FUBO_QUEST_TRIGGER_POSITION,
+		"伏波古岭军情",
+		"fubo_quest",
+		FUBO_QUEST_TRIGGER_RADIUS
+	)
+	fubo_quest_trigger.remove_from_group("sea_auto_trigger")
 
 
 func _configure_sea_map_hud() -> void:
@@ -564,6 +577,9 @@ func _on_auto_trigger_body_entered(body: Node2D, area: Area2D) -> void:
 		return
 	var display_name := str(area.get_meta("display_name", "海上目标"))
 	var trigger_kind := str(area.get_meta("trigger_kind", "event"))
+	if trigger_kind == "fubo_quest":
+		_open_fubo_quest_dialogue()
+		return
 	if trigger_kind == "ship" and display_name == "私盐商船":
 		_open_salt_merchant_event(area)
 		return
@@ -637,6 +653,8 @@ func _open_salt_merchant_event(area: Area2D) -> void:
 
 func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 	match option_id:
+		&"accept_fubo_quest":
+			_accept_fubo_side_quest()
 		&"salvage":
 			_resolve_drifting_crate_event()
 			_event_dialogue.present(
@@ -686,6 +704,38 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 			)
 		&"finish_salt_event":
 			_finish_salt_merchant_event()
+
+
+func _open_fubo_quest_dialogue() -> void:
+	var game_state := _game_state()
+	if game_state == null or bool(game_state.call("has_fubo_side_quest")):
+		return
+	if _event_dialogue == null:
+		_open_fubo_quest_dialogue.call_deferred()
+		return
+	if _event_dialogue.visible or _transitioning:
+		return
+	_fubo_quest_dialogue_open = true
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_event_dialogue.present(
+		"水师士兵",
+		"将军，海域东北方有一座孤岛，名为伏波古岭。岛上军士扼守航道、巡查烽堠，以防倭寇乘隙侵扰。将军若得空，可登岛巡视军备，也好安定守军之心。",
+		SOLDIER_PORTRAIT,
+		[{"id": &"accept_fubo_quest", "text": "收到，我会前去巡视。"}]
+	)
+
+
+func _accept_fubo_side_quest() -> void:
+	var game_state := _game_state()
+	if game_state != null:
+		game_state.call("accept_fubo_side_quest")
+	_fubo_quest_dialogue_open = false
+	_event_dialogue.hide_dialogue()
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
+	_refresh_exploration_task()
+	_show_toast("已接取支线：伏波古岭")
 
 
 func _resolve_drifting_crate_event() -> void:
@@ -772,6 +822,9 @@ func _enter_active_location() -> void:
 		_return_to_scene_two()
 		return
 	var target_scene_path := "" if _active_location_area == null else str(_active_location_area.get_meta("target_scene_path", ""))
+	if target_scene_path == FUBO_TRAVEL.FUBO_SCENE_PATH and not _has_fubo_side_quest():
+		_open_fubo_quest_dialogue()
+		return
 	if not target_scene_path.is_empty():
 		_advance_exploration_stage(3)
 		_enter_location_scene(target_scene_path, "正在登陆%s" % _active_location_name)
@@ -909,7 +962,36 @@ func _refresh_exploration_task() -> void:
 			objective = "接触海上的船只或漂流事件"
 		4:
 			objective = "继续探索岭南海域"
-	exploration_hud.call("set_main_task_progress", "探索海域，完善海图", objective, _exploration_stage)
+	exploration_hud.call(
+		"set_main_task_progress",
+		"探索海域，完善海图",
+		objective,
+		_exploration_stage,
+		_quest_hud_state()
+	)
+
+
+func _quest_hud_state() -> Dictionary:
+	var game_state := _game_state()
+	if game_state == null:
+		return {}
+	return {
+		"fubo_side_quest": game_state.call("get_fubo_side_quest_state"),
+		"tracked_side_quest": String(game_state.call("get_tracked_side_quest")),
+	}
+
+
+func _has_fubo_side_quest() -> bool:
+	var game_state := _game_state()
+	return game_state != null and bool(game_state.call("has_fubo_side_quest"))
+
+
+func _on_side_quest_tracked(quest_id: StringName) -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
+	var game_state := _game_state()
+	if game_state != null:
+		game_state.call("set_tracked_side_quest", quest_id)
 
 
 func _on_hud_menu_visibility_changed(is_open: bool) -> void:

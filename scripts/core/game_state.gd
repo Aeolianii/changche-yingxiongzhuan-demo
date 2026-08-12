@@ -3,6 +3,7 @@ extends Node
 const FUBO_SAVE_STATE := preload("res://scripts/fubo_guling/fubo_save_state.gd")
 const SAVE_VERSION := 1
 const DEFAULT_SAVE_PATH := "user://main_flow_save.json"
+const FUBO_SIDE_QUEST_ID := &"fubo_guling"
 const ALLOWED_SCENES := [
 	"res://scenes/palace/palace_demo.tscn",
 	"res://scenes/Scene2.tscn",
@@ -92,6 +93,43 @@ func set_sea_fog_state(state: Dictionary) -> void:
 func get_sea_fog_state() -> Dictionary:
 	var state = _world_state.get("sea_fog", {})
 	return (state as Dictionary).duplicate(true) if state is Dictionary else {}
+
+
+func accept_fubo_side_quest() -> void:
+	var state := get_fubo_side_quest_state()
+	state["accepted"] = true
+	_world_state["fubo_side_quest"] = state
+	_world_state["tracked_side_quest"] = String(FUBO_SIDE_QUEST_ID)
+
+
+func has_fubo_side_quest() -> bool:
+	return bool(get_fubo_side_quest_state().get("accepted", false))
+
+
+func set_fubo_side_quest_progress(progress_stage: int, keeper_intro_completed: bool) -> void:
+	var state := get_fubo_side_quest_state()
+	state["accepted"] = true
+	state["progress_stage"] = clampi(progress_stage, 0, 4)
+	state["keeper_intro_completed"] = keeper_intro_completed
+	_world_state["fubo_side_quest"] = state
+
+
+func get_fubo_side_quest_state() -> Dictionary:
+	var raw_state: Variant = _world_state.get("fubo_side_quest", {})
+	var state := (raw_state as Dictionary).duplicate(true) if raw_state is Dictionary else {}
+	return {
+		"accepted": bool(state.get("accepted", false)),
+		"progress_stage": clampi(int(state.get("progress_stage", 0)), 0, 4),
+		"keeper_intro_completed": bool(state.get("keeper_intro_completed", false)),
+	}
+
+
+func set_tracked_side_quest(quest_id: StringName) -> void:
+	_world_state["tracked_side_quest"] = String(quest_id)
+
+
+func get_tracked_side_quest() -> StringName:
+	return StringName(str(_world_state.get("tracked_side_quest", "")))
 
 
 func reset_runtime_world_state() -> void:

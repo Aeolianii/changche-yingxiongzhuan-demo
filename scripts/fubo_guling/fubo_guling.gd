@@ -92,6 +92,7 @@ func _ready() -> void:
 	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
 	$Interface.add_child(_loading_transition)
 	_build_collision_debug()
+	_ensure_fubo_side_quest()
 	_restore_saved_scene_state(_consume_saved_scene_state())
 	_apply_phase_world_state()
 	_refresh_exploration_hud()
@@ -128,6 +129,7 @@ func _exit_tree() -> void:
 		[&"save_requested", Callable(self, "_on_save_requested")],
 		[&"load_requested", Callable(self, "_on_load_requested")],
 		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+		[&"side_quest_tracked", Callable(self, "_on_side_quest_tracked")],
 	]:
 		if _exploration_ui.is_connected(binding[0], binding[1]):
 			_exploration_ui.disconnect(binding[0], binding[1])
@@ -140,6 +142,7 @@ func _connect_global_hud_signals() -> void:
 		[&"save_requested", Callable(self, "_on_save_requested")],
 		[&"load_requested", Callable(self, "_on_load_requested")],
 		[&"return_title_requested", Callable(self, "_on_return_title_requested")],
+		[&"side_quest_tracked", Callable(self, "_on_side_quest_tracked")],
 	]:
 		if not _exploration_ui.is_connected(binding[0], binding[1]):
 			_exploration_ui.connect(binding[0], binding[1])
@@ -298,15 +301,45 @@ func _refresh_exploration_hud() -> void:
 		Phase.COMPLETE:
 			objective = "伏波古岭行程完成"
 			progress_stage = 4
+	_sync_fubo_side_quest_progress(progress_stage)
+	var game_state := _game_state()
+	var fubo_state := {} if game_state == null else game_state.call("get_fubo_side_quest_state") as Dictionary
+	var tracked_side_quest := &"fubo_guling" if game_state == null else StringName(game_state.call("get_tracked_side_quest"))
 	exploration_hud.call(
 		"set_main_task_progress",
-		"伏波古岭",
-		objective,
-		progress_stage,
-		{"keeper_intro_completed": _keeper_intro_completed}
+		"探索海域，完善海图",
+		"巡视伏波古岭，返回海图后继续探索海域",
+		0,
+		{
+			"fubo_side_quest": fubo_state,
+			"tracked_side_quest": String(tracked_side_quest),
+		}
 	)
 	var should_show := not _transitioning and not dialogue_panel.visible and not overlay.visible and minigame_host.active_minigame == null
 	exploration_hud.call("set_exploration_visible", should_show)
+
+
+func _ensure_fubo_side_quest() -> void:
+	var game_state := _game_state()
+	if game_state == null:
+		return
+	if not bool(game_state.call("has_fubo_side_quest")):
+		game_state.call("accept_fubo_side_quest")
+	game_state.call("set_tracked_side_quest", &"fubo_guling")
+
+
+func _sync_fubo_side_quest_progress(progress_stage: int) -> void:
+	var game_state := _game_state()
+	if game_state != null:
+		game_state.call("set_fubo_side_quest_progress", progress_stage, _keeper_intro_completed)
+
+
+func _on_side_quest_tracked(quest_id: StringName) -> void:
+	if _exploration_ui.call("current_owner") != self:
+		return
+	var game_state := _game_state()
+	if game_state != null:
+		game_state.call("set_tracked_side_quest", quest_id)
 
 
 func _configure_camera() -> void:

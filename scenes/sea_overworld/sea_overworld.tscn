@@ -1,29 +1,44 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene format=3 uid="uid://c3b1yq110iyac"]
 
-[ext_resource type="Script" path="res://scripts/sea_overworld.gd" id="1_world"]
-[ext_resource type="Script" path="res://scripts/sea_overworld_player.gd" id="2_player"]
+[ext_resource type="Script" uid="uid://csc78w730kvv6" path="res://scripts/sea_overworld.gd" id="1_world"]
+[ext_resource type="Script" uid="uid://l8hlp5ijnd7t" path="res://scripts/sea_overworld_player.gd" id="2_player"]
 [ext_resource type="Texture2D" uid="uid://2mkhgruqho0j" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_a_v3.png" id="3_map"]
-[ext_resource type="Texture2D" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="5_button"]
-[ext_resource type="Texture2D" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="6_button_active"]
+[ext_resource type="Texture2D" uid="uid://d4fe3kc37c3kx" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="5_button"]
+[ext_resource type="Texture2D" uid="uid://d2w4jmas4pnol" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="6_button_active"]
 [ext_resource type="Texture2D" uid="uid://db3wnywk2vlwp" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_b_v3.png" id="7_east_map"]
-[ext_resource type="Shader" path="res://shaders/map_chunk_blend.gdshader" id="8_chunk_blend"]
+[ext_resource type="Shader" uid="uid://b6r77nqd8gck5" path="res://shaders/map_chunk_blend.gdshader" id="8_chunk_blend"]
 [ext_resource type="Texture2D" uid="uid://dbwami5jjx10a" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_c_v3.png" id="9_c_map"]
 [ext_resource type="Texture2D" uid="uid://br011pbau8w5v" path="res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v3.png" id="10_d_map"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_east_blend"]
 shader = ExtResource("8_chunk_blend")
+shader_parameter/fade_width = 0.05
+shader_parameter/fade_from_left = true
+shader_parameter/fade_from_top = false
+shader_parameter/world_origin = Vector2(0, 0)
+shader_parameter/world_size = Vector2(2508, 1412)
+shader_parameter/water_motion_strength = 0.9
+shader_parameter/water_wave_speed = 0.55
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_c_blend"]
 shader = ExtResource("8_chunk_blend")
+shader_parameter/fade_width = 0.05
 shader_parameter/fade_from_left = false
 shader_parameter/fade_from_top = true
+shader_parameter/world_origin = Vector2(0, 0)
+shader_parameter/world_size = Vector2(2508, 1412)
+shader_parameter/water_motion_strength = 0.9
+shader_parameter/water_wave_speed = 0.55
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_d_blend"]
 shader = ExtResource("8_chunk_blend")
+shader_parameter/fade_width = 0.05
+shader_parameter/fade_from_left = true
 shader_parameter/fade_from_top = true
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
-radius = 19.0
+shader_parameter/world_origin = Vector2(0, 0)
+shader_parameter/world_size = Vector2(2508, 1412)
+shader_parameter/water_motion_strength = 0.9
+shader_parameter/water_wave_speed = 0.55
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_south_harbor_west_rock"]
 radius = 76.321686
@@ -43,177 +58,176 @@ radius = 72.02777
 [sub_resource type="CircleShape2D" id="CircleShape2D_shanwan_outer_reef"]
 radius = 65.0
 
-[node name="SeaOverworld" type="Node2D"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 19.0
+
+[node name="SeaOverworld" type="Node2D" unique_id=188588886]
 script = ExtResource("1_world")
 
-[node name="World" type="Node2D" parent="."]
+[node name="World" type="Node2D" parent="." unique_id=1970062786]
 
-[node name="Background" type="Sprite2D" parent="World"]
+[node name="Background" type="Sprite2D" parent="World" unique_id=182680834]
 z_index = -100
 texture_filter = 1
+scale = Vector2(0.75, 0.75)
 texture = ExtResource("3_map")
 centered = false
-scale = Vector2(0.75, 0.75)
 
-[node name="EastBackground" type="Sprite2D" parent="World"]
+[node name="EastBackground" type="Sprite2D" parent="World" unique_id=1158190563]
 z_index = -99
-position = Vector2(2388, 0)
 texture_filter = 1
 material = SubResource("ShaderMaterial_east_blend")
+position = Vector2(2388, 0)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("7_east_map")
 centered = false
 
-[node name="CBackground" type="Sprite2D" parent="World"]
+[node name="CBackground" type="Sprite2D" parent="World" unique_id=1929135844]
 z_index = -98
-position = Vector2(0, 1292)
 texture_filter = 1
 material = SubResource("ShaderMaterial_c_blend")
+position = Vector2(0, 1292)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("9_c_map")
 centered = false
 
-[node name="DBackground" type="Sprite2D" parent="World"]
+[node name="DBackground" type="Sprite2D" parent="World" unique_id=1732051552]
 z_index = -97
-position = Vector2(2388, 1292)
 texture_filter = 1
 material = SubResource("ShaderMaterial_d_blend")
+position = Vector2(2388, 1292)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("10_d_map")
 centered = false
 
-[node name="WorldCollision" type="StaticBody2D" parent="World"]
-collision_layer = 1
-collision_mask = 1
+[node name="WorldCollision" type="StaticBody2D" parent="World" unique_id=142456126]
 
-[node name="NorthwestCoast" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="NorthwestCoast" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=1943583753]
 polygon = PackedVector2Array(0, 0, 1746, -5, 1879, 92, 1797, 120, 1650, 145, 1558, 238, 1380, 293, 1390, 351, 1510, 430, 1644, 377, 1725, 416, 1753, 460, 1728, 512, 1703, 520, 1670, 493, 1590, 527, 1659, 569, 1626, 596, 1528, 541, 1378, 563, 1291, 586, 1365, 644, 1309, 676, 1218, 626, 1088, 676, 970, 681, 874, 644, 671, 688, 558, 781, 470, 880, 529, 897, 616, 905, 709, 858, 777, 868, 829, 808, 913, 850, 1006, 825, 1238, 885, 1427, 1000, 1451, 1042, 1434, 1109, 1488, 1172, 1367, 1194, 1311, 1114, 1128, 1033, 951, 1014, 779, 1051, 689, 1102, 673, 1171, 696, 1212, 760, 1262, 463, 1253, 187, 1098, 118, 1146, 0, 1090)
 
-[node name="SouthHarborWestRock" type="CollisionShape2D" parent="World/WorldCollision"]
+[node name="SouthHarborWestRock" type="CollisionShape2D" parent="World/WorldCollision" unique_id=580719522]
 position = Vector2(270, 1244)
 shape = SubResource("CircleShape2D_south_harbor_west_rock")
 
-[node name="SouthHarborWestRock" type="CollisionShape2D" parent="World/WorldCollision/SouthHarborWestRock"]
+[node name="SouthHarborWestRock" type="CollisionShape2D" parent="World/WorldCollision/SouthHarborWestRock" unique_id=1576533828]
 position = Vector2(350, 1020)
 shape = SubResource("CircleShape2D_south_harbor_west_rock")
 
-[node name="EastBaySandbar" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="EastBaySandbar" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=1908734749]
 position = Vector2(27, 52)
 polygon = PackedVector2Array(1710, 620, 1757, 581, 1816, 555, 1931, 554, 1957, 531, 2015, 561, 2078, 573, 2085, 596, 2061, 606, 2122, 641, 2100, 668, 2024, 630, 1928, 633, 1868, 662, 1772, 669)
 
-[node name="QingyuPagodaIsland" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="QingyuPagodaIsland" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=1216422031]
 polygon = PackedVector2Array(2329, 511, 2331, 471, 2380, 425, 2422, 448, 2420, 495, 2451, 502, 2483, 491, 2536, 560, 2546, 581, 2515, 600, 2415, 635, 2284, 570, 2303, 528)
 
-[node name="CangmenFortress" type="CollisionPolygon2D" parent="World/WorldCollision"]
-polygon = PackedVector2Array(2535, 1052, 2616, 959, 2647, 988, 2805, 925, 2995, 1040, 3018, 1056, 3055, 1107, 2986, 1167, 2806, 1225, 2597, 1162, 2501, 1104)
+[node name="CangmenFortress" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=1142831122]
+polygon = PackedVector2Array(2535, 1052, 2585, 1020, 2616, 959, 2647, 988, 2805, 925, 2995, 1040, 3018, 1056, 3055, 1107, 2986, 1167, 2806, 1225, 2597, 1162, 2501, 1104)
 
-[node name="CangmenDock" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="CangmenDock" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=1738341583]
 position = Vector2(-6, -10)
 polygon = PackedVector2Array(2436, 1217, 2566, 1131, 2603, 1175, 2488, 1249)
 
-[node name="WulanVillageIsland" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="WulanVillageIsland" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=796764927]
 polygon = PackedVector2Array(3228, 712, 3301, 654, 3385, 656, 3420, 685, 3462, 697, 3466, 722, 3406, 746, 3454.6648, 773.1989, 3421, 783, 3352, 765, 3247, 768, 3224, 745)
 
-[node name="WulanVillageIsland" type="CollisionPolygon2D" parent="World/WorldCollision/WulanVillageIsland"]
+[node name="WulanVillageIsland" type="CollisionPolygon2D" parent="World/WorldCollision/WulanVillageIsland" unique_id=284491654]
 position = Vector2(-1118, 979)
 polygon = PackedVector2Array(3196, 720, 3275, 661, 3281, 700, 3356, 641, 3406, 621, 3393, 657, 3391, 684, 3435, 681, 3459, 710, 3535, 768, 3536, 792, 3476, 860, 3326.7505, 812.75745, 3234, 797, 3174, 788)
 
-[node name="FuboRidge" type="CollisionPolygon2D" parent="World/WorldCollision"]
-polygon = PackedVector2Array(3878, 767, 3975, 690, 4078, 664, 4170, 700, 4361, 843, 4535, 946, 4710, 935, 4780, 1035, 4693, 1118, 4617, 1165, 4534, 1136, 4350, 1010, 4276, 1022, 4252, 1054, 4150, 1012, 4158, 951, 3950, 895)
+[node name="FuboRidge" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=1941793087]
+polygon = PackedVector2Array(3878, 767, 3919, 717, 3975, 690, 4041, 659, 4078, 664, 4105, 698, 4152, 709, 4172, 709, 4234, 767, 4287, 774, 4318, 832, 4357, 854, 4535, 946, 4710, 935, 4780, 1035, 4693, 1118, 4617, 1165, 4534, 1136, 4350, 1010, 4276, 1022, 4252, 1054, 4150, 1012, 4158, 951, 3950, 895, 3874, 794)
 
-[node name="FuboRidge" type="CollisionPolygon2D" parent="World/WorldCollision/FuboRidge"]
+[node name="FuboRidge" type="CollisionPolygon2D" parent="World/WorldCollision/FuboRidge" unique_id=330497231]
 position = Vector2(-541, -436)
 polygon = PackedVector2Array(3894, 757, 3983, 704, 4185, 650, 4303, 695, 4405, 796, 4462, 922, 4346, 1028, 4254, 1069, 4082, 1062, 4102, 1005, 3904, 1019, 3848, 1010, 3785, 983, 4065, 986, 4193, 920, 4146, 821, 4032, 816, 3854, 825)
 
-[node name="ShanwanMountain" type="CollisionPolygon2D" parent="World/WorldCollision"]
-polygon = PackedVector2Array(3293, 1110, 3370, 1035, 3447, 983, 3577, 963, 3620, 1020, 3755, 1184, 3708, 1207, 3725, 1246, 3657, 1259, 3678, 1313, 3623, 1329, 3487, 1295, 3432, 1324, 3391, 1314, 3399, 1252, 3345, 1216, 3335, 1278, 3217, 1283, 3234, 1212)
+[node name="ShanwanMountain" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=483472566]
+polygon = PackedVector2Array(3293, 1110, 3370, 1035, 3447, 983, 3577, 963, 3620, 1020, 3755, 1184, 3735, 1215, 3708, 1207, 3725, 1246, 3657, 1259, 3678, 1313, 3623, 1329, 3487, 1295, 3432, 1324, 3391, 1314, 3399, 1252, 3345, 1216, 3335, 1278, 3217, 1283, 3234, 1212)
 
-[node name="ChenghaiLighthouse" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="ChenghaiLighthouse" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=293226798]
 polygon = PackedVector2Array(645, 1548, 661, 1454, 691, 1454, 703, 1541, 739, 1561, 759, 1627, 799, 1660, 876, 1795, 784, 1838, 656, 1892, 520, 1850, 463, 1775, 535, 1692, 581, 1679, 615, 1551)
 
-[node name="ChenghaiLighthouse" type="CollisionPolygon2D" parent="World/WorldCollision/ChenghaiLighthouse"]
+[node name="ChenghaiLighthouse" type="CollisionPolygon2D" parent="World/WorldCollision/ChenghaiLighthouse" unique_id=1229352210]
 polygon = PackedVector2Array(645, 1548, 661, 1454, 691, 1454, 703, 1541, 739, 1561, 759, 1627, 799, 1660, 876, 1795, 784, 1838, 656, 1892, 520, 1850, 463, 1775, 535, 1692, 581, 1679, 615, 1551)
 
-[node name="LongmenStronghold" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="LongmenStronghold" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=469040597]
 polygon = PackedVector2Array(590, 2177, 717, 2081, 757, 2108, 776, 2061, 805, 2059, 827, 2096, 846.0199, 2073.4895, 868.474, 2081.421, 941, 2125, 990, 2103, 1026, 2154, 1036, 2087, 1073, 2070, 1099, 2099, 1106, 2173, 1157, 2169, 1217, 2226, 1207, 2296, 1169, 2305, 1091, 2279, 1096, 2321, 1023, 2345, 1061.9911, 2395.1335, 1007, 2400, 987, 2370, 936, 2384, 1001, 2453, 941, 2479, 839, 2410, 767, 2441, 659, 2387, 582, 2384, 517, 2325)
 
-[node name="BaishaSandbar" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="BaishaSandbar" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=2113797455]
 polygon = PackedVector2Array(1389, 2392, 1577, 2361, 1724, 2328, 1808, 2265, 1850, 2300, 1834, 2348, 1947, 2374, 1836, 2456, 1797, 2419, 1742, 2439, 1806, 2509, 1764, 2527, 1709, 2496, 1561, 2500, 1380, 2475, 1354, 2442)
 
-[node name="XuanchaoWestReef" type="CollisionShape2D" parent="World/WorldCollision"]
+[node name="XuanchaoWestReef" type="CollisionShape2D" parent="World/WorldCollision" unique_id=1984383197]
 position = Vector2(2006, 2370)
 shape = SubResource("CircleShape2D_xuanchao_west_reef")
 
-[node name="XuanchaoMainReef" type="CollisionShape2D" parent="World/WorldCollision"]
+[node name="XuanchaoMainReef" type="CollisionShape2D" parent="World/WorldCollision" unique_id=296557264]
 position = Vector2(2344, 2390)
 shape = SubResource("CircleShape2D_xuanchao_main_reef")
 
-[node name="XuanchaoSouthReef" type="CollisionShape2D" parent="World/WorldCollision"]
+[node name="XuanchaoSouthReef" type="CollisionShape2D" parent="World/WorldCollision" unique_id=1869222812]
 position = Vector2(2168, 2452)
 shape = SubResource("CircleShape2D_xuanchao_south_reef")
 
-[node name="RedBayMountain" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="RedBayMountain" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=186831732]
 polygon = PackedVector2Array(2866, 1921, 3040, 1729, 3143, 1708, 3188, 1739, 3211, 1839, 3277, 1918, 3363, 1906, 3409, 1961, 3443, 1990, 3402, 2037, 3367, 2048, 3411, 2088, 3357, 2101, 3347, 2114, 3376, 2130, 3355, 2163, 3310, 2160, 3245, 2166, 3235, 2205, 3266, 2234, 3244, 2255, 3210, 2246, 3200, 2224, 3140, 2240, 3017, 2219, 2907, 2265, 2846, 2252, 2814, 2238, 2835, 2193, 2865, 2167, 2795, 2137, 2710, 2142, 2751, 2001)
 
-[node name="NanaoWestWall" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="NanaoWestWall" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=1774082834]
 polygon = PackedVector2Array(3515, 2341, 3603, 2277, 3680, 2140, 3790, 2280, 3635, 2414, 3491, 2442, 3463, 2413)
 
-[node name="NanaoCitadel" type="CollisionPolygon2D" parent="World/WorldCollision"]
+[node name="NanaoCitadel" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=2086278028]
 polygon = PackedVector2Array(3682, 2142, 3703, 2029, 3732, 2012, 3783, 2060, 3832, 2033, 3887, 1939, 3904, 1909, 3952, 1879, 4014, 1971, 4113, 1948, 4202, 1836, 4301, 1889, 4339, 1956, 4422, 2030, 4448, 1997, 4492, 2009, 4545, 2104, 4599, 2112, 4664, 2174, 4736, 2367, 4550, 2480, 4358, 2546, 4072, 2552, 4020, 2535, 4006, 2490, 3939, 2425, 3785, 2533, 3735, 2498, 3874, 2403, 3730, 2300)
 
-[node name="CentralNorthReef" type="CollisionShape2D" parent="World/WorldCollision"]
+[node name="CentralNorthReef" type="CollisionShape2D" parent="World/WorldCollision" unique_id=579050169]
 position = Vector2(1910, 1604)
 shape = SubResource("CircleShape2D_central_north_reef")
 
-[node name="ShanwanOuterReef" type="CollisionShape2D" parent="World/WorldCollision"]
+[node name="ShanwanOuterReef" type="CollisionShape2D" parent="World/WorldCollision" unique_id=1435959432]
 position = Vector2(3928, 1247)
 shape = SubResource("CircleShape2D_shanwan_outer_reef")
 
-[node name="WorldMarkers" type="Node2D" parent="World"]
+[node name="WorldMarkers" type="Node2D" parent="World" unique_id=1405184518]
 
-[node name="Player" type="CharacterBody2D" parent="World"]
+[node name="Player" type="CharacterBody2D" parent="World" unique_id=939135333]
 z_index = 50
 position = Vector2(1500, 800)
-collision_layer = 1
-collision_mask = 1
 script = ExtResource("2_player")
 
-[node name="WakeSprite" type="Sprite2D" parent="World/Player"]
+[node name="WakeSprite" type="Sprite2D" parent="World/Player" unique_id=1008451845]
 z_index = -2
 texture_filter = 1
 scale = Vector2(0.28, 0.28)
 
-[node name="SideSplashSprite" type="Sprite2D" parent="World/Player"]
+[node name="SideSplashSprite" type="Sprite2D" parent="World/Player" unique_id=1056871774]
 z_index = -1
 texture_filter = 1
 scale = Vector2(0.28, 0.28)
 
-[node name="VisualRoot" type="Node2D" parent="World/Player"]
+[node name="VisualRoot" type="Node2D" parent="World/Player" unique_id=1125936180]
 
-[node name="ShipSprite" type="Sprite2D" parent="World/Player/VisualRoot"]
+[node name="ShipSprite" type="Sprite2D" parent="World/Player/VisualRoot" unique_id=574674137]
 z_index = 1
 texture_filter = 1
 scale = Vector2(0.28, 0.28)
 
-[node name="HeroSprite" type="Sprite2D" parent="World/Player/VisualRoot"]
+[node name="HeroSprite" type="Sprite2D" parent="World/Player/VisualRoot" unique_id=1439806361]
 z_index = 2
 texture_filter = 1
 scale = Vector2(0.088, 0.088)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player" unique_id=1032351445]
 shape = SubResource("CircleShape2D_player")
 
-[node name="Camera2D" type="Camera2D" parent="World/Player"]
-position_smoothing_enabled = true
-position_smoothing_speed = 7.0
+[node name="Camera2D" type="Camera2D" parent="World/Player" unique_id=695489842]
 limit_left = 0
 limit_top = 0
 limit_right = 2508
 limit_bottom = 1412
+position_smoothing_enabled = true
+position_smoothing_speed = 7.0
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1884919791]
 
-[node name="Root" type="Control" parent="UI"]
+[node name="Root" type="Control" parent="UI" unique_id=1667887177]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -222,10 +236,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="InteractionPrompt" type="Control" parent="UI/Root"]
+[node name="InteractionPrompt" type="Control" parent="UI/Root" unique_id=1654836713]
 visible = false
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
@@ -238,7 +252,8 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="EnterButton" type="TextureButton" parent="UI/Root/InteractionPrompt"]
+[node name="EnterButton" type="TextureButton" parent="UI/Root/InteractionPrompt" unique_id=694058583]
+texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -247,20 +262,18 @@ grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
-texture_filter = 1
 texture_normal = ExtResource("5_button")
 texture_pressed = ExtResource("6_button_active")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="LocationName" type="Label" parent="UI/Root/InteractionPrompt"]
+[node name="LocationName" type="Label" parent="UI/Root/InteractionPrompt" unique_id=952669120]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_top = 13.0
 offset_bottom = 53.0
 grow_horizontal = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.96, 0.91, 0.78, 1)
 theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.98)
 theme_override_constants/outline_size = 4
@@ -269,7 +282,7 @@ text = "【地点名称】"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="KeyHint" type="Label" parent="UI/Root/InteractionPrompt"]
+[node name="KeyHint" type="Label" parent="UI/Root/InteractionPrompt" unique_id=1303019300]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -279,7 +292,6 @@ offset_top = -43.0
 offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.83, 0.78, 0.66, 1)
 theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.96)
 theme_override_constants/outline_size = 3

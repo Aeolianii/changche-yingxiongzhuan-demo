@@ -35,7 +35,9 @@ func _run() -> void:
 		_expect(spawned_pirate.move_speed < player.move_speed, "Pirate movement speed must remain lower than the player ship speed.")
 		_expect(is_equal_approx(spawned_pirate.detection_radius, 360.0) and is_equal_approx(spawned_pirate.disengage_radius, 520.0), "Pirate chase must use the approved hysteresis distances.")
 		_expect(is_equal_approx(spawned_pirate.pursuit_leash_radius, 720.0), "Pirate chase must use the approved birth-point leash radius.")
-	_expect((pirates[0] as SeaOverworldPirate).ship_sprite.scale.is_equal_approx(Vector2(0.168, 0.168)), "Pirate ship visuals must be 20 percent larger than the initial scale.")
+	var player_ship_scale := player.ship_sprite.scale
+	var pirate_ship_scale := (pirates[0] as SeaOverworldPirate).ship_sprite.scale
+	_expect(pirate_ship_scale.is_equal_approx(player_ship_scale * 0.95), "Pirate ship visuals must be five percent smaller than the player ship.")
 
 	var pirate := pirates[0] as SeaOverworldPirate
 	for pirate_index in range(1, pirates.size()):

@@ -5,6 +5,12 @@
 - Target platform: Windows
 - Canonical project root: `combined-project/`
 
+## Project classification and excluded workflow
+
+本仓库是 Godot 4.7.1 .NET 游戏工程，不是离线 H5 或互动空间工程。`project.godot` 是工程入口，场景使用 `.tscn`，运行时代码使用 GDScript 与 C#；开发和验收以 Godot .NET 构建、资源导入、场景加载及项目内测试为准。
+
+本项目不使用 `interact-creation` skill，也不适用该流程的 `index.html`、离线 Web、8MB H5 压缩包或 `h5-validator` 等约束。即使任务涉及“互动”“小游戏”“主界面”“接入其他项目”等描述，也必须先按本节识别为 Godot 工程，再选择 Godot 原生实现与验证方式。
+
 ## Runtime map
 
 项目入口 `TitleScreen`、`PalaceDemo` 与第二场景 `Scene2` 使用 GDScript；水师操演模块使用 C#。项目自 2026-08-13 起是 Godot 4.7.1 .NET 混合工程，必须使用 .NET 版编辑器或运行时构建和启动。

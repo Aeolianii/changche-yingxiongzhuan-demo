@@ -1,5 +1,11 @@
 # Project documents
 
+## Project type and tool boundary
+
+- 本项目是 **Godot 4.7.1 .NET 游戏项目**，规范入口为根目录 `project.godot`，运行与验证使用 Godot .NET 4.7.1。
+- 本项目不是离线 H5、互动空间作品或单页 Web 项目，不以 `index.html` / `.zip` 作为交付物。
+- 项目开发、场景接入、资源处理、测试和打包均不得调用或套用 `interact-creation` skill；应按 Godot、GDScript、C#、`.tscn` 和项目内测试规范处理。
+
 ## Current focus
 
 - Milestone: 场景一至场景二连续可玩原型

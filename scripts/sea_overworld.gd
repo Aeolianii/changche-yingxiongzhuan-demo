@@ -951,7 +951,7 @@ func _show_haibatian_reply() -> void:
 		}],
 		"",
 		false,
-		1.0,
+		0.88,
 		true
 	)
 

@@ -2,8 +2,10 @@ extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const HAIBATIAN_PORTRAIT_PATH := "res://assets/sea_overworld/portraits/倭寇头目海霸天.png"
+const VICTORY_CG_PATH := "res://assets/sea_overworld/cutscenes/wokou_victory_cg_v1.png"
 const PROTAGONIST_SCREENSHOT_PATH := "res://.godot/wokou_quest_protagonist_dialogue.png"
 const HAIBATIAN_SCREENSHOT_PATH := "res://.godot/wokou_quest_haibatian_dialogue.png"
+const VICTORY_SCREENSHOT_PATH := "res://.godot/wokou_victory_cutscene.png"
 
 var _failures: Array[String] = []
 
@@ -88,17 +90,28 @@ func _run() -> void:
 		var battle_option := option_box.get_child(0) as Button
 		_expect("一决胜负" in battle_option.text and "战斗系统还未完善，此战默认获胜" in battle_option.text, "The battle option must state the placeholder auto-victory rule.")
 		var cutscene := scene.get("_wokou_victory_cutscene") as WokouVictoryCutscene
-		cutscene.duration_scale = 0.01
+		cutscene.duration_scale = 0.08
 		battle_option.pressed.emit()
 		await process_frame
-		_expect(cutscene.visible and cutscene.is_playing_for_test(), "Choosing battle must immediately show the victory CG placeholder.")
-		_expect((cutscene.get_node("Caption/Title") as Label).text == "靖海奏捷", "The victory placeholder must show its approved main caption.")
-		_expect((cutscene.get_node("Caption/Subtitle") as Label).text == "倭巢已破，海疆暂安", "The victory placeholder must show its approved result caption.")
+		_expect(cutscene.visible and cutscene.is_playing_for_test(), "Choosing battle must immediately show the Wokou victory ending CG.")
+		var cg_image := cutscene.get_node("CGImage") as TextureRect
+		_expect(cg_image.texture != null and cg_image.texture.resource_path == VICTORY_CG_PATH, "The ending must use the generated camp-destruction CG.")
+		var ending_captions := cutscene.story_captions_for_test()
+		var ending_text := "".join(ending_captions)
+		_expect(ending_captions.size() == 5 and ending_text.length() >= 100, "The ending must present at least one hundred Chinese characters across five readable captions.")
+		_expect("伏波将军上任以来" in ending_text and "倭寇之乱终告平定" in ending_text and "海晏民安" in ending_text, "The ending text must praise the general, record the campaign victory and close on peace for the people.")
+		_expect(cutscene.estimated_duration_seconds_for_test() > 10.0, "The full-speed CG duration must be derived from the longer ending text.")
 		_expect(bool(scene.get("_wokou_battle_completed")) and not player.controls_enabled, "The placeholder battle must default to victory while controls remain locked for the CG.")
-		for _frame in range(120):
-			if not bool(scene.get("_transitioning")):
+		var story_label := cutscene.get_node("StoryText") as Label
+		for _caption_frame in range(120):
+			if not story_label.text.is_empty() and story_label.modulate.a > 0.98:
 				break
 			await process_frame
+		_expect(story_label.modulate.a > 0.98, "The ending caption must become fully opaque over the CG.")
+		await _capture_cutscene(VICTORY_SCREENSHOT_PATH)
+		if cutscene.is_playing_for_test():
+			await cutscene.cutscene_finished
+		await process_frame
 
 	_expect(not bool(scene.get("_transitioning")) and player.controls_enabled, "Finishing the victory CG must restore sailing controls.")
 	_expect(main_task_name.text == "讨伐倭寇" and "倭寇营地已平定" in main_task_objective.text, "Victory must keep the campaign title and mark the camp pacified.")
@@ -121,6 +134,14 @@ func _capture_dialogue(path: String) -> void:
 	await RenderingServer.frame_post_draw
 	var save_error := root.get_texture().get_image().save_png(path)
 	_expect(save_error == OK, "Wokou dialogue preview could not be saved to %s." % path)
+
+
+func _capture_cutscene(path: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	await RenderingServer.frame_post_draw
+	var save_error := root.get_texture().get_image().save_png(path)
+	_expect(save_error == OK, "Wokou ending preview could not be saved to %s." % path)
 
 
 func _expect(condition: bool, message: String) -> void:

@@ -503,3 +503,12 @@ Constraints: change only scale/centering needed for safe non-overlapping cells a
 这些素材服务于初版移动、地点提示、占位触发与漂流木箱一次性事件。当前除伏波古岭外不要求真实进入岛屿，也不在大地图播放完整海战或实现拟真航海环境；地图文字、地点名称、“进入 · E”、对话选项和资源提示继续由 Godot 界面控件绘制，不烘焙进图片。
 
 当前运行时地点分布已简化为 A4/B5/C4/D2，共 15 个地点；东极秘岛因生产图中没有独立岛体而删除。上方 v1～v4 生图提示词中的 D3/16 地点描述仅保留为当时的生成历史记录，不代表当前运行时配置。
+
+## 2026-08-13 倭寇营地结局 CG
+
+- 运行文件：`assets/sea_overworld/cutscenes/wokou_victory_cg_v1.png`，1536×1024。
+- 生成方式：Codex 内置 ImageGen；以 `southbound_journey.png` 为水墨像素风参考，以主角正、左、右、背四视图为服饰与发冠参考。
+- 画面内容：成年比例的伏波将军立于右侧，指挥厂车将士拆毁海岛贼营、降下破损贼旗；远海渔船与晨光表现海疆重归安定。成图不烘焙文字、UI、标志或水印。
+- 运行效果：复用场景一至场景二章节转场的 1.035 倍缓慢推镜、画面淡入淡出与逐段字幕节奏。五段结局文案共 122 字，按每字 0.065 秒计算停留时间，完整演出约 12.18 秒。
+- 字幕直接浮于 CG 下方中央，不使用额外底框；浅金字配 9 像素深墨描边与阴影，确保复杂明暗背景上仍清晰可读。
+- 最终提示词：`Use case: historical-scene. Create a 3:2 landscape ending CG of the adult Fubo General leading his forces after destroying a long-standing coastal raider camp. Match the supplied sepia Chinese ink-wash pixel-art transition reference with dense black brush borders, crisp clustered pixels and restrained charcoal, umber, aged-gold and deep-red colors. Translate the supplied chibi four-view protagonist into a handsome clean-shaven adult of believable seven-head proportions while preserving his high round bun, small black-gold crown, black-and-gold robe, gold bracers and deep-red cloak lining. Place the general on the right third in a commanding rear three-quarter pose; show soldiers dismantling palisades and lowering a torn unmarked pirate banner, with wrecked boats, fading smoke, calm sea and returning fishing boats beyond. Keep the bottom-center band suitable for engine captions. No text, UI, logo, watermark, gore, corpses, modern objects, national flags, Japanese shrine, samurai armor, photorealism or 3D.`

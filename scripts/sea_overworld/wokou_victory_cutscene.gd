@@ -3,15 +3,26 @@ extends Control
 
 signal cutscene_finished
 
-const BASE_DURATION_SECONDS := 4.0
+const STORY_CAPTIONS := [
+	"伏波将军上任以来，整饬水师，巡弋诸岛，誓平海疆宿患。",
+	"今率厂车将士直捣贼巢，破寨毁舟，倭寇之乱终告平定。",
+	"自此商船复通，渔火重明，流离百姓也得以重返故里。",
+	"沿海乡镇炊烟再起，百业渐兴，军民无不称颂将军。",
+	"护境有方，治军有度；从此海晏民安，万家长享太平。",
+]
+const IMAGE_FADE_SECONDS := 0.62
+const CAPTION_FADE_IN_SECONDS := 0.3
+const CAPTION_SECONDS_PER_CHARACTER := 0.065
+const CAPTION_MIN_HOLD_SECONDS := 1.2
+const CAPTION_FADE_OUT_SECONDS := 0.26
+const ENDING_PAUSE_SECONDS := 0.35
+const FINAL_FADE_SECONDS := 0.48
 
-@export_range(0.1, 10.0, 0.01) var duration_seconds := BASE_DURATION_SECONDS
 @export_range(0.01, 4.0, 0.01) var duration_scale := 1.0
 
-@onready var cg_placeholder: Control = $CGPlaceholder
-@onready var victory_mark: Label = $CGPlaceholder/VictoryMark
-@onready var title_label: Label = $Caption/Title
-@onready var subtitle_label: Label = $Caption/Subtitle
+@onready var cg_image: TextureRect = $CGImage
+@onready var cg_shade: ColorRect = $CGShade
+@onready var story_text: Label = $StoryText
 
 var _playing := false
 
@@ -28,26 +39,24 @@ func play() -> void:
 	_reset_visuals()
 	show()
 	await get_tree().process_frame
-	cg_placeholder.pivot_offset = cg_placeholder.size * 0.5
-	cg_placeholder.scale = Vector2(1.045, 1.045)
+	cg_image.pivot_offset = cg_image.size * 0.5
+	cg_image.scale = Vector2(1.035, 1.035)
 
-	var camera_tween := create_tween()
-	camera_tween.tween_property(cg_placeholder, "scale", Vector2.ONE, _duration(BASE_DURATION_SECONDS))
+	create_tween().tween_property(cg_image, "scale", Vector2.ONE, _duration(_estimated_duration_seconds()))
+	var image_in := create_tween().set_parallel(true)
+	image_in.tween_property(cg_image, "modulate:a", 1.0, _duration(IMAGE_FADE_SECONDS))
+	image_in.tween_property(cg_shade, "modulate:a", 1.0, _duration(IMAGE_FADE_SECONDS))
+	await image_in.finished
 
-	var fade_in := create_tween().set_parallel(true)
-	fade_in.tween_property(cg_placeholder, "modulate:a", 1.0, _duration(0.55))
-	fade_in.tween_property(victory_mark, "modulate:a", 0.2, _duration(0.55))
-	fade_in.tween_property(title_label, "modulate:a", 1.0, _duration(0.42)).set_delay(_duration(0.28))
-	fade_in.tween_property(subtitle_label, "modulate:a", 1.0, _duration(0.42)).set_delay(_duration(0.52))
-	await fade_in.finished
-	await get_tree().create_timer(_duration(2.56)).timeout
+	for caption in STORY_CAPTIONS:
+		await _show_story_caption(caption)
+	await _pause(ENDING_PAUSE_SECONDS)
 
-	var fade_out := create_tween().set_parallel(true)
-	fade_out.tween_property(cg_placeholder, "modulate:a", 0.0, _duration(0.5))
-	fade_out.tween_property(victory_mark, "modulate:a", 0.0, _duration(0.5))
-	fade_out.tween_property(title_label, "modulate:a", 0.0, _duration(0.32))
-	fade_out.tween_property(subtitle_label, "modulate:a", 0.0, _duration(0.32))
-	await fade_out.finished
+	var image_out := create_tween().set_parallel(true)
+	image_out.tween_property(cg_image, "modulate:a", 0.0, _duration(FINAL_FADE_SECONDS))
+	image_out.tween_property(cg_shade, "modulate:a", 0.0, _duration(FINAL_FADE_SECONDS))
+	image_out.tween_property(story_text, "modulate:a", 0.0, _duration(0.28))
+	await image_out.finished
 
 	hide()
 	_playing = false
@@ -58,13 +67,48 @@ func is_playing_for_test() -> bool:
 	return _playing
 
 
+func story_captions_for_test() -> Array:
+	return STORY_CAPTIONS.duplicate()
+
+
+func estimated_duration_seconds_for_test() -> float:
+	return _estimated_duration_seconds()
+
+
 func _reset_visuals() -> void:
-	cg_placeholder.modulate = Color(1.0, 1.0, 1.0, 0.0)
-	cg_placeholder.scale = Vector2.ONE
-	victory_mark.modulate = Color(0.95, 0.82, 0.48, 0.0)
-	title_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
-	subtitle_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	cg_image.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	cg_image.scale = Vector2.ONE
+	cg_shade.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	story_text.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	story_text.text = ""
+
+
+func _show_story_caption(caption: String) -> void:
+	story_text.text = caption
+	story_text.modulate.a = 0.0
+	var fade_in := create_tween()
+	fade_in.tween_property(story_text, "modulate:a", 1.0, _duration(CAPTION_FADE_IN_SECONDS))
+	await fade_in.finished
+	await _pause(_caption_hold_seconds(caption))
+	var fade_out := create_tween()
+	fade_out.tween_property(story_text, "modulate:a", 0.0, _duration(CAPTION_FADE_OUT_SECONDS))
+	await fade_out.finished
+
+
+func _caption_hold_seconds(caption: String) -> float:
+	return maxf(CAPTION_MIN_HOLD_SECONDS, caption.length() * CAPTION_SECONDS_PER_CHARACTER)
+
+
+func _estimated_duration_seconds() -> float:
+	var total := IMAGE_FADE_SECONDS + ENDING_PAUSE_SECONDS + FINAL_FADE_SECONDS
+	for caption in STORY_CAPTIONS:
+		total += CAPTION_FADE_IN_SECONDS + _caption_hold_seconds(caption) + CAPTION_FADE_OUT_SECONDS
+	return total
+
+
+func _pause(seconds: float) -> void:
+	await get_tree().create_timer(_duration(seconds)).timeout
 
 
 func _duration(seconds: float) -> float:
-	return maxf(seconds * (duration_seconds / BASE_DURATION_SECONDS) * duration_scale, 0.001)
+	return maxf(seconds * duration_scale, 0.001)

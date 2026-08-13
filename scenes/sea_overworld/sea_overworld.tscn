@@ -109,10 +109,6 @@ polygon = PackedVector2Array(0, 0, 1746, -5, 1879, 92, 1797, 120, 1650, 145, 155
 position = Vector2(270, 1244)
 shape = SubResource("CircleShape2D_south_harbor_west_rock")
 
-[node name="SouthHarborWestRock" type="CollisionShape2D" parent="World/WorldCollision/SouthHarborWestRock" unique_id=1576533828]
-position = Vector2(350, 1020)
-shape = SubResource("CircleShape2D_south_harbor_west_rock")
-
 [node name="EastBaySandbar" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=1908734749]
 position = Vector2(27, 52)
 polygon = PackedVector2Array(1710, 620, 1757, 581, 1816, 555, 1931, 554, 1957, 531, 2015, 561, 2078, 573, 2085, 596, 2061, 606, 2122, 641, 2100, 668, 2024, 630, 1928, 633, 1868, 662, 1772, 669)
@@ -130,24 +126,21 @@ polygon = PackedVector2Array(2436, 1217, 2566, 1131, 2603, 1175, 2488, 1249)
 [node name="WulanVillageIsland" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=796764927]
 polygon = PackedVector2Array(3228, 712, 3301, 654, 3385, 656, 3420, 685, 3462, 697, 3466, 722, 3406, 746, 3454.6648, 773.1989, 3421, 783, 3352, 765, 3247, 768, 3224, 745)
 
-[node name="WulanVillageIsland" type="CollisionPolygon2D" parent="World/WorldCollision/WulanVillageIsland" unique_id=284491654]
+[node name="ChenChuan" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=284491654]
 position = Vector2(-1118, 979)
 polygon = PackedVector2Array(3196, 720, 3275, 661, 3281, 700, 3356, 641, 3406, 621, 3393, 657, 3391, 684, 3435, 681, 3459, 710, 3535, 768, 3536, 792, 3476, 860, 3326.7505, 812.75745, 3234, 797, 3174, 788)
 
 [node name="FuboRidge" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=1941793087]
 polygon = PackedVector2Array(3878, 767, 3919, 717, 3975, 690, 4041, 659, 4078, 664, 4105, 698, 4152, 709, 4172, 709, 4234, 767, 4287, 774, 4318, 832, 4357, 854, 4535, 946, 4710, 935, 4780, 1035, 4693, 1118, 4617, 1165, 4534, 1136, 4350, 1010, 4276, 1022, 4252, 1054, 4150, 1012, 4158, 951, 3950, 895, 3874, 794)
 
-[node name="FuboRidge" type="CollisionPolygon2D" parent="World/WorldCollision/FuboRidge" unique_id=330497231]
+[node name="YueHuanHarbor" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=330497231]
 position = Vector2(-541, -436)
-polygon = PackedVector2Array(3894, 757, 3983, 704, 4185, 650, 4303, 695, 4405, 796, 4462, 922, 4346, 1028, 4254, 1069, 4082, 1062, 4102, 1005, 3904, 1019, 3848, 1010, 3785, 983, 4065, 986, 4193, 920, 4146, 821, 4032, 816, 3854, 825)
+polygon = PackedVector2Array(3894, 757, 3983, 704, 4185, 650, 4303, 695, 4405, 796, 4462, 922, 4346, 1028, 4254, 1069, 4082, 1062, 4102, 1005, 3904, 1019, 3824, 1014, 3784, 971, 4076, 946, 4170, 915, 4143, 822, 4028, 830, 3853, 814)
 
 [node name="ShanwanMountain" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=483472566]
 polygon = PackedVector2Array(3293, 1110, 3370, 1035, 3447, 983, 3577, 963, 3620, 1020, 3755, 1184, 3735, 1215, 3708, 1207, 3725, 1246, 3657, 1259, 3678, 1313, 3623, 1329, 3487, 1295, 3432, 1324, 3391, 1314, 3399, 1252, 3345, 1216, 3335, 1278, 3217, 1283, 3234, 1212)
 
 [node name="ChenghaiLighthouse" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=293226798]
-polygon = PackedVector2Array(645, 1548, 661, 1454, 691, 1454, 703, 1541, 739, 1561, 759, 1627, 799, 1660, 876, 1795, 784, 1838, 656, 1892, 520, 1850, 463, 1775, 535, 1692, 581, 1679, 615, 1551)
-
-[node name="ChenghaiLighthouse" type="CollisionPolygon2D" parent="World/WorldCollision/ChenghaiLighthouse" unique_id=1229352210]
 polygon = PackedVector2Array(645, 1548, 661, 1454, 691, 1454, 703, 1541, 739, 1561, 759, 1627, 799, 1660, 876, 1795, 784, 1838, 656, 1892, 520, 1850, 463, 1775, 535, 1692, 581, 1679, 615, 1551)
 
 [node name="LongmenStronghold" type="CollisionPolygon2D" parent="World/WorldCollision" unique_id=469040597]

@@ -68,13 +68,14 @@ func _run() -> void:
 
 	var return_loading := sea_scene.get_node("UI/SceneLoadingTransition") as SceneLoadingTransition
 	_expect(is_equal_approx(return_loading.minimum_duration, 1.0), "Return loading transition must also default to one second.")
+	sea_scene.set("_entered_from_scene_two", false)
 	var enter_button := sea_scene.get_node("UI/Root/InteractionPrompt/EnterButton") as BaseButton
 	var return_started_at := Time.get_ticks_msec()
 	enter_button.pressed.emit()
 	_expect(return_loading.visible and (return_loading.get_node("LoadingText") as Label).text == "正在进入南海军港", "South Sea Harbor return must show the correct loading message immediately.")
 
 	var returned_scene := await _wait_for_scene("Scene2")
-	_expect(returned_scene != null, "South Sea Harbor did not return to Scene2.")
+	_expect(returned_scene != null, "South Sea Harbor did not return to Scene2 after the transient departure flag was lost.")
 	_expect(Time.get_ticks_msec() - return_started_at >= 950, "Return-to-harbor loading screen must remain visible for at least one second.")
 	if returned_scene == null:
 		_finish()

@@ -841,7 +841,7 @@ func _on_event_dialogue_visibility_changed() -> void:
 func _enter_active_location() -> void:
 	if _active_location_name.is_empty() or _transitioning:
 		return
-	if _active_location_name == "南海军港" and _entered_from_scene_two:
+	if _active_location_name == "南海军港":
 		_return_to_scene_two()
 		return
 	var target_scene_path := "" if _active_location_area == null else str(_active_location_area.get_meta("target_scene_path", ""))

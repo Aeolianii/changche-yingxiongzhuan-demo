@@ -98,6 +98,11 @@ func _run() -> void:
 				every_step_completed = false
 				break
 		_expect(every_step_completed, "The archived Fubo quest must check every task-flow step.")
+	quest_screen.call("set_quest_context", &"sea_overworld")
+	var rebuilt_active_quests := quest_screen.get("_quests") as Array
+	var rebuilt_completed_quests := quest_screen.get("_completed_quests") as Array
+	_expect(not _contains_quest(rebuilt_active_quests, "fubo_guling"), "Resetting the sea quest context must not move completed Fubo back into the active list.")
+	_expect(_contains_quest(rebuilt_completed_quests, "fubo_guling"), "Resetting the sea quest context must preserve completed Fubo in the archive.")
 	quest_screen.call("show_screen")
 	var sea_choice_after_completion := quest_screen.get_node("QuestChoices/QuestChoice1") as Button
 	sea_choice_after_completion.pressed.emit()
@@ -128,6 +133,13 @@ func _run() -> void:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		_failures.append(message)
+
+
+func _contains_quest(quests: Array, quest_id: String) -> bool:
+	for quest_value in quests:
+		if str((quest_value as Dictionary).get("id", "")) == quest_id:
+			return true
+	return false
 
 
 func _finish() -> void:

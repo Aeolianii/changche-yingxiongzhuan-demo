@@ -158,10 +158,12 @@ func set_quest_context(context_id: StringName) -> void:
 	match context_id:
 		&"sea_overworld":
 			_quests = _make_sea_overworld_quests(_task_state)
-			_completed_quests.clear()
+			_completed_quests = _make_completed_quests(_main_task_title)
+			_append_completed_side_quests(_task_state)
 		&"fubo_guling":
 			_quests = _make_sea_overworld_quests(_task_state)
-			_completed_quests.clear()
+			_completed_quests = _make_completed_quests(_main_task_title)
+			_append_completed_side_quests(_task_state)
 		_:
 			_quests.clear()
 			for quest_value in QUESTS:

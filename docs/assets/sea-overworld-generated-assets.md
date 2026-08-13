@@ -455,6 +455,28 @@ Constraints: background must be one uniform #00ff00 with no gradient, texture, s
 Avoid: photorealism, smooth vector art, Western fantasy treasure chest, open lid, oversized foam, detached splash particles
 ```
 
+### 4.22 海盗船四向移动图集
+
+内置生图模式：图像生成后进行一次精确背景编辑。图集按四列两行排列：从左至右为下、左、右、上，第一行为停驻，第二行为航行。生成阶段不绘制尾流，运行时复用玩家船只的 `ship_wake_fx_atlas_v1.png`；最终通过 imagegen 技能附带的色键工具去除纯绿色背景，输出透明 PNG。
+
+最终资源：`assets/sprites/sea_overworld/pirate_ship_4dir_states_v1.png`
+
+```text
+Use case: stylized-concept
+Asset type: production 4-direction pirate-ship sprite sheet for a Chinese historical sea-overworld game
+Primary request: create exactly eight coherent sprites in a strict 4 columns x 2 rows grid. Columns from left to right are DOWN/front view, LEFT view, RIGHT view, UP/rear view. Top row is idle/resting; bottom row is sailing with a stronger dynamic lean and sail tension. Depict one compact Ming-era Chinese pirate junk with charcoal-black sails, a small off-white skull-and-crossbones emblem, dark red torn pennants, a weathered brown wooden hull and restrained iron fittings. All eight cells must depict the same vessel with consistent scale, lighting and silhouette.
+Style/medium: polished hand-painted pixel art with subtle Chinese ink-wash dry-brush texture, crisp stair-stepped edges, readable at small overworld scale, matching an ancient Chinese maritime RPG.
+Composition/framing: each sprite centered in an equal cell with generous padding; no overlap between cells; exact orthogonal directions, not diagonal views.
+Scene/backdrop: perfectly flat solid green chroma-key background.
+Constraints: ship only; no sea, wake, foam, splash, cast shadow, text, labels, borders, UI, logo or watermark.
+```
+
+背景修订提示词：
+
+```text
+Replace only the dark red background with one perfectly uniform flat #00ff00 chroma-key background. Preserve all eight pirate ships, the exact 4x2 grid, their pixels, scale, placement, lighting and colors unchanged. Add nothing else.
+```
+
 ## 5. 当前使用边界
 
 ### 高清分层重制（2026-08-10，进行中）

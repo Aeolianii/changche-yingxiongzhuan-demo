@@ -7,6 +7,7 @@ const TEA_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大
 const SALT_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图私盐商人.png")
 const FIELD_EVENT_DIALOGUE_SCENE := preload("res://scenes/ui/field_event_dialogue.tscn")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
+const PIRATE_SCENE := preload("res://scenes/sea_overworld/sea_overworld_pirate.tscn")
 const SEA_FOG_OF_WAR_SCRIPT := preload("res://scripts/sea_fog_of_war.gd")
 const A_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_a_v3.png")
 const B_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_b_v3.png")
@@ -32,6 +33,12 @@ const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
 const FUBO_QUEST_TRIGGER_POSITION := Vector2(4260, 780)
 const FUBO_QUEST_TRIGGER_RADIUS := 760.0
+const PIRATE_COUNT := 3
+const PIRATE_HARBOR_SAFE_RADIUS := 700.0
+const PIRATE_PLAYER_SAFE_RADIUS := 480.0
+const PIRATE_SEPARATION := 460.0
+const PIRATE_SPAWN_EDGE_MARGIN := 120.0
+const PIRATE_SPAWN_CLEARANCE := 48.0
 
 @onready var player: SeaOverworldPlayer = $World/Player
 @onready var camera: Camera2D = $World/Player/Camera2D
@@ -65,6 +72,9 @@ var _active_salt_merchant_ship: Area2D
 var _salt_merchant_event_resolved := false
 var _fubo_quest_dialogue_open := false
 var _fog_of_war: Node2D
+var _pirates: Array[SeaOverworldPirate] = []
+var _active_battle_pirate: SeaOverworldPirate
+var _pirate_spawn_rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
@@ -108,6 +118,7 @@ func _ready() -> void:
 	camera.reset_smoothing()
 	_build_fog_of_war()
 	_configure_sea_map_hud()
+	_spawn_pirates_deferred.call_deferred()
 
 
 func _exit_tree() -> void:
@@ -310,6 +321,98 @@ func _build_auto_triggers() -> void:
 		FUBO_QUEST_TRIGGER_RADIUS
 	)
 	fubo_quest_trigger.remove_from_group("sea_auto_trigger")
+
+
+func _spawn_pirates_deferred() -> void:
+	await get_tree().physics_frame
+	if not is_inside_tree() or _transitioning:
+		return
+	_pirate_spawn_rng.randomize()
+	for pirate_index in range(PIRATE_COUNT):
+		var spawn_position := _find_random_pirate_spawn()
+		if not is_finite(spawn_position.x) or not is_finite(spawn_position.y):
+			push_warning("Could not find a collision-free pirate spawn point.")
+			continue
+		var pirate := PIRATE_SCENE.instantiate() as SeaOverworldPirate
+		pirate.name = "PirateShip%d" % (pirate_index + 1)
+		world_markers.add_child(pirate)
+		pirate.setup(player, spawn_position, _pirate_spawn_rng.randi(), player.movement_bounds)
+		pirate.battle_requested.connect(_on_pirate_battle_requested)
+		_pirates.append(pirate)
+		pirate.set_navigation_enabled(
+			not _transitioning
+			and not (_event_dialogue != null and _event_dialogue.visible)
+			and not bool(exploration_hud.call("is_menu_open"))
+		)
+
+
+func _find_random_pirate_spawn() -> Vector2:
+	var spawn_bounds := player.movement_bounds.grow(-PIRATE_SPAWN_EDGE_MARGIN)
+	for _attempt in range(240):
+		var candidate := Vector2(
+			_pirate_spawn_rng.randf_range(spawn_bounds.position.x, spawn_bounds.end.x),
+			_pirate_spawn_rng.randf_range(spawn_bounds.position.y, spawn_bounds.end.y)
+		)
+		if candidate.distance_to(SOUTH_SEA_HARBOR_SPAWN) < PIRATE_HARBOR_SAFE_RADIUS:
+			continue
+		if candidate.distance_to(player.global_position) < PIRATE_PLAYER_SAFE_RADIUS:
+			continue
+		var too_close_to_pirate := false
+		for pirate in _pirates:
+			if is_instance_valid(pirate) and candidate.distance_to(pirate.global_position) < PIRATE_SEPARATION:
+				too_close_to_pirate = true
+				break
+		if too_close_to_pirate or not _is_open_water_for_pirate(candidate):
+			continue
+		return candidate
+	return Vector2(INF, INF)
+
+
+func _is_open_water_for_pirate(candidate: Vector2) -> bool:
+	var query := PhysicsShapeQueryParameters2D.new()
+	var clearance_shape := CircleShape2D.new()
+	clearance_shape.radius = PIRATE_SPAWN_CLEARANCE
+	query.shape = clearance_shape
+	query.transform = Transform2D(0.0, candidate)
+	query.collision_mask = PLAYER_LAYER
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	query.exclude = [player.get_rid()]
+	return get_world_2d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+func _set_pirates_navigation_enabled(value: bool) -> void:
+	for pirate in _pirates:
+		if is_instance_valid(pirate):
+			pirate.set_navigation_enabled(value)
+
+
+func _on_pirate_battle_requested(pirate: SeaOverworldPirate) -> void:
+	if _transitioning or not is_instance_valid(pirate):
+		return
+	_active_battle_pirate = pirate
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_set_pirates_navigation_enabled(false)
+	_event_dialogue.present(
+		"水师士兵",
+		"前方海盗船已逼近我军，双方即将接战！",
+		SOLDIER_PORTRAIT,
+		[{"id": &"finish_pirate_placeholder", "text": "海战界面即将开放"}],
+		"当前版本暂不进入正式海战"
+	)
+
+
+func _finish_pirate_placeholder() -> void:
+	_event_dialogue.hide_dialogue()
+	if is_instance_valid(_active_battle_pirate):
+		_pirates.erase(_active_battle_pirate)
+		_active_battle_pirate.queue_free()
+	_active_battle_pirate = null
+	player.controls_enabled = not _transitioning and not bool(exploration_hud.call("is_menu_open"))
+	_set_pirates_navigation_enabled(player.controls_enabled)
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
+	_advance_exploration_stage(4)
 
 
 func _configure_sea_map_hud() -> void:
@@ -653,6 +756,8 @@ func _open_salt_merchant_event(area: Area2D) -> void:
 
 func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 	match option_id:
+		&"finish_pirate_placeholder":
+			_finish_pirate_placeholder()
 		&"accept_fubo_quest":
 			_accept_fubo_side_quest()
 		&"salvage":
@@ -836,6 +941,11 @@ func _on_event_dialogue_visibility_changed() -> void:
 	if _event_dialogue == null:
 		return
 	exploration_hud.call("set_sea_map_button_visible", not _event_dialogue.visible)
+	_set_pirates_navigation_enabled(
+		not _event_dialogue.visible
+		and not _transitioning
+		and not bool(exploration_hud.call("is_menu_open"))
+	)
 
 
 func _enter_active_location() -> void:
@@ -870,6 +980,7 @@ func _enter_location_scene(scene_path: String, loading_text: String) -> void:
 		_current_event_state()
 	))
 	player.controls_enabled = false
+	_set_pirates_navigation_enabled(false)
 	interaction_prompt.hide()
 	exploration_hud.call("set_exploration_visible", false)
 	await _loading_transition.play_loading(loading_text)
@@ -880,6 +991,7 @@ func _enter_location_scene(scene_path: String, loading_text: String) -> void:
 	_loading_transition.reset_loading()
 	_transitioning = false
 	player.controls_enabled = true
+	_set_pirates_navigation_enabled(true)
 	exploration_hud.call("set_exploration_visible", true)
 	interaction_prompt.visible = not _active_location_name.is_empty()
 
@@ -890,6 +1002,7 @@ func _return_to_scene_two() -> void:
 	_transitioning = true
 	_store_fog_state()
 	player.controls_enabled = false
+	_set_pirates_navigation_enabled(false)
 	interaction_prompt.hide()
 	exploration_hud.call("set_exploration_visible", false)
 	var root := get_tree().root
@@ -902,6 +1015,7 @@ func _return_to_scene_two() -> void:
 	_loading_transition.reset_loading()
 	_transitioning = false
 	player.controls_enabled = true
+	_set_pirates_navigation_enabled(true)
 	exploration_hud.call("set_exploration_visible", true)
 	interaction_prompt.visible = not _active_location_name.is_empty()
 
@@ -1022,6 +1136,7 @@ func _on_hud_menu_visibility_changed(is_open: bool) -> void:
 		return
 	var dialogue_open := _event_dialogue != null and _event_dialogue.visible
 	player.controls_enabled = not is_open and not dialogue_open
+	_set_pirates_navigation_enabled(not is_open and not dialogue_open and not _transitioning)
 	interaction_prompt.visible = not is_open and not dialogue_open and not _active_location_name.is_empty()
 
 

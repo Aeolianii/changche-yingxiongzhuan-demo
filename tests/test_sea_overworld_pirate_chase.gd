@@ -34,6 +34,8 @@ func _run() -> void:
 		_expect(spawned_pirate.spawn_origin().distance_to(HARBOR_POSITION) >= 700.0, "Pirates must not spawn inside the South Sea Harbor safety radius.")
 		_expect(spawned_pirate.move_speed < player.move_speed, "Pirate movement speed must remain lower than the player ship speed.")
 		_expect(is_equal_approx(spawned_pirate.detection_radius, 360.0) and is_equal_approx(spawned_pirate.disengage_radius, 520.0), "Pirate chase must use the approved hysteresis distances.")
+		_expect(is_equal_approx(spawned_pirate.pursuit_leash_radius, 720.0), "Pirate chase must use the approved birth-point leash radius.")
+	_expect((pirates[0] as SeaOverworldPirate).ship_sprite.scale.is_equal_approx(Vector2(0.168, 0.168)), "Pirate ship visuals must be 20 percent larger than the initial scale.")
 
 	var pirate := pirates[0] as SeaOverworldPirate
 	for pirate_index in range(1, pirates.size()):
@@ -58,7 +60,25 @@ func _run() -> void:
 	_expect(pirate.velocity.length() > 0.0, "A chasing pirate must move continuously toward the player.")
 	player.global_position = pirate.global_position + Vector2(pirate.disengage_radius + 80.0, 0)
 	await physics_frame
-	_expect(not pirate.is_chasing(), "A pirate must stop chasing after the player leaves its disengage radius.")
+	_expect(pirate.behavior_name_for_test() == "return", "A pirate must return home after the player leaves its disengage radius.")
+	var distance_before_return := pirate.global_position.distance_to(pirate.spawn_origin())
+	for _frame in range(3):
+		await physics_frame
+	_expect(pirate.global_position.distance_to(pirate.spawn_origin()) < distance_before_return, "A returning pirate must move toward its birth point.")
+
+	pirate.global_position = pirate.spawn_origin() + Vector2(60, 0)
+	pirate.pursuit_leash_radius = 40.0
+	player.global_position = pirate.global_position + Vector2(80, 0)
+	pirate.force_chase_for_test()
+	await physics_frame
+	_expect(pirate.behavior_name_for_test() == "return", "A pirate must abandon pursuit after crossing its birth-point leash.")
+	player.global_position = pirate.global_position + Vector2(10, 0)
+	await physics_frame
+	_expect(pirate.behavior_name_for_test() == "return", "A returning pirate must ignore nearby players until it reaches home.")
+	pirate.pursuit_leash_radius = 720.0
+	pirate.global_position = pirate.spawn_origin() + Vector2(8, 0)
+	await physics_frame
+	_expect(pirate.behavior_name_for_test() == "wander", "A pirate must resume patrol after returning to its birth point.")
 
 	pirate.set_navigation_enabled(true)
 	pirate.request_battle_for_test()

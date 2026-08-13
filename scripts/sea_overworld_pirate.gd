@@ -3,7 +3,7 @@ extends CharacterBody2D
 
 signal battle_requested(pirate: SeaOverworldPirate)
 
-enum Behavior { WANDER, REST, CHASE }
+enum Behavior { WANDER, REST, CHASE, RETURN }
 
 const PIRATE_SHIP_ATLAS := preload("res://assets/sprites/sea_overworld/pirate_ship_4dir_states_v1.png")
 const WAKE_ATLAS := preload("res://assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png")
@@ -17,6 +17,7 @@ const WAKE_FRAME_TIME := 0.11
 @export var patrol_radius := 240.0
 @export var detection_radius := 360.0
 @export var disengage_radius := 520.0
+@export var pursuit_leash_radius := 720.0
 @export var wander_duration_range := Vector2(1.5, 3.5)
 @export var rest_duration_range := Vector2(0.8, 1.8)
 
@@ -68,14 +69,23 @@ func _physics_process(delta: float) -> void:
 
 	var distance_to_player := global_position.distance_to(_player.global_position)
 	if _behavior == Behavior.CHASE:
-		if distance_to_player > disengage_radius:
-			_start_wander()
-	elif distance_to_player <= detection_radius:
+		if (
+			distance_to_player > disengage_radius
+			or global_position.distance_to(_spawn_origin) > pursuit_leash_radius
+		):
+			_start_return()
+	elif _behavior != Behavior.RETURN and distance_to_player <= detection_radius:
 		_behavior = Behavior.CHASE
 
 	var desired_direction := Vector2.ZERO
 	if _behavior == Behavior.CHASE:
 		desired_direction = global_position.direction_to(_player.global_position)
+	elif _behavior == Behavior.RETURN:
+		if global_position.distance_to(_spawn_origin) <= 18.0:
+			global_position = _spawn_origin
+			_start_wander()
+		else:
+			desired_direction = global_position.direction_to(_spawn_origin)
 	else:
 		_behavior_time_left -= delta
 		if _behavior == Behavior.REST:
@@ -136,6 +146,10 @@ func force_rest_for_test(duration: float) -> void:
 	velocity = Vector2.ZERO
 
 
+func force_chase_for_test() -> void:
+	_behavior = Behavior.CHASE
+
+
 func request_battle_for_test() -> void:
 	_request_battle()
 
@@ -153,6 +167,11 @@ func _start_wander() -> void:
 func _start_rest() -> void:
 	_behavior = Behavior.REST
 	_behavior_time_left = _rng.randf_range(rest_duration_range.x, rest_duration_range.y)
+	velocity = Vector2.ZERO
+
+
+func _start_return() -> void:
+	_behavior = Behavior.RETURN
 	velocity = Vector2.ZERO
 
 

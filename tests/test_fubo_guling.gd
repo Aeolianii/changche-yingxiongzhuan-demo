@@ -198,24 +198,38 @@ func _test_scene_contract() -> void:
 	level.call("_on_trigger_body_exited", player, "fishing")
 	_check(not fishing_station.call("is_highlighted_for_test"), "Leaving the fishing station must clear its highlight.")
 	_check(level.get_node("Interface/MinigameHost").active_minigame == null, "Keeper dialogue must not open fishing directly.")
+	var game_state := root.get_node("GameState")
+	var inventory_before_first_fishing := game_state.call("get_economy_state") as Dictionary
+	var items_before_first_fishing := inventory_before_first_fishing.get("items", {}) as Dictionary
+	var yellow_before := int(items_before_first_fishing.get("yellow_croaker", 0))
+	var crab_before := int(items_before_first_fishing.get("green_crab", 0))
+	var grouper_before := int(items_before_first_fishing.get("grouper", 0))
 	level.call("_on_fishing_body_entered", player)
 	prompt_button.pressed.emit()
 	var host = level.get_node("Interface/MinigameHost")
 	_check(host.active_minigame != null and host.active_minigame.game_id == "fishing", "The shared interaction button must open coastal fishing.")
 	_check(host.active_minigame.can_process() and host.active_minigame.get_node("ExitButton").can_process(), "Hosted fishing controls must receive real input.")
-	host.active_minigame.completed.emit({"game_id": "fishing", "completed": true, "rating": "渔获丰足", "mistakes": 0, "duration_ms": 1000})
+	host.active_minigame.completed.emit({"game_id": "fishing", "completed": true, "rating": "渔获丰足", "mistakes": 0, "duration_ms": 1000, "catches": {"small_fish": 2, "crab": 1}})
 	await process_frame
 	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Fishing completion must restore the map and unlock the school.")
+	var items_after_first_fishing := (game_state.call("get_economy_state") as Dictionary).get("items", {}) as Dictionary
+	_check(int(items_after_first_fishing.get("yellow_croaker", 0)) == yellow_before + 2 and int(items_after_first_fishing.get("green_crab", 0)) == crab_before + 1, "First fishing completion must add every caught item to the global inventory.")
 	_check(level.is_school_locked_for_test() and level.get_node("World/WorldObjects/SchoolBarrier").visible, "Completing fishing must keep both the decorative school fence and its local collision unchanged.")
 	_check("渔获满舱，收竿归岸" in FileAccess.get_file_as_string("res://scripts/fubo_guling/fubo_guling.gd") and "渔获满舱，可以前往古校场" not in FileAccess.get_file_as_string("res://scripts/fubo_guling/fubo_guling.gd"), "Every fishing completion notice must only report the catch and return ashore.")
 	var repeat_fishing_position := Vector2(720, 805)
 	player.global_position = repeat_fishing_position
 	_check(level.trigger_fishing_for_test(), "Fishing must remain available after its first story completion.")
 	_check(host.active_minigame != null and host.active_minigame.game_id == "fishing", "Repeat fishing must open the real fishing minigame.")
+	host.active_minigame.completed.emit({"game_id": "fishing", "completed": true, "rating": "满舱而归", "mistakes": 0, "duration_ms": 900, "catches": {"small_fish": 3, "big_fish": 1}})
+	await process_frame
+	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Completing repeat fishing must preserve the current story phase.")
+	_check(player.global_position == repeat_fishing_position, "Completing repeat fishing must restore the position used to enter it.")
+	var items_after_repeat_fishing := (game_state.call("get_economy_state") as Dictionary).get("items", {}) as Dictionary
+	_check(int(items_after_repeat_fishing.get("yellow_croaker", 0)) == yellow_before + 5, "Repeat fishing must accumulate its yellow croakers on top of the first catch.")
+	_check(int(items_after_repeat_fishing.get("green_crab", 0)) == crab_before + 1 and int(items_after_repeat_fishing.get("grouper", 0)) == grouper_before + 1, "Repeat fishing must add all other caught item types without replacing earlier inventory.")
+	_check(fishing_station.call("is_available_for_test") and level.trigger_fishing_for_test(), "Fishing must still be available for another round after a repeat completion.")
 	host.active_minigame.exit_requested.emit()
 	await process_frame
-	_check(level.get_phase_for_test() == level.Phase.DRUM_AVAILABLE and host.active_minigame == null, "Leaving repeat fishing must preserve the current story phase.")
-	_check(player.global_position == repeat_fishing_position, "Leaving repeat fishing must restore the position used to enter it.")
 	var drum_entry_position := Vector2(950, 500)
 	(level.get_node("World/WorldObjects/Player") as CharacterBody2D).global_position = drum_entry_position
 	level.call("_on_school_body_entered", player)
@@ -247,7 +261,6 @@ func _test_scene_contract() -> void:
 	_check(player.controls_enabled and not completion_cutscene.visible, "Finishing the CG must restore scene control and hide the transition.")
 	_check(level.call("_is_stable_save_state"), "Completed Fubo exploration must be saveable.")
 	_check(fishing_station.call("is_available_for_test"), "Fishing must remain available after the side quest is complete.")
-	var game_state := root.get_node("GameState")
 	var completed_fubo_state := game_state.call("get_fubo_side_quest_state") as Dictionary
 	_check(bool(completed_fubo_state.get("completed", false)) and int(completed_fubo_state.get("progress_stage", 0)) == 4, "Finishing the CG must persistently complete the Fubo side quest.")
 	_check(game_state.call("get_tracked_side_quest") == &"", "A completed Fubo quest must be removed from the tracked side-quest slot.")

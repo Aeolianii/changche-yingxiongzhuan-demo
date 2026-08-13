@@ -214,7 +214,7 @@ func _build_locations() -> void:
 	_build_location("青屿秘境", Vector2(2380, 540), 145.0, Vector2(260, 100), Vector2(0, 170), "该地点即将开放", Vector2(420, -140))
 
 	_build_location("沧门礁堡", Vector2(2780, 1080), 190.0, Vector2(320, 120), Vector2(-360, 140), "该岛屿即将开放")
-	_build_location("月环商港", Vector2(3650, 360), 250.0, Vector2(480, 150), Vector2(-300, 80), "该岛屿即将开放")
+	_build_location("月环商港", Vector2(3650, 360), 250.0, Vector2(480, 150), Vector2(-300, 80), "进入商港", Vector2.ZERO, [], [], "res://scenes/yuehuan_merchant_harbor/yuehuan_merchant_harbor.tscn")
 	_build_location(
 		"雾岚群岛",
 		Vector2(3070, 850),
@@ -623,7 +623,7 @@ func _open_tea_merchant_event(area: Area2D) -> void:
 	interaction_prompt.hide()
 	_event_dialogue.present(
 		"茶叶商人",
-		"将军，这是姑苏新产的龙井茶。我们沿途遭遇风暴，船只受损，急需银钱修缮。还望将军购买一些茶叶，助我们渡过难关。",
+		"将军，这是姑苏新产的龙井茶。我们沿途遭遇风暴，船只受损，急需军饷修缮。还望将军购买一些茶叶，助我们渡过难关。",
 		TEA_MERCHANT_PORTRAIT,
 		[
 			{"id": &"buy_longjing_tea", "text": "购买龙井茶"},
@@ -656,10 +656,15 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 		&"accept_fubo_quest":
 			_accept_fubo_side_quest()
 		&"salvage":
+			var game_state := _game_state()
+			if game_state != null:
+				game_state.call("add_military_pay", 1000)
+				game_state.call("add_economy_item", "wood", 100)
+				game_state.call("add_economy_item", "ironstone", 100)
 			_resolve_drifting_crate_event()
 			_event_dialogue.present(
 				"水师士兵",
-				"禀将军，木箱已经打捞完毕，所得物资如下：\n金石 +100　　木材 +100　　银钱 +1000",
+				"禀将军，木箱已经打捞完毕，所得物资如下：\n铁石 +100　　木材 +100　　军饷 +1000",
 				SOLDIER_PORTRAIT,
 				[{"id": &"continue", "text": "收下物资，继续航行"}]
 			)
@@ -669,16 +674,31 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 		&"continue":
 			_close_crate_dialogue()
 		&"buy_longjing_tea":
+			var game_state := _game_state()
+			if game_state != null and game_state.call("spend_military_pay", 100):
+				game_state.call("add_economy_item", "longjing_tea", 1)
+			else:
+				_event_dialogue.present(
+					"茶叶商人",
+					"将军军饷不足，小商不敢强求。",
+					TEA_MERCHANT_PORTRAIT,
+					[{"id": &"finish_tea_trade", "text": "继续航行"}],
+					"需要军饷 100"
+				)
+				return
 			_event_dialogue.present(
 				"茶叶商人",
 				"多谢将军相助！",
 				TEA_MERCHANT_PORTRAIT,
 				[{"id": &"finish_tea_trade", "text": "收下龙井茶，继续航行"}],
-				"银钱 -1000　　获得商品：[color=#f2c45c]龙井茶[/color]"
+				"军饷 -100　　获得商品：[color=#f2c45c]龙井茶[/color]"
 			)
 		&"decline_longjing_tea", &"finish_tea_trade":
 			_finish_tea_merchant_event()
 		&"seize_private_salt":
+			var game_state := _game_state()
+			if game_state != null:
+				game_state.call("add_economy_item", "private_salt", 1)
 			_event_dialogue.present(
 				"私盐商人",
 				"官爷饶命！这些盐货都交由水师处置。",
@@ -687,12 +707,15 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 				"查获物品：[color=#f2c45c]私盐[/color]"
 			)
 		&"accept_salt_bribe":
+			var game_state := _game_state()
+			if game_state != null:
+				game_state.call("add_military_pay", 800)
 			_event_dialogue.present(
 				"私盐商人",
 				"多谢将军高抬贵手，这点薄礼还请笑纳。",
 				SALT_MERCHANT_PORTRAIT,
-				[{"id": &"finish_salt_event", "text": "收下银钱，继续航行"}],
-				"银钱 +800"
+				[{"id": &"finish_salt_event", "text": "收下军饷，继续航行"}],
+				"军饷 +800"
 			)
 		&"release_salt_ship":
 			_event_dialogue.present(

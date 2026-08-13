@@ -1,7 +1,9 @@
 extends Node
 
 const FUBO_SAVE_STATE := preload("res://scripts/fubo_guling/fubo_save_state.gd")
-const SAVE_VERSION := 1
+const ECONOMY := preload("res://scripts/economy/economy_state.gd")
+const TRADE := preload("res://scripts/economy/trade_service.gd")
+const SAVE_VERSION := 2
 const DEFAULT_SAVE_PATH := "user://main_flow_save.json"
 const FUBO_SIDE_QUEST_ID := &"fubo_guling"
 const ALLOWED_SCENES := [
@@ -9,6 +11,7 @@ const ALLOWED_SCENES := [
 	"res://scenes/Scene2.tscn",
 	"res://scenes/sea_overworld/sea_overworld.tscn",
 	"res://scenes/fubo_guling/fubo_guling.tscn",
+	"res://scenes/yuehuan_merchant_harbor/yuehuan_merchant_harbor.tscn",
 ]
 
 var save_path_override := ""
@@ -148,6 +151,58 @@ func reset_runtime_world_state() -> void:
 	_world_state.clear()
 
 
+func get_economy_state() -> Dictionary:
+	_ensure_economy()
+	return (_world_state["economy"] as Dictionary).duplicate(true)
+
+
+func add_economy_item(item_id: String, amount: int) -> bool:
+	_ensure_economy()
+	return ECONOMY.add_item(_world_state["economy"], item_id, amount)
+
+
+func add_military_pay(amount: int) -> bool:
+	if amount <= 0:
+		return false
+	_ensure_economy()
+	_world_state["economy"]["pay"] = int(_world_state["economy"]["pay"]) + amount
+	return true
+
+
+func spend_military_pay(amount: int) -> bool:
+	if amount <= 0:
+		return false
+	_ensure_economy()
+	if int(_world_state["economy"]["pay"]) < amount:
+		return false
+	_world_state["economy"]["pay"] = int(_world_state["economy"]["pay"]) - amount
+	return true
+
+
+func buy_economy_item(item_id: String, quantity: int) -> Dictionary:
+	_ensure_economy()
+	return TRADE.buy_item(_world_state["economy"], item_id, quantity)
+
+
+func sell_economy_item(item_id: String, quantity: int) -> Dictionary:
+	_ensure_economy()
+	return TRADE.sell_item(_world_state["economy"], item_id, quantity)
+
+
+func buy_economy_blueprint(ship_type_id: String) -> Dictionary:
+	_ensure_economy()
+	return TRADE.buy_blueprint(_world_state["economy"], ship_type_id)
+
+
+func build_economy_ship(ship_type_id: String) -> Dictionary:
+	_ensure_economy()
+	return TRADE.build_ship(_world_state["economy"], ship_type_id)
+
+
+func _ensure_economy() -> void:
+	_world_state["economy"] = ECONOMY.normalize(_world_state.get("economy", {}))
+
+
 func has_save() -> bool:
 	return FileAccess.file_exists(_effective_save_path())
 
@@ -206,7 +261,7 @@ func _validate_save_data(data: Dictionary) -> Dictionary:
 	for key in ["version", "saved_at_unix", "scene_path", "scene_state"]:
 		if not data.has(key):
 			return _reject("missing_field")
-	if not _is_whole_number(data["version"]) or int(data["version"]) != SAVE_VERSION:
+	if not _is_whole_number(data["version"]) or int(data["version"]) not in [1, SAVE_VERSION]:
 		return _reject("unsupported_version")
 	if not _is_whole_number(data["saved_at_unix"]) or int(data["saved_at_unix"]) < 0:
 		return _reject("invalid_timestamp")

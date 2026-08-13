@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 俯视水墨船影：船头朝右；船头尖（左→右 指向船头） -->
+  <path d="M96 64 L30 30 Q18 44 26 58 L26 70 Q18 84 30 98 L96 64 Z"
+        fill="#3a4a3a" stroke="#2b3a2b" stroke-width="3"/>
+  <!-- 船尾楼 -->
+  <rect x="28" y="50" width="16" height="28" rx="3" fill="#8a5a2b" stroke="#2b3a2b" stroke-width="2"/>
+  <!-- 桅杆偏尾 -->
+  <line x1="44" y1="64" x2="44" y2="28" stroke="#2b3a2b" stroke-width="3"/>
+</svg>

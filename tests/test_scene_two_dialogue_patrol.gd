@@ -1,6 +1,7 @@
 extends SceneTree
 
 const SCENE_TWO := preload("res://scenes/Scene2.tscn")
+const NAVAL_RETURN_CONTEXT_META := "scene_two_naval_return_context"
 
 var failures: Array[String] = []
 var scene_two: Node2D
@@ -24,7 +25,11 @@ func _run() -> void:
 	current_scene = scene_two
 	await process_frame
 	await physics_frame
+	_bind_scene_two_nodes()
+	await _run_patrol_flow()
 
+
+func _bind_scene_two_nodes() -> void:
 	player = scene_two.get_node("World/Actors/Player") as CharacterBody2D
 	dialogue_panel = scene_two.get_node("UI/DialoguePanel") as Control
 	option_box = scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
@@ -32,6 +37,9 @@ func _run() -> void:
 	task_name = root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label
 	objective = root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
 	drill_overlay = scene_two.get_node("UI/DrillOverlay") as Control
+
+
+func _run_patrol_flow() -> void:
 
 	_expect(task_name.text == "巡视水师驻地", "Scene2 must begin with the patrol task.")
 	_expect("0/2" in objective.text, "Patrol task must begin with zero of two soldier reports.")
@@ -64,6 +72,7 @@ func _run() -> void:
 	_expect(objective.text == "与广州县令交谈", "After reporting to the officer, the task must point to the magistrate.")
 
 	await _interact_with("World/Actors/Npcs/GuangzhouCountyMagistrate")
+	var expected_return_position := player.global_position
 	_expect(_speaker_text() == "广州县令", "Magistrate dialogue must use the magistrate identity.")
 	await _press_option(0)
 	var first_magistrate_line := (scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text
@@ -71,25 +80,71 @@ func _run() -> void:
 	await _advance_scripted_dialogue(3)
 	_expect(drill_overlay.visible, "Completing the magistrate briefing must open the drill.")
 	_expect(task_name.text == "参加水师操练", "Opening the drill must update the main task.")
+	_expect(root.has_meta(NAVAL_RETURN_CONTEXT_META), "Opening naval training must store a one-shot Scene2 return context.")
 
-	var drill_return := drill_overlay.get_node("ReturnButton") as Button
-	drill_return.pressed.emit()
-	await process_frame
+	var naval_menu := await _wait_for_scene("LevelSelect")
+	_expect(naval_menu != null, "Completing the magistrate briefing must enter the naval main interface.")
+	if naval_menu == null:
+		_finish()
+		return
+	_expect(naval_menu.get_node_or_null("SceneTransitionFade") != null, "Naval main interface must provide the black fade transition overlay.")
+	await create_timer(1.0).timeout
+	(naval_menu.get_node("MainReturnButton") as Button).pressed.emit()
+	var returned_scene := await _wait_for_scene("Scene2")
+	_expect(returned_scene != null, "Naval main-interface return button must return to Scene2.")
+	if returned_scene == null:
+		_finish()
+		return
+	scene_two = returned_scene as Node2D
+	_bind_scene_two_nodes()
+	await create_timer(1.0).timeout
 	_expect(task_name.text == "探索海域，完善海图", "Completing the drill must unlock the chart-completion task.")
 	_expect(objective.text == "与广州县令交谈，选择是否立即出发", "Post-drill task must direct the player back to the magistrate.")
+	_expect(player.global_position.is_equal_approx(expected_return_position), "Returning from naval training must restore the pre-dialogue player position exactly.")
 
 	await _interact_with("World/Actors/Npcs/GuangzhouCountyMagistrate")
 	_expect(_speaker_text() == "广州县令", "Sea-departure dialogue must still use the magistrate identity.")
 	_expect((scene_two.get_node("UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text == "将军是否要巡视一下岭南海域？", "Magistrate must ask whether the player wants to inspect Lingnan waters.")
-	_expect(option_box.get_child_count() == 2, "Sea-departure dialogue must provide exactly two choices.")
-	if option_box.get_child_count() == 2:
-		_expect((option_box.get_child(0) as Button).text == "立即出发  ▶", "First sea-departure choice must be arrow-marked 立即出发.")
-		_expect((option_box.get_child(1) as Button).text == "稍后再说  ▶", "Second sea-departure choice must be arrow-marked 稍后再说.")
-	await _press_option(1)
-	_expect(not dialogue_panel.visible and task_name.text == "探索海域，完善海图", "Choosing 稍后再说 must keep the chart-completion task available.")
+	_expect(option_box.get_child_count() == 3, "Post-drill magistrate dialogue must provide exactly three choices.")
+	if option_box.get_child_count() == 3:
+		_expect((option_box.get_child(0) as Button).text == "出海  ▶", "First post-drill choice must be arrow-marked 出海.")
+		_expect((option_box.get_child(1) as Button).text == "操演  ▶", "Second post-drill choice must be arrow-marked 操演.")
+		_expect((option_box.get_child(2) as Button).text == "无事  ▶", "Third post-drill choice must be arrow-marked 无事.")
+	await _press_option(2)
+	_expect(not dialogue_panel.visible and task_name.text == "探索海域，完善海图", "Choosing 无事 must keep the chart-completion task available.")
 
+	await _interact_with("World/Actors/Npcs/GuangzhouCountyMagistrate")
+	var repeat_return_position := player.global_position
+	await _press_option(1)
+	var repeated_menu := await _wait_for_scene("LevelSelect")
+	_expect(repeated_menu != null, "Choosing 操演 must reopen the naval main interface.")
+	if repeated_menu != null:
+		await create_timer(1.0).timeout
+		(repeated_menu.get_node("MainReturnButton") as Button).pressed.emit()
+		var repeated_return := await _wait_for_scene("Scene2")
+		_expect(repeated_return != null, "Repeated naval training must return to Scene2.")
+		if repeated_return != null:
+			scene_two = repeated_return as Node2D
+			_bind_scene_two_nodes()
+			await create_timer(1.0).timeout
+			_expect(int(scene_two.get("_patrol_task_stage")) == 5, "Repeated naval training must preserve the post-drill task stage.")
+			_expect(player.global_position.is_equal_approx(repeat_return_position), "Repeated naval training must restore the pre-dialogue player position.")
+
+	_finish()
+
+
+func _wait_for_scene(expected_name: String) -> Node:
+	for _attempt in range(250):
+		await create_timer(0.02).timeout
+		if current_scene != null and current_scene.name == expected_name:
+			return current_scene
+	return null
+
+
+func _finish() -> void:
+	root.remove_meta(NAVAL_RETURN_CONTEXT_META)
 	if failures.is_empty():
-		print("Scene2 dialogue patrol runtime verification passed.")
+		print("Scene2 dialogue patrol and naval-training round-trip verification passed.")
 		quit(0)
 		return
 

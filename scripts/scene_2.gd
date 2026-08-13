@@ -21,6 +21,9 @@ const CHAPTER_ENTRY_META := "chapter_transition_from_scene_one"
 const RETURN_FROM_SEA_META := "scene_two_return_from_sea_overworld"
 const SEA_OVERWORLD_ENTRY_META := "sea_overworld_from_scene_two"
 const SEA_OVERWORLD_SCENE := "res://scenes/sea_overworld/sea_overworld.tscn"
+const NAVAL_RETURN_CONTEXT_META := "scene_two_naval_return_context"
+const NAVAL_LEVEL_SELECT_SCENE := "res://scenes/naval/LevelSelect.tscn"
+const NAVAL_FADE_DURATION := 0.9
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
 const INTERACTION_BUTTON_NORMAL := preload("res://assets/ui/sea_overworld/interaction_button_ink_v1.png")
@@ -72,6 +75,10 @@ var _click_stuck_elapsed := 0.0
 var _current_target: Variant = null
 var _active_npc: Variant = null
 var _saved_scene_state: Dictionary = {}
+var _naval_return_context: Dictionary = {}
+var _magistrate_dialogue_origin_position := Vector2.ZERO
+var _magistrate_dialogue_origin_direction := "down"
+var _has_magistrate_dialogue_origin := false
 
 var _magistrate_dialogues: Array = [
 	["广州县令", "将军有所不知，南疆水师多年未操练，沿海海域情况未明，旧有海图也多有缺漏。"],
@@ -86,8 +93,10 @@ var _arrival_dialogues: Array = [
 
 
 func _ready() -> void:
-	_saved_scene_state = _consume_saved_scene_state()
-	if _saved_scene_state.is_empty():
+	_naval_return_context = _consume_naval_return_context()
+	if _naval_return_context.is_empty():
+		_saved_scene_state = _consume_saved_scene_state()
+	if _naval_return_context.is_empty() and _saved_scene_state.is_empty():
 		_returning_from_sea = _consume_scene_entry_flag(RETURN_FROM_SEA_META)
 		var entered_from_chapter_one := _consume_scene_entry_flag(CHAPTER_ENTRY_META)
 		_should_play_arrival_dialogue = not _returning_from_sea and entered_from_chapter_one
@@ -661,6 +670,9 @@ func _build_ui() -> void:
 	if not _saved_scene_state.is_empty():
 		_restore_saved_scene_state(_saved_scene_state)
 		_saved_scene_state.clear()
+	elif not _naval_return_context.is_empty():
+		_restore_naval_return_context(_naval_return_context)
+		_naval_return_context.clear()
 	elif _returning_from_sea:
 		_restore_post_drill_state()
 		_refresh_exploration_hud()
@@ -776,74 +788,25 @@ func _create_drill_overlay() -> Control:
 	var root := Control.new()
 	root.name = "DrillOverlay"
 	root.visible = false
-	root.size = Vector2(1344, 896)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	root.modulate.a = 0.0
 
-	var dim := ColorRect.new()
-	dim.color = Color(0.02, 0.05, 0.08, 0.72)
-	dim.size = Vector2(1344, 896)
-	root.add_child(dim)
-
-	var title := Label.new()
-	title.text = "水师操练"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(0, 96)
-	title.size = Vector2(1344, 70)
-	title.add_theme_font_size_override("font_size", 48)
-	root.add_child(title)
-
-	var body := Label.new()
-	body.text = "战鼓既发，左右舷师列阵。弓弩、火炮、登舷诸队依令操演，旗帜在甲板上传令往复，南疆水师初具军容。"
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	body.position = Vector2(220, 180)
-	body.size = Vector2(904, 120)
-	body.add_theme_font_size_override("font_size", 28)
-	root.add_child(body)
-
-	var note := Label.new()
-	note.text = "备注：有待完善，可以用 CG 来代替演示。"
-	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	note.position = Vector2(220, 258)
-	note.size = Vector2(904, 42)
-	note.add_theme_font_size_override("font_size", 22)
-	note.add_theme_color_override("font_color", Color(0.88, 0.84, 0.72))
-	root.add_child(note)
-
-	_add_drill_ship(root, Vector2(410, 500), -9)
-	_add_drill_ship(root, Vector2(672, 430), 0)
-	_add_drill_ship(root, Vector2(934, 500), 9)
-
-	var close_button := Button.new()
-	close_button.name = "ReturnButton"
-	close_button.text = "返回甲板"
-	close_button.position = Vector2(572, 760)
-	close_button.size = Vector2(200, 52)
-	close_button.pressed.connect(_close_drill_overlay)
-	root.add_child(close_button)
+	var black := ColorRect.new()
+	black.name = "Black"
+	black.color = Color.BLACK
+	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(black)
 	return root
-
-
-func _add_drill_ship(root: Control, position_value: Vector2, rotation_degrees_value: float) -> void:
-	var ship := Polygon2D.new()
-	ship.position = position_value
-	ship.rotation_degrees = rotation_degrees_value
-	ship.polygon = PackedVector2Array([
-		Vector2(0, -88), Vector2(48, -48), Vector2(38, 88),
-		Vector2(0, 118), Vector2(-38, 88), Vector2(-48, -48),
-	])
-	ship.color = Color(0.55, 0.33, 0.18)
-	root.add_child(ship)
-
-	var sail := Polygon2D.new()
-	sail.position = position_value + Vector2(0, -12)
-	sail.rotation_degrees = rotation_degrees_value
-	sail.polygon = PackedVector2Array([Vector2(-8, -66), Vector2(45, 20), Vector2(-8, 72)])
-	sail.color = Color(0.86, 0.78, 0.55)
-	root.add_child(sail)
 
 
 func _open_npc_dialogue(npc: Dictionary) -> void:
 	_active_npc = npc
+	if str(npc.get("role", "")) == MAGISTRATE_ROLE:
+		_magistrate_dialogue_origin_position = _player.global_position
+		_magistrate_dialogue_origin_direction = _last_direction
+		_has_magistrate_dialogue_origin = true
 	_suspend_interaction_prompt()
 	_dialogue_panel.show()
 	_refresh_exploration_hud()
@@ -918,8 +881,9 @@ func _configure_magistrate_dialogue() -> void:
 
 	if _patrol_task_stage == PatrolTaskStage.EXPLORE_LINGNAN:
 		_dialogue_label.text = "将军是否要巡视一下岭南海域？"
-		_add_dialogue_option("立即出发", _depart_to_sea_overworld)
-		_add_dialogue_option("稍后再说", _close_npc_dialogue)
+		_add_dialogue_option("出海", _depart_to_sea_overworld)
+		_add_dialogue_option("操演", _show_drill)
+		_add_dialogue_option("无事", _close_npc_dialogue)
 		return
 
 	_dialogue_label.text = "地方所需粮草与工匠，下官会依议定之数按期送至军港。"
@@ -1229,16 +1193,87 @@ func _update_task_hud() -> void:
 
 func _show_drill() -> void:
 	_interaction_panel.hide()
+	_dialogue_panel.hide()
+	_current_target = null
+	_active_npc = null
+	cancel_player_move_target()
+	_transitioning = true
+	var return_position := _magistrate_dialogue_origin_position if _has_magistrate_dialogue_origin else _player.global_position
+	var return_direction := _magistrate_dialogue_origin_direction if _has_magistrate_dialogue_origin else _last_direction
+	get_tree().root.set_meta(NAVAL_RETURN_CONTEXT_META, {
+		"player_position": _vector_to_save(return_position),
+		"last_direction": return_direction,
+		"patrol_task_stage": int(_patrol_task_stage),
+		"complete_first_drill": _patrol_task_stage == PatrolTaskStage.DRILL_UNLOCKED,
+		"heard_soldier_roles": [LEFT_SOLDIER_ROLE, RIGHT_SOLDIER_ROLE],
+	})
+	_drill_overlay.modulate.a = 0.0
 	_drill_overlay.show()
 	_refresh_exploration_hud()
+	var fade_out := create_tween()
+	fade_out.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	fade_out.tween_property(_drill_overlay, "modulate:a", 1.0, NAVAL_FADE_DURATION)
+	fade_out.finished.connect(_change_to_naval_training)
 
 
-func _close_drill_overlay() -> void:
-	_drill_overlay.hide()
-	if _patrol_task_stage == PatrolTaskStage.DRILL_UNLOCKED:
-		_patrol_task_stage = PatrolTaskStage.EXPLORE_LINGNAN
-		_update_task_hud()
+func _change_to_naval_training() -> void:
+	var change_error := get_tree().change_scene_to_file(NAVAL_LEVEL_SELECT_SCENE)
+	if change_error == OK:
+		return
+	get_tree().root.remove_meta(NAVAL_RETURN_CONTEXT_META)
+	_transitioning = false
+	var fade_back := create_tween()
+	fade_back.tween_property(_drill_overlay, "modulate:a", 0.0, 0.2)
+	fade_back.finished.connect(func() -> void:
+		_drill_overlay.hide()
+		_refresh_exploration_hud()
+	)
+	if _exploration_hud != null:
+		_exploration_hud.call("show_toast", "海战操演暂时无法开启。")
+
+
+func _consume_naval_return_context() -> Dictionary:
+	if not get_tree().root.has_meta(NAVAL_RETURN_CONTEXT_META):
+		return {}
+	var raw_context: Variant = get_tree().root.get_meta(NAVAL_RETURN_CONTEXT_META)
+	get_tree().root.remove_meta(NAVAL_RETURN_CONTEXT_META)
+	return (raw_context as Dictionary).duplicate(true) if raw_context is Dictionary else {}
+
+
+func _restore_naval_return_context(context: Dictionary) -> void:
+	_heard_soldier_reports.clear()
+	var heard_roles: Variant = context.get("heard_soldier_roles", [])
+	if heard_roles is Array:
+		for role_value in heard_roles:
+			var role := str(role_value)
+			if role in [LEFT_SOLDIER_ROLE, RIGHT_SOLDIER_ROLE]:
+				_heard_soldier_reports[role] = true
+	var restored_stage := int(context.get("patrol_task_stage", PatrolTaskStage.EXPLORE_LINGNAN))
+	if bool(context.get("complete_first_drill", false)) or restored_stage == PatrolTaskStage.DRILL_UNLOCKED:
+		restored_stage = PatrolTaskStage.EXPLORE_LINGNAN
+	if restored_stage not in [PatrolTaskStage.MEET_MAGISTRATE, PatrolTaskStage.EXPLORE_LINGNAN]:
+		restored_stage = PatrolTaskStage.EXPLORE_LINGNAN
+	_patrol_task_stage = restored_stage
+	_last_direction = str(context.get("last_direction", "down"))
+	if _last_direction not in ["up", "down", "left", "right"]:
+		_last_direction = "down"
+	_player.global_position = _vector_from_save(context.get("player_position"), _player.global_position)
+	_player_sprite.play("idle_%s" % _last_direction)
+	_dialogue_panel.hide()
+	_interaction_panel.hide()
+	_transitioning = true
+	_drill_overlay.modulate.a = 1.0
+	_drill_overlay.show()
+	_update_task_hud()
 	_refresh_exploration_hud()
+	var fade_in := create_tween()
+	fade_in.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	fade_in.tween_property(_drill_overlay, "modulate:a", 0.0, NAVAL_FADE_DURATION)
+	fade_in.finished.connect(func() -> void:
+		_drill_overlay.hide()
+		_transitioning = false
+		_refresh_exploration_hud()
+	)
 
 
 func _refresh_exploration_hud() -> void:

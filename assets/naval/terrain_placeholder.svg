@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- 淡墨格地形占位：四象限各一色，M2 细分 -->
+  <!-- 深水 -->
+  <rect x="0" y="0" width="32" height="32" fill="#b7c6c8" stroke="#8fa8ab" stroke-width="1"/>
+  <!-- 浅滩 -->
+  <rect x="32" y="0" width="32" height="32" fill="#d8c99a" stroke="#b8a86f" stroke-width="1"/>
+  <!-- 礁石 -->
+  <rect x="0" y="32" width="32" height="32" fill="#8c6b4c" stroke="#6f5136" stroke-width="1"/>
+  <!-- 岛屿/山 -->
+  <rect x="32" y="32" width="32" height="32" fill="#66635a" stroke="#4d4a42" stroke-width="1"/>
+</svg>

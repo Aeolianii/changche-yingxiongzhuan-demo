@@ -1,0 +1,341 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/naval/presentation/NavalDeploymentController.cs" id="1_deploy"]
+[ext_resource type="Script" path="res://scripts/naval/presentation/NavalGridView.cs" id="2_grid"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/deployment_command_desk.png" id="3_command_desk"]
+
+[node name="Deployment" type="Node2D"]
+script = ExtResource("1_deploy")
+
+[node name="DeployGrid" type="Node2D" parent="."]
+script = ExtResource("2_grid")
+
+[node name="DeployShips" type="Node2D" parent="."]
+
+[node name="DeployHud" type="CanvasLayer" parent="."]
+
+[node name="StatusLabel" type="Label" parent="DeployHud"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 640.0
+offset_bottom = 44.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.08, 0.12, 0.08, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="MessageLabel" type="Label" parent="DeployHud"]
+offset_left = 16.0
+offset_top = 48.0
+offset_right = 1000.0
+offset_bottom = 70.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.25, 0.2, 0.1, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Panel" type="Panel" parent="DeployHud"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -560.0
+offset_top = -312.0
+offset_right = 560.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Backdrop" type="TextureRect" parent="DeployHud/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("3_command_desk")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Box" type="VBoxContainer" parent="DeployHud/Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 52.0
+offset_top = 52.0
+offset_right = -52.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="Columns" type="HBoxContainer" parent="DeployHud/Panel/Box"]
+custom_minimum_size = Vector2(0, 224)
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="ShipCommands" type="VBoxContainer" parent="DeployHud/Panel/Box/Columns"]
+custom_minimum_size = Vector2(530, 224)
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="DeployHud/Panel/Box/Columns/ShipCommands"]
+custom_minimum_size = Vector2(530, 40)
+layout_mode = 2
+text = "舰船调度"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FirstRow" type="HBoxContainer" parent="DeployHud/Panel/Box/Columns/ShipCommands"]
+custom_minimum_size = Vector2(530, 78)
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Rotate" type="Button" parent="DeployHud/Panel/Box/Columns/ShipCommands/FirstRow"]
+custom_minimum_size = Vector2(304, 78)
+layout_mode = 2
+text = "旋转朝向 · 右转90°"
+
+[node name="SetFlagship" type="Button" parent="DeployHud/Panel/Box/Columns/ShipCommands/FirstRow"]
+custom_minimum_size = Vector2(222, 78)
+layout_mode = 2
+text = "设为指挥舰"
+
+[node name="SecondRow" type="HBoxContainer" parent="DeployHud/Panel/Box/Columns/ShipCommands"]
+custom_minimum_size = Vector2(530, 78)
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="ResetDefault" type="Button" parent="DeployHud/Panel/Box/Columns/ShipCommands/SecondRow"]
+custom_minimum_size = Vector2(286, 78)
+layout_mode = 2
+text = "恢复默认阵型"
+
+[node name="SelfSink" type="Button" parent="DeployHud/Panel/Box/Columns/ShipCommands/SecondRow"]
+custom_minimum_size = Vector2(240, 78)
+layout_mode = 2
+text = "浅滩自沉"
+visible = false
+
+[node name="FleetCommands" type="VBoxContainer" parent="DeployHud/Panel/Box/Columns"]
+custom_minimum_size = Vector2(240, 224)
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Title" type="Label" parent="DeployHud/Panel/Box/Columns/FleetCommands"]
+custom_minimum_size = Vector2(240, 40)
+layout_mode = 2
+text = "舰队整备"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Equip" type="Button" parent="DeployHud/Panel/Box/Columns/FleetCommands"]
+custom_minimum_size = Vector2(236, 82)
+size_flags_horizontal = 4
+layout_mode = 2
+text = "装备配置"
+
+[node name="FleetConfig" type="Button" parent="DeployHud/Panel/Box/Columns/FleetCommands"]
+custom_minimum_size = Vector2(236, 82)
+size_flags_horizontal = 4
+layout_mode = 2
+text = "舰队配置"
+
+[node name="BattleCommand" type="VBoxContainer" parent="DeployHud/Panel/Box/Columns"]
+custom_minimum_size = Vector2(214, 224)
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="DeployHud/Panel/Box/Columns/BattleCommand"]
+custom_minimum_size = Vector2(214, 40)
+layout_mode = 2
+text = "决战军令"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ConfirmCenter" type="CenterContainer" parent="DeployHud/Panel/Box/Columns/BattleCommand"]
+custom_minimum_size = Vector2(214, 178)
+layout_mode = 2
+
+[node name="Confirm" type="Button" parent="DeployHud/Panel/Box/Columns/BattleCommand/ConfirmCenter"]
+custom_minimum_size = Vector2(214, 82)
+layout_mode = 2
+text = "开始战斗"
+
+[node name="EquipmentPanel" type="Panel" parent="DeployHud"]
+visible = false
+offset_left = 16.0
+offset_top = 84.0
+offset_right = 1000.0
+offset_bottom = 496.0
+
+[node name="Box" type="VBoxContainer" parent="DeployHud/EquipmentPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = -14.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="DeployHud/EquipmentPanel/Box"]
+text = "装备配置 · 布阵前完成"
+
+[node name="ShipRow" type="HBoxContainer" parent="DeployHud/EquipmentPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Ship1" type="Button" parent="DeployHud/EquipmentPanel/Box/ShipRow"]
+custom_minimum_size = Vector2(120, 38)
+
+[node name="Ship2" type="Button" parent="DeployHud/EquipmentPanel/Box/ShipRow"]
+custom_minimum_size = Vector2(120, 38)
+
+[node name="Ship3" type="Button" parent="DeployHud/EquipmentPanel/Box/ShipRow"]
+custom_minimum_size = Vector2(120, 38)
+
+[node name="Ship4" type="Button" parent="DeployHud/EquipmentPanel/Box/ShipRow"]
+custom_minimum_size = Vector2(120, 38)
+
+[node name="SlotsLabel" type="Label" parent="DeployHud/EquipmentPanel/Box"]
+
+[node name="WeaponRow" type="HBoxContainer" parent="DeployHud/EquipmentPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="DeployHud/EquipmentPanel/Box/WeaponRow"]
+text = "武器"
+
+[node name="SkillRow" type="HBoxContainer" parent="DeployHud/EquipmentPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="DeployHud/EquipmentPanel/Box/SkillRow"]
+text = "技能"
+
+[node name="ArmorRow" type="HBoxContainer" parent="DeployHud/EquipmentPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="DeployHud/EquipmentPanel/Box/ArmorRow"]
+text = "护甲"
+
+[node name="HintLabel" type="Label" parent="DeployHud/EquipmentPanel/Box"]
+text = "护甲每级 +3 负载 · −10% 减伤（上限80%）｜撞角限1件｜技能按槽位×每场次数"
+
+[node name="CloseRow" type="HBoxContainer" parent="DeployHud/EquipmentPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Close" type="Button" parent="DeployHud/EquipmentPanel/Box/CloseRow"]
+custom_minimum_size = Vector2(120, 40)
+text = "关闭"
+[node name="FleetPanel" type="Panel" parent="DeployHud"]
+visible = false
+offset_left = 16.0
+offset_top = 84.0
+offset_right = 1000.0
+offset_bottom = 780.0
+
+[node name="Box" type="VBoxContainer" parent="DeployHud/FleetPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = -14.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="Caption" type="Label" parent="DeployHud/FleetPanel/Box"]
+text = "舰队配置 · 增删舰船 / 装备 / 预设保存加载"
+
+[node name="ComposeRow" type="HBoxContainer" parent="DeployHud/FleetPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="DeployHud/FleetPanel/Box/ComposeRow"]
+custom_minimum_size = Vector2(64, 0)
+text = "添加舰船"
+
+[node name="AddFlagship" type="Button" parent="DeployHud/FleetPanel/Box/ComposeRow"]
+custom_minimum_size = Vector2(110, 34)
+text = "旗舰"
+
+[node name="AddFrigate" type="Button" parent="DeployHud/FleetPanel/Box/ComposeRow"]
+custom_minimum_size = Vector2(110, 34)
+text = "护卫舰"
+
+[node name="AddMerchant" type="Button" parent="DeployHud/FleetPanel/Box/ComposeRow"]
+custom_minimum_size = Vector2(110, 34)
+text = "商船"
+
+[node name="AddTransport" type="Button" parent="DeployHud/FleetPanel/Box/ComposeRow"]
+custom_minimum_size = Vector2(110, 34)
+text = "运输船"
+
+[node name="PreviewLabel" type="Label" parent="DeployHud/FleetPanel/Box"]
+text = "舰队 0 艘"
+
+[node name="ShipScroll" type="ScrollContainer" parent="DeployHud/FleetPanel/Box"]
+custom_minimum_size = Vector2(0, 116)
+horizontal_scroll_mode = 0
+
+[node name="ShipList" type="VBoxContainer" parent="DeployHud/FleetPanel/Box/ShipScroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="SlotsLabel" type="Label" parent="DeployHud/FleetPanel/Box"]
+text = "请选择一艘舰配置装备"
+
+[node name="FleetWeaponRow" type="HBoxContainer" parent="DeployHud/FleetPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="DeployHud/FleetPanel/Box/FleetWeaponRow"]
+text = "武器"
+
+[node name="FleetSkillRow" type="HBoxContainer" parent="DeployHud/FleetPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="DeployHud/FleetPanel/Box/FleetSkillRow"]
+text = "技能"
+
+[node name="FleetArmorRow" type="HBoxContainer" parent="DeployHud/FleetPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="DeployHud/FleetPanel/Box/FleetArmorRow"]
+text = "护甲"
+
+[node name="SaveRow" type="HBoxContainer" parent="DeployHud/FleetPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="DeployHud/FleetPanel/Box/SaveRow"]
+custom_minimum_size = Vector2(64, 0)
+text = "保存预设"
+
+[node name="NameEdit" type="LineEdit" parent="DeployHud/FleetPanel/Box/SaveRow"]
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 34)
+placeholder_text = "预设名"
+
+[node name="SaveButton" type="Button" parent="DeployHud/FleetPanel/Box/SaveRow"]
+custom_minimum_size = Vector2(110, 34)
+text = "保存"
+
+[node name="PresetScroll" type="ScrollContainer" parent="DeployHud/FleetPanel/Box"]
+custom_minimum_size = Vector2(0, 104)
+horizontal_scroll_mode = 0
+
+[node name="PresetList" type="VBoxContainer" parent="DeployHud/FleetPanel/Box/PresetScroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="CloseRow" type="HBoxContainer" parent="DeployHud/FleetPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="Close" type="Button" parent="DeployHud/FleetPanel/Box/CloseRow"]
+custom_minimum_size = Vector2(120, 40)
+text = "关闭"

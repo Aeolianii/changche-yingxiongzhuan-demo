@@ -30,7 +30,7 @@ func _run() -> void:
 	_expect(is_equal_approx(loading.minimum_duration, 1.0), "Scene loading transition must default to a one-second minimum duration.")
 	await _interact_with(scene_two, "World/Actors/Npcs/GuangzhouCountyMagistrate")
 	var option_box := _option_box(scene_two)
-	_expect(option_box.get_child_count() == 2, "Magistrate sea-departure dialogue choices are missing.")
+	_expect(option_box.get_child_count() == 3, "Magistrate post-drill 出海/操演/无事 choices are missing.")
 	if option_box.get_child_count() < 1:
 		_finish()
 		return

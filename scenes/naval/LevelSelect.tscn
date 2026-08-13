@@ -1,0 +1,151 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/naval/presentation/LevelSelectController.cs" id="1_ctl"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/level_select_bamboo_ocean_background.png" id="2_bg"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/level_select_vertical_frame.png" id="3_frame"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/level_select_return_brush.png" id="4_return"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/level_select_page_left.png" id="5_page_left"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/level_select_page_right.png" id="6_page_right"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_title"]
+atlas = ExtResource("3_frame")
+region = Rect2(63, 86, 703, 1749)
+
+[node name="LevelSelect" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ctl")
+
+[node name="Background" type="TextureRect" parent="."]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_bg")
+expand_mode = 1
+
+[node name="TitleFrame" type="TextureRect" parent="."]
+texture_filter = 1
+offset_left = 272.0
+offset_top = 142.0
+offset_right = 462.0
+offset_bottom = 762.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_title")
+expand_mode = 1
+
+[node name="Eyebrow" type="Label" parent="."]
+visible = false
+offset_left = 304.0
+offset_top = 214.0
+offset_right = 336.0
+offset_bottom = 474.0
+text = "广\n州\n县\n令\n请"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Title" type="Label" parent="."]
+offset_left = 322.0
+offset_top = 308.0
+offset_right = 374.0
+offset_bottom = 596.0
+text = "水\n师\n操\n演"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Subtitle" type="Label" parent="."]
+offset_left = 362.0
+offset_top = 242.0
+offset_right = 430.0
+offset_bottom = 662.0
+text = "厂\n车\n县\n令\n请\n检\n阅\n南\n疆\n水\n师"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProgressLabel" type="Label" parent="."]
+offset_left = 34.0
+offset_top = 20.0
+offset_right = 280.0
+offset_bottom = 66.0
+theme_override_font_sizes/font_size = 23
+text = "已通关 0 / 8"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="MainReturnButton" type="Button" parent="."]
+texture_filter = 1
+offset_left = 1168.0
+offset_top = 18.0
+offset_right = 1328.0
+offset_bottom = 78.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+text = "返回"
+metadata/_brush_texture = ExtResource("4_return")
+
+[node name="LevelBack" type="Button" parent="."]
+visible = false
+offset_left = 272.0
+offset_top = 142.0
+offset_right = 462.0
+offset_bottom = 762.0
+text = "返\n回\n章\n程"
+
+[node name="ChapterScroll" type="ScrollContainer" parent="."]
+offset_left = 520.0
+offset_top = 132.0
+offset_right = 1318.0
+offset_bottom = 772.0
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 0
+
+[node name="ChapterRoot" type="HBoxContainer" parent="ChapterScroll"]
+size_flags_vertical = 3
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="ScrollLeft" type="Button" parent="."]
+texture_filter = 1
+offset_left = 464.0
+offset_top = 424.0
+offset_right = 520.0
+offset_bottom = 480.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+metadata/_page_texture = ExtResource("5_page_left")
+
+[node name="ScrollRight" type="Button" parent="."]
+texture_filter = 1
+offset_left = 1288.0
+offset_top = 424.0
+offset_right = 1344.0
+offset_bottom = 480.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+metadata/_page_texture = ExtResource("6_page_right")
+
+[node name="LevelRoot" type="HBoxContainer" parent="."]
+visible = false
+offset_left = 458.0
+offset_top = 132.0
+offset_right = 1256.0
+offset_bottom = 772.0
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="HintLabel" type="Label" parent="."]
+offset_left = 184.0
+offset_top = 824.0
+offset_right = 1160.0
+offset_bottom = 878.0
+theme_override_font_sizes/font_size = 23
+text = "击鼓点将，选择操演章程 · 自由模式随时可入"
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -88,7 +88,7 @@ func _run() -> void:
 		var label := location_label as Label
 		if "南海军港" in label.text:
 			south_harbor_label = label
-		elif "倭寇营地" in label.text:
+		elif "倭寇大本营" in label.text:
 			pirate_camp_label = label
 	_expect(south_harbor_label != null and south_harbor_label.visible, "Revealed South Sea Harbor name must appear on the full chart.")
 	_expect(pirate_camp_label != null and not pirate_camp_label.visible, "Unexplored pirate-camp name must stay hidden.")

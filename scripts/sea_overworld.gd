@@ -3,10 +3,13 @@ extends Node2D
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
 const DRIFTING_CRATE_TEXTURE := preload("res://assets/sprites/sea_overworld/drifting_supply_crate_v1.png")
 const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
+const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
 const TEA_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图茶叶商人.png")
 const SALT_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图私盐商人.png")
+const HAIBATIAN_PORTRAIT := preload("res://assets/sea_overworld/portraits/倭寇头目海霸天.png")
 const FIELD_EVENT_DIALOGUE_SCENE := preload("res://scenes/ui/field_event_dialogue.tscn")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
+const WOKOU_VICTORY_CUTSCENE_SCENE := preload("res://scenes/sea_overworld/wokou_victory_cutscene.tscn")
 const PIRATE_SCENE := preload("res://scenes/sea_overworld/sea_overworld_pirate.tscn")
 const SEA_FOG_OF_WAR_SCRIPT := preload("res://scripts/sea_fog_of_war.gd")
 const A_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_a_v3.png")
@@ -33,6 +36,8 @@ const LUNAR_DAY_META := "sea_overworld_lunar_day"
 const SECONDS_PER_LUNAR_DAY := 2.0
 const FUBO_QUEST_TRIGGER_POSITION := Vector2(4260, 780)
 const FUBO_QUEST_TRIGGER_RADIUS := 760.0
+const WOKOU_STRONGHOLD_POSITION := Vector2(4380, 2460)
+const WOKOU_WARNING_TRIGGER_RADIUS := 760.0
 const PIRATE_COUNT := 5
 const PIRATE_HARBOR_SAFE_RADIUS := 700.0
 const PIRATE_PLAYER_SAFE_RADIUS := 480.0
@@ -71,6 +76,9 @@ var _tea_merchant_event_resolved := false
 var _active_salt_merchant_ship: Area2D
 var _salt_merchant_event_resolved := false
 var _fubo_quest_dialogue_open := false
+var _wokou_warning_acknowledged := false
+var _wokou_battle_completed := false
+var _wokou_victory_cutscene: WokouVictoryCutscene
 var _fog_of_war: Node2D
 var _pirates: Array[SeaOverworldPirate] = []
 var _active_battle_pirate: SeaOverworldPirate
@@ -112,6 +120,9 @@ func _ready() -> void:
 	interaction_prompt.hide()
 	_loading_transition = LOADING_TRANSITION_SCENE.instantiate() as SceneLoadingTransition
 	$UI.add_child(_loading_transition)
+	_wokou_victory_cutscene = WOKOU_VICTORY_CUTSCENE_SCENE.instantiate() as WokouVictoryCutscene
+	$UI.add_child(_wokou_victory_cutscene)
+	_wokou_victory_cutscene.connect("cutscene_finished", _on_wokou_victory_cutscene_finished)
 	if not restoring_saved_state and not _returning_from_fubo:
 		player.global_position = SOUTH_SEA_HARBOR_SPAWN
 		_activate_south_sea_harbor_spawn()
@@ -297,12 +308,12 @@ func _build_locations() -> void:
 		[Vector2(380, 430)]
 	)
 	_build_location(
-		"倭寇营地",
-		Vector2(4380, 2460),
+		"倭寇大本营",
+		WOKOU_STRONGHOLD_POSITION,
 		120.0,
 		Vector2.ZERO,
 		Vector2.ZERO,
-		"该岛屿即将开放",
+		"讨伐倭寇大本营",
 		Vector2.ZERO,
 		[Vector2(-630, 140)]
 	)
@@ -321,6 +332,14 @@ func _build_auto_triggers() -> void:
 		FUBO_QUEST_TRIGGER_RADIUS
 	)
 	fubo_quest_trigger.remove_from_group("sea_auto_trigger")
+	var wokou_warning_trigger := _make_auto_trigger(
+		"WokouStrongholdWarningTrigger",
+		WOKOU_STRONGHOLD_POSITION,
+		"倭寇大本营军情",
+		"wokou_warning",
+		WOKOU_WARNING_TRIGGER_RADIUS
+	)
+	wokou_warning_trigger.remove_from_group("sea_auto_trigger")
 
 
 func _spawn_pirates_deferred() -> void:
@@ -683,6 +702,9 @@ func _on_auto_trigger_body_entered(body: Node2D, area: Area2D) -> void:
 	if trigger_kind == "fubo_quest":
 		_open_fubo_quest_dialogue()
 		return
+	if trigger_kind == "wokou_warning":
+		_open_wokou_warning_dialogue()
+		return
 	if trigger_kind == "ship" and display_name == "私盐商船":
 		_open_salt_merchant_event(area)
 		return
@@ -760,6 +782,12 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 			_finish_pirate_placeholder()
 		&"accept_fubo_quest":
 			_accept_fubo_side_quest()
+		&"acknowledge_wokou_warning":
+			_acknowledge_wokou_warning()
+		&"confront_haibatian":
+			_show_haibatian_reply()
+		&"fight_haibatian":
+			_resolve_wokou_battle()
 		&"salvage":
 			var game_state := _game_state()
 			if game_state != null:
@@ -866,6 +894,92 @@ func _accept_fubo_side_quest() -> void:
 	_show_toast("已接取支线：伏波古岭")
 
 
+func _open_wokou_warning_dialogue() -> void:
+	if _wokou_warning_acknowledged or _wokou_battle_completed or _transitioning:
+		return
+	if _event_dialogue == null:
+		_open_wokou_warning_dialogue.call_deferred()
+		return
+	if _event_dialogue.visible:
+		return
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_event_dialogue.present(
+		"水师士兵",
+		"将军，前方水寨旌旗杂乱、哨船密布，正是倭寇大本营！贼众据险死守，贸然突进万分凶险。还请将军传令各船收拢阵形、严守战位，切莫轻敌！",
+		SOLDIER_PORTRAIT,
+		[{
+			"id": &"acknowledge_wokou_warning",
+			"text": "传令全军戒备，列阵前进",
+		}]
+	)
+
+
+func _acknowledge_wokou_warning() -> void:
+	_wokou_warning_acknowledged = true
+	_remove_wokou_warning_trigger()
+	_event_dialogue.hide_dialogue()
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
+	_refresh_exploration_task()
+	_show_toast("主线推进：进逼倭寇大本营")
+
+
+func _open_wokou_confrontation() -> void:
+	if _event_dialogue == null or _event_dialogue.visible or _transitioning or _wokou_battle_completed:
+		return
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_event_dialogue.present(
+		"水师元帅",
+		"海霸天！你纵倭船劫掠商旅，焚毁渔村，杀伤我大明军民，搅得岭南沿海不得安生。本将奉旨靖海，今日兵临贼巢，便是你束手伏诛之时！",
+		PROTAGONIST_PORTRAIT,
+		[{"id": &"confront_haibatian", "text": "喝令贼首答话"}]
+	)
+
+
+func _show_haibatian_reply() -> void:
+	_event_dialogue.present(
+		"倭寇头目·海霸天",
+		"呸！狗官，少在老子面前装腔作势！老子还没领船去寻你，你倒自己送上门来了。弟兄们早已磨快倭刀——既敢闯我大寨，今日便叫你有来无回！",
+		HAIBATIAN_PORTRAIT,
+		[{
+			"id": &"fight_haibatian",
+			"text": "进军，一决胜负（战斗系统还未完善，此战默认获胜）",
+		}]
+	)
+
+
+func _resolve_wokou_battle() -> void:
+	_wokou_battle_completed = true
+	_wokou_warning_acknowledged = true
+	_advance_exploration_stage(4)
+	_remove_wokou_warning_trigger()
+	_event_dialogue.hide_dialogue()
+	_transitioning = true
+	player.controls_enabled = false
+	_set_pirates_navigation_enabled(false)
+	interaction_prompt.hide()
+	exploration_hud.call("set_exploration_visible", false)
+	_wokou_victory_cutscene.play()
+
+
+func _on_wokou_victory_cutscene_finished() -> void:
+	_transitioning = false
+	exploration_hud.call("set_exploration_visible", true)
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	_set_pirates_navigation_enabled(player.controls_enabled)
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
+	_refresh_exploration_task()
+	_show_toast("主线完成：荡平倭寇大本营")
+
+
+func _remove_wokou_warning_trigger() -> void:
+	var trigger := world_markers.get_node_or_null("WokouStrongholdWarningTrigger")
+	if is_instance_valid(trigger):
+		trigger.queue_free()
+
+
 func _resolve_drifting_crate_event() -> void:
 	if _crate_event_resolved:
 		return
@@ -953,6 +1067,12 @@ func _enter_active_location() -> void:
 		return
 	if _active_location_name == "南海军港":
 		_return_to_scene_two()
+		return
+	if _active_location_name == "倭寇大本营":
+		if _wokou_battle_completed:
+			_show_toast("倭寇大本营 · 贼巢已平定")
+		else:
+			_open_wokou_confrontation()
 		return
 	var target_scene_path := "" if _active_location_area == null else str(_active_location_area.get_meta("target_scene_path", ""))
 	if target_scene_path == FUBO_TRAVEL.FUBO_SCENE_PATH and not _has_fubo_side_quest():
@@ -1059,6 +1179,8 @@ func _current_event_state() -> Dictionary:
 		"crate_event_resolved": _crate_event_resolved,
 		"tea_merchant_event_resolved": _tea_merchant_event_resolved,
 		"salt_merchant_event_resolved": _salt_merchant_event_resolved,
+		"wokou_warning_acknowledged": _wokou_warning_acknowledged,
+		"wokou_battle_completed": _wokou_battle_completed,
 	}
 
 
@@ -1069,12 +1191,18 @@ func _restore_event_state(value: Variant) -> void:
 	_crate_event_resolved = bool(state.get("crate_event_resolved", false))
 	_tea_merchant_event_resolved = bool(state.get("tea_merchant_event_resolved", false))
 	_salt_merchant_event_resolved = bool(state.get("salt_merchant_event_resolved", false))
+	_wokou_warning_acknowledged = bool(state.get("wokou_warning_acknowledged", false))
+	_wokou_battle_completed = bool(state.get("wokou_battle_completed", false))
+	if _wokou_battle_completed:
+		_wokou_warning_acknowledged = true
 	if _crate_event_resolved:
 		_remove_drifting_crate()
 	if _tea_merchant_event_resolved:
 		_remove_tea_merchant_ship()
 	if _salt_merchant_event_resolved:
 		_remove_salt_merchant_ship()
+	if _wokou_warning_acknowledged:
+		_remove_wokou_warning_trigger()
 
 
 func _show_toast(message: String) -> void:
@@ -1090,15 +1218,20 @@ func _advance_exploration_stage(next_stage: int) -> void:
 
 func _refresh_exploration_task() -> void:
 	var objective := "使用WASD或方向键驾驶船只"
-	match _exploration_stage:
-		1:
-			objective = "靠近任意岛屿，查看地点名称"
-		2:
-			objective = "点击进入按钮或按E尝试进入地点"
-		3:
-			objective = "接触海上的船只或漂流事件"
-		4:
-			objective = "继续探索岭南海域"
+	if _wokou_battle_completed:
+		objective = "倭寇大本营已平定，继续完善岭南海图"
+	elif _wokou_warning_acknowledged:
+		objective = "驶近倭寇大本营，按E发起讨伐"
+	else:
+		match _exploration_stage:
+			1:
+				objective = "靠近任意岛屿，查看地点名称"
+			2:
+				objective = "点击进入按钮或按E尝试进入地点"
+			3:
+				objective = "接触海上的船只或漂流事件"
+			4:
+				objective = "继续探索岭南海域"
 	exploration_hud.call(
 		"set_main_task_progress",
 		"探索海域，完善海图",
@@ -1159,6 +1292,8 @@ func _on_save_requested() -> void:
 		"crate_event_resolved": _crate_event_resolved,
 		"tea_merchant_event_resolved": _tea_merchant_event_resolved,
 		"salt_merchant_event_resolved": _salt_merchant_event_resolved,
+		"wokou_warning_acknowledged": _wokou_warning_acknowledged,
+		"wokou_battle_completed": _wokou_battle_completed,
 	}
 	var result: Dictionary = game_state.call("save_game", SCENE_PATH, snapshot)
 	_show_save_message(bool(result.get("ok", false)), str(result.get("reason", "")))

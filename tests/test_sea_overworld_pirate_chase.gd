@@ -1,6 +1,7 @@
 extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
+const PIRATE_ATLAS := preload("res://assets/sprites/sea_overworld/pirate_ship_4dir_states_v1.png")
 const HARBOR_POSITION := Vector2(880, 1170)
 
 var failures: Array[String] = []
@@ -11,6 +12,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	_expect(_atlas_boundaries_are_clear(), "Pirate atlas sprites must not bleed across 4x2 cell boundaries.")
 	var game_state := root.get_node_or_null("GameState")
 	if game_state != null:
 		game_state.call("reset_runtime_world_state")
@@ -34,6 +36,8 @@ func _run() -> void:
 		_expect(is_equal_approx(spawned_pirate.detection_radius, 360.0) and is_equal_approx(spawned_pirate.disengage_radius, 520.0), "Pirate chase must use the approved hysteresis distances.")
 
 	var pirate := pirates[0] as SeaOverworldPirate
+	for pirate_index in range(1, pirates.size()):
+		(pirates[pirate_index] as SeaOverworldPirate).set_navigation_enabled(false)
 	player.global_position = HARBOR_POSITION
 	pirate.set_navigation_enabled(true)
 	pirate.force_rest_for_test(0.5)
@@ -56,8 +60,10 @@ func _run() -> void:
 	await physics_frame
 	_expect(not pirate.is_chasing(), "A pirate must stop chasing after the player leaves its disengage radius.")
 
+	pirate.set_navigation_enabled(true)
 	pirate.request_battle_for_test()
-	await process_frame
+	for _frame in range(3):
+		await process_frame
 	var dialogue := scene.get("_event_dialogue") as FieldEventDialogue
 	_expect(dialogue.visible and "即将接战" in dialogue.dialogue_label.text, "Touching a pirate must open the battle placeholder dialogue.")
 	_expect(not player.controls_enabled, "The player ship must stop while the pirate battle placeholder is open.")
@@ -71,6 +77,21 @@ func _run() -> void:
 	_expect((scene.get("_pirates") as Array).size() == 2, "The contacted pirate must be removed after the placeholder encounter.")
 
 	_finish(scene)
+
+
+func _atlas_boundaries_are_clear() -> bool:
+	var image := PIRATE_ATLAS.get_image()
+	var boundary_x_values := [384, 768, 1152]
+	for boundary_x in boundary_x_values:
+		for x in range(boundary_x - 8, boundary_x + 8):
+			for y in range(image.get_height()):
+				if image.get_pixel(x, y).a > 0.02:
+					return false
+	for y in range(504, 520):
+		for x in range(image.get_width()):
+			if image.get_pixel(x, y).a > 0.02:
+				return false
+	return true
 
 
 func _expect(condition: bool, message: String) -> void:

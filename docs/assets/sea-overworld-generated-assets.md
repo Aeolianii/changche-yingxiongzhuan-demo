@@ -477,6 +477,17 @@ Constraints: ship only; no sea, wake, foam, splash, cast shadow, text, labels, b
 Replace only the dark red background with one perfectly uniform flat #00ff00 chroma-key background. Preserve all eight pirate ships, the exact 4x2 grid, their pixels, scale, placement, lighting and colors unchanged. Add nothing else.
 ```
 
+分格清理修订（2026-08-13）：原始图集中相邻船只越过等分边界，Godot 使用 `AtlasTexture` 裁切时会把下一格的船体碎片带入当前帧。使用内置生图的精确对象编辑模式缩小并重新居中八艘船，再次执行色键去底；最终图集在三条纵向分界和一条横向分界两侧均保留透明安全区。
+
+```text
+Use case: precise-object-edit
+Asset type: production 4-direction pirate-ship sprite sheet for Godot atlas cropping
+Input image: Image 1 is the exact edit target, a 1536x1024 4 columns x 2 rows sprite sheet on flat green.
+Primary request: fix only the sprite-sheet cell separation. Keep the exact 4x2 layout and the same eight pirate ships/directions/states, but scale down and recenter any ship as needed so every ship is fully contained inside its own equal 384x512 cell. Create a clear uniform flat-green safety gutter of at least 28 pixels on both sides of each vertical cell boundary at x=384, x=768, and x=1152, and at least 20 pixels on both sides of the horizontal boundary at y=512. Remove every detached fragment, rope, sail tip, hull tip, pixel cluster, or neighboring-ship bleed that crosses into another cell. Each cell must contain exactly one connected ship silhouette with no stray detached artifacts. Preserve the ships' black sails, red pennants, brown hulls, skull markings, pixel-art style, lighting, directions, and idle/sailing row meanings.
+Scene/backdrop: one perfectly uniform flat #00ff00 chroma-key background with no gradient, texture, shadow, water, wake, foam, or splash.
+Constraints: change only scale/centering needed for safe non-overlapping cells and remove stray detached fragments; do not redesign the ships; no text, borders, grid lines, UI, logo, or watermark.
+```
+
 ## 5. 当前使用边界
 
 ### 高清分层重制（2026-08-10，进行中）

@@ -37,9 +37,10 @@ func present(
 	options: Array[Dictionary],
 	detail_bbcode: String = "",
 	portrait_on_left: bool = false,
-	portrait_scale: float = 1.0
+	portrait_scale: float = 1.0,
+	portrait_keep_full: bool = false
 ) -> void:
-	_apply_dialogue_side(portrait_on_left, portrait_scale)
+	_apply_dialogue_side(portrait_on_left, portrait_scale, portrait_keep_full)
 	speaker_label.text = speaker
 	dialogue_label.text = line
 	dialogue_label.custom_minimum_size.y = COMPACT_DIALOGUE_MIN_HEIGHT if not detail_bbcode.is_empty() else DEFAULT_DIALOGUE_MIN_HEIGHT
@@ -79,12 +80,13 @@ func _apply_scene_two_styles() -> void:
 	name_style.content_margin_top = 7
 	name_style.content_margin_bottom = 7
 	name_plate.add_theme_stylebox_override("panel", name_style)
-	_apply_dialogue_side(false, 1.0)
+	_apply_dialogue_side(false, 1.0, false)
 
 
-func _apply_dialogue_side(portrait_on_left: bool, portrait_scale: float) -> void:
+func _apply_dialogue_side(portrait_on_left: bool, portrait_scale: float, portrait_keep_full: bool) -> void:
 	var safe_scale := clampf(portrait_scale, 0.5, 1.0)
-	var portrait_size := PORTRAIT_BASE_SIZE * safe_scale
+	var portrait_size := (Vector2.ONE * PORTRAIT_BASE_SIZE.y if portrait_keep_full else PORTRAIT_BASE_SIZE) * safe_scale
+	portrait_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED if portrait_keep_full else TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	portrait_image.size = portrait_size
 	portrait_image.position.y = PORTRAIT_BOTTOM - portrait_size.y
 	portrait_box.position = Vector2(48, 492) if portrait_on_left else Vector2(1076, 492)

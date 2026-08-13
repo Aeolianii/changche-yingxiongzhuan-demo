@@ -79,7 +79,8 @@ func _run() -> void:
 	_expect("狗官" in dialogue.dialogue_label.text and "自己送上门" in dialogue.dialogue_label.text and "抄家伙" in dialogue.dialogue_label.text, "Hai Batian must answer as a coarse bandit without self-identifying through a Wokou weapon.")
 	_expect("倭刀" not in dialogue.dialogue_label.text, "Hai Batian must not claim that his men wield Wokou swords.")
 	_expect(dialogue.portrait_image.texture != null and dialogue.portrait_image.texture.resource_path == HAIBATIAN_PORTRAIT_PATH, "Hai Batian's dialogue must use the supplied portrait.")
-	_expect(dialogue.portrait_image.position.x > 900.0 and dialogue.portrait_image.size.y < 430.0, "Hai Batian must remain on the right and use a merchant-sized cutout.")
+	_expect(dialogue.portrait_image.position.x > 800.0 and dialogue.portrait_image.size.is_equal_approx(Vector2(520, 520)), "Hai Batian must remain on the right at the original portrait height in an expanded square frame.")
+	_expect(dialogue.portrait_image.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "Hai Batian's complete square source must be centered without cropping either shoulder.")
 	await _capture_dialogue(HAIBATIAN_SCREENSHOT_PATH)
 	option_box = dialogue.option_box
 	_expect(option_box.get_child_count() == 1, "Hai Batian's reply must expose one battle option.")

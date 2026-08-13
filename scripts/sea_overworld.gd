@@ -37,7 +37,7 @@ const SECONDS_PER_LUNAR_DAY := 2.0
 const FUBO_QUEST_TRIGGER_POSITION := Vector2(4260, 780)
 const FUBO_QUEST_TRIGGER_RADIUS := 760.0
 const WOKOU_STRONGHOLD_POSITION := Vector2(4380, 2460)
-const WOKOU_WARNING_TRIGGER_RADIUS := 760.0
+const WOKOU_WARNING_TRIGGER_RADIUS := 1100.0
 const PIRATE_COUNT := 5
 const PIRATE_HARBOR_SAFE_RADIUS := 700.0
 const PIRATE_PLAYER_SAFE_RADIUS := 480.0
@@ -308,12 +308,12 @@ func _build_locations() -> void:
 		[Vector2(380, 430)]
 	)
 	_build_location(
-		"倭寇大本营",
+		"倭寇营地",
 		WOKOU_STRONGHOLD_POSITION,
 		120.0,
 		Vector2.ZERO,
 		Vector2.ZERO,
-		"讨伐倭寇大本营",
+		"讨伐倭寇营地",
 		Vector2.ZERO,
 		[Vector2(-630, 140)]
 	)
@@ -335,7 +335,7 @@ func _build_auto_triggers() -> void:
 	var wokou_warning_trigger := _make_auto_trigger(
 		"WokouStrongholdWarningTrigger",
 		WOKOU_STRONGHOLD_POSITION,
-		"倭寇大本营军情",
+		"倭寇营地军情",
 		"wokou_warning",
 		WOKOU_WARNING_TRIGGER_RADIUS
 	)
@@ -906,7 +906,7 @@ func _open_wokou_warning_dialogue() -> void:
 	interaction_prompt.hide()
 	_event_dialogue.present(
 		"水师士兵",
-		"将军，前方水寨旌旗杂乱、哨船密布，正是倭寇大本营！贼众据险死守，贸然突进万分凶险。还请将军传令各船收拢阵形、严守战位，切莫轻敌！",
+		"将军，前方已近倭寇营地！水寨旌旗杂乱、哨船密布，贼众又据险死守，贸然突进万分凶险。还请将军传令各船收拢阵形、严守战位，切莫轻敌！",
 		SOLDIER_PORTRAIT,
 		[{
 			"id": &"acknowledge_wokou_warning",
@@ -922,7 +922,7 @@ func _acknowledge_wokou_warning() -> void:
 	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
 	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
 	_refresh_exploration_task()
-	_show_toast("主线推进：进逼倭寇大本营")
+	_show_toast("主线更新：讨伐倭寇")
 
 
 func _open_wokou_confrontation() -> void:
@@ -932,21 +932,26 @@ func _open_wokou_confrontation() -> void:
 	interaction_prompt.hide()
 	_event_dialogue.present(
 		"水师元帅",
-		"海霸天！你纵倭船劫掠商旅，焚毁渔村，杀伤我大明军民，搅得岭南沿海不得安生。本将奉旨靖海，今日兵临贼巢，便是你束手伏诛之时！",
+		"海霸天！你纵船劫掠商旅，焚毁渔村，杀伤我厂车军民，搅得沿海不得安生。本将奉命靖海，今日兵临贼巢，便是你束手伏诛之时！",
 		PROTAGONIST_PORTRAIT,
-		[{"id": &"confront_haibatian", "text": "喝令贼首答话"}]
+		[{"id": &"confront_haibatian", "text": "喝令贼首答话"}],
+		"",
+		true
 	)
 
 
 func _show_haibatian_reply() -> void:
 	_event_dialogue.present(
 		"倭寇头目·海霸天",
-		"呸！狗官，少在老子面前装腔作势！老子还没领船去寻你，你倒自己送上门来了。弟兄们早已磨快倭刀——既敢闯我大寨，今日便叫你有来无回！",
+		"呸！狗官，少在老子面前装腔作势！老子还没领船去寻你，你倒自己送上门来了。弟兄们，抄家伙守住寨门——既敢闯我营寨，今日便叫你有来无回！",
 		HAIBATIAN_PORTRAIT,
 		[{
 			"id": &"fight_haibatian",
 			"text": "进军，一决胜负（战斗系统还未完善，此战默认获胜）",
-		}]
+		}],
+		"",
+		false,
+		0.78
 	)
 
 
@@ -971,7 +976,7 @@ func _on_wokou_victory_cutscene_finished() -> void:
 	_set_pirates_navigation_enabled(player.controls_enabled)
 	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
 	_refresh_exploration_task()
-	_show_toast("主线完成：荡平倭寇大本营")
+	_show_toast("主线完成：荡平倭寇营地")
 
 
 func _remove_wokou_warning_trigger() -> void:
@@ -1068,9 +1073,9 @@ func _enter_active_location() -> void:
 	if _active_location_name == "南海军港":
 		_return_to_scene_two()
 		return
-	if _active_location_name == "倭寇大本营":
+	if _active_location_name == "倭寇营地":
 		if _wokou_battle_completed:
-			_show_toast("倭寇大本营 · 贼巢已平定")
+			_show_toast("倭寇营地 · 贼巢已平定")
 		else:
 			_open_wokou_confrontation()
 		return
@@ -1217,11 +1222,14 @@ func _advance_exploration_stage(next_stage: int) -> void:
 
 
 func _refresh_exploration_task() -> void:
+	var task_title := "探索海域，完善海图"
 	var objective := "使用WASD或方向键驾驶船只"
 	if _wokou_battle_completed:
-		objective = "倭寇大本营已平定，继续完善岭南海图"
+		task_title = "讨伐倭寇"
+		objective = "倭寇营地已平定"
 	elif _wokou_warning_acknowledged:
-		objective = "驶近倭寇大本营，按E发起讨伐"
+		task_title = "讨伐倭寇"
+		objective = "驶近倭寇营地，按E发起讨伐"
 	else:
 		match _exploration_stage:
 			1:
@@ -1234,7 +1242,7 @@ func _refresh_exploration_task() -> void:
 				objective = "继续探索岭南海域"
 	exploration_hud.call(
 		"set_main_task_progress",
-		"探索海域，完善海图",
+		task_title,
 		objective,
 		_exploration_stage,
 		_quest_hud_state()

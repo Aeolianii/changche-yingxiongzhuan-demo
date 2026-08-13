@@ -12,7 +12,7 @@ const EXPECTED_ENTRY_CENTERS := {
 		Vector2(660, 1980), Vector2(420, 1910), Vector2(380, 1700), Vector2(430, 1480),
 	],
 	"红湾卫所": [Vector2(3360, 2190)],
-	"倭寇大本营": [Vector2(3750, 2600)],
+	"倭寇营地": [Vector2(3750, 2600)],
 }
 
 var failures: Array[String] = []

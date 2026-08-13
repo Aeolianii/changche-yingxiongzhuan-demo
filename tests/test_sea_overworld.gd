@@ -26,12 +26,12 @@ const EXPECTED_LOCATIONS := {
 	"白沙渔岛": Vector2(1460, 2460),
 	"玄潮古屿": Vector2(2100, 2240),
 	"红湾卫所": Vector2(2980, 1760),
-	"倭寇大本营": Vector2(4380, 2460),
+	"倭寇营地": Vector2(4380, 2460),
 }
 const A_LOCATIONS := ["南海军港", "川山渔村", "东湾水寨", "青屿秘境"]
 const B_LOCATIONS := ["沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]
 const C_LOCATIONS := ["澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿"]
-const D_LOCATIONS := ["红湾卫所", "倭寇大本营"]
+const D_LOCATIONS := ["红湾卫所", "倭寇营地"]
 const NAVIGATION_ROUTES := {
 	"A_TO_B": [Vector2(1500, 800), Vector2(2100, 800), Vector2(2388, 800), Vector2(2700, 800), Vector2(3050, 800)],
 	"A_TO_C": [Vector2(1700, 1050), Vector2(1700, 1292), Vector2(1700, 1500), Vector2(1550, 1750), Vector2(1400, 1950)],
@@ -402,7 +402,7 @@ func _verify_production_entry_alignment(scene: Node) -> void:
 			Vector2(660, 1980), Vector2(420, 1910), Vector2(380, 1700), Vector2(430, 1480),
 		],
 		"红湾卫所": [Vector2(3360, 2190)],
-		"倭寇大本营": [Vector2(3750, 2600)],
+		"倭寇营地": [Vector2(3750, 2600)],
 	}
 	for location_name in expected_entry_centers:
 		var location := _find_location(locations, location_name)
@@ -566,7 +566,7 @@ func _verify_shared_exploration_hud(scene: Node) -> void:
 			south_harbor_map_label = label
 		elif "川山渔村" in label.text:
 			chuanshan_map_label = label
-	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "倭寇大本营", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
+	for expected_name in ["南海军港", "川山渔村", "东湾水寨", "青屿秘境", "红湾卫所", "倭寇营地", "澄海灯岛", "龙门海寨", "白沙渔岛", "玄潮古屿", "沧门礁堡", "月环商港", "雾岚群岛", "伏波古岭", "珊湾渔链"]:
 		_expect(location_names.any(func(text: String) -> bool: return expected_name in text), "Full map is missing the %s island label." % expected_name)
 	_expect(location_names.all(func(text: String) -> bool: return "南澳商港" not in text), "Full map must not retain the retired South Australia merchant-port name.")
 	for hidden_name in ["茶叶商船", "私盐商船", "岭南商船", "漂流木箱"]:
@@ -744,7 +744,7 @@ func _verify_c_directional_entries(scene: Node, c_locations: Array[Area2D]) -> v
 func _verify_d_expansion(scene: Node) -> void:
 	var d_locations := _collect_region_locations(D_LOCATIONS, "D")
 	_expect(d_locations.size() == 2, "D must contain two lower-right enemy-core locations matching the two visible islands.")
-	await _verify_region_interactions(scene, d_locations, "倭寇大本营", D_ZONE_SCREENSHOT_PATH)
+	await _verify_region_interactions(scene, d_locations, "倭寇营地", D_ZONE_SCREENSHOT_PATH)
 
 
 func _collect_region_locations(names: Array, region_name: String) -> Array[Area2D]:
@@ -759,8 +759,8 @@ func _collect_region_locations(names: Array, region_name: String) -> Array[Area2
 		if expected_name == "伏波古岭":
 			_expect(str(location.get_meta("entry_message", "")) == "进入伏波古岭", "Fubo Ridge must retain its playable entry message.")
 			_expect(str(location.get_meta("target_scene_path", "")).ends_with("fubo_guling.tscn"), "Fubo Ridge must retain its playable scene target.")
-		elif expected_name == "倭寇大本营":
-			_expect(str(location.get_meta("entry_message", "")) == "讨伐倭寇大本营", "The Wokou stronghold must expose its main-quest interaction.")
+		elif expected_name == "倭寇营地":
+			_expect(str(location.get_meta("entry_message", "")) == "讨伐倭寇营地", "The Wokou camp must expose its main-quest interaction.")
 		else:
 			_expect(str(location.get_meta("entry_message", "")) == "该岛屿即将开放", "%s must use the island coming-soon message." % expected_name)
 	return region_locations
@@ -781,7 +781,7 @@ func _verify_region_interactions(scene: Node, locations: Array[Area2D], preview_
 			await physics_frame
 		var location_name := str(location.get_meta("location_name", ""))
 		_expect(prompt.visible and location_name in location_label.text, "%s must expose its entry prompt from collision-free water." % location_name)
-		if location_name == "倭寇大本营":
+		if location_name == "倭寇营地":
 			continue
 		if not str(location.get_meta("target_scene_path", "")).is_empty():
 			continue

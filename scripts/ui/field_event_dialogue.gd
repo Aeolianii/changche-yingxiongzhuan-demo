@@ -8,6 +8,10 @@ const DIALOGUE_NAMEPLATE := preload("res://assets/ui/dialogue/ink_speaker_namepl
 const DEFAULT_DIALOGUE_MIN_HEIGHT := 62.0
 const COMPACT_DIALOGUE_MIN_HEIGHT := 34.0
 const OPTION_ARROW_SUFFIX := "  ▶"
+const PORTRAIT_BASE_SIZE := Vector2(440.0, 520.0)
+const PORTRAIT_BOTTOM := 930.0
+const PORTRAIT_LEFT_EDGE := -20.0
+const PORTRAIT_RIGHT_EDGE := 1324.0
 
 @onready var paper_panel: PanelContainer = $FullWidthPaperDialogueBox
 @onready var dialogue_margin: MarginContainer = $FullWidthPaperDialogueBox/DialogueMargin
@@ -31,8 +35,11 @@ func present(
 	line: String,
 	portrait: Texture2D,
 	options: Array[Dictionary],
-	detail_bbcode: String = ""
+	detail_bbcode: String = "",
+	portrait_on_left: bool = false,
+	portrait_scale: float = 1.0
 ) -> void:
+	_apply_dialogue_side(portrait_on_left, portrait_scale)
 	speaker_label.text = speaker
 	dialogue_label.text = line
 	dialogue_label.custom_minimum_size.y = COMPACT_DIALOGUE_MIN_HEIGHT if not detail_bbcode.is_empty() else DEFAULT_DIALOGUE_MIN_HEIGHT
@@ -72,10 +79,37 @@ func _apply_scene_two_styles() -> void:
 	name_style.content_margin_top = 7
 	name_style.content_margin_bottom = 7
 	name_plate.add_theme_stylebox_override("panel", name_style)
-	dialogue_margin.add_theme_constant_override("margin_left", 206)
-	dialogue_margin.add_theme_constant_override("margin_right", 440)
-	dialogue_margin.add_theme_constant_override("margin_top", 76)
-	dialogue_margin.add_theme_constant_override("margin_bottom", 18)
+	_apply_dialogue_side(false, 1.0)
+
+
+func _apply_dialogue_side(portrait_on_left: bool, portrait_scale: float) -> void:
+	var safe_scale := clampf(portrait_scale, 0.5, 1.0)
+	var portrait_size := PORTRAIT_BASE_SIZE * safe_scale
+	portrait_image.size = portrait_size
+	portrait_image.position.y = PORTRAIT_BOTTOM - portrait_size.y
+	portrait_box.position = Vector2(48, 492) if portrait_on_left else Vector2(1076, 492)
+	portrait_label.position = portrait_box.position
+	if portrait_on_left:
+		portrait_image.position.x = PORTRAIT_LEFT_EDGE
+		name_plate.position = Vector2(24, 830)
+		_set_dialogue_margins(426, 240, 76, 18)
+		dialogue_label.custom_minimum_size.x = 630
+		detail_label.custom_minimum_size.x = 630
+		option_box.custom_minimum_size.x = 630
+	else:
+		portrait_image.position.x = PORTRAIT_RIGHT_EDGE - portrait_size.x
+		name_plate.position = Vector2(1060, 830)
+		_set_dialogue_margins(206, 440, 76, 18)
+		dialogue_label.custom_minimum_size.x = 650
+		detail_label.custom_minimum_size.x = 650
+		option_box.custom_minimum_size.x = 650
+
+
+func _set_dialogue_margins(left: int, right: int, top: int, bottom: int) -> void:
+	dialogue_margin.add_theme_constant_override("margin_left", left)
+	dialogue_margin.add_theme_constant_override("margin_right", right)
+	dialogue_margin.add_theme_constant_override("margin_top", top)
+	dialogue_margin.add_theme_constant_override("margin_bottom", bottom)
 
 
 func _add_option(text_value: String, option_id: StringName) -> void:

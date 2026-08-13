@@ -16,6 +16,19 @@ func _run() -> void:
 	var game_state := root.get_node_or_null("GameState")
 	if game_state != null:
 		game_state.call("reset_runtime_world_state")
+	var first_scene := SEA_SCENE.instantiate() as Node2D
+	root.add_child(first_scene)
+	current_scene = first_scene
+	for _frame in range(6):
+		await physics_frame
+	var first_origins: Array[Vector2] = []
+	for pirate_value in first_scene.get("_pirates") as Array:
+		first_origins.append((pirate_value as SeaOverworldPirate).spawn_origin())
+	_expect(first_origins.size() == 5, "Every sea-map entry must create five pirate ships.")
+	current_scene = null
+	first_scene.queue_free()
+	await process_frame
+
 	var scene := SEA_SCENE.instantiate() as Node2D
 	root.add_child(scene)
 	current_scene = scene
@@ -24,7 +37,14 @@ func _run() -> void:
 
 	var player := scene.get_node("World/Player") as SeaOverworldPlayer
 	var pirates := scene.get("_pirates") as Array
-	_expect(pirates.size() == 3, "Sea overworld must spawn exactly three pirate ships.")
+	_expect(pirates.size() == 5, "Sea overworld must spawn exactly five pirate ships.")
+	var distribution_changed := first_origins.size() != pirates.size()
+	if not distribution_changed:
+		for pirate_index in range(pirates.size()):
+			if not first_origins[pirate_index].is_equal_approx((pirates[pirate_index] as SeaOverworldPirate).spawn_origin()):
+				distribution_changed = true
+				break
+	_expect(distribution_changed, "Re-entering the sea map must create a new random pirate distribution.")
 	if pirates.is_empty():
 		_finish(scene)
 		return
@@ -35,6 +55,11 @@ func _run() -> void:
 		_expect(spawned_pirate.move_speed < player.move_speed, "Pirate movement speed must remain lower than the player ship speed.")
 		_expect(is_equal_approx(spawned_pirate.detection_radius, 360.0) and is_equal_approx(spawned_pirate.disengage_radius, 520.0), "Pirate chase must use the approved hysteresis distances.")
 		_expect(is_equal_approx(spawned_pirate.pursuit_leash_radius, 720.0), "Pirate chase must use the approved birth-point leash radius.")
+	for first_index in range(pirates.size()):
+		for second_index in range(first_index + 1, pirates.size()):
+			var first_origin := (pirates[first_index] as SeaOverworldPirate).spawn_origin()
+			var second_origin := (pirates[second_index] as SeaOverworldPirate).spawn_origin()
+			_expect(first_origin.distance_to(second_origin) >= 460.0, "Pirates must spawn in separated parts of the sea map.")
 	var player_ship_scale := player.ship_sprite.scale
 	var pirate_ship_scale := (pirates[0] as SeaOverworldPirate).ship_sprite.scale
 	_expect(pirate_ship_scale.is_equal_approx(player_ship_scale * 0.95), "Pirate ship visuals must be five percent smaller than the player ship.")
@@ -60,6 +85,7 @@ func _run() -> void:
 	await physics_frame
 	_expect(pirate.is_chasing(), "A pirate must chase when the player enters its detection radius.")
 	_expect(pirate.velocity.length() > 0.0, "A chasing pirate must move continuously toward the player.")
+	pirate.global_position = pirate.spawn_origin() + Vector2(40, 0)
 	player.global_position = pirate.global_position + Vector2(pirate.disengage_radius + 80.0, 0)
 	await physics_frame
 	_expect(pirate.behavior_name_for_test() == "return", "A pirate must return home after the player leaves its disengage radius.")
@@ -70,11 +96,11 @@ func _run() -> void:
 
 	pirate.global_position = pirate.spawn_origin() + Vector2(60, 0)
 	pirate.pursuit_leash_radius = 40.0
-	player.global_position = pirate.global_position + Vector2(80, 0)
+	player.global_position = pirate.global_position + Vector2(200, 0)
 	pirate.force_chase_for_test()
 	await physics_frame
 	_expect(pirate.behavior_name_for_test() == "return", "A pirate must abandon pursuit after crossing its birth-point leash.")
-	player.global_position = pirate.global_position + Vector2(10, 0)
+	player.global_position = pirate.global_position + Vector2(200, 0)
 	await physics_frame
 	_expect(pirate.behavior_name_for_test() == "return", "A returning pirate must ignore nearby players until it reaches home.")
 	pirate.pursuit_leash_radius = 720.0
@@ -96,7 +122,7 @@ func _run() -> void:
 	await process_frame
 	_expect(not dialogue.visible, "Closing the battle placeholder must restore the sea map.")
 	_expect(player.controls_enabled, "Closing the battle placeholder must restore player movement.")
-	_expect((scene.get("_pirates") as Array).size() == 2, "The contacted pirate must be removed after the placeholder encounter.")
+	_expect((scene.get("_pirates") as Array).size() == 4, "The contacted pirate must be removed after the placeholder encounter.")
 
 	_finish(scene)
 

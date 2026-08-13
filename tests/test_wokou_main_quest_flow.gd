@@ -39,7 +39,7 @@ func _run() -> void:
 	var player := scene.get_node("World/Player") as SeaOverworldPlayer
 	var dialogue := scene.get("_event_dialogue") as FieldEventDialogue
 	var warning_shape := warning_trigger.get_child(0) as CollisionShape2D
-	_expect(warning_shape.shape is CircleShape2D and is_equal_approx((warning_shape.shape as CircleShape2D).radius, 1100.0), "The Wokou warning must trigger well before the fleet reaches the camp entrance.")
+	_expect(warning_shape.shape is CircleShape2D and is_equal_approx((warning_shape.shape as CircleShape2D).radius, 1200.0), "The Wokou warning radius must extend one hundred pixels farther from the camp.")
 	scene.call("_on_auto_trigger_body_entered", player, warning_trigger)
 	await process_frame
 	_expect(dialogue.visible and dialogue.speaker_label.text == "水师士兵", "Approaching the stronghold must automatically open the soldier warning.")

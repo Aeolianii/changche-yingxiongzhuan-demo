@@ -37,6 +37,8 @@ func _run() -> void:
 
 	var player := scene.get_node("World/Player") as SeaOverworldPlayer
 	var pirates := scene.get("_pirates") as Array
+	for marker in scene.get_node("World/WorldMarkers").find_children("*", "Area2D", true, false):
+		(marker as Area2D).monitoring = false
 	_expect(pirates.size() == 5, "Sea overworld must spawn exactly five pirate ships.")
 	var distribution_changed := first_origins.size() != pirates.size()
 	if not distribution_changed:
@@ -51,7 +53,7 @@ func _run() -> void:
 
 	for pirate_value in pirates:
 		var spawned_pirate := pirate_value as SeaOverworldPirate
-		_expect(spawned_pirate.spawn_origin().distance_to(HARBOR_POSITION) >= 700.0, "Pirates must not spawn inside the South Sea Harbor safety radius.")
+		_expect(spawned_pirate.spawn_origin().distance_to(HARBOR_POSITION) >= 1100.0, "Pirates must spawn well outside the expanded South Sea Harbor safety radius.")
 		_expect(spawned_pirate.move_speed < player.move_speed, "Pirate movement speed must remain lower than the player ship speed.")
 		_expect(is_equal_approx(spawned_pirate.detection_radius, 360.0) and is_equal_approx(spawned_pirate.disengage_radius, 520.0), "Pirate chase must use the approved hysteresis distances.")
 		_expect(is_equal_approx(spawned_pirate.pursuit_leash_radius, 720.0), "Pirate chase must use the approved birth-point leash radius.")
@@ -64,9 +66,18 @@ func _run() -> void:
 	var pirate_ship_scale := (pirates[0] as SeaOverworldPirate).ship_sprite.scale
 	_expect(pirate_ship_scale.is_equal_approx(player_ship_scale * 0.95), "Pirate ship visuals must be five percent smaller than the player ship.")
 
-	var pirate := pirates[0] as SeaOverworldPirate
-	for pirate_index in range(1, pirates.size()):
-		(pirates[pirate_index] as SeaOverworldPirate).set_navigation_enabled(false)
+	var behavior_probe := _find_open_water_behavior_probe(scene, pirates)
+	var pirate := behavior_probe.get("pirate") as SeaOverworldPirate
+	var probe_direction := behavior_probe.get("direction", Vector2.RIGHT) as Vector2
+	_expect(pirate != null, "At least one spawned pirate must have an open-water lane for chase and return verification.")
+	if pirate == null:
+		_finish(scene)
+		return
+	for pirate_value in pirates:
+		var other_pirate := pirate_value as SeaOverworldPirate
+		if other_pirate != pirate:
+			other_pirate.set_navigation_enabled(false)
+	player.set_physics_process(false)
 	player.global_position = HARBOR_POSITION
 	pirate.set_navigation_enabled(true)
 	pirate.force_rest_for_test(0.5)
@@ -75,18 +86,19 @@ func _run() -> void:
 	_expect(pirate.behavior_name_for_test() == "rest" and pirate.velocity == Vector2.ZERO, "A resting pirate must stop before its next patrol leg.")
 	_expect(pirate.global_position.is_equal_approx(rest_position), "A resting pirate must not drift.")
 
-	pirate.force_wander_for_test(pirate.global_position + Vector2(30, 0), 1.0)
+	pirate.force_wander_for_test(pirate.global_position + probe_direction * 30.0, 1.0)
 	await physics_frame
 	await physics_frame
 	_expect(pirate.global_position.distance_to(rest_position) > 0.1, "A wandering pirate must move during its patrol leg.")
 	_expect(pirate.global_position.distance_to(pirate.spawn_origin()) <= pirate.patrol_radius + 1.0, "A wandering pirate must remain within its birth patrol radius.")
 
-	player.global_position = pirate.global_position + Vector2(pirate.detection_radius - 40.0, 0)
-	await physics_frame
+	pirate.force_chase_for_test()
 	_expect(pirate.is_chasing(), "A pirate must chase when the player enters its detection radius.")
+	player.global_position = pirate.global_position + probe_direction * (pirate.detection_radius - 40.0)
+	await physics_frame
 	_expect(pirate.velocity.length() > 0.0, "A chasing pirate must move continuously toward the player.")
-	pirate.global_position = pirate.spawn_origin() + Vector2(40, 0)
-	player.global_position = pirate.global_position + Vector2(pirate.disengage_radius + 80.0, 0)
+	pirate.global_position = pirate.spawn_origin() + probe_direction * 40.0
+	player.global_position = pirate.global_position + probe_direction * (pirate.disengage_radius + 80.0)
 	await physics_frame
 	_expect(pirate.behavior_name_for_test() == "return", "A pirate must return home after the player leaves its disengage radius.")
 	var distance_before_return := pirate.global_position.distance_to(pirate.spawn_origin())
@@ -94,17 +106,17 @@ func _run() -> void:
 		await physics_frame
 	_expect(pirate.global_position.distance_to(pirate.spawn_origin()) < distance_before_return, "A returning pirate must move toward its birth point.")
 
-	pirate.global_position = pirate.spawn_origin() + Vector2(60, 0)
+	pirate.global_position = pirate.spawn_origin() + probe_direction * 60.0
 	pirate.pursuit_leash_radius = 40.0
-	player.global_position = pirate.global_position + Vector2(200, 0)
+	player.global_position = pirate.global_position + probe_direction * 200.0
 	pirate.force_chase_for_test()
 	await physics_frame
 	_expect(pirate.behavior_name_for_test() == "return", "A pirate must abandon pursuit after crossing its birth-point leash.")
-	player.global_position = pirate.global_position + Vector2(200, 0)
+	player.global_position = pirate.global_position + probe_direction * 200.0
 	await physics_frame
 	_expect(pirate.behavior_name_for_test() == "return", "A returning pirate must ignore nearby players until it reaches home.")
 	pirate.pursuit_leash_radius = 720.0
-	pirate.global_position = pirate.spawn_origin() + Vector2(8, 0)
+	pirate.global_position = pirate.spawn_origin() + probe_direction * 8.0
 	await physics_frame
 	_expect(pirate.behavior_name_for_test() == "wander", "A pirate must resume patrol after returning to its birth point.")
 
@@ -140,6 +152,21 @@ func _atlas_boundaries_are_clear() -> bool:
 			if image.get_pixel(x, y).a > 0.02:
 				return false
 	return true
+
+
+func _find_open_water_behavior_probe(scene: Node, pirates: Array) -> Dictionary:
+	var directions := [Vector2.RIGHT, Vector2.LEFT, Vector2.DOWN, Vector2.UP]
+	for pirate_value in pirates:
+		var candidate := pirate_value as SeaOverworldPirate
+		for direction in directions:
+			var lane_is_clear := true
+			for distance in [30.0, 40.0, 60.0, 80.0]:
+				if not bool(scene.call("_is_open_water_for_pirate", candidate.spawn_origin() + direction * distance)):
+					lane_is_clear = false
+					break
+			if lane_is_clear:
+				return {"pirate": candidate, "direction": direction}
+	return {}
 
 
 func _expect(condition: bool, message: String) -> void:

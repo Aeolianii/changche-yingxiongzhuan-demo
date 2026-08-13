@@ -19,7 +19,7 @@ func _run() -> void:
 	await process_frame
 
 	var bribe_scene := await _spawn_scene()
-	await _verify_choice_branch(bribe_scene, 1, "银钱 +800", false)
+	await _verify_choice_branch(bribe_scene, 1, "军饷 +800", false)
 	bribe_scene.queue_free()
 	await process_frame
 

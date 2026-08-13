@@ -8,6 +8,7 @@ const KEEPER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
 const FUBO_SAVE_STATE := preload("res://scripts/fubo_guling/fubo_save_state.gd")
+const ITEM_CATALOG := preload("res://scripts/economy/item_catalog.gd")
 const SCENE_PATH := "res://scenes/fubo_guling/fubo_guling.tscn"
 const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 
@@ -542,6 +543,14 @@ func _complete_fishing(result: Dictionary) -> void:
 	var first_completion := _fishing_return_phase in [Phase.ARRIVAL, Phase.FISHING_AVAILABLE]
 	phase = Phase.DRUM_AVAILABLE if first_completion else _fishing_return_phase
 	_apply_phase_world_state()
+	var game_state := _game_state()
+	if game_state != null:
+		var catches = result.get("catches", {})
+		if catches is Dictionary:
+			for catch_kind in catches:
+				var item_id := ITEM_CATALOG.fishing_reward_id(str(catch_kind))
+				if not item_id.is_empty():
+					game_state.call("add_economy_item", item_id, int(catches[catch_kind]))
 	_refresh_exploration_hud()
 	if not _test_mode:
 		_show_notice("渔获满舱，收竿归岸", 1.8)

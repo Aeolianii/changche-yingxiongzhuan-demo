@@ -80,6 +80,8 @@ $requiredFiles = @(
     'scenes\palace\palace_demo.tscn',
     'scenes\Scene2.tscn',
     'scenes\sea_overworld\sea_overworld.tscn',
+	'scenes\yuehuan_merchant_harbor\yuehuan_merchant_harbor.tscn',
+	'scenes\yuehuan_merchant_harbor\merchant_shop_overlay.tscn',
 	'scenes\ui\exploration_hud.tscn',
 	'scenes\ui\title_screen.tscn',
     'scenes\ui\chapter_transition.tscn',
@@ -123,7 +125,10 @@ $requiredFiles = @(
     'assets\characters\soldier\standard\walk\down\1.png',
     'assets\ui\dialogue\ink_dialogue_backdrop.png',
     'assets\ui\dialogue\ink_speaker_nameplate.png',
-    'assets\backgrounds\naval_base.png'
+    'assets\backgrounds\naval_base.png',
+	'assets\yuehuan_merchant_island\backgrounds\yuehuan_merchant_island_v3.png',
+	'assets\yuehuan_merchant_island\characters\liang_trader_v2.png',
+	'assets\yuehuan_merchant_island\characters\shen_shipwright_v2.png'
 )
 
 foreach ($requiredFile in $requiredFiles) {
@@ -144,9 +149,7 @@ $projectFile = Join-Path $projectRoot 'project.godot'
 if (Test-Path -LiteralPath $projectFile -PathType Leaf) {
     $projectContent = [System.IO.File]::ReadAllText($projectFile)
 	Assert-Contains $projectContent 'run/main_scene="res://scenes/ui/title_screen\.tscn"' 'Project must start from the title screen.'
-    if ($projectContent -match '"C#"|\[dotnet\]|project/assembly_name') {
-        Add-Failure 'Project must not retain obsolete C# or .NET configuration.'
-    }
+	Assert-Contains $projectContent '\[dotnet\][\s\S]*project/assembly_name' 'Project must retain the active Scene2 C#/.NET configuration.'
     Assert-Contains $projectContent '"physical_keycode":32' 'The interact action must include Space.'
     Assert-Contains $projectContent '"physical_keycode":69' 'The interact action must include E.'
 }
@@ -251,7 +254,7 @@ if (Test-Path -LiteralPath $seaOverworldScript -PathType Leaf) {
 $gameStateScript = Join-Path $projectRoot 'scripts\core\game_state.gd'
 if (Test-Path -LiteralPath $gameStateScript -PathType Leaf) {
     $gameStateContent = [System.IO.File]::ReadAllText($gameStateScript)
-    Assert-Contains $gameStateContent 'SAVE_VERSION\s*:=\s*1' 'Main-flow saves must declare a version.'
+    Assert-Contains $gameStateContent 'SAVE_VERSION\s*:=\s*2' 'Main-flow saves must declare economy-aware version 2.'
     Assert-Contains $gameStateContent 'user://main_flow_save\.json' 'Main-flow saves must use the documented single-slot path.'
     Assert-Contains $gameStateContent 'func consume_pending_scene_state\(' 'Loaded scene snapshots must be consumed once.'
 } else {
@@ -291,7 +294,9 @@ if (Test-Path -LiteralPath $sceneOneFile -PathType Leaf) {
     Assert-Contains $sceneOneScene '\[node name="PortraitImage" type="TextureRect" parent="UI/Overlay/PortraitDisplay"' 'Scene1 must contain a portrait texture node.'
     Assert-Contains $sceneOneScene '\[node name="PlaceholderFrame" type="ColorRect" parent="UI/Overlay/PortraitDisplay"' 'Scene1 must contain an emperor placeholder card.'
     Assert-Contains $sceneOneScene '\[node name="NameText" type="Label" parent="UI/Overlay/PortraitDisplay/NamePlate"' 'Scene1 must contain a portrait name plate.'
-    Assert-Contains $sceneOneScene 'instance=ExtResource\("8_hud"\)' 'Scene1 must instance the shared exploration HUD.'
+	if ($sceneOneScene -match 'exploration_hud\.tscn') {
+		Add-Failure 'Scene1 must not instance a private exploration HUD after the global ExplorationUI migration.'
+	}
     Assert-Contains $sceneOneScene 'instance=ExtResource\("9_chapter"\)' 'Scene1 must instance the chapter transition UI.'
     Assert-Contains $sceneOneScene 'assets/ui/dialogue/ink_dialogue_backdrop\.png' 'Scene1 must share the generated ink dialogue backdrop.'
     Assert-Contains $sceneOneScene 'assets/ui/dialogue/ink_speaker_nameplate\.png' 'Scene1 must share the generated ink speaker nameplate.'
@@ -302,6 +307,8 @@ Test-SceneResourceReferences 'scenes\characters\player.tscn'
 Test-SceneResourceReferences 'scenes\characters\npc.tscn'
 Test-SceneResourceReferences 'scenes\Scene2.tscn'
 Test-SceneResourceReferences 'scenes\sea_overworld\sea_overworld.tscn'
+Test-SceneResourceReferences 'scenes\yuehuan_merchant_harbor\yuehuan_merchant_harbor.tscn'
+Test-SceneResourceReferences 'scenes\yuehuan_merchant_harbor\merchant_shop_overlay.tscn'
 Test-SceneResourceReferences 'scenes\ui\exploration_hud.tscn'
 Test-SceneResourceReferences 'scenes\ui\chapter_transition.tscn'
 Test-SceneResourceReferences 'scenes\ui\title_screen.tscn'

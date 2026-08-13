@@ -21,6 +21,7 @@ var _game: FuboFishingGame
 var _started_ms := 0
 var _completion_sent := false
 var _exiting := false
+var _catch_counts: Dictionary = {}
 
 
 func _ready() -> void:
@@ -93,6 +94,7 @@ func _refresh_hud() -> void:
 
 
 func _on_catch_landed(kind: String, value: int) -> void:
+	_catch_counts[kind] = int(_catch_counts.get(kind, 0)) + 1
 	board.flash_catch()
 	status_label.text = "钓到%s，+%d 分！" % [String(CATCH_NAMES.get(kind, "鱼获")), value]
 
@@ -103,7 +105,9 @@ func _on_empty_hook_returned() -> void:
 
 func _finish_after_feedback() -> void:
 	await get_tree().create_timer(0.65).timeout
-	completed.emit(build_result(_game.get_rating(), _game.get_empty_casts(), Time.get_ticks_msec() - _started_ms))
+	var result := build_result(_game.get_rating(), _game.get_empty_casts(), Time.get_ticks_msec() - _started_ms)
+	result["catches"] = _catch_counts.duplicate(true)
+	completed.emit(result)
 
 
 func _request_exit() -> void:

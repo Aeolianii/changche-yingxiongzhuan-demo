@@ -86,7 +86,7 @@ func _verify_salvage_branch(scene: Node) -> void:
 	_expect(dialogue.visible, "Salvaging must keep the dialogue open for the resource result.")
 	_expect(not sea_map_status.visible, "Sea map button must remain hidden while the salvage result dialogue is open.")
 	var result_text := (dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label).text
-	_expect("金石 +100" in result_text and "木材 +100" in result_text and "银钱 +1000" in result_text, "Salvage result must show all three exact resource gains.")
+	_expect("铁石 +100" in result_text and "木材 +100" in result_text and "军饷 +1000" in result_text, "Salvage result must show all three exact resource gains.")
 	_expect(not player.controls_enabled, "Player movement must remain locked until the salvage result is acknowledged.")
 	option_box = _option_box(dialogue)
 	_expect(option_box.get_child_count() == 1, "Salvage result must provide one continue option.")

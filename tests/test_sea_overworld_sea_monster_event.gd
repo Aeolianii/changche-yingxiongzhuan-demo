@@ -11,7 +11,14 @@ const PORTRAIT_PATHS := [
 	"res://assets/sea_overworld/portraits/海怪2.png",
 	"res://assets/sea_overworld/portraits/海怪3.png",
 ]
+const DEEP_WATER_SPAWN_POINTS: Array[Vector2] = [
+	Vector2(1600, 1900),
+	Vector2(4580, 250),
+	Vector2(4580, 1530),
+]
+const SEA_MONSTER_SPAWN_CLEARANCE := 220.0
 const MAP_PREVIEW_PATH := "res://.godot/sea_overworld_monster_mist_preview.png"
+const DIALOGUE_PREVIEW_PATH := "res://.godot/sea_overworld_monster_dialogue_preview.png"
 
 var failures: Array[String] = []
 
@@ -74,6 +81,18 @@ func _verify_default_victory(scene: Node, variant: int) -> void:
 	var portrait := dialogue.get_node("LargeTransparentPortrait") as TextureRect
 	_expect(speaker.text == "海中异兽" and "海怪" in line.text, "Approaching the mist must reveal a sea monster in dialogue.")
 	_expect(portrait.texture != null and portrait.texture.resource_path == PORTRAIT_PATHS[variant], "Sea-monster variant %d must reveal its matching portrait." % (variant + 1))
+	if portrait.texture != null:
+		var portrait_image := portrait.texture.get_image()
+		var portrait_last := portrait_image.get_size() - Vector2i.ONE
+		_expect(
+			portrait_image.get_pixel(0, 0).a < 0.05
+			and portrait_image.get_pixel(portrait_last.x, 0).a < 0.05
+			and portrait_image.get_pixel(0, portrait_last.y).a < 0.05
+			and portrait_image.get_pixel(portrait_last.x, portrait_last.y).a < 0.05,
+			"Sea-monster portrait variant %d must have a transparent outer background." % (variant + 1)
+		)
+	if variant == 1:
+		await _capture_dialogue_preview()
 	option_box = _option_box(dialogue)
 	_expect(option_box.get_child_count() == 1, "Revealed sea monster must provide one placeholder battle choice.")
 	if option_box.get_child_count() != 1:
@@ -131,6 +150,15 @@ func _verify_map_visual(scene: Node, variant: int) -> Area2D:
 	_expect(events.size() == 3, "Sea-monster entry must respect the three-event limit.")
 	_expect(str(event.get_meta("display_name")) == "雾中可疑身影", "Map event must remain unidentified before interaction.")
 	_expect(int(event.get_meta("sea_monster_variant", -1)) == variant, "Sea-monster event must retain its selected variant identity.")
+	var uses_deep_water_anchor := false
+	for spawn_point in DEEP_WATER_SPAWN_POINTS:
+		if event.global_position.distance_to(spawn_point) < 0.1:
+			uses_deep_water_anchor = true
+		_expect(
+			bool(scene.call("_is_open_water_for_random_event", spawn_point, SEA_MONSTER_SPAWN_CLEARANCE)),
+			"Sea-monster deep-water anchor %s must keep a 220-unit clear radius from island collision." % spawn_point
+		)
+	_expect(uses_deep_water_anchor, "Sea-monster event must spawn at one of the three approved broad-water anchors.")
 	var sprite := event.get_node("EventVisual/MistSprite") as Sprite2D
 	_expect(sprite.texture != null and sprite.texture.resource_path == MIST_PATHS[variant], "Sea-monster variant %d must use its matching generated mist silhouette." % (variant + 1))
 	var mist_image := sprite.texture.get_image()
@@ -173,6 +201,15 @@ func _capture_map_preview(scene: Node, event: Area2D, player: CharacterBody2D) -
 		await physics_frame
 	await RenderingServer.frame_post_draw
 	_expect(root.get_texture().get_image().save_png(MAP_PREVIEW_PATH) == OK, "Sea-monster mist map preview could not be saved.")
+
+
+func _capture_dialogue_preview() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	for _frame in range(3):
+		await process_frame
+	await RenderingServer.frame_post_draw
+	_expect(root.get_texture().get_image().save_png(DIALOGUE_PREVIEW_PATH) == OK, "Sea-monster dialogue preview could not be saved.")
 
 
 func _option_box(dialogue: Control) -> VBoxContainer:

@@ -65,9 +65,14 @@ const RANDOM_EVENT_SPAWN_POINTS := {
 	RANDOM_EVENT_TEA: Vector2(1370, 760),
 	RANDOM_EVENT_SALT: Vector2(2200, 1500),
 	RANDOM_EVENT_CRATE: Vector2(1300, 1700),
-	RANDOM_EVENT_SEA_MONSTER: Vector2(3300, 1760),
 }
 const RANDOM_EVENT_SPAWN_CLEARANCE := 82.0
+const SEA_MONSTER_DEEP_WATER_SPAWN_POINTS: Array[Vector2] = [
+	Vector2(1600, 1900),
+	Vector2(4580, 250),
+	Vector2(4580, 1530),
+]
+const SEA_MONSTER_SPAWN_CLEARANCE := 220.0
 const RANDOM_EVENT_SPAWN_SEPARATION := 360.0
 const RANDOM_EVENT_VIEW_MARGIN := 96.0
 const SALT_MERCHANT_MOVE_SPEED := 210.0
@@ -407,8 +412,15 @@ func _initialize_random_events() -> void:
 
 
 func _spawn_random_event_at_random_position(event_id: StringName) -> Area2D:
-	var spawn_position := _find_random_event_spawn_position()
+	var spawn_position := (
+		_find_sea_monster_spawn_position()
+		if event_id == RANDOM_EVENT_SEA_MONSTER
+		else _find_random_event_spawn_position()
+	)
 	if not is_finite(spawn_position.x) or not is_finite(spawn_position.y):
+		if event_id == RANDOM_EVENT_SEA_MONSTER:
+			push_warning("Could not find an available deep-water sea-monster spawn point.")
+			return null
 		spawn_position = RANDOM_EVENT_SPAWN_POINTS[event_id]
 	return _spawn_random_event(event_id, spawn_position)
 
@@ -495,9 +507,13 @@ func _refill_random_event_slots() -> void:
 		if candidates.is_empty():
 			break
 		var chosen_id := candidates[_random_event_rng.randi_range(0, candidates.size() - 1)]
-		var spawn_position: Vector2 = RANDOM_EVENT_SPAWN_POINTS[chosen_id]
-		if not _is_random_event_spawn_valid(spawn_position):
-			spawn_position = _find_random_event_spawn_position()
+		var spawn_position := Vector2(INF, INF)
+		if chosen_id == RANDOM_EVENT_SEA_MONSTER:
+			spawn_position = _find_sea_monster_spawn_position()
+		else:
+			spawn_position = RANDOM_EVENT_SPAWN_POINTS[chosen_id]
+			if not _is_random_event_spawn_valid(spawn_position):
+				spawn_position = _find_random_event_spawn_position()
 		if not is_finite(spawn_position.x) or not is_finite(spawn_position.y):
 			push_warning("Could not find an off-screen random-event spawn point.")
 			break
@@ -537,6 +553,25 @@ func _is_random_event_spawn_valid(candidate: Vector2) -> bool:
 		if candidate.distance_to(existing_area.global_position) < trigger_clearance:
 			return false
 	return _is_open_water_for_random_event(candidate)
+
+
+func _find_sea_monster_spawn_position() -> Vector2:
+	var candidates: Array[Vector2] = SEA_MONSTER_DEEP_WATER_SPAWN_POINTS.duplicate()
+	while not candidates.is_empty():
+		var candidate_index := _random_event_rng.randi_range(0, candidates.size() - 1)
+		var candidate: Vector2 = candidates.pop_at(candidate_index)
+		if _is_sea_monster_spawn_valid(candidate):
+			return candidate
+	return Vector2(INF, INF)
+
+
+func _is_sea_monster_spawn_valid(candidate: Vector2) -> bool:
+	if _player_view_world_rect().grow(RANDOM_EVENT_VIEW_MARGIN).has_point(candidate):
+		return false
+	for active_event in _active_random_events():
+		if candidate.distance_to(active_event.global_position) < RANDOM_EVENT_SPAWN_SEPARATION:
+			return false
+	return _is_open_water_for_random_event(candidate, SEA_MONSTER_SPAWN_CLEARANCE)
 
 
 func _find_random_event_spawn_position() -> Vector2:

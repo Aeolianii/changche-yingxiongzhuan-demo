@@ -44,6 +44,7 @@ func _run() -> void:
 
 func _spawn_scene() -> Node:
 	var scene := SEA_SCENE.instantiate()
+	scene.set("_random_event_seed_override", 1)
 	root.add_child(scene)
 	current_scene = scene
 	await process_frame
@@ -94,13 +95,14 @@ func _verify_salt_ship_setup(scene: Node) -> Area2D:
 	var salt_ship := scene.get_node_or_null("World/WorldMarkers/SaltMerchantShip") as Area2D
 	var tea_ship := scene.get_node_or_null("World/WorldMarkers/ShipTrigger0") as Area2D
 	var crate := scene.get_node_or_null("World/WorldMarkers/DriftEvent") as Area2D
-	_expect(salt_ship != null and tea_ship != null and crate != null, "Salt, tea and crate event nodes must exist for spacing verification.")
-	if salt_ship == null or tea_ship == null or crate == null:
+	_expect(salt_ship != null and tea_ship != null and crate == null, "A salt-seeded map must start with tea and salt as its two random events.")
+	if salt_ship == null or tea_ship == null:
 		return null
-	_expect(salt_ship.position.is_equal_approx(SALT_MERCHANT_POSITION), "Salt merchant ship must use the approved offshore position.")
+	var spawn_origin: Vector2 = salt_ship.get_meta("spawn_origin", Vector2.ZERO)
+	_expect(spawn_origin.is_equal_approx(SALT_MERCHANT_POSITION), "Salt merchant ship must use the approved offshore refresh point.")
+	_expect(salt_ship.position.distance_to(spawn_origin) <= 120.0, "Salt merchant patrol must stay within its 120-unit local range.")
 	_expect(_is_water_clear(salt_ship.global_position, 120.0), "Salt merchant ship must stay well clear of land.")
-	_expect(salt_ship.position.distance_to(tea_ship.position) > 900.0, "Salt and tea merchant events must be widely separated.")
-	_expect(salt_ship.position.distance_to(crate.position) > 900.0, "Salt merchant and drifting-crate events must be widely separated.")
+	_expect(spawn_origin.distance_to(tea_ship.position) > 900.0, "Salt and tea merchant refresh points must be widely separated.")
 	_expect(str(salt_ship.get_meta("display_name")) == "私盐商船", "Salt ship event must retain its private event identity.")
 	_expect(salt_ship.find_children("*", "Label", true, false).is_empty(), "Salt ship identity must not be shown before interaction.")
 	var trigger_shapes := salt_ship.find_children("*", "CollisionShape2D", false, false)

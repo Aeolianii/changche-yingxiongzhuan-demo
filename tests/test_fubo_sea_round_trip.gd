@@ -33,9 +33,6 @@ func _run() -> void:
 	ship.call("restore_facing_index", 2)
 	sea.set("_exploration_stage", 4)
 	sea.set("_lunar_day", 8.5)
-	sea.set("_crate_event_resolved", true)
-	sea.set("_tea_merchant_event_resolved", true)
-	sea.set("_salt_merchant_event_resolved", true)
 	var fog_probe := Vector2(3000, 1500)
 	var sea_fog := sea.get_node("World/FogOfWar")
 	sea_fog.call("reveal_at", fog_probe)
@@ -43,8 +40,16 @@ func _run() -> void:
 	var expected_position := ship.global_position
 	for _frame in range(3):
 		await physics_frame
+	var event_dialogue := sea.get_node("UI/FieldEventDialogue") as Control
+	if event_dialogue.visible and not bool(root.get_node("GameState").call("has_fubo_side_quest")):
+		var option_box := event_dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
+		if option_box.get_child_count() == 1:
+			(option_box.get_child(0) as Button).pressed.emit()
+			await process_frame
+			await physics_frame
 	_check((sea.get_node("UI/Root/InteractionPrompt") as Control).visible, "Fubo entry prompt must appear on reachable water.")
 	await _capture_if_visible(SEA_ENTRY_SCREENSHOT, "Fubo sea entry screenshot could not be saved.")
+	var expected_random_events := _random_event_positions(sea)
 
 	var enter_event := InputEventKey.new()
 	enter_event.physical_keycode = KEY_E
@@ -77,9 +82,12 @@ func _run() -> void:
 		_check(int(returned_ship.call("save_facing_index")) == 2, "Sea return must restore the pre-landing facing.")
 		_check(int(returned_sea.get("_exploration_stage")) == 4, "Sea return must restore exploration progress.")
 		_check(is_equal_approx(float(returned_sea.get("_lunar_day")), 8.5), "Sea return must restore lunar progress.")
-		_check(returned_sea.get_node_or_null("World/WorldMarkers/DriftEvent") == null, "Sea return must preserve the resolved drifting-crate state.")
-		_check(returned_sea.get_node_or_null("World/WorldMarkers/ShipTrigger0") == null, "Sea return must preserve the resolved tea-merchant state.")
-		_check(returned_sea.get_node_or_null("World/WorldMarkers/SaltMerchantShip") == null, "Sea return must preserve the resolved salt-merchant state.")
+		var returned_random_events := _random_event_positions(returned_sea)
+		_check(
+			returned_random_events.size() == expected_random_events.size()
+			and returned_random_events.keys().all(func(event_id: String) -> bool: return expected_random_events.has(event_id)),
+			"Sea return must preserve the two active random-event types without duplication."
+		)
 		var returned_fog := returned_sea.get_node("World/FogOfWar")
 		_check(bool(returned_fog.call("is_world_position_revealed", fog_probe)), "Sea return must preserve the explored fog route.")
 	_check(not root.has_meta(TRAVEL.RETURN_REQUEST_META) and not root.has_meta(TRAVEL.RETURN_CONTEXT_META), "Round-trip metadata must be consumed after returning.")
@@ -102,6 +110,15 @@ func _find_location(location_name: String) -> Area2D:
 		if str(location_node.get_meta("location_name", "")) == location_name:
 			return location_node as Area2D
 	return null
+
+
+func _random_event_positions(sea: Node) -> Dictionary:
+	var result := {}
+	var events: Array = sea.call("_active_random_events") as Array
+	for area in events:
+		var event_area := area as Area2D
+		result[String(event_area.get_meta("random_event_id", &""))] = event_area.global_position
+	return result
 
 
 func _find_clear_entry_point(area: Area2D) -> Vector2:

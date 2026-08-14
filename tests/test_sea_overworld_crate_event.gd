@@ -43,6 +43,7 @@ func _run() -> void:
 
 func _spawn_scene() -> Node:
 	var scene := SEA_SCENE.instantiate()
+	scene.set("_random_event_seed_override", 0)
 	root.add_child(scene)
 	current_scene = scene
 	await process_frame

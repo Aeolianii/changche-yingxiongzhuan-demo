@@ -19,7 +19,7 @@
 
 `PalaceDemo` 包含 Background、WorldCollisions、YSortedCharacters、InteractionPoints、Camera2D 和 UI。
 
-`Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操演黑场过渡层。完整操演界面由 `scenes/naval/LevelSelect.tscn`、`NavalDeployment.tscn` 与 `NavalDemo.tscn` 承载。
+`Scene2` 包含 World、运行时角色与环境构建、Camera2D、NPC 交互、对话 UI 和操演黑场过渡层。完整操演界面由 `scenes/naval/LevelSelect.tscn`、`NavalDeployment.tscn` 与 `NavalDemo.tscn` 承载；这是工程中唯一保留的海战实现，旧 GDScript 战棋原型与独立官军战役外壳不再参与运行或验证。
 
 `SeaOverworld` 是海上大地图初版，场景位于 `scenes/sea_overworld/sea_overworld.tscn`。它使用横向拼接的广东海岸基础图与东部扩展图、手工岛屿碰撞、`CharacterBody2D` 船只、地点 `Area2D` 和独立 Canvas UI；东部扩展以 `World/EastBackground` 节点序列化在场景中，全部 14 个海岸多边形与 18 个圆形礁石碰撞也序列化在 `World/WorldCollision` 下，碰撞几何与地点交互范围以提交 `3ac55ce` 为固定基线；海上自动目标默认使用半径 `82`，私盐商船使用紧贴船体的半径 `48`。场景脚本只负责背景参数、动态地点/事件与运行时交互，不再生成静态世界碰撞。水师操练完成后可由场景二的广州县令对话进入，可从南海军港返回场景二，也可从伏波古岭入口进入真实岛屿场景。
 

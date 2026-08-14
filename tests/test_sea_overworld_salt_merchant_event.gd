@@ -2,6 +2,7 @@ extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SALT_MERCHANT_PORTRAIT_PATH := "res://assets/sea_overworld/portraits/大地图私盐商人.png"
+const EVENT_SHIPS_ATLAS_PATH := "res://assets/sprites/sea_overworld/event_ships_atlas_v2.png"
 const RESULT_SCREENSHOT_PATH := "res://.godot/sea_overworld_salt_merchant_result_preview.png"
 
 var failures: Array[String] = []
@@ -88,19 +89,22 @@ func _verify_choice_branch(scene: Node, option_index: int, expected_detail: Stri
 	_expect(not dialogue.visible and player.controls_enabled, "Finishing a salt merchant result must resume sailing.")
 	_expect(scene.get_node_or_null("World/WorldMarkers/SaltMerchantShip") == null, "Salt merchant ship must disappear after the result dialogue ends.")
 	_expect(bool(scene.get("_salt_merchant_event_resolved")), "Every salt merchant choice must resolve the event.")
+	_expect((scene.get("_resolved_random_event_ids") as Dictionary).has(&"salt_merchant"), "A completed salt merchant must be blocked from refilling in the same session.")
 
 
 func _verify_salt_ship_setup(scene: Node) -> Area2D:
 	var salt_ship := scene.get_node_or_null("World/WorldMarkers/SaltMerchantShip") as Area2D
 	var tea_ship := scene.get_node_or_null("World/WorldMarkers/ShipTrigger0") as Area2D
 	var crate := scene.get_node_or_null("World/WorldMarkers/DriftEvent") as Area2D
-	_expect(salt_ship != null and tea_ship != null and crate == null, "A salt-seeded map must start with tea and salt as its two random events.")
-	if salt_ship == null or tea_ship == null:
+	_expect(salt_ship != null and crate != null and tea_ship == null, "A salt-seeded map must allow three ordinary events without forcing the tea merchant.")
+	if salt_ship == null:
 		return null
 	var spawn_origin: Vector2 = salt_ship.get_meta("spawn_origin", Vector2.ZERO)
 	_expect(salt_ship.position.distance_to(spawn_origin) <= 240.0, "Salt merchant patrol must stay within its pirate-matched 240-unit range.")
 	_expect(_is_water_clear(salt_ship.global_position, 48.0), "Salt merchant ship must stay clear of land.")
-	_expect(spawn_origin.distance_to(tea_ship.position) >= 360.0, "Salt and tea merchant refresh points must respect random-event separation.")
+	for event_area in scene.call("_active_random_events") as Array:
+		if event_area != salt_ship:
+			_expect(spawn_origin.distance_to((event_area as Area2D).position) >= 360.0, "All three random-event refresh points must respect event separation.")
 	_expect(str(salt_ship.get_meta("display_name")) == "私盐商船", "Salt ship event must retain its private event identity.")
 	_expect(salt_ship.find_children("*", "Label", true, false).is_empty(), "Salt ship identity must not be shown before interaction.")
 	var trigger_shapes := salt_ship.find_children("*", "CollisionShape2D", false, false)
@@ -108,10 +112,8 @@ func _verify_salt_ship_setup(scene: Node) -> Area2D:
 	var trigger_circle := trigger_shape.shape as CircleShape2D if trigger_shape != null else null
 	_expect(trigger_circle != null and is_equal_approx(trigger_circle.radius, 48.0), "Salt merchant interaction radius must stay tightly wrapped around the ship.")
 	var salt_sprite := salt_ship.get_node("ShipSprite") as Sprite2D
-	var tea_sprite := tea_ship.get_node("ShipSprite") as Sprite2D
 	var salt_texture := salt_sprite.texture as AtlasTexture
-	var tea_texture := tea_sprite.texture as AtlasTexture
-	_expect(salt_texture != null and tea_texture != null and salt_texture.atlas.resource_path == tea_texture.atlas.resource_path and salt_texture.region == tea_texture.region, "Salt and tea merchants must share exactly the same ship appearance.")
+	_expect(salt_texture != null and salt_texture.atlas.resource_path == EVENT_SHIPS_ATLAS_PATH, "Salt merchant must retain the shared event-ship atlas appearance.")
 	return salt_ship
 
 

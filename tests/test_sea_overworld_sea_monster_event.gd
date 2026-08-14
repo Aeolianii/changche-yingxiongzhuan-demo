@@ -42,7 +42,7 @@ func _run() -> void:
 func _spawn_scene(variant: int) -> Node:
 	root.get_node("GameState").call("reset_runtime_world_state")
 	var scene := SEA_SCENE.instantiate()
-	scene.set("_random_event_seed_override", 2)
+	scene.set("_random_event_seed_override", 1)
 	scene.set("_sea_monster_variant_override", variant)
 	root.add_child(scene)
 	current_scene = scene
@@ -128,7 +128,7 @@ func _verify_map_visual(scene: Node, variant: int) -> Area2D:
 	if event == null:
 		return null
 	var events: Array = scene.call("_active_random_events") as Array
-	_expect(events.size() == 2, "Sea-monster entry must still respect the two-event limit.")
+	_expect(events.size() == 3, "Sea-monster entry must respect the three-event limit.")
 	_expect(str(event.get_meta("display_name")) == "雾中可疑身影", "Map event must remain unidentified before interaction.")
 	_expect(int(event.get_meta("sea_monster_variant", -1)) == variant, "Sea-monster event must retain its selected variant identity.")
 	var sprite := event.get_node("EventVisual/MistSprite") as Sprite2D

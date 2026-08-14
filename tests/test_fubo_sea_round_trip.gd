@@ -85,10 +85,9 @@ func _run() -> void:
 		_check(is_equal_approx(float(returned_sea.get("_lunar_day")), 8.5), "Sea return must restore lunar progress.")
 		var returned_random_events := _random_event_positions(returned_sea)
 		_check(
-			returned_random_events.size() == 2
-			and returned_random_events.has("tea_merchant")
+			returned_random_events.size() == 3
 			and returned_random_events != expected_random_events,
-			"Sea return must keep unfinished tea guaranteed while rerolling active event types or positions."
+			"Sea return must reroll three ordinary event slots without preserving the previous session."
 		)
 		var returned_fog := returned_sea.get_node("World/FogOfWar")
 		_check(bool(returned_fog.call("is_world_position_revealed", fog_probe)), "Sea return must preserve the explored fog route.")

@@ -55,13 +55,12 @@ const PIRATE_PLAYER_SAFE_RADIUS := 480.0
 const PIRATE_SEPARATION := 460.0
 const PIRATE_SPAWN_EDGE_MARGIN := 120.0
 const PIRATE_SPAWN_CLEARANCE := 48.0
-const MAX_ACTIVE_RANDOM_EVENTS := 2
+const MAX_ACTIVE_RANDOM_EVENTS := 3
 const RANDOM_EVENT_TEA := &"tea_merchant"
 const RANDOM_EVENT_SALT := &"salt_merchant"
 const RANDOM_EVENT_CRATE := &"drifting_crate"
 const RANDOM_EVENT_SEA_MONSTER := &"sea_monster_mist"
 const RANDOM_EVENT_TYPES: Array[StringName] = [RANDOM_EVENT_TEA, RANDOM_EVENT_SALT, RANDOM_EVENT_CRATE, RANDOM_EVENT_SEA_MONSTER]
-const RANDOM_EVENT_REROLL_TYPES: Array[StringName] = [RANDOM_EVENT_CRATE, RANDOM_EVENT_SALT, RANDOM_EVENT_SEA_MONSTER]
 const RANDOM_EVENT_SPAWN_POINTS := {
 	RANDOM_EVENT_TEA: Vector2(1370, 760),
 	RANDOM_EVENT_SALT: Vector2(2200, 1500),
@@ -123,7 +122,7 @@ var _random_event_rng := RandomNumberGenerator.new()
 var _random_event_seed_override := -1
 var _sea_monster_variant_override := -1
 var _pending_random_event_refill := false
-var _last_resolved_random_event := StringName()
+var _resolved_random_event_ids: Dictionary = {}
 var _salt_merchant_wander_origin := Vector2.ZERO
 var _salt_merchant_wander_target := Vector2.ZERO
 var _salt_merchant_behavior := &"rest"
@@ -388,6 +387,7 @@ func _build_auto_triggers() -> void:
 
 func _initialize_random_events() -> void:
 	_clear_random_events_immediate()
+	_resolved_random_event_ids.clear()
 	_tea_merchant_event_resolved = _is_tea_merchant_event_completed()
 	_crate_event_resolved = false
 	_salt_merchant_event_resolved = false
@@ -396,18 +396,14 @@ func _initialize_random_events() -> void:
 		_random_event_rng.seed = _random_event_seed_override
 	else:
 		_random_event_rng.randomize()
-	if not _tea_merchant_event_resolved:
-		_spawn_random_event_at_random_position(RANDOM_EVENT_TEA)
-	var candidates := RANDOM_EVENT_REROLL_TYPES.duplicate()
+	var candidates := _available_random_event_types()
 	while _active_random_events().size() < MAX_ACTIVE_RANDOM_EVENTS and not candidates.is_empty():
 		var candidate_index := _random_event_rng.randi_range(0, candidates.size() - 1)
 		if _random_event_seed_override >= 0:
-			var non_tea_slot := _active_random_events().size() - (0 if _tea_merchant_event_resolved else 1)
-			candidate_index = posmod(_random_event_seed_override + non_tea_slot, candidates.size())
+			candidate_index = posmod(_random_event_seed_override + _active_random_events().size(), candidates.size())
 		var event_id: StringName = candidates.pop_at(candidate_index)
 		_spawn_random_event_at_random_position(event_id)
-	_pending_random_event_refill = _active_random_events().size() < MAX_ACTIVE_RANDOM_EVENTS
-	_last_resolved_random_event = StringName()
+	_pending_random_event_refill = _active_random_events().size() < MAX_ACTIVE_RANDOM_EVENTS and not _available_random_event_types().is_empty()
 
 
 func _spawn_random_event_at_random_position(event_id: StringName) -> Area2D:
@@ -418,7 +414,9 @@ func _spawn_random_event_at_random_position(event_id: StringName) -> Area2D:
 
 
 func _spawn_random_event(event_id: StringName, at: Vector2) -> Area2D:
-	if _find_random_event(event_id) != null:
+	if _resolved_random_event_ids.has(event_id) or _find_random_event(event_id) != null:
+		return null
+	if event_id == RANDOM_EVENT_TEA and _tea_merchant_event_resolved:
 		return null
 	var area: Area2D
 	match event_id:
@@ -469,6 +467,7 @@ func _find_random_event(event_id: StringName) -> Area2D:
 
 
 func _mark_random_event_resolved(event_id: StringName, area: Area2D) -> void:
+	_resolved_random_event_ids[event_id] = true
 	match event_id:
 		RANDOM_EVENT_TEA:
 			_tea_merchant_event_resolved = true
@@ -482,7 +481,6 @@ func _mark_random_event_resolved(event_id: StringName, area: Area2D) -> void:
 		area.remove_from_group("sea_random_event")
 		area.set_deferred("monitoring", false)
 		area.queue_free()
-	_last_resolved_random_event = event_id
 	_pending_random_event_refill = true
 
 
@@ -492,12 +490,8 @@ func _refill_random_event_slots() -> void:
 	while _active_random_events().size() < MAX_ACTIVE_RANDOM_EVENTS:
 		var candidates: Array[StringName] = []
 		for event_id in _available_random_event_types():
-			if event_id != _last_resolved_random_event and _find_random_event(event_id) == null:
+			if _find_random_event(event_id) == null:
 				candidates.append(event_id)
-		if candidates.is_empty():
-			for event_id in _available_random_event_types():
-				if _find_random_event(event_id) == null:
-					candidates.append(event_id)
 		if candidates.is_empty():
 			break
 		var chosen_id := candidates[_random_event_rng.randi_range(0, candidates.size() - 1)]
@@ -509,13 +503,16 @@ func _refill_random_event_slots() -> void:
 			break
 		_spawn_random_event(chosen_id, spawn_position)
 	_pending_random_event_refill = false
-	_last_resolved_random_event = StringName()
 
 
 func _available_random_event_types() -> Array[StringName]:
-	var result := RANDOM_EVENT_REROLL_TYPES.duplicate()
-	if not _tea_merchant_event_resolved:
-		result.push_front(RANDOM_EVENT_TEA)
+	var result: Array[StringName] = []
+	for event_id in RANDOM_EVENT_TYPES:
+		if _resolved_random_event_ids.has(event_id):
+			continue
+		if event_id == RANDOM_EVENT_TEA and _tea_merchant_event_resolved:
+			continue
+		result.append(event_id)
 	return result
 
 

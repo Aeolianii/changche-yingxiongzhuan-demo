@@ -45,6 +45,7 @@ func _spawn_scene(reset_world_state: bool) -> Node:
 	if reset_world_state:
 		root.get_node("GameState").call("reset_runtime_world_state")
 	var scene := SEA_SCENE.instantiate()
+	scene.set("_random_event_seed_override", 0)
 	root.add_child(scene)
 	current_scene = scene
 	await process_frame
@@ -140,7 +141,7 @@ func _verify_resolved_state_restore(scene: Node) -> void:
 
 func _verify_completed_reentry(scene: Node) -> void:
 	var events: Array = scene.call("_active_random_events") as Array
-	_expect(events.size() == 2, "Re-entering after tea completion must still fill both random-event slots.")
+	_expect(events.size() == 3, "Re-entering after tea completion must fill all three slots with the remaining event types.")
 	_expect(scene.get_node_or_null("World/WorldMarkers/ShipTrigger0") == null, "A completed tea merchant must not be forced on later entries.")
 	_expect(bool(scene.get("_tea_merchant_event_resolved")), "Tea completion must be read from persistent world state on entry.")
 

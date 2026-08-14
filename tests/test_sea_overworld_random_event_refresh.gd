@@ -38,11 +38,11 @@ func _run() -> void:
 
 func _verify_initial_slots(scene: Node) -> void:
 	var events := _active_events(scene)
-	_expect(events.size() == 2, "A fresh sea map must contain exactly two active random events.")
-	_expect(_event_ids(events).has(EVENT_TEA), "A fresh sea map must always contain the tea merchant.")
-	_expect(_event_ids(events).has(EVENT_SALT), "The deterministic salt seed must choose the salt merchant as the second event.")
-	_expect(not _event_ids(events).has(EVENT_CRATE) and not _event_ids(events).has(EVENT_SEA_MONSTER), "The deterministic salt seed must fill only one non-tea slot.")
-	_expect(_has_unique_ids(events), "The two initial event slots must use distinct event types.")
+	var ids := _event_ids(events)
+	_expect(events.size() == 3, "A fresh sea map must contain exactly three active random events when three types are available.")
+	_expect(ids.has(EVENT_SALT) and ids.has(EVENT_CRATE) and ids.has(EVENT_SEA_MONSTER), "The deterministic seed must choose salt, crate, and sea monster as three ordinary candidates.")
+	_expect(not ids.has(EVENT_TEA), "An unfinished tea merchant must not receive a guaranteed or priority slot.")
+	_expect(_has_unique_ids(events), "The three initial event slots must use distinct event types.")
 
 
 func _verify_salt_patrol_and_refill(scene: Node) -> void:
@@ -91,17 +91,26 @@ func _verify_salt_patrol_and_refill(scene: Node) -> void:
 
 	var events := _active_events(scene)
 	var ids := _event_ids(events)
-	_expect(events.size() == 2, "Completing one event must refill the active slots back to two.")
+	_expect(events.size() == 3, "Completing one event must refill the active slots back to three while an unseen type remains.")
 	_expect(_has_unique_ids(events), "Refilling must not create duplicate event types.")
-	_expect(ids.has(EVENT_TEA) and (ids.has(EVENT_CRATE) or ids.has(EVENT_SEA_MONSTER)), "Completing salt must refill from another non-tea event type.")
-	_expect(not ids.has(EVENT_SALT), "The just-completed salt event must not immediately replace itself.")
-	var replacement: Area2D
-	for event_area in events:
-		if StringName((event_area as Area2D).get_meta("random_event_id", &"")) != EVENT_TEA:
-			replacement = event_area as Area2D
+	_expect(ids.has(EVENT_TEA) and ids.has(EVENT_CRATE) and ids.has(EVENT_SEA_MONSTER), "Completing salt must fill the free slot with the only unseen event type.")
+	_expect(not ids.has(EVENT_SALT), "A completed salt event must not return during the same sea-map session.")
+	_expect((scene.get("_resolved_random_event_ids") as Dictionary).has(EVENT_SALT), "Completing salt must record its type in the current session.")
+	var replacement := scene.call("_find_random_event", EVENT_TEA) as Area2D
 	if replacement != null:
 		var view_rect: Rect2 = scene.call("_player_view_world_rect")
 		_expect(not view_rect.has_point(replacement.global_position), "Replacement event must spawn outside the player's current camera view.")
+
+	var crate := scene.call("_find_random_event", EVENT_CRATE) as Area2D
+	scene.call("_mark_random_event_resolved", EVENT_CRATE, crate)
+	await process_frame
+	scene.call("_refill_random_event_slots")
+	await process_frame
+	var exhausted_ids := _event_ids(_active_events(scene))
+	_expect(exhausted_ids.size() == 2, "Active slots must shrink when every remaining event type is already active or resolved.")
+	_expect(not exhausted_ids.has(EVENT_SALT) and not exhausted_ids.has(EVENT_CRATE), "Resolved event types must never refill again in the same session.")
+	scene.call("_refill_random_event_slots")
+	_expect(_event_ids(_active_events(scene)) == exhausted_ids, "Repeated refill requests must not resurrect already resolved event types.")
 
 
 func _verify_entry_reroll_and_tea_completion(scene: Node) -> void:
@@ -110,13 +119,14 @@ func _verify_entry_reroll_and_tea_completion(scene: Node) -> void:
 	scene.set("_random_event_seed_override", 2)
 	scene.call("_restore_event_state", state)
 	var after := _event_positions(scene)
-	_expect(after.size() == 2 and after != before, "Entering through state restoration must reroll event types or positions instead of restoring old slots.")
+	_expect(after.size() == 3 and after != before, "Entering through state restoration must reroll three event types or positions instead of restoring old slots.")
+	_expect((scene.get("_resolved_random_event_ids") as Dictionary).is_empty(), "A new sea-map entry must clear the previous session's resolved event types.")
 	var game_state := root.get_node("GameState")
 	game_state.call("set_tea_merchant_event_completed", true)
 	scene.set("_random_event_seed_override", 0)
 	scene.call("_initialize_random_events")
 	var completed_ids := _event_ids(_active_events(scene))
-	_expect(completed_ids.size() == 2 and not completed_ids.has(EVENT_TEA), "A completed tea event must stop occupying a guaranteed slot on later entries.")
+	_expect(completed_ids.size() == 3 and not completed_ids.has(EVENT_TEA), "A completed tea event must leave the later-entry pool while the other three types fill all slots.")
 
 
 func _active_events(scene: Node) -> Array:

@@ -2,7 +2,6 @@ extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const MERCHANT_PORTRAIT_PATH := "res://assets/sea_overworld/portraits/大地图茶叶商人.png"
-const MERCHANT_SHIP_POSITION := Vector2(1370, 760)
 const RESULT_SCREENSHOT_PATH := "res://.godot/sea_overworld_tea_merchant_result_preview.png"
 
 var failures: Array[String] = []
@@ -13,17 +12,22 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var purchase_scene := await _spawn_scene()
+	var purchase_scene := await _spawn_scene(true)
 	await _verify_purchase_branch(purchase_scene)
 	purchase_scene.queue_free()
 	await process_frame
 
-	var decline_scene := await _spawn_scene()
+	var decline_scene := await _spawn_scene(true)
 	await _verify_decline_branch(decline_scene)
 	decline_scene.queue_free()
 	await process_frame
 
-	var restored_scene := await _spawn_scene()
+	var completed_reentry := await _spawn_scene(false)
+	_verify_completed_reentry(completed_reentry)
+	completed_reentry.queue_free()
+	await process_frame
+
+	var restored_scene := await _spawn_scene(true)
 	await _verify_resolved_state_restore(restored_scene)
 	restored_scene.queue_free()
 	await process_frame
@@ -37,7 +41,9 @@ func _run() -> void:
 	quit(1)
 
 
-func _spawn_scene() -> Node:
+func _spawn_scene(reset_world_state: bool) -> Node:
+	if reset_world_state:
+		root.get_node("GameState").call("reset_runtime_world_state")
 	var scene := SEA_SCENE.instantiate()
 	root.add_child(scene)
 	current_scene = scene
@@ -129,6 +135,14 @@ func _verify_resolved_state_restore(scene: Node) -> void:
 	await physics_frame
 	_expect(bool(scene.get("_tea_merchant_event_resolved")), "Loaded tea-merchant resolution flag must be restored.")
 	_expect(scene.get_node_or_null("World/WorldMarkers/ShipTrigger0") == null, "A resolved tea merchant ship must stay removed after state restoration.")
+	_expect(bool(root.get_node("GameState").call("is_tea_merchant_event_completed")), "Legacy tea completion must migrate into persistent world state.")
+
+
+func _verify_completed_reentry(scene: Node) -> void:
+	var events: Array = scene.call("_active_random_events") as Array
+	_expect(events.size() == 2, "Re-entering after tea completion must still fill both random-event slots.")
+	_expect(scene.get_node_or_null("World/WorldMarkers/ShipTrigger0") == null, "A completed tea merchant must not be forced on later entries.")
+	_expect(bool(scene.get("_tea_merchant_event_resolved")), "Tea completion must be read from persistent world state on entry.")
 
 
 func _verify_merchant_ship(scene: Node) -> Area2D:
@@ -136,7 +150,6 @@ func _verify_merchant_ship(scene: Node) -> Area2D:
 	_expect(merchant_ship != null, "Tea merchant ship event node is missing.")
 	if merchant_ship == null:
 		return null
-	_expect(merchant_ship.position.is_equal_approx(MERCHANT_SHIP_POSITION), "Tea merchant ship must move upward near Chuanshan Fishing Village.")
 	_expect(_is_water_clear(merchant_ship.global_position, 19.0), "Tea merchant ship must remain approachable on open water.")
 	_expect(str(merchant_ship.get_meta("display_name")) == "茶叶商船", "Nearshore ship must be renamed to Tea Merchant Ship.")
 	_expect(merchant_ship.find_children("*", "Label", true, false).is_empty(), "Tea merchant ship name must not be rendered on the overworld.")

@@ -98,6 +98,17 @@ func get_sea_fog_state() -> Dictionary:
 	return (state as Dictionary).duplicate(true) if state is Dictionary else {}
 
 
+func set_tea_merchant_event_completed(completed: bool) -> void:
+	if completed:
+		_world_state["tea_merchant_event_completed"] = true
+	else:
+		_world_state.erase("tea_merchant_event_completed")
+
+
+func is_tea_merchant_event_completed() -> bool:
+	return bool(_world_state.get("tea_merchant_event_completed", false))
+
+
 func accept_fubo_side_quest() -> void:
 	var state := get_fubo_side_quest_state()
 	state["accepted"] = true

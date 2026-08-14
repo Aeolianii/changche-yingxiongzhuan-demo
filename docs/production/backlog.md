@@ -19,6 +19,7 @@ Keep only actionable work here. Link each in-progress item to its change record.
 
 ## Done
 
+- [x] 雾中海怪随机事件、每次入图重抽与私盐商间歇巡航（[CHG-20260814-sea-monster-random-event](../changes/CHG-20260814-sea-monster-random-event.md)）。
 - [x] 海上随机事件双槽刷新与私盐商船巡航（[CHG-20260814-sea-random-event-refresh](../changes/CHG-20260814-sea-random-event-refresh.md)）。
 - [x] 月环商港、全局仓库与造船闭环（[CHG-20260812-yuehuan-merchant-harbor](../changes/CHG-20260812-yuehuan-merchant-harbor.md)）。
 

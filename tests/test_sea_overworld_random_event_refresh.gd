@@ -4,7 +4,7 @@ const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const EVENT_TEA := &"tea_merchant"
 const EVENT_SALT := &"salt_merchant"
 const EVENT_CRATE := &"drifting_crate"
-const SALT_SPAWN := Vector2(2200, 1500)
+const EVENT_SEA_MONSTER := &"sea_monster_mist"
 
 var failures: Array[String] = []
 
@@ -23,7 +23,7 @@ func _run() -> void:
 
 	_verify_initial_slots(scene)
 	await _verify_salt_patrol_and_refill(scene)
-	_verify_active_state_round_trip(scene)
+	_verify_entry_reroll_and_tea_completion(scene)
 
 	scene.queue_free()
 	await process_frame
@@ -41,7 +41,7 @@ func _verify_initial_slots(scene: Node) -> void:
 	_expect(events.size() == 2, "A fresh sea map must contain exactly two active random events.")
 	_expect(_event_ids(events).has(EVENT_TEA), "A fresh sea map must always contain the tea merchant.")
 	_expect(_event_ids(events).has(EVENT_SALT), "The deterministic salt seed must choose the salt merchant as the second event.")
-	_expect(not _event_ids(events).has(EVENT_CRATE), "Only one of salt merchant and drifting crate may accompany the initial tea merchant.")
+	_expect(not _event_ids(events).has(EVENT_CRATE) and not _event_ids(events).has(EVENT_SEA_MONSTER), "The deterministic salt seed must fill only one non-tea slot.")
 	_expect(_has_unique_ids(events), "The two initial event slots must use distinct event types.")
 
 
@@ -51,10 +51,16 @@ func _verify_salt_patrol_and_refill(scene: Node) -> void:
 	if salt_ship == null:
 		return
 	var spawn_origin: Vector2 = salt_ship.get_meta("spawn_origin", Vector2.ZERO)
-	_expect(spawn_origin.is_equal_approx(SALT_SPAWN), "Salt merchant must patrol from its approved refresh point.")
-	scene.call("_update_salt_merchant_movement", 2.0)
+	for _step in range(30):
+		scene.call("_update_salt_merchant_movement", 0.1)
+		if not salt_ship.position.is_equal_approx(spawn_origin):
+			break
 	_expect(not salt_ship.position.is_equal_approx(spawn_origin), "Salt merchant must move within its local patrol area.")
-	_expect(salt_ship.position.distance_to(spawn_origin) <= 120.0, "Salt merchant must never leave its 120-unit patrol radius.")
+	_expect(salt_ship.position.distance_to(spawn_origin) <= 240.0, "Salt merchant must never leave its pirate-matched 240-unit patrol radius.")
+	scene.call("_start_salt_merchant_rest")
+	var rest_position := salt_ship.position
+	scene.call("_update_salt_merchant_movement", 0.4)
+	_expect(salt_ship.position.is_equal_approx(rest_position) and StringName(scene.get("_salt_merchant_behavior")) == &"rest", "Salt merchant must stop during its pirate-matched rest phase.")
 
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var camera := scene.get_node("World/Player/Camera2D") as Camera2D
@@ -87,21 +93,30 @@ func _verify_salt_patrol_and_refill(scene: Node) -> void:
 	var ids := _event_ids(events)
 	_expect(events.size() == 2, "Completing one event must refill the active slots back to two.")
 	_expect(_has_unique_ids(events), "Refilling must not create duplicate event types.")
-	_expect(ids.has(EVENT_TEA) and ids.has(EVENT_CRATE), "Completing the initial salt event must rotate in the inactive drifting crate.")
+	_expect(ids.has(EVENT_TEA) and (ids.has(EVENT_CRATE) or ids.has(EVENT_SEA_MONSTER)), "Completing salt must refill from another non-tea event type.")
 	_expect(not ids.has(EVENT_SALT), "The just-completed salt event must not immediately replace itself.")
-	var crate := scene.get_node_or_null("World/WorldMarkers/DriftEvent") as Area2D
-	_expect(crate != null, "The drifting crate must be the replacement event.")
-	if crate != null:
+	var replacement: Area2D
+	for event_area in events:
+		if StringName((event_area as Area2D).get_meta("random_event_id", &"")) != EVENT_TEA:
+			replacement = event_area as Area2D
+	if replacement != null:
 		var view_rect: Rect2 = scene.call("_player_view_world_rect")
-		_expect(not view_rect.has_point(crate.global_position), "Replacement event must spawn outside the player's current camera view.")
+		_expect(not view_rect.has_point(replacement.global_position), "Replacement event must spawn outside the player's current camera view.")
 
 
-func _verify_active_state_round_trip(scene: Node) -> void:
+func _verify_entry_reroll_and_tea_completion(scene: Node) -> void:
 	var before := _event_positions(scene)
 	var state: Dictionary = scene.call("_current_event_state")
+	scene.set("_random_event_seed_override", 2)
 	scene.call("_restore_event_state", state)
 	var after := _event_positions(scene)
-	_expect(after.size() == 2 and after == before, "Random-event type and position must survive scene-state restoration without duplication.")
+	_expect(after.size() == 2 and after != before, "Entering through state restoration must reroll event types or positions instead of restoring old slots.")
+	var game_state := root.get_node("GameState")
+	game_state.call("set_tea_merchant_event_completed", true)
+	scene.set("_random_event_seed_override", 0)
+	scene.call("_initialize_random_events")
+	var completed_ids := _event_ids(_active_events(scene))
+	_expect(completed_ids.size() == 2 and not completed_ids.has(EVENT_TEA), "A completed tea event must stop occupying a guaranteed slot on later entries.")
 
 
 func _active_events(scene: Node) -> Array:

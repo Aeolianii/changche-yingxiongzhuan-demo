@@ -2,11 +2,21 @@ extends Node2D
 
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
 const DRIFTING_CRATE_TEXTURE := preload("res://assets/sprites/sea_overworld/drifting_supply_crate_v1.png")
+const SEA_MONSTER_MIST_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/sea_overworld/random_events/sea_monster_mist_1_v1.png"),
+	preload("res://assets/sprites/sea_overworld/random_events/sea_monster_mist_2_v1.png"),
+	preload("res://assets/sprites/sea_overworld/random_events/sea_monster_mist_3_v1.png"),
+]
 const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
 const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
 const TEA_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图茶叶商人.png")
 const SALT_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图私盐商人.png")
 const HAIBATIAN_PORTRAIT := preload("res://assets/sea_overworld/portraits/倭寇头目海霸天.png")
+const SEA_MONSTER_PORTRAITS: Array[Texture2D] = [
+	preload("res://assets/sea_overworld/portraits/海怪1.png"),
+	preload("res://assets/sea_overworld/portraits/海怪2.png"),
+	preload("res://assets/sea_overworld/portraits/海怪3.png"),
+]
 const FIELD_EVENT_DIALOGUE_SCENE := preload("res://scenes/ui/field_event_dialogue.tscn")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const WOKOU_VICTORY_CUTSCENE_SCENE := preload("res://scenes/sea_overworld/wokou_victory_cutscene.tscn")
@@ -18,6 +28,7 @@ const C_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong
 const D_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong_sea_zone_d_v3.png")
 const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
+const SEA_EVENT_VIGNETTE_SHADER := preload("res://shaders/sea_event_vignette.gdshader")
 const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
 const MAP_CHUNK_SIZE := Vector2(2508, 1412)
 const MAP_CHUNK_OVERLAP := 120.0
@@ -48,18 +59,24 @@ const MAX_ACTIVE_RANDOM_EVENTS := 2
 const RANDOM_EVENT_TEA := &"tea_merchant"
 const RANDOM_EVENT_SALT := &"salt_merchant"
 const RANDOM_EVENT_CRATE := &"drifting_crate"
-const RANDOM_EVENT_TYPES: Array[StringName] = [RANDOM_EVENT_TEA, RANDOM_EVENT_SALT, RANDOM_EVENT_CRATE]
+const RANDOM_EVENT_SEA_MONSTER := &"sea_monster_mist"
+const RANDOM_EVENT_TYPES: Array[StringName] = [RANDOM_EVENT_TEA, RANDOM_EVENT_SALT, RANDOM_EVENT_CRATE, RANDOM_EVENT_SEA_MONSTER]
+const RANDOM_EVENT_REROLL_TYPES: Array[StringName] = [RANDOM_EVENT_CRATE, RANDOM_EVENT_SALT, RANDOM_EVENT_SEA_MONSTER]
 const RANDOM_EVENT_SPAWN_POINTS := {
 	RANDOM_EVENT_TEA: Vector2(1370, 760),
 	RANDOM_EVENT_SALT: Vector2(2200, 1500),
 	RANDOM_EVENT_CRATE: Vector2(1300, 1700),
+	RANDOM_EVENT_SEA_MONSTER: Vector2(3300, 1760),
 }
 const RANDOM_EVENT_SPAWN_CLEARANCE := 82.0
 const RANDOM_EVENT_SPAWN_SEPARATION := 360.0
 const RANDOM_EVENT_VIEW_MARGIN := 96.0
-const SALT_MERCHANT_WANDER_RADIUS := 120.0
-const SALT_MERCHANT_WANDER_X := 92.0
-const SALT_MERCHANT_WANDER_Y := 58.0
+const SALT_MERCHANT_MOVE_SPEED := 210.0
+const SALT_MERCHANT_PATROL_RADIUS := 240.0
+const SALT_MERCHANT_WANDER_DURATION_RANGE := Vector2(1.5, 3.5)
+const SALT_MERCHANT_REST_DURATION_RANGE := Vector2(0.8, 1.8)
+const SEA_MONSTER_REWARD_WOOD := 500
+const SEA_MONSTER_REWARD_IRONSTONE := 500
 
 @onready var player: SeaOverworldPlayer = $World/Player
 @onready var camera: Camera2D = $World/Player/Camera2D
@@ -91,6 +108,9 @@ var _active_tea_merchant_ship: Area2D
 var _tea_merchant_event_resolved := false
 var _active_salt_merchant_ship: Area2D
 var _salt_merchant_event_resolved := false
+var _active_sea_monster_event: Area2D
+var _sea_monster_event_resolved := false
+var _active_sea_monster_variant := 0
 var _fubo_quest_dialogue_open := false
 var _wokou_warning_acknowledged := false
 var _wokou_battle_completed := false
@@ -101,10 +121,13 @@ var _active_battle_pirate: SeaOverworldPirate
 var _pirate_spawn_rng := RandomNumberGenerator.new()
 var _random_event_rng := RandomNumberGenerator.new()
 var _random_event_seed_override := -1
+var _sea_monster_variant_override := -1
 var _pending_random_event_refill := false
 var _last_resolved_random_event := StringName()
 var _salt_merchant_wander_origin := Vector2.ZERO
-var _salt_merchant_wander_elapsed := 0.0
+var _salt_merchant_wander_target := Vector2.ZERO
+var _salt_merchant_behavior := &"rest"
+var _salt_merchant_behavior_time_left := 0.0
 
 
 func _ready() -> void:
@@ -344,7 +367,6 @@ func _build_locations() -> void:
 
 func _build_auto_triggers() -> void:
 	_build_ship_trigger("岭南商船", Vector2(2600, 760), 1)
-	_initialize_random_events()
 	var fubo_quest_trigger := _make_auto_trigger(
 		"FuboQuestTrigger",
 		FUBO_QUEST_TRIGGER_POSITION,
@@ -361,18 +383,38 @@ func _build_auto_triggers() -> void:
 		WOKOU_WARNING_TRIGGER_RADIUS
 	)
 	wokou_warning_trigger.remove_from_group("sea_auto_trigger")
+	_initialize_random_events()
 
 
 func _initialize_random_events() -> void:
-	var secondary_event := RANDOM_EVENT_CRATE
+	_clear_random_events_immediate()
+	_tea_merchant_event_resolved = _is_tea_merchant_event_completed()
+	_crate_event_resolved = false
+	_salt_merchant_event_resolved = false
+	_sea_monster_event_resolved = false
 	if _random_event_seed_override >= 0:
 		_random_event_rng.seed = _random_event_seed_override
-		secondary_event = RANDOM_EVENT_CRATE if _random_event_seed_override % 2 == 0 else RANDOM_EVENT_SALT
 	else:
 		_random_event_rng.randomize()
-		secondary_event = RANDOM_EVENT_CRATE if _random_event_rng.randi_range(0, 1) == 0 else RANDOM_EVENT_SALT
-	_spawn_random_event(RANDOM_EVENT_TEA, RANDOM_EVENT_SPAWN_POINTS[RANDOM_EVENT_TEA])
-	_spawn_random_event(secondary_event, RANDOM_EVENT_SPAWN_POINTS[secondary_event])
+	if not _tea_merchant_event_resolved:
+		_spawn_random_event_at_random_position(RANDOM_EVENT_TEA)
+	var candidates := RANDOM_EVENT_REROLL_TYPES.duplicate()
+	while _active_random_events().size() < MAX_ACTIVE_RANDOM_EVENTS and not candidates.is_empty():
+		var candidate_index := _random_event_rng.randi_range(0, candidates.size() - 1)
+		if _random_event_seed_override >= 0:
+			var non_tea_slot := _active_random_events().size() - (0 if _tea_merchant_event_resolved else 1)
+			candidate_index = posmod(_random_event_seed_override + non_tea_slot, candidates.size())
+		var event_id: StringName = candidates.pop_at(candidate_index)
+		_spawn_random_event_at_random_position(event_id)
+	_pending_random_event_refill = _active_random_events().size() < MAX_ACTIVE_RANDOM_EVENTS
+	_last_resolved_random_event = StringName()
+
+
+func _spawn_random_event_at_random_position(event_id: StringName) -> Area2D:
+	var spawn_position := _find_random_event_spawn_position()
+	if not is_finite(spawn_position.x) or not is_finite(spawn_position.y):
+		spawn_position = RANDOM_EVENT_SPAWN_POINTS[event_id]
+	return _spawn_random_event(event_id, spawn_position)
 
 
 func _spawn_random_event(event_id: StringName, at: Vector2) -> Area2D:
@@ -387,10 +429,20 @@ func _spawn_random_event(event_id: StringName, at: Vector2) -> Area2D:
 			area = _build_ship_trigger("私盐商船", at, 0, "SaltMerchantShip", 48.0)
 			_salt_merchant_event_resolved = false
 			_salt_merchant_wander_origin = at
-			_salt_merchant_wander_elapsed = 0.0
+			_start_salt_merchant_wander()
 		RANDOM_EVENT_CRATE:
 			area = _build_event_trigger("漂流木箱", at)
 			_crate_event_resolved = false
+		RANDOM_EVENT_SEA_MONSTER:
+			_active_sea_monster_variant = (
+				_sea_monster_variant_override
+				if _sea_monster_variant_override >= 0
+				else _random_event_rng.randi_range(0, SEA_MONSTER_MIST_TEXTURES.size() - 1)
+			)
+			_active_sea_monster_variant = posmod(_active_sea_monster_variant, SEA_MONSTER_MIST_TEXTURES.size())
+			area = _build_sea_monster_event_trigger(at, _active_sea_monster_variant)
+			_active_sea_monster_event = area
+			_sea_monster_event_resolved = false
 		_:
 			push_warning("Unknown sea random event type: %s" % event_id)
 			return null
@@ -424,6 +476,8 @@ func _mark_random_event_resolved(event_id: StringName, area: Area2D) -> void:
 			_salt_merchant_event_resolved = true
 		RANDOM_EVENT_CRATE:
 			_crate_event_resolved = true
+		RANDOM_EVENT_SEA_MONSTER:
+			_sea_monster_event_resolved = true
 	if is_instance_valid(area):
 		area.remove_from_group("sea_random_event")
 		area.set_deferred("monitoring", false)
@@ -437,11 +491,11 @@ func _refill_random_event_slots() -> void:
 		return
 	while _active_random_events().size() < MAX_ACTIVE_RANDOM_EVENTS:
 		var candidates: Array[StringName] = []
-		for event_id in RANDOM_EVENT_TYPES:
+		for event_id in _available_random_event_types():
 			if event_id != _last_resolved_random_event and _find_random_event(event_id) == null:
 				candidates.append(event_id)
 		if candidates.is_empty():
-			for event_id in RANDOM_EVENT_TYPES:
+			for event_id in _available_random_event_types():
 				if _find_random_event(event_id) == null:
 					candidates.append(event_id)
 		if candidates.is_empty():
@@ -458,11 +512,32 @@ func _refill_random_event_slots() -> void:
 	_last_resolved_random_event = StringName()
 
 
+func _available_random_event_types() -> Array[StringName]:
+	var result := RANDOM_EVENT_REROLL_TYPES.duplicate()
+	if not _tea_merchant_event_resolved:
+		result.push_front(RANDOM_EVENT_TEA)
+	return result
+
+
 func _is_random_event_spawn_valid(candidate: Vector2) -> bool:
 	if _player_view_world_rect().grow(RANDOM_EVENT_VIEW_MARGIN).has_point(candidate):
 		return false
 	for active_event in _active_random_events():
 		if candidate.distance_to(active_event.global_position) < RANDOM_EVENT_SPAWN_SEPARATION:
+			return false
+	for child in world_markers.get_children():
+		var existing_area := child as Area2D
+		if existing_area == null or existing_area.is_in_group("sea_random_event"):
+			continue
+		var trigger_kind := str(existing_area.get_meta("trigger_kind", ""))
+		if trigger_kind not in ["fubo_quest", "wokou_warning", "ship"]:
+			continue
+		var trigger_clearance := RANDOM_EVENT_SPAWN_CLEARANCE
+		for shape_node in existing_area.find_children("*", "CollisionShape2D", false, false):
+			var circle := (shape_node as CollisionShape2D).shape as CircleShape2D
+			if circle != null:
+				trigger_clearance = maxf(trigger_clearance, circle.radius + RANDOM_EVENT_SPAWN_CLEARANCE)
+		if candidate.distance_to(existing_area.global_position) < trigger_clearance:
 			return false
 	return _is_open_water_for_random_event(candidate)
 
@@ -501,21 +576,59 @@ func _is_open_water_for_random_event(candidate: Vector2, clearance := RANDOM_EVE
 
 func _update_salt_merchant_movement(delta: float) -> void:
 	var salt_ship := _find_random_event(RANDOM_EVENT_SALT)
-	if salt_ship == null or (_event_dialogue != null and _event_dialogue.visible):
+	if (
+		salt_ship == null
+		or _transitioning
+		or (_event_dialogue != null and _event_dialogue.visible)
+		or (_exploration_ui != null and bool(exploration_hud.call("is_menu_open")))
+	):
 		return
-	_salt_merchant_wander_elapsed += delta
-	var offset := Vector2(
-		sin(_salt_merchant_wander_elapsed * 0.62) * SALT_MERCHANT_WANDER_X,
-		sin(_salt_merchant_wander_elapsed * 0.43) * SALT_MERCHANT_WANDER_Y
+	_salt_merchant_behavior_time_left -= delta
+	if _salt_merchant_behavior == &"rest":
+		if _salt_merchant_behavior_time_left <= 0.0:
+			_start_salt_merchant_wander()
+		return
+	if _salt_merchant_behavior_time_left <= 0.0 or salt_ship.position.distance_to(_salt_merchant_wander_target) <= 18.0:
+		_start_salt_merchant_rest()
+		return
+	var candidate := salt_ship.position.move_toward(_salt_merchant_wander_target, SALT_MERCHANT_MOVE_SPEED * delta)
+	var offset := candidate - _salt_merchant_wander_origin
+	if offset.length() > SALT_MERCHANT_PATROL_RADIUS:
+		candidate = _salt_merchant_wander_origin + offset.normalized() * SALT_MERCHANT_PATROL_RADIUS
+	if _is_open_water_for_random_event(candidate, 48.0):
+		salt_ship.position = candidate
+	else:
+		_start_salt_merchant_rest()
+
+
+func _start_salt_merchant_wander() -> void:
+	_salt_merchant_behavior = &"wander"
+	_salt_merchant_behavior_time_left = _random_event_rng.randf_range(
+		SALT_MERCHANT_WANDER_DURATION_RANGE.x,
+		SALT_MERCHANT_WANDER_DURATION_RANGE.y
 	)
-	if offset.length() > SALT_MERCHANT_WANDER_RADIUS:
-		offset = offset.normalized() * SALT_MERCHANT_WANDER_RADIUS
-	for raw_offset in [offset, Vector2(-offset.x, offset.y), Vector2(offset.x, -offset.y), -offset]:
-		var candidate_offset: Vector2 = raw_offset
-		var candidate: Vector2 = _salt_merchant_wander_origin + candidate_offset
-		if _is_open_water_for_random_event(candidate, SALT_MERCHANT_WANDER_RADIUS):
-			salt_ship.position = candidate
+	for _attempt in range(16):
+		var angle := _random_event_rng.randf_range(0.0, TAU)
+		var radius := _random_event_rng.randf_range(SALT_MERCHANT_PATROL_RADIUS * 0.35, SALT_MERCHANT_PATROL_RADIUS)
+		var candidate := _salt_merchant_wander_origin + Vector2.from_angle(angle) * radius
+		candidate = candidate.clamp(player.movement_bounds.position, player.movement_bounds.end)
+		if _is_open_water_for_random_event(candidate, 48.0):
+			_salt_merchant_wander_target = candidate
 			return
+	_start_salt_merchant_rest()
+
+
+func _start_salt_merchant_rest() -> void:
+	_salt_merchant_behavior = &"rest"
+	_salt_merchant_behavior_time_left = _random_event_rng.randf_range(
+		SALT_MERCHANT_REST_DURATION_RANGE.x,
+		SALT_MERCHANT_REST_DURATION_RANGE.y
+	)
+
+
+func _is_tea_merchant_event_completed() -> bool:
+	var game_state := _game_state()
+	return game_state != null and game_state.has_method("is_tea_merchant_event_completed") and bool(game_state.call("is_tea_merchant_event_completed"))
 
 
 func _spawn_pirates_deferred() -> void:
@@ -830,6 +943,27 @@ func _build_event_trigger(event_name: String, at: Vector2) -> Area2D:
 	return area
 
 
+func _build_sea_monster_event_trigger(at: Vector2, variant: int) -> Area2D:
+	var area := _make_auto_trigger("SeaMonsterMistEvent", at, "雾中可疑身影", "event", 96.0)
+	area.set_meta("sea_monster_variant", variant)
+	var visual := Node2D.new()
+	visual.name = "EventVisual"
+	visual.z_index = 17
+	area.add_child(visual)
+	var mist_sprite := Sprite2D.new()
+	mist_sprite.name = "MistSprite"
+	mist_sprite.texture = SEA_MONSTER_MIST_TEXTURES[variant]
+	mist_sprite.scale = Vector2(0.22, 0.22)
+	mist_sprite.modulate = Color(1.0, 1.0, 1.0, 0.72)
+	mist_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var vignette_material := ShaderMaterial.new()
+	vignette_material.shader = SEA_EVENT_VIGNETTE_SHADER
+	mist_sprite.material = vignette_material
+	visual.add_child(mist_sprite)
+	_floating_visuals.append(visual)
+	return area
+
+
 func _make_auto_trigger(node_name: String, at: Vector2, display_name: String, trigger_kind: String, trigger_radius: float = 82.0) -> Area2D:
 	var area := Area2D.new()
 	area.name = node_name
@@ -891,6 +1025,9 @@ func _on_auto_trigger_body_entered(body: Node2D, area: Area2D) -> void:
 		return
 	if trigger_kind == "event" and display_name == "漂流木箱":
 		_open_drifting_crate_event(area)
+		return
+	if trigger_kind == "event" and display_name == "雾中可疑身影":
+		_open_sea_monster_event(area)
 		return
 	if trigger_kind == "ship":
 		_show_toast("%s · 该船只开发中" % display_name)
@@ -954,6 +1091,25 @@ func _open_salt_merchant_event(area: Area2D) -> void:
 	)
 
 
+func _open_sea_monster_event(area: Area2D) -> void:
+	if _sea_monster_event_resolved or (_event_dialogue != null and _event_dialogue.visible):
+		return
+	_active_sea_monster_event = area
+	_active_sea_monster_variant = int(area.get_meta("sea_monster_variant", 0))
+	area.set_deferred("monitoring", false)
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_event_dialogue.present(
+		"水师士兵",
+		"将军，前方海面忽然涌起大片白雾，雾中似有一个庞大的黑影正在缓缓移动……",
+		SOLDIER_PORTRAIT,
+		[
+			{"id": &"inspect_sea_monster", "text": "靠近查看"},
+			{"id": &"avoid_sea_monster", "text": "绕行"},
+		]
+	)
+
+
 func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 	match option_id:
 		&"finish_pirate_placeholder":
@@ -966,6 +1122,38 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 			_show_haibatian_reply()
 		&"fight_haibatian":
 			_resolve_wokou_battle()
+		&"inspect_sea_monster":
+			_event_dialogue.present(
+				"海中异兽",
+				"舰队靠近后，雾中的黑影骤然翻涌而出——竟是一头从未见过的海怪！",
+				SEA_MONSTER_PORTRAITS[_active_sea_monster_variant],
+				[{
+					"id": &"fight_sea_monster_placeholder",
+					"text": "迎战海怪（战斗系统尚未接入，此战默认获胜）",
+				}],
+				"",
+				false,
+				0.88,
+				true
+			)
+		&"avoid_sea_monster":
+			_resolve_sea_monster_event()
+			_close_sea_monster_dialogue()
+		&"fight_sea_monster_placeholder":
+			var game_state := _game_state()
+			if game_state != null:
+				game_state.call("add_economy_item", "wood", SEA_MONSTER_REWARD_WOOD)
+				game_state.call("add_economy_item", "ironstone", SEA_MONSTER_REWARD_IRONSTONE)
+			_resolve_sea_monster_event()
+			_event_dialogue.present(
+				"水师士兵",
+				"将军神勇！我军已战胜海怪，并从它盘踞的海域打捞出大量材料。",
+				SOLDIER_PORTRAIT,
+				[{"id": &"finish_sea_monster_event", "text": "收下材料，继续航行"}],
+				"木材 +%d　　铁石 +%d" % [SEA_MONSTER_REWARD_WOOD, SEA_MONSTER_REWARD_IRONSTONE]
+			)
+		&"finish_sea_monster_event":
+			_close_sea_monster_dialogue()
 		&"salvage":
 			var game_state := _game_state()
 			if game_state != null:
@@ -1201,6 +1389,9 @@ func _resolve_tea_merchant_event() -> void:
 		merchant_ship = _find_random_event(RANDOM_EVENT_TEA)
 	_mark_random_event_resolved(RANDOM_EVENT_TEA, merchant_ship)
 	_active_tea_merchant_ship = null
+	var game_state := _game_state()
+	if game_state != null and game_state.has_method("set_tea_merchant_event_completed"):
+		game_state.call("set_tea_merchant_event_completed", true)
 	_advance_exploration_stage(4)
 
 
@@ -1241,6 +1432,24 @@ func _remove_salt_merchant_ship() -> void:
 		merchant_ship.remove_from_group("sea_random_event")
 		merchant_ship.free()
 	_active_salt_merchant_ship = null
+
+
+func _resolve_sea_monster_event() -> void:
+	if _sea_monster_event_resolved:
+		return
+	var sea_monster_event := _active_sea_monster_event
+	if not is_instance_valid(sea_monster_event):
+		sea_monster_event = _find_random_event(RANDOM_EVENT_SEA_MONSTER)
+	_mark_random_event_resolved(RANDOM_EVENT_SEA_MONSTER, sea_monster_event)
+	_active_sea_monster_event = null
+	_advance_exploration_stage(4)
+
+
+func _close_sea_monster_dialogue() -> void:
+	_event_dialogue.hide_dialogue()
+	_refill_random_event_slots()
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
 
 
 func _close_crate_dialogue() -> void:
@@ -1375,90 +1584,25 @@ func _restore_fubo_return(context: Dictionary) -> void:
 
 func _current_event_state() -> Dictionary:
 	return {
-		"crate_event_resolved": _crate_event_resolved,
 		"tea_merchant_event_resolved": _tea_merchant_event_resolved,
-		"salt_merchant_event_resolved": _salt_merchant_event_resolved,
-		"active_random_events": _serialize_active_random_events(),
 		"wokou_warning_acknowledged": _wokou_warning_acknowledged,
 		"wokou_battle_completed": _wokou_battle_completed,
 	}
 
 
-func _serialize_active_random_events() -> Array[Dictionary]:
-	var result: Array[Dictionary] = []
-	for area in _active_random_events():
-		result.append({
-			"id": String(area.get_meta("random_event_id", &"")),
-			"position": _vector_to_save(area.global_position),
-			"origin": _vector_to_save(area.get_meta("spawn_origin", area.global_position) as Vector2),
-			"wander_elapsed": _salt_merchant_wander_elapsed if StringName(area.get_meta("random_event_id", &"")) == RANDOM_EVENT_SALT else 0.0,
-		})
-	return result
-
-
 func _restore_event_state(value: Variant) -> void:
-	if not value is Dictionary:
-		return
-	var state := value as Dictionary
-	_crate_event_resolved = bool(state.get("crate_event_resolved", false))
-	_tea_merchant_event_resolved = bool(state.get("tea_merchant_event_resolved", false))
-	_salt_merchant_event_resolved = bool(state.get("salt_merchant_event_resolved", false))
+	var state := value as Dictionary if value is Dictionary else {}
+	var saved_tea_completion := bool(state.get("tea_merchant_event_resolved", false))
+	var game_state := _game_state()
+	if saved_tea_completion and game_state != null and game_state.has_method("set_tea_merchant_event_completed"):
+		game_state.call("set_tea_merchant_event_completed", true)
 	_wokou_warning_acknowledged = bool(state.get("wokou_warning_acknowledged", false))
 	_wokou_battle_completed = bool(state.get("wokou_battle_completed", false))
 	if _wokou_battle_completed:
 		_wokou_warning_acknowledged = true
-	if state.has("active_random_events") and state["active_random_events"] is Array:
-		_restore_active_random_events(state["active_random_events"] as Array)
-	else:
-		_restore_legacy_random_event_state()
+	_initialize_random_events()
 	if _wokou_warning_acknowledged:
 		_remove_wokou_warning_trigger()
-
-
-func _restore_active_random_events(saved_events: Array) -> void:
-	_clear_random_events_immediate()
-	_crate_event_resolved = true
-	_tea_merchant_event_resolved = true
-	_salt_merchant_event_resolved = true
-	for raw_event in saved_events:
-		if _active_random_events().size() >= MAX_ACTIVE_RANDOM_EVENTS:
-			break
-		if not raw_event is Dictionary:
-			continue
-		var event_data := raw_event as Dictionary
-		var event_id := StringName(str(event_data.get("id", "")))
-		if event_id not in RANDOM_EVENT_TYPES or _find_random_event(event_id) != null:
-			continue
-		var fallback: Vector2 = RANDOM_EVENT_SPAWN_POINTS[event_id]
-		var restored_position := _vector_from_save(event_data.get("position"), fallback)
-		restored_position = restored_position.clamp(player.movement_bounds.position, player.movement_bounds.end)
-		var restored_origin := _vector_from_save(event_data.get("origin"), restored_position)
-		restored_origin = restored_origin.clamp(player.movement_bounds.position, player.movement_bounds.end)
-		var restored_event := _spawn_random_event(event_id, restored_position)
-		if restored_event != null:
-			restored_event.set_meta("spawn_origin", restored_origin)
-			if event_id == RANDOM_EVENT_SALT:
-				_salt_merchant_wander_origin = restored_origin
-				_salt_merchant_wander_elapsed = maxf(0.0, float(event_data.get("wander_elapsed", 0.0)))
-	_pending_random_event_refill = _active_random_events().size() < MAX_ACTIVE_RANDOM_EVENTS
-	_last_resolved_random_event = StringName()
-	_refill_random_event_slots()
-
-
-func _restore_legacy_random_event_state() -> void:
-	var last_resolved := StringName()
-	if _crate_event_resolved:
-		_remove_drifting_crate()
-		last_resolved = RANDOM_EVENT_CRATE
-	if _tea_merchant_event_resolved:
-		_remove_tea_merchant_ship()
-		last_resolved = RANDOM_EVENT_TEA
-	if _salt_merchant_event_resolved:
-		_remove_salt_merchant_ship()
-		last_resolved = RANDOM_EVENT_SALT
-	_last_resolved_random_event = last_resolved
-	_pending_random_event_refill = _active_random_events().size() < MAX_ACTIVE_RANDOM_EVENTS
-	_refill_random_event_slots()
 
 
 func _clear_random_events_immediate() -> void:
@@ -1468,6 +1612,7 @@ func _clear_random_events_immediate() -> void:
 	_active_drifting_crate = null
 	_active_tea_merchant_ship = null
 	_active_salt_merchant_ship = null
+	_active_sea_monster_event = null
 
 
 func _show_toast(message: String) -> void:
@@ -1557,10 +1702,7 @@ func _on_save_requested() -> void:
 		"facing_index": int(player.call("save_facing_index")),
 		"exploration_stage": _exploration_stage,
 		"lunar_day": _lunar_day,
-		"crate_event_resolved": _crate_event_resolved,
 		"tea_merchant_event_resolved": _tea_merchant_event_resolved,
-		"salt_merchant_event_resolved": _salt_merchant_event_resolved,
-		"active_random_events": _serialize_active_random_events(),
 		"wokou_warning_acknowledged": _wokou_warning_acknowledged,
 		"wokou_battle_completed": _wokou_battle_completed,
 	}

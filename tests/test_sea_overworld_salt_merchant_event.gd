@@ -2,7 +2,6 @@ extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SALT_MERCHANT_PORTRAIT_PATH := "res://assets/sea_overworld/portraits/大地图私盐商人.png"
-const SALT_MERCHANT_POSITION := Vector2(2200, 1500)
 const RESULT_SCREENSHOT_PATH := "res://.godot/sea_overworld_salt_merchant_result_preview.png"
 
 var failures: Array[String] = []
@@ -29,7 +28,7 @@ func _run() -> void:
 	await process_frame
 
 	var restored_scene := await _spawn_scene()
-	await _verify_resolved_state_restore(restored_scene)
+	await _verify_entry_reroll_ignores_old_resolution(restored_scene)
 	restored_scene.queue_free()
 	await process_frame
 
@@ -99,10 +98,9 @@ func _verify_salt_ship_setup(scene: Node) -> Area2D:
 	if salt_ship == null or tea_ship == null:
 		return null
 	var spawn_origin: Vector2 = salt_ship.get_meta("spawn_origin", Vector2.ZERO)
-	_expect(spawn_origin.is_equal_approx(SALT_MERCHANT_POSITION), "Salt merchant ship must use the approved offshore refresh point.")
-	_expect(salt_ship.position.distance_to(spawn_origin) <= 120.0, "Salt merchant patrol must stay within its 120-unit local range.")
-	_expect(_is_water_clear(salt_ship.global_position, 120.0), "Salt merchant ship must stay well clear of land.")
-	_expect(spawn_origin.distance_to(tea_ship.position) > 900.0, "Salt and tea merchant refresh points must be widely separated.")
+	_expect(salt_ship.position.distance_to(spawn_origin) <= 240.0, "Salt merchant patrol must stay within its pirate-matched 240-unit range.")
+	_expect(_is_water_clear(salt_ship.global_position, 48.0), "Salt merchant ship must stay clear of land.")
+	_expect(spawn_origin.distance_to(tea_ship.position) >= 360.0, "Salt and tea merchant refresh points must respect random-event separation.")
 	_expect(str(salt_ship.get_meta("display_name")) == "私盐商船", "Salt ship event must retain its private event identity.")
 	_expect(salt_ship.find_children("*", "Label", true, false).is_empty(), "Salt ship identity must not be shown before interaction.")
 	var trigger_shapes := salt_ship.find_children("*", "CollisionShape2D", false, false)
@@ -136,7 +134,7 @@ func _verify_initial_dialogue(scene: Node, dialogue: Control, player: CharacterB
 		_expect((option_box.get_child(2) as Button).text == "放行商船  ▶", "Third salt merchant choice must be arrow-marked release.")
 
 
-func _verify_resolved_state_restore(scene: Node) -> void:
+func _verify_entry_reroll_ignores_old_resolution(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	scene.call("_restore_saved_scene_state", {
 		"player_position": [player.global_position.x, player.global_position.y],
@@ -147,8 +145,8 @@ func _verify_resolved_state_restore(scene: Node) -> void:
 	})
 	await process_frame
 	await physics_frame
-	_expect(bool(scene.get("_salt_merchant_event_resolved")), "Loaded salt-merchant resolution flag must be restored.")
-	_expect(scene.get_node_or_null("World/WorldMarkers/SaltMerchantShip") == null, "A resolved salt merchant ship must stay removed after loading.")
+	_expect(not bool(scene.get("_salt_merchant_event_resolved")), "Old salt completion flags must reset when a new sea-map entry rerolls events.")
+	_expect(scene.get_node_or_null("World/WorldMarkers/SaltMerchantShip") != null, "A private-salt event may be freshly rolled again on entry.")
 
 
 func _capture_result_preview() -> void:

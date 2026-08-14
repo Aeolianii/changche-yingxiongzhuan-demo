@@ -16,6 +16,7 @@ func _run() -> void:
 	root.remove_meta(TRAVEL.RETURN_REQUEST_META)
 	root.remove_meta(TRAVEL.RETURN_CONTEXT_META)
 	root.set_meta("sea_overworld_lunar_day", 0.0)
+	root.get_node("GameState").call("reset_runtime_world_state")
 
 	var sea := SEA_SCENE.instantiate()
 	root.add_child(sea)
@@ -84,9 +85,10 @@ func _run() -> void:
 		_check(is_equal_approx(float(returned_sea.get("_lunar_day")), 8.5), "Sea return must restore lunar progress.")
 		var returned_random_events := _random_event_positions(returned_sea)
 		_check(
-			returned_random_events.size() == expected_random_events.size()
-			and returned_random_events.keys().all(func(event_id: String) -> bool: return expected_random_events.has(event_id)),
-			"Sea return must preserve the two active random-event types without duplication."
+			returned_random_events.size() == 2
+			and returned_random_events.has("tea_merchant")
+			and returned_random_events != expected_random_events,
+			"Sea return must keep unfinished tea guaranteed while rerolling active event types or positions."
 		)
 		var returned_fog := returned_sea.get_node("World/FogOfWar")
 		_check(bool(returned_fog.call("is_world_position_revealed", fog_probe)), "Sea return must preserve the explored fog route.")

@@ -70,6 +70,15 @@ func _verify_save_file_contract() -> void:
 	incompatible_file.close()
 	var incompatible_result: Dictionary = game_state.call("load_game")
 	_expect(not incompatible_result.get("ok", false) and incompatible_result.get("reason") == "unsupported_version", "Incompatible save versions must be rejected safely.")
+	game_state.call("reset_runtime_world_state")
+	game_state.call("set_tea_merchant_event_completed", true)
+	var tea_save_result: Dictionary = game_state.call("save_game", PALACE_PATH, snapshot)
+	_expect(tea_save_result.get("ok", false), "Tea-merchant completion must be accepted in global save state.")
+	game_state.call("reset_runtime_world_state")
+	game_state.call("load_game")
+	_expect(bool(game_state.call("is_tea_merchant_event_completed")), "Tea-merchant completion must survive a formal save/load round trip.")
+	game_state.call("consume_pending_scene_state", PALACE_PATH)
+	game_state.call("reset_runtime_world_state")
 
 
 func _verify_palace_restore() -> void:

@@ -28,7 +28,7 @@ func _run() -> void:
 	await process_frame
 
 	var restored_scene := await _spawn_scene()
-	await _verify_resolved_state_restore(restored_scene)
+	await _verify_entry_reroll_ignores_old_resolution(restored_scene)
 	restored_scene.queue_free()
 	await process_frame
 
@@ -144,7 +144,7 @@ func _verify_ignore_branch(scene: Node) -> void:
 	_expect(sea_map_status.visible, "Sea map button must return after the ignored crate dialogue closes.")
 
 
-func _verify_resolved_state_restore(scene: Node) -> void:
+func _verify_entry_reroll_ignores_old_resolution(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	scene.call("_restore_saved_scene_state", {
 		"player_position": [player.global_position.x, player.global_position.y],
@@ -155,8 +155,8 @@ func _verify_resolved_state_restore(scene: Node) -> void:
 	})
 	await process_frame
 	await physics_frame
-	_expect(bool(scene.get("_crate_event_resolved")), "Loaded crate resolution flag must be restored.")
-	_expect(scene.get_node_or_null("World/WorldMarkers/DriftEvent") == null, "A resolved drifting crate must stay removed after state restoration.")
+	_expect(not bool(scene.get("_crate_event_resolved")), "Old crate completion flags must reset when a new sea-map entry rerolls events.")
+	_expect(scene.get_node_or_null("World/WorldMarkers/DriftEvent") != null, "A drifting crate may be freshly rolled again on entry.")
 
 
 func _verify_crate_visual(scene: Node) -> Area2D:

@@ -3,9 +3,9 @@ extends Node2D
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
 const DRIFTING_CRATE_TEXTURE := preload("res://assets/sprites/sea_overworld/drifting_supply_crate_v1.png")
 const SEA_MONSTER_MIST_TEXTURES: Array[Texture2D] = [
-	preload("res://assets/sprites/sea_overworld/random_events/sea_monster_mist_1_v1.png"),
-	preload("res://assets/sprites/sea_overworld/random_events/sea_monster_mist_2_v1.png"),
-	preload("res://assets/sprites/sea_overworld/random_events/sea_monster_mist_3_v1.png"),
+	preload("res://assets/sprites/sea_overworld/random_events/海怪雾影1.png"),
+	preload("res://assets/sprites/sea_overworld/random_events/海怪雾影2.png"),
+	preload("res://assets/sprites/sea_overworld/random_events/海怪雾影3.png"),
 ]
 const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
 const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
@@ -958,6 +958,9 @@ func _build_sea_monster_event_trigger(at: Vector2, variant: int) -> Area2D:
 	mist_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	var vignette_material := ShaderMaterial.new()
 	vignette_material.shader = SEA_EVENT_VIGNETTE_SHADER
+	vignette_material.set_shader_parameter("fog_motion_speed", 0.032)
+	vignette_material.set_shader_parameter("fog_opacity_variation", 0.12)
+	vignette_material.set_shader_parameter("fog_brightness_variation", 0.07)
 	mist_sprite.material = vignette_material
 	visual.add_child(mist_sprite)
 	_floating_visuals.append(visual)

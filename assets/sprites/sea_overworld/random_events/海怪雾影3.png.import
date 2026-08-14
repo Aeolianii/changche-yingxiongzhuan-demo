@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bcjj4bles0ft7"
-path="res://.godot/imported/sea_monster_mist_2_v1.png-52fb61249f05eb14a30e5c31d6c50ce9.ctex"
+uid="uid://b1qo4sbet7e3i"
+path="res://.godot/imported/海怪雾影3.png-6caf2c7c39fca14be723d351e5bcdc39.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/sea_overworld/random_events/sea_monster_mist_2_v1.png"
-dest_files=["res://.godot/imported/sea_monster_mist_2_v1.png-52fb61249f05eb14a30e5c31d6c50ce9.ctex"]
+source_file="res://assets/sprites/sea_overworld/random_events/海怪雾影3.png"
+dest_files=["res://.godot/imported/海怪雾影3.png-6caf2c7c39fca14be723d351e5bcdc39.ctex"]
 
 [params]
 

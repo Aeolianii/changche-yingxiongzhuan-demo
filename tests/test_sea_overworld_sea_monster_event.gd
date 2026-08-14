@@ -2,9 +2,9 @@ extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const MIST_PATHS := [
-	"res://assets/sprites/sea_overworld/random_events/sea_monster_mist_1_v1.png",
-	"res://assets/sprites/sea_overworld/random_events/sea_monster_mist_2_v1.png",
-	"res://assets/sprites/sea_overworld/random_events/sea_monster_mist_3_v1.png",
+	"res://assets/sprites/sea_overworld/random_events/海怪雾影1.png",
+	"res://assets/sprites/sea_overworld/random_events/海怪雾影2.png",
+	"res://assets/sprites/sea_overworld/random_events/海怪雾影3.png",
 ]
 const PORTRAIT_PATHS := [
 	"res://assets/sea_overworld/portraits/海怪1.png",
@@ -133,8 +133,21 @@ func _verify_map_visual(scene: Node, variant: int) -> Area2D:
 	_expect(int(event.get_meta("sea_monster_variant", -1)) == variant, "Sea-monster event must retain its selected variant identity.")
 	var sprite := event.get_node("EventVisual/MistSprite") as Sprite2D
 	_expect(sprite.texture != null and sprite.texture.resource_path == MIST_PATHS[variant], "Sea-monster variant %d must use its matching generated mist silhouette." % (variant + 1))
+	var mist_image := sprite.texture.get_image()
+	var last_pixel := mist_image.get_size() - Vector2i.ONE
+	_expect(
+		mist_image.get_pixel(0, 0).a < 0.05
+		and mist_image.get_pixel(last_pixel.x, 0).a < 0.05
+		and mist_image.get_pixel(0, last_pixel.y).a < 0.05
+		and mist_image.get_pixel(last_pixel.x, last_pixel.y).a < 0.05,
+		"Sea-monster variant %d must retain a genuinely transparent outer background." % (variant + 1)
+	)
 	var shader_material := sprite.material as ShaderMaterial
 	_expect(shader_material != null and shader_material.shader.resource_path.ends_with("sea_event_vignette.gdshader"), "Mist sprite must use edge fading so it blends into the overworld sea.")
+	_expect(float(shader_material.get_shader_parameter("fog_motion_speed")) > 0.0, "Mist shader must animate the bright fog with time-driven drift.")
+	_expect(float(shader_material.get_shader_parameter("fog_opacity_variation")) > 0.0, "Mist shader must give the bright fog a restrained opacity variation.")
+	_expect(float(shader_material.get_shader_parameter("fog_brightness_variation")) > 0.0, "Mist shader must give the bright fog a restrained brightness variation.")
+	_expect("TIME" in shader_material.shader.code and "fog_mask" in shader_material.shader.code, "Mist shader must drive a brightness-masked fog animation over time.")
 	_expect(event.find_children("*", "Label", true, false).is_empty(), "Suspicious mist must show no identifying map label.")
 	return event
 

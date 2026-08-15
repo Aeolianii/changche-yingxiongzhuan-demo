@@ -26,7 +26,8 @@ void fragment() {
 	vec4 source = texture(TEXTURE, UV);
 	vec2 world_position = world_origin + UV * world_size;
 	float time = TIME * water_wave_speed * 0.02545;
-	vec2 flow_uv = fract(world_position * vec2(0.00082, 0.00105));
+	// Keep the base coordinates continuous; the seamless flow texture handles wrapping.
+	vec2 flow_uv = world_position * vec2(0.00082, 0.00105);
 
 	// Same three-layer counter-flow used by the naval battle surface.
 	float broad_a = sea_luma(texture(waterFlowTexture, fract(

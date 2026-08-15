@@ -1,11 +1,12 @@
 extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
-const MIST_PATHS := [
+const SHADOW_SOURCE_PATHS := [
 	"res://assets/sprites/sea_overworld/random_events/海怪雾影1.png",
 	"res://assets/sprites/sea_overworld/random_events/海怪雾影2.png",
 	"res://assets/sprites/sea_overworld/random_events/海怪雾影3.png",
 ]
+const SURFACE_MIST_PATH := "res://assets/sprites/sea_overworld/random_events/海怪贴海薄雾_v2.png"
 const PORTRAIT_PATHS := [
 	"res://assets/sea_overworld/portraits/海怪1.png",
 	"res://assets/sea_overworld/portraits/海怪2.png",
@@ -160,7 +161,7 @@ func _verify_map_visual(scene: Node, variant: int) -> Area2D:
 		)
 	_expect(uses_deep_water_anchor, "Sea-monster event must spawn at one of the three approved broad-water anchors.")
 	var sprite := event.get_node("EventVisual/MistSprite") as Sprite2D
-	_expect(sprite.texture != null and sprite.texture.resource_path == MIST_PATHS[variant], "Sea-monster variant %d must use its matching generated mist silhouette." % (variant + 1))
+	_expect(sprite.texture != null and sprite.texture.resource_path == SURFACE_MIST_PATH, "Sea-monster event must use the shared low-contrast surface-mist layer.")
 	var mist_image := sprite.texture.get_image()
 	var last_pixel := mist_image.get_size() - Vector2i.ONE
 	_expect(
@@ -172,10 +173,19 @@ func _verify_map_visual(scene: Node, variant: int) -> Area2D:
 	)
 	var shader_material := sprite.material as ShaderMaterial
 	_expect(shader_material != null and shader_material.shader.resource_path.ends_with("sea_event_vignette.gdshader"), "Mist sprite must use edge fading so it blends into the overworld sea.")
-	_expect(float(shader_material.get_shader_parameter("fog_motion_speed")) > 0.0, "Mist shader must animate the bright fog with time-driven drift.")
-	_expect(float(shader_material.get_shader_parameter("fog_opacity_variation")) > 0.0, "Mist shader must give the bright fog a restrained opacity variation.")
-	_expect(float(shader_material.get_shader_parameter("fog_brightness_variation")) > 0.0, "Mist shader must give the bright fog a restrained brightness variation.")
-	_expect("TIME" in shader_material.shader.code and "fog_mask" in shader_material.shader.code, "Mist shader must drive a brightness-masked fog animation over time.")
+	_expect(float(shader_material.get_shader_parameter("fog_motion_speed")) > 0.0, "Mist shader must animate the surface fog with time-driven drift.")
+	_expect(float(shader_material.get_shader_parameter("fog_opacity_variation")) > 0.0, "Mist shader must give the surface fog a restrained opacity variation.")
+	_expect(float(shader_material.get_shader_parameter("fog_brightness_variation")) > 0.0, "Mist shader must give the surface fog a restrained brightness variation.")
+	_expect("TIME" in shader_material.shader.code and "warped_uv" in shader_material.shader.code, "Mist shader must distort and breathe the pixel-ink fog over time.")
+	var shadow := event.get_node("EventVisual/MonsterShadow") as Sprite2D
+	_expect(shadow.texture != null and shadow.texture.resource_path == SHADOW_SOURCE_PATHS[variant], "Sea-monster variant %d must retain its matching creature identity beneath the mist." % (variant + 1))
+	var shadow_material := shadow.material as ShaderMaterial
+	_expect(shadow_material != null and shadow_material.shader.resource_path.ends_with("sea_monster_shadow.gdshader"), "Monster silhouette must be recolored and dissolved as an underwater pixel-ink shadow.")
+	_expect("darkness" in shadow_material.shader.code and "pixel_step" in shadow_material.shader.code, "Monster shadow shader must extract only the dark silhouette and retain pixel clusters.")
+	var ripple := event.get_node("EventVisual/SurfaceRipple") as ColorRect
+	var ripple_material := ripple.material as ShaderMaterial
+	_expect(ripple_material != null and ripple_material.shader.resource_path.ends_with("sea_monster_ripple.gdshader"), "Sea-monster event must disturb the sea with animated elliptical ripples.")
+	_expect("TIME" in ripple_material.shader.code and "ripple_band" in ripple_material.shader.code, "Sea-monster ripple must expand and fade over time.")
 	_expect(event.find_children("*", "Label", true, false).is_empty(), "Suspicious mist must show no identifying map label.")
 	return event
 
@@ -184,7 +194,7 @@ func _verify_initial_dialogue(dialogue: Control, player: CharacterBody2D) -> voi
 	_expect(dialogue.visible and not player.controls_enabled, "Touching suspicious mist must open dialogue and pause sailing.")
 	var speaker := dialogue.get_node("NamePlate/SpeakerLabel") as Label
 	var line := dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
-	_expect(speaker.text == "水师士兵" and "白雾" in line.text and "黑影" in line.text, "Initial report must describe dense white mist and an unidentified shadow.")
+	_expect(speaker.text == "水师士兵" and "青灰薄雾" in line.text and "黑影" in line.text, "Initial report must describe surface mist and an unidentified underwater shadow.")
 	var option_box := _option_box(dialogue)
 	_expect(option_box.get_child_count() == 2, "Suspicious mist must show exactly two initial choices.")
 	if option_box.get_child_count() == 2:
@@ -195,12 +205,16 @@ func _verify_initial_dialogue(dialogue: Control, player: CharacterBody2D) -> voi
 func _capture_map_preview(scene: Node, event: Area2D, player: CharacterBody2D) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
-	player.global_position = event.global_position + Vector2(-190, 0)
-	(scene.get_node("World/Player/Camera2D") as Camera2D).reset_smoothing()
-	for _frame in range(4):
-		await physics_frame
+	var camera := scene.get_node("World/Player/Camera2D") as Camera2D
+	var smoothing_was_enabled := camera.position_smoothing_enabled
+	camera.position_smoothing_enabled = false
+	camera.global_position = event.global_position
+	await create_timer(1.4).timeout
 	await RenderingServer.frame_post_draw
 	_expect(root.get_texture().get_image().save_png(MAP_PREVIEW_PATH) == OK, "Sea-monster mist map preview could not be saved.")
+	camera.position = Vector2.ZERO
+	camera.position_smoothing_enabled = smoothing_was_enabled
+	camera.reset_smoothing()
 
 
 func _capture_dialogue_preview() -> void:

@@ -2,11 +2,12 @@ extends Node2D
 
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
 const DRIFTING_CRATE_TEXTURE := preload("res://assets/sprites/sea_overworld/drifting_supply_crate_v1.png")
-const SEA_MONSTER_MIST_TEXTURES: Array[Texture2D] = [
+const SEA_MONSTER_SHADOW_SOURCE_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/sea_overworld/random_events/海怪雾影1.png"),
 	preload("res://assets/sprites/sea_overworld/random_events/海怪雾影2.png"),
 	preload("res://assets/sprites/sea_overworld/random_events/海怪雾影3.png"),
 ]
+const SEA_MONSTER_SURFACE_MIST_TEXTURE := preload("res://assets/sprites/sea_overworld/random_events/海怪贴海薄雾_v2.png")
 const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
 const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
 const TEA_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图茶叶商人.png")
@@ -29,6 +30,8 @@ const D_MAP_TEXTURE := preload("res://assets/backgrounds/sea_overworld/guangdong
 const FUBO_TRAVEL := preload("res://scripts/fubo_guling/fubo_travel_session.gd")
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 const SEA_EVENT_VIGNETTE_SHADER := preload("res://shaders/sea_event_vignette.gdshader")
+const SEA_MONSTER_SHADOW_SHADER := preload("res://shaders/sea_monster_shadow.gdshader")
+const SEA_MONSTER_RIPPLE_SHADER := preload("res://shaders/sea_monster_ripple.gdshader")
 const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel_seamless_v2.png")
 const MAP_CHUNK_SIZE := Vector2(2508, 1412)
 const MAP_CHUNK_OVERLAP := 120.0
@@ -447,9 +450,9 @@ func _spawn_random_event(event_id: StringName, at: Vector2) -> Area2D:
 			_active_sea_monster_variant = (
 				_sea_monster_variant_override
 				if _sea_monster_variant_override >= 0
-				else _random_event_rng.randi_range(0, SEA_MONSTER_MIST_TEXTURES.size() - 1)
+				else _random_event_rng.randi_range(0, SEA_MONSTER_SHADOW_SOURCE_TEXTURES.size() - 1)
 			)
-			_active_sea_monster_variant = posmod(_active_sea_monster_variant, SEA_MONSTER_MIST_TEXTURES.size())
+			_active_sea_monster_variant = posmod(_active_sea_monster_variant, SEA_MONSTER_SHADOW_SOURCE_TEXTURES.size())
 			area = _build_sea_monster_event_trigger(at, _active_sea_monster_variant)
 			_active_sea_monster_event = area
 			_sea_monster_event_resolved = false
@@ -982,19 +985,54 @@ func _build_sea_monster_event_trigger(at: Vector2, variant: int) -> Area2D:
 	visual.name = "EventVisual"
 	visual.z_index = 17
 	area.add_child(visual)
+
+	var ripple := ColorRect.new()
+	ripple.name = "SurfaceRipple"
+	ripple.position = Vector2(-190.0, -112.0)
+	ripple.size = Vector2(380.0, 224.0)
+	ripple.color = Color.WHITE
+	ripple.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ripple.z_index = 0
+	var ripple_material := ShaderMaterial.new()
+	ripple_material.shader = SEA_MONSTER_RIPPLE_SHADER
+	ripple_material.set_shader_parameter("phase_offset", float(variant) * 0.19)
+	ripple.material = ripple_material
+	visual.add_child(ripple)
+
+	var shadow_sprite := Sprite2D.new()
+	shadow_sprite.name = "MonsterShadow"
+	shadow_sprite.texture = SEA_MONSTER_SHADOW_SOURCE_TEXTURES[variant]
+	shadow_sprite.position = Vector2(0.0, 7.0)
+	shadow_sprite.scale = Vector2(0.25, 0.205)
+	shadow_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	shadow_sprite.z_index = 1
+	var shadow_material := ShaderMaterial.new()
+	shadow_material.shader = SEA_MONSTER_SHADOW_SHADER
+	shadow_material.set_shader_parameter("flow_phase", float(variant) * 1.73)
+	shadow_sprite.material = shadow_material
+	visual.add_child(shadow_sprite)
+
 	var mist_sprite := Sprite2D.new()
 	mist_sprite.name = "MistSprite"
-	mist_sprite.texture = SEA_MONSTER_MIST_TEXTURES[variant]
-	mist_sprite.scale = Vector2(0.22, 0.22)
-	mist_sprite.modulate = Color(1.0, 1.0, 1.0, 0.72)
-	mist_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	mist_sprite.texture = SEA_MONSTER_SURFACE_MIST_TEXTURE
+	mist_sprite.position = Vector2(0.0, -4.0)
+	mist_sprite.scale = Vector2(0.27, 0.22)
+	mist_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	mist_sprite.z_index = 2
 	var vignette_material := ShaderMaterial.new()
 	vignette_material.shader = SEA_EVENT_VIGNETTE_SHADER
-	vignette_material.set_shader_parameter("fog_motion_speed", 0.032)
-	vignette_material.set_shader_parameter("fog_opacity_variation", 0.12)
-	vignette_material.set_shader_parameter("fog_brightness_variation", 0.07)
+	vignette_material.set_shader_parameter("fog_motion_speed", 0.026)
+	vignette_material.set_shader_parameter("fog_opacity_variation", 0.16)
+	vignette_material.set_shader_parameter("fog_brightness_variation", 0.045)
 	mist_sprite.material = vignette_material
 	visual.add_child(mist_sprite)
+
+	visual.modulate.a = 0.0
+	visual.scale = Vector2(0.94, 0.94)
+	var reveal_tween := visual.create_tween().set_parallel(true)
+	reveal_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	reveal_tween.tween_property(visual, "modulate:a", 1.0, 1.25)
+	reveal_tween.tween_property(visual, "scale", Vector2.ONE, 1.6)
 	_floating_visuals.append(visual)
 	return area
 
@@ -1136,7 +1174,7 @@ func _open_sea_monster_event(area: Area2D) -> void:
 	interaction_prompt.hide()
 	_event_dialogue.present(
 		"水师士兵",
-		"将军，前方海面忽然涌起大片白雾，雾中似有一个庞大的黑影正在缓缓移动……",
+		"将军，前方海面忽然漫起青灰薄雾，雾下似有一个庞大的黑影正随暗流缓缓移动……",
 		SOLDIER_PORTRAIT,
 		[
 			{"id": &"inspect_sea_monster", "text": "靠近查看"},

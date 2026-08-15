@@ -130,6 +130,8 @@ var _random_event_rng := RandomNumberGenerator.new()
 var _random_event_seed_override := -1
 var _sea_monster_variant_override := -1
 var _pending_random_event_refill := false
+var _sea_monster_retry_pending := false
+var _sea_monster_retry_origin := Vector2(INF, INF)
 var _resolved_random_event_ids: Dictionary = {}
 var _salt_merchant_wander_origin := Vector2.ZERO
 var _salt_merchant_wander_target := Vector2.ZERO
@@ -400,6 +402,8 @@ func _initialize_random_events() -> void:
 	_crate_event_resolved = false
 	_salt_merchant_event_resolved = false
 	_sea_monster_event_resolved = false
+	_sea_monster_retry_pending = false
+	_sea_monster_retry_origin = Vector2(INF, INF)
 	if _random_event_seed_override >= 0:
 		_random_event_rng.seed = _random_event_seed_override
 	else:
@@ -509,7 +513,11 @@ func _refill_random_event_slots() -> void:
 				candidates.append(event_id)
 		if candidates.is_empty():
 			break
-		var chosen_id := candidates[_random_event_rng.randi_range(0, candidates.size() - 1)]
+		var chosen_id := (
+			RANDOM_EVENT_SEA_MONSTER
+			if _sea_monster_retry_pending and candidates.has(RANDOM_EVENT_SEA_MONSTER)
+			else candidates[_random_event_rng.randi_range(0, candidates.size() - 1)]
+		)
 		var spawn_position := Vector2(INF, INF)
 		if chosen_id == RANDOM_EVENT_SEA_MONSTER:
 			spawn_position = _find_sea_monster_spawn_position()
@@ -520,7 +528,12 @@ func _refill_random_event_slots() -> void:
 		if not is_finite(spawn_position.x) or not is_finite(spawn_position.y):
 			push_warning("Could not find an off-screen random-event spawn point.")
 			break
-		_spawn_random_event(chosen_id, spawn_position)
+		var spawned_event := _spawn_random_event(chosen_id, spawn_position)
+		if spawned_event == null:
+			break
+		if chosen_id == RANDOM_EVENT_SEA_MONSTER:
+			_sea_monster_retry_pending = false
+			_sea_monster_retry_origin = Vector2(INF, INF)
 	_pending_random_event_refill = false
 
 
@@ -569,6 +582,8 @@ func _find_sea_monster_spawn_position() -> Vector2:
 
 
 func _is_sea_monster_spawn_valid(candidate: Vector2) -> bool:
+	if _sea_monster_retry_pending and candidate.is_equal_approx(_sea_monster_retry_origin):
+		return false
 	if _player_view_world_rect().grow(RANDOM_EVENT_VIEW_MARGIN).has_point(candidate):
 		return false
 	for active_event in _active_random_events():
@@ -1210,7 +1225,7 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 				true
 			)
 		&"avoid_sea_monster":
-			_resolve_sea_monster_event()
+			_recycle_sea_monster_event()
 			_close_sea_monster_dialogue()
 		&"fight_sea_monster_placeholder":
 			var game_state := _game_state()
@@ -1515,7 +1530,24 @@ func _resolve_sea_monster_event() -> void:
 		sea_monster_event = _find_random_event(RANDOM_EVENT_SEA_MONSTER)
 	_mark_random_event_resolved(RANDOM_EVENT_SEA_MONSTER, sea_monster_event)
 	_active_sea_monster_event = null
+	_sea_monster_retry_pending = false
+	_sea_monster_retry_origin = Vector2(INF, INF)
 	_advance_exploration_stage(4)
+
+
+func _recycle_sea_monster_event() -> void:
+	if _sea_monster_event_resolved:
+		return
+	var sea_monster_event := _active_sea_monster_event
+	if not is_instance_valid(sea_monster_event):
+		sea_monster_event = _find_random_event(RANDOM_EVENT_SEA_MONSTER)
+	if is_instance_valid(sea_monster_event):
+		_sea_monster_retry_origin = sea_monster_event.global_position
+		sea_monster_event.remove_from_group("sea_random_event")
+		sea_monster_event.free()
+	_active_sea_monster_event = null
+	_sea_monster_retry_pending = true
+	_pending_random_event_refill = true
 
 
 func _close_sea_monster_dialogue() -> void:

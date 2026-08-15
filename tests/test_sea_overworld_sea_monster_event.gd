@@ -121,6 +121,8 @@ func _verify_default_victory(scene: Node, variant: int) -> void:
 		(option_box.get_child(0) as Button).pressed.emit()
 		await process_frame
 	_expect(not dialogue.visible and player.controls_enabled, "Finishing the sea-monster result must resume sailing.")
+	_expect((scene.get("_resolved_random_event_ids") as Dictionary).has(&"sea_monster_mist"), "Winning must permanently resolve the sea-monster type for the current sea-map session.")
+	_expect(scene.call("_find_random_event", &"sea_monster_mist") == null, "A defeated sea monster must not refresh after its result dialogue closes.")
 
 
 func _verify_avoid_branch(scene: Node) -> void:
@@ -130,18 +132,30 @@ func _verify_avoid_branch(scene: Node) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var dialogue := scene.get_node("UI/FieldEventDialogue") as Control
 	var before: Dictionary = root.get_node("GameState").call("get_economy_state")
-	player.global_position = event.global_position
-	for _frame in range(3):
-		await physics_frame
-	var option_box := _option_box(dialogue)
-	if option_box.get_child_count() != 2:
-		return
-	(option_box.get_child(1) as Button).pressed.emit()
-	await process_frame
-	await process_frame
+	var previous_event := event
+	for retry_index in range(2):
+		var previous_position := previous_event.global_position
+		player.global_position = previous_position
+		for _frame in range(3):
+			await physics_frame
+		var option_box := _option_box(dialogue)
+		if option_box.get_child_count() != 2:
+			_expect(false, "Each refreshed sea monster must still offer the avoid choice.")
+			return
+		(option_box.get_child(1) as Button).pressed.emit()
+		await process_frame
+		await process_frame
+		var refreshed_event := scene.call("_find_random_event", &"sea_monster_mist") as Area2D
+		_expect(refreshed_event != null and refreshed_event != previous_event, "Avoiding must replace the current sea monster with a fresh instance.")
+		_expect(refreshed_event != null and not refreshed_event.global_position.is_equal_approx(previous_position), "A refreshed sea monster must move to another available deep-water anchor.")
+		_expect(not (scene.get("_resolved_random_event_ids") as Dictionary).has(&"sea_monster_mist"), "Avoiding must not resolve the sea-monster type for the current session.")
+		_expect(not bool(scene.get("_sea_monster_event_resolved")), "Avoiding must leave the sea-monster victory state incomplete.")
+		if refreshed_event == null:
+			return
+		previous_event = refreshed_event
 	var after: Dictionary = root.get_node("GameState").call("get_economy_state")
 	_expect(not dialogue.visible and player.controls_enabled, "Choosing to go around must close dialogue and resume sailing.")
-	_expect(scene.get_node_or_null("World/WorldMarkers/SeaMonsterMistEvent") == null, "Going around must remove the current mist event.")
+	_expect((scene.call("_active_random_events") as Array).size() == 3, "Avoiding must refill the sea-monster slot without exceeding the three-event limit.")
 	_expect(after["items"] == before["items"], "Going around the suspicious shadow must grant no materials.")
 
 

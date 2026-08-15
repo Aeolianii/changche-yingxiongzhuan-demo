@@ -3,7 +3,7 @@ extends SceneTree
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SOUTH_SEA_HARBOR_SPAWN := Vector2(880, 1170)
 const FAR_WATERS := Vector2(4380, 2460)
-const FOG_CELL_SIZE := 16.0
+const FOG_CELL_SIZE := 8.0
 const WORLD_SCREENSHOT_PATH := "res://.godot/sea_fog_world_preview.png"
 const MAP_SCREENSHOT_PATH := "res://.godot/sea_fog_map_preview.png"
 
@@ -63,6 +63,8 @@ func _run() -> void:
 		_expect(world_fog_material != null and world_fog_material.shader.resource_path.ends_with("sea_world_fog_edge.gdshader"), "World fog must soften the narrow unexplored edge instead of drawing a hard black line.")
 		_expect(float(world_fog_material.get_shader_parameter("blur_texels")) >= 2.0, "World edge fog must use the wider soft transition.")
 		_expect(float(world_fog_material.get_shader_parameter("edge_warp_texels")) >= 1.0, "World edge fog must warp the revealed rectangle into a stable irregular ink contour.")
+		_expect(float(world_fog_material.get_shader_parameter("alpha_dither")) > 0.0, "World edge fog must dither intermediate alpha levels to break up visible gradient bands.")
+		_expect("weight_x" in world_fog_material.shader.code and "GAUSSIAN_RADIUS" in world_fog_material.shader.code, "World edge fog must use a continuous 5x5 Gaussian kernel instead of nine fixed alpha bands.")
 		_expect(float(world_fog_material.get_shader_parameter("fog_opacity")) <= 0.75, "World edge fog must stay gently translucent rather than covering the view with solid black.")
 
 	var hud := root.get_node("ExplorationUI/HUD") as Control
@@ -127,8 +129,8 @@ func _expect_polygon_revealed(fog: Node, polygon_node: CollisionPolygon2D, world
 		bounds = bounds.expand(world_point)
 	var sampled_cells := 0
 	var first_hidden_cell := Vector2.ZERO
-	for cell_y in range(floori(bounds.position.y / FOG_CELL_SIZE), ceili(bounds.end.y / FOG_CELL_SIZE)):
-		for cell_x in range(floori(bounds.position.x / FOG_CELL_SIZE), ceili(bounds.end.x / FOG_CELL_SIZE)):
+	for cell_y in range(maxi(0, floori(bounds.position.y / FOG_CELL_SIZE)), ceili(bounds.end.y / FOG_CELL_SIZE)):
+		for cell_x in range(maxi(0, floori(bounds.position.x / FOG_CELL_SIZE)), ceili(bounds.end.x / FOG_CELL_SIZE)):
 			var cell_center := Vector2(cell_x + 0.5, cell_y + 0.5) * FOG_CELL_SIZE
 			if not Geometry2D.is_point_in_polygon(cell_center, world_polygon):
 				continue

@@ -3,12 +3,14 @@ extends Node2D
 
 signal state_changed
 
-const STATE_VERSION := 1
-const CELL_SIZE := 16.0
+const STATE_VERSION := 2
+const LEGACY_STATE_VERSION := 1
+const LEGACY_CELL_SIZE := 16.0
+const CELL_SIZE := 8.0
 const WORLD_FOG_Z_INDEX := 40
 const VIEW_EDGE_FOG_INSET := 48.0
 const REVEAL_UPDATE_DISTANCE := 2.0
-const REVEAL_FADE_DURATION := 0.16
+const REVEAL_FADE_DURATION := 0.4
 const WORLD_FOG_SHADER := preload("res://shaders/sea_world_fog_edge.gdshader")
 
 var _world_size := Vector2.ONE
@@ -205,12 +207,21 @@ func _build_world_overlay() -> void:
 	_world_overlay.z_index = WORLD_FOG_Z_INDEX
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = WORLD_FOG_SHADER
+	fog_material.set_shader_parameter("blur_texels", 2.0)
+	fog_material.set_shader_parameter("edge_warp_texels", 1.6)
+	fog_material.set_shader_parameter("edge_irregularity", 0.045)
+	fog_material.set_shader_parameter("alpha_dither", 0.026)
+	fog_material.set_shader_parameter("fog_opacity", 0.72)
 	_world_overlay.material = fog_material
 	add_child(_world_overlay)
 
 
 func _restore_state(saved_state: Dictionary) -> void:
-	if int(saved_state.get("version", 0)) != STATE_VERSION:
+	var state_version := int(saved_state.get("version", 0))
+	if state_version == LEGACY_STATE_VERSION and is_equal_approx(float(saved_state.get("cell_size", 0.0)), LEGACY_CELL_SIZE):
+		_restore_legacy_state(saved_state)
+		return
+	if state_version != STATE_VERSION:
 		return
 	if int(saved_state.get("grid_width", 0)) != _grid_size.x or int(saved_state.get("grid_height", 0)) != _grid_size.y:
 		return
@@ -220,6 +231,34 @@ func _restore_state(saved_state: Dictionary) -> void:
 	if restored_bits.size() != _revealed_bits.size():
 		return
 	_revealed_bits = restored_bits
+
+
+func _restore_legacy_state(saved_state: Dictionary) -> void:
+	var legacy_grid_size := Vector2i(
+		maxi(1, ceili(_world_size.x / LEGACY_CELL_SIZE)),
+		maxi(1, ceili(_world_size.y / LEGACY_CELL_SIZE))
+	)
+	if int(saved_state.get("grid_width", 0)) != legacy_grid_size.x or int(saved_state.get("grid_height", 0)) != legacy_grid_size.y:
+		return
+	var legacy_bits := Marshalls.base64_to_raw(str(saved_state.get("revealed_bits", "")))
+	if legacy_bits.size() != ceili(float(legacy_grid_size.x * legacy_grid_size.y) / 8.0):
+		return
+	for cell_y in _grid_size.y:
+		for cell_x in _grid_size.x:
+			var world_center := (Vector2(cell_x, cell_y) + Vector2(0.5, 0.5)) * _cell_world_size
+			var legacy_cell := Vector2i(
+				clampi(floori(world_center.x / LEGACY_CELL_SIZE), 0, legacy_grid_size.x - 1),
+				clampi(floori(world_center.y / LEGACY_CELL_SIZE), 0, legacy_grid_size.y - 1)
+			)
+			var legacy_index := legacy_cell.y * legacy_grid_size.x + legacy_cell.x
+			if _packed_bit_is_set(legacy_bits, legacy_index):
+				_set_revealed(cell_y * _grid_size.x + cell_x)
+
+
+func _packed_bit_is_set(bits: PackedByteArray, bit_index: int) -> bool:
+	var byte_index := bit_index >> 3
+	var bit_mask := 1 << (bit_index & 7)
+	return (bits[byte_index] & bit_mask) != 0
 
 
 func _world_to_cell(world_position: Vector2) -> Vector2i:

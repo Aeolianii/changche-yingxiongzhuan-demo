@@ -2,10 +2,10 @@ extends Node2D
 
 const EVENT_SHIPS_ATLAS := preload("res://assets/sprites/sea_overworld/event_ships_atlas_v2.png")
 const DRIFTING_CRATE_TEXTURE := preload("res://assets/sprites/sea_overworld/drifting_supply_crate_v1.png")
-const SEA_MONSTER_SHADOW_SOURCE_TEXTURES: Array[Texture2D] = [
-	preload("res://assets/sprites/sea_overworld/random_events/海怪雾影1.png"),
-	preload("res://assets/sprites/sea_overworld/random_events/海怪雾影2.png"),
-	preload("res://assets/sprites/sea_overworld/random_events/海怪雾影3.png"),
+const SEA_MONSTER_SHADOW_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/sea_overworld/random_events/海怪水下影1_v2.png"),
+	preload("res://assets/sprites/sea_overworld/random_events/海怪水下影2_v2.png"),
+	preload("res://assets/sprites/sea_overworld/random_events/海怪水下影3_v2.png"),
 ]
 const SEA_MONSTER_SURFACE_MIST_TEXTURE := preload("res://assets/sprites/sea_overworld/random_events/海怪贴海薄雾_v2.png")
 const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
@@ -450,9 +450,9 @@ func _spawn_random_event(event_id: StringName, at: Vector2) -> Area2D:
 			_active_sea_monster_variant = (
 				_sea_monster_variant_override
 				if _sea_monster_variant_override >= 0
-				else _random_event_rng.randi_range(0, SEA_MONSTER_SHADOW_SOURCE_TEXTURES.size() - 1)
+				else _random_event_rng.randi_range(0, SEA_MONSTER_SHADOW_TEXTURES.size() - 1)
 			)
-			_active_sea_monster_variant = posmod(_active_sea_monster_variant, SEA_MONSTER_SHADOW_SOURCE_TEXTURES.size())
+			_active_sea_monster_variant = posmod(_active_sea_monster_variant, SEA_MONSTER_SHADOW_TEXTURES.size())
 			area = _build_sea_monster_event_trigger(at, _active_sea_monster_variant)
 			_active_sea_monster_event = area
 			_sea_monster_event_resolved = false
@@ -1001,7 +1001,7 @@ func _build_sea_monster_event_trigger(at: Vector2, variant: int) -> Area2D:
 
 	var shadow_sprite := Sprite2D.new()
 	shadow_sprite.name = "MonsterShadow"
-	shadow_sprite.texture = SEA_MONSTER_SHADOW_SOURCE_TEXTURES[variant]
+	shadow_sprite.texture = SEA_MONSTER_SHADOW_TEXTURES[variant]
 	shadow_sprite.position = Vector2(0.0, 7.0)
 	shadow_sprite.scale = Vector2(0.25, 0.205)
 	shadow_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST

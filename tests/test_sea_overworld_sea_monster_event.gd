@@ -2,9 +2,9 @@ extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const SHADOW_SOURCE_PATHS := [
-	"res://assets/sprites/sea_overworld/random_events/海怪雾影1.png",
-	"res://assets/sprites/sea_overworld/random_events/海怪雾影2.png",
-	"res://assets/sprites/sea_overworld/random_events/海怪雾影3.png",
+	"res://assets/sprites/sea_overworld/random_events/海怪水下影1_v2.png",
+	"res://assets/sprites/sea_overworld/random_events/海怪水下影2_v2.png",
+	"res://assets/sprites/sea_overworld/random_events/海怪水下影3_v2.png",
 ]
 const SURFACE_MIST_PATH := "res://assets/sprites/sea_overworld/random_events/海怪贴海薄雾_v2.png"
 const PORTRAIT_PATHS := [
@@ -18,7 +18,11 @@ const DEEP_WATER_SPAWN_POINTS: Array[Vector2] = [
 	Vector2(4580, 1530),
 ]
 const SEA_MONSTER_SPAWN_CLEARANCE := 220.0
-const MAP_PREVIEW_PATH := "res://.godot/sea_overworld_monster_mist_preview.png"
+const MAP_PREVIEW_PATHS := [
+	"res://.godot/sea_overworld_monster_mist_variant1_preview.png",
+	"res://.godot/sea_overworld_monster_mist_variant2_preview.png",
+	"res://.godot/sea_overworld_monster_mist_variant3_preview.png",
+]
 const DIALOGUE_PREVIEW_PATH := "res://.godot/sea_overworld_monster_dialogue_preview.png"
 
 var failures: Array[String] = []
@@ -66,8 +70,7 @@ func _verify_default_victory(scene: Node, variant: int) -> void:
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var dialogue := scene.get_node("UI/FieldEventDialogue") as Control
 	var economy_before: Dictionary = root.get_node("GameState").call("get_economy_state")
-	if variant == 0:
-		await _capture_map_preview(scene, event, player)
+	await _capture_map_preview(scene, event, player, variant)
 	player.global_position = event.global_position
 	for _frame in range(3):
 		await physics_frame
@@ -181,7 +184,7 @@ func _verify_map_visual(scene: Node, variant: int) -> Area2D:
 	_expect(shadow.texture != null and shadow.texture.resource_path == SHADOW_SOURCE_PATHS[variant], "Sea-monster variant %d must retain its matching creature identity beneath the mist." % (variant + 1))
 	var shadow_material := shadow.material as ShaderMaterial
 	_expect(shadow_material != null and shadow_material.shader.resource_path.ends_with("sea_monster_shadow.gdshader"), "Monster silhouette must be recolored and dissolved as an underwater pixel-ink shadow.")
-	_expect("darkness" in shadow_material.shader.code and "pixel_step" in shadow_material.shader.code, "Monster shadow shader must extract only the dark silhouette and retain pixel clusters.")
+	_expect("source.a" in shadow_material.shader.code and "pixel_step" in shadow_material.shader.code, "Monster shadow shader must preserve the generated silhouette alpha and retain pixel clusters.")
 	var ripple := event.get_node("EventVisual/SurfaceRipple") as ColorRect
 	var ripple_material := ripple.material as ShaderMaterial
 	_expect(ripple_material != null and ripple_material.shader.resource_path.ends_with("sea_monster_ripple.gdshader"), "Sea-monster event must disturb the sea with animated elliptical ripples.")
@@ -202,19 +205,23 @@ func _verify_initial_dialogue(dialogue: Control, player: CharacterBody2D) -> voi
 		_expect((option_box.get_child(1) as Button).text == "绕行  ▶", "Second suspicious-mist choice must be 绕行.")
 
 
-func _capture_map_preview(scene: Node, event: Area2D, player: CharacterBody2D) -> void:
+func _capture_map_preview(scene: Node, event: Area2D, player: CharacterBody2D, variant: int) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
+	var was_paused := paused
+	paused = true
+	(event.get_node("EventVisual") as CanvasItem).modulate.a = 1.0
 	var camera := scene.get_node("World/Player/Camera2D") as Camera2D
 	var smoothing_was_enabled := camera.position_smoothing_enabled
 	camera.position_smoothing_enabled = false
 	camera.global_position = event.global_position
 	await create_timer(1.4).timeout
 	await RenderingServer.frame_post_draw
-	_expect(root.get_texture().get_image().save_png(MAP_PREVIEW_PATH) == OK, "Sea-monster mist map preview could not be saved.")
+	_expect(root.get_texture().get_image().save_png(MAP_PREVIEW_PATHS[variant]) == OK, "Sea-monster mist map preview could not be saved.")
 	camera.position = Vector2.ZERO
 	camera.position_smoothing_enabled = smoothing_was_enabled
 	camera.reset_smoothing()
+	paused = was_paused
 
 
 func _capture_dialogue_preview() -> void:

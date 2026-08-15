@@ -28,9 +28,7 @@ void fragment() {
 	vec2 pixel_step = TEXTURE_PIXEL_SIZE * 4.0;
 	sampled_uv = (floor(sampled_uv / pixel_step) + vec2(0.5)) * pixel_step;
 	vec4 source = texture(TEXTURE, sampled_uv);
-	float luminance = dot(source.rgb, vec3(0.299, 0.587, 0.114));
-	float darkness = 1.0 - smoothstep(0.30, 0.74, luminance);
-	float shadow_mask = source.a * smoothstep(0.06, 0.72, darkness);
+	float shadow_mask = source.a;
 	float ink_grain = mix(0.82, 1.0, shadow_hash(floor(UV / pixel_step)));
 	float breath = 0.92 + sin(TIME * 0.29 + flow_phase) * 0.08;
 	float edge_distance = min(min(UV.x, 1.0 - UV.x), min(UV.y, 1.0 - UV.y));

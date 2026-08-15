@@ -1,11 +1,11 @@
 shader_type canvas_item;
 render_mode unshaded;
 
-const int GAUSSIAN_RADIUS = 2;
-uniform float blur_texels : hint_range(0.5, 4.0) = 2.2;
-uniform float edge_warp_texels : hint_range(0.0, 4.0) = 2.8;
-uniform float edge_irregularity : hint_range(0.0, 0.2) = 0.065;
-uniform float alpha_dither : hint_range(0.0, 0.08) = 0.036;
+const int DISTANCE_SEARCH_RADIUS = 4;
+uniform float feather_texels : hint_range(0.5, 4.0) = 3.4;
+uniform float edge_warp_texels : hint_range(0.0, 2.0) = 0.8;
+uniform float edge_irregularity : hint_range(0.0, 1.0) = 0.34;
+uniform float alpha_dither : hint_range(0.0, 0.08) = 0.012;
 uniform float fog_opacity : hint_range(0.0, 1.0) = 0.72;
 
 
@@ -36,31 +36,38 @@ void fragment() {
 		ink_noise(fog_texel_position * vec2(0.22, 0.28) + vec2(7.1, 28.4)),
 		ink_noise(fog_texel_position * vec2(0.26, 0.19) + vec2(31.8, 9.5))
 	) * 2.0 - 1.0;
-	vec2 warped_uv = clamp(
-		UV + (broad_warp * 0.72 + fine_warp * 0.28) * TEXTURE_PIXEL_SIZE * edge_warp_texels,
+	vec2 texture_size = vec2(1.0) / TEXTURE_PIXEL_SIZE;
+	vec2 distance_position = clamp(
+		fog_texel_position + (broad_warp * 0.72 + fine_warp * 0.28) * edge_warp_texels,
 		vec2(0.0),
-		vec2(1.0)
+		texture_size - vec2(0.001)
 	);
-	vec2 sample_step = TEXTURE_PIXEL_SIZE * blur_texels;
-	float alpha_sum = 0.0;
-	float weight_sum = 0.0;
-	for (int sample_y = -GAUSSIAN_RADIUS; sample_y <= GAUSSIAN_RADIUS; sample_y++) {
-		for (int sample_x = -GAUSSIAN_RADIUS; sample_x <= GAUSSIAN_RADIUS; sample_x++) {
-			float weight_x = sample_x == 0 ? 6.0 : (abs(sample_x) == 1 ? 4.0 : 1.0);
-			float weight_y = sample_y == 0 ? 6.0 : (abs(sample_y) == 1 ? 4.0 : 1.0);
-			float weight = weight_x * weight_y;
-			vec2 sample_uv = clamp(
-				warped_uv + vec2(float(sample_x), float(sample_y)) * sample_step,
+	vec2 base_cell = floor(distance_position);
+	vec2 base_uv = (base_cell + vec2(0.5)) * TEXTURE_PIXEL_SIZE;
+	float center_mask = step(0.5, texture(TEXTURE, base_uv).a);
+	float nearest_opposite = float(DISTANCE_SEARCH_RADIUS) + 1.0;
+	for (int sample_y = -DISTANCE_SEARCH_RADIUS; sample_y <= DISTANCE_SEARCH_RADIUS; sample_y++) {
+		for (int sample_x = -DISTANCE_SEARCH_RADIUS; sample_x <= DISTANCE_SEARCH_RADIUS; sample_x++) {
+			vec2 sample_cell = clamp(
+				base_cell + vec2(float(sample_x), float(sample_y)),
 				vec2(0.0),
-				vec2(1.0)
+				texture_size - vec2(1.0)
 			);
-			alpha_sum += texture(TEXTURE, sample_uv).a * weight;
-			weight_sum += weight;
+			vec2 sample_uv = (sample_cell + vec2(0.5)) * TEXTURE_PIXEL_SIZE;
+			float sample_mask = step(0.5, texture(TEXTURE, sample_uv).a);
+			if (abs(sample_mask - center_mask) > 0.5) {
+				vec2 rectangle_distance = max(
+					max(sample_cell - distance_position, distance_position - (sample_cell + vec2(1.0))),
+					vec2(0.0)
+				);
+				nearest_opposite = min(nearest_opposite, length(rectangle_distance));
+			}
 		}
 	}
-	float alpha = alpha_sum / weight_sum;
-	float edge_shift = (ink_noise(fog_texel_position * vec2(0.31, 0.27)) - 0.5) * edge_irregularity;
-	float softened_alpha = smoothstep(0.06 + edge_shift, 0.94 + edge_shift, alpha);
+	float signed_distance = center_mask > 0.5 ? nearest_opposite : -nearest_opposite;
+	float edge_noise = ink_noise(fog_texel_position * vec2(0.19, 0.23) + vec2(37.0, 11.0)) - 0.5;
+	signed_distance += edge_noise * edge_irregularity;
+	float softened_alpha = smoothstep(-feather_texels, feather_texels, signed_distance);
 	float transition_mask = 4.0 * softened_alpha * (1.0 - softened_alpha);
 	float stable_dither = ink_hash(floor(fog_texel_position * 2.0) + vec2(83.0, 29.0)) - 0.5;
 	softened_alpha = clamp(softened_alpha + stable_dither * alpha_dither * transition_mask, 0.0, 1.0);

@@ -182,10 +182,10 @@ func _build_world_overlay() -> void:
 	_world_overlay.z_index = WORLD_FOG_Z_INDEX
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = WORLD_FOG_SHADER
-	fog_material.set_shader_parameter("blur_texels", 2.2)
-	fog_material.set_shader_parameter("edge_warp_texels", 2.8)
-	fog_material.set_shader_parameter("edge_irregularity", 0.065)
-	fog_material.set_shader_parameter("alpha_dither", 0.036)
+	fog_material.set_shader_parameter("feather_texels", 3.4)
+	fog_material.set_shader_parameter("edge_warp_texels", 0.8)
+	fog_material.set_shader_parameter("edge_irregularity", 0.34)
+	fog_material.set_shader_parameter("alpha_dither", 0.012)
 	fog_material.set_shader_parameter("fog_opacity", 0.72)
 	_world_overlay.material = fog_material
 	add_child(_world_overlay)

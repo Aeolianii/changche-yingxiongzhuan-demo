@@ -2,10 +2,10 @@ shader_type canvas_item;
 render_mode unshaded;
 
 const int GAUSSIAN_RADIUS = 2;
-uniform float blur_texels : hint_range(0.5, 4.0) = 2.0;
-uniform float edge_warp_texels : hint_range(0.0, 3.0) = 1.6;
-uniform float edge_irregularity : hint_range(0.0, 0.2) = 0.045;
-uniform float alpha_dither : hint_range(0.0, 0.08) = 0.026;
+uniform float blur_texels : hint_range(0.5, 4.0) = 2.2;
+uniform float edge_warp_texels : hint_range(0.0, 4.0) = 2.8;
+uniform float edge_irregularity : hint_range(0.0, 0.2) = 0.065;
+uniform float alpha_dither : hint_range(0.0, 0.08) = 0.036;
 uniform float fog_opacity : hint_range(0.0, 1.0) = 0.72;
 
 

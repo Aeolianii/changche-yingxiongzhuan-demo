@@ -10,7 +10,6 @@ const CELL_SIZE := 8.0
 const WORLD_FOG_Z_INDEX := 40
 const VIEW_EDGE_FOG_INSET := 48.0
 const REVEAL_UPDATE_DISTANCE := 2.0
-const REVEAL_FADE_DURATION := 0.4
 const WORLD_FOG_SHADER := preload("res://shaders/sea_world_fog_edge.gdshader")
 
 var _world_size := Vector2.ONE
@@ -24,7 +23,6 @@ var _world_overlay: Sprite2D
 var _last_reveal_position := Vector2(INF, INF)
 var _last_camera_center := Vector2(INF, INF)
 var _last_camera_target := Vector2(INF, INF)
-var _fading_cell_alpha: Dictionary = {}
 
 
 func setup(world_size: Vector2, camera_node: Camera2D, saved_state: Dictionary = {}) -> void:
@@ -40,29 +38,6 @@ func setup(world_size: Vector2, camera_node: Camera2D, saved_state: Dictionary =
 	_restore_state(saved_state)
 	_build_texture()
 	_build_world_overlay()
-	_fading_cell_alpha.clear()
-	set_process(false)
-
-
-func _process(delta: float) -> void:
-	if _fading_cell_alpha.is_empty():
-		set_process(false)
-		return
-	var alpha_step := delta / REVEAL_FADE_DURATION
-	for cell_index_value in _fading_cell_alpha.keys():
-		var cell_index := int(cell_index_value)
-		var current_alpha := float(_fading_cell_alpha[cell_index])
-		var next_alpha := move_toward(current_alpha, 0.0, alpha_step)
-		var cell_x := cell_index % _grid_size.x
-		var cell_y := floori(float(cell_index) / float(_grid_size.x))
-		_fog_image.set_pixel(cell_x, cell_y, Color(0, 0, 0, next_alpha))
-		if next_alpha <= 0.001:
-			_fading_cell_alpha.erase(cell_index)
-		else:
-			_fading_cell_alpha[cell_index] = next_alpha
-	_fog_texture.update(_fog_image)
-	if _fading_cell_alpha.is_empty():
-		set_process(false)
 
 
 func reveal_at(world_position: Vector2, immediate := false) -> bool:
@@ -153,7 +128,7 @@ func get_view_edge_fog_inset() -> float:
 
 
 func get_pending_reveal_fade_count_for_test() -> int:
-	return _fading_cell_alpha.size()
+	return 0
 
 
 func _get_camera_reveal_half_size() -> Vector2:
@@ -207,10 +182,10 @@ func _build_world_overlay() -> void:
 	_world_overlay.z_index = WORLD_FOG_Z_INDEX
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = WORLD_FOG_SHADER
-	fog_material.set_shader_parameter("blur_texels", 2.0)
-	fog_material.set_shader_parameter("edge_warp_texels", 1.6)
-	fog_material.set_shader_parameter("edge_irregularity", 0.045)
-	fog_material.set_shader_parameter("alpha_dither", 0.026)
+	fog_material.set_shader_parameter("blur_texels", 2.2)
+	fog_material.set_shader_parameter("edge_warp_texels", 2.8)
+	fog_material.set_shader_parameter("edge_irregularity", 0.065)
+	fog_material.set_shader_parameter("alpha_dither", 0.036)
 	fog_material.set_shader_parameter("fog_opacity", 0.72)
 	_world_overlay.material = fog_material
 	add_child(_world_overlay)
@@ -283,13 +258,8 @@ func _set_revealed(cell_index: int) -> bool:
 	return true
 
 
-func _queue_reveal_visual(cell_x: int, cell_y: int, cell_index: int, immediate: bool) -> void:
-	if immediate:
-		_fading_cell_alpha.erase(cell_index)
-		_fog_image.set_pixel(cell_x, cell_y, Color(0, 0, 0, 0))
-		return
-	_fading_cell_alpha[cell_index] = _fog_image.get_pixel(cell_x, cell_y).a
-	set_process(true)
+func _queue_reveal_visual(cell_x: int, cell_y: int, _cell_index: int, _immediate: bool) -> void:
+	_fog_image.set_pixel(cell_x, cell_y, Color(0, 0, 0, 0))
 
 
 func _cell_overlaps_polygon(cell: Vector2i, world_polygon: PackedVector2Array) -> bool:
@@ -306,9 +276,8 @@ func _cell_overlaps_polygon(cell: Vector2i, world_polygon: PackedVector2Array) -
 	return false
 
 
-func _commit_reveal(changed: bool, immediate := false) -> void:
+func _commit_reveal(changed: bool, _immediate := false) -> void:
 	if not changed:
 		return
-	if immediate:
-		_fog_texture.update(_fog_image)
+	_fog_texture.update(_fog_image)
 	state_changed.emit()

@@ -6,6 +6,7 @@ const FAR_WATERS := Vector2(4380, 2460)
 const FOG_CELL_SIZE := 8.0
 const WORLD_SCREENSHOT_PATH := "res://.godot/sea_fog_world_preview.png"
 const MAP_SCREENSHOT_PATH := "res://.godot/sea_fog_map_preview.png"
+const ROUTE_SCREENSHOT_PATH := "res://.godot/sea_fog_route_preview.png"
 
 var failures: Array[String] = []
 
@@ -47,7 +48,7 @@ func _run() -> void:
 	_expect(is_equal_approx(float(fog.call("get_view_edge_fog_inset")), 48.0), "World exploration must reserve only a narrow 48-pixel fog strip at unexplored viewport edges.")
 	var reveal_center := Vector2(2500, 1350)
 	fog.call("reveal_at", reveal_center)
-	_expect(int(fog.call("get_pending_reveal_fade_count_for_test")) > 0, "Newly explored fog cells must fade out over time instead of disappearing in one frame.")
+	_expect(int(fog.call("get_pending_reveal_fade_count_for_test")) == 0, "Newly explored fog cells must not retain staggered per-cell alpha levels that form visible terraces.")
 	_expect(float(fog.call("get_explored_ratio")) > initial_ratio, "Sailing into new waters must increase chart completion.")
 	_expect(bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.45, 0))), "A point inside the camera-width reveal footprint must be visible.")
 	_expect(not bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.49, 0))), "An unexplored direction must retain fog only near the viewport's outer edge.")
@@ -62,7 +63,7 @@ func _run() -> void:
 		var world_fog_material := world_overlay.material as ShaderMaterial
 		_expect(world_fog_material != null and world_fog_material.shader.resource_path.ends_with("sea_world_fog_edge.gdshader"), "World fog must soften the narrow unexplored edge instead of drawing a hard black line.")
 		_expect(float(world_fog_material.get_shader_parameter("blur_texels")) >= 2.0, "World edge fog must use the wider soft transition.")
-		_expect(float(world_fog_material.get_shader_parameter("edge_warp_texels")) >= 1.0, "World edge fog must warp the revealed rectangle into a stable irregular ink contour.")
+		_expect(float(world_fog_material.get_shader_parameter("edge_warp_texels")) >= 2.5, "World edge fog must warp the 8-pixel reveal grid strongly enough to hide its rectangular contour.")
 		_expect(float(world_fog_material.get_shader_parameter("alpha_dither")) > 0.0, "World edge fog must dither intermediate alpha levels to break up visible gradient bands.")
 		_expect("weight_x" in world_fog_material.shader.code and "GAUSSIAN_RADIUS" in world_fog_material.shader.code, "World edge fog must use a continuous 5x5 Gaussian kernel instead of nine fixed alpha bands.")
 		_expect(float(world_fog_material.get_shader_parameter("fog_opacity")) <= 0.75, "World edge fog must stay gently translucent rather than covering the view with solid black.")
@@ -102,6 +103,20 @@ func _run() -> void:
 	close_button.pressed.emit()
 	await process_frame
 	_expect(not map_screen.visible, "Pressing the generated sea-map Return button must restore exploration.")
+	if DisplayServer.get_name() != "headless":
+		for route_step in range(36):
+			var route_position := Vector2(1500.0 + route_step * 52.0, 1560.0 + sin(route_step * 0.47) * 22.0)
+			fog.call("reveal_at", route_position, true)
+		var sea_player := scene.get_node("World/Player") as CharacterBody2D
+		var sea_camera := scene.get_node("World/Player/Camera2D") as Camera2D
+		sea_player.set_physics_process(false)
+		sea_player.global_position = Vector2(2400, 1560)
+		sea_camera.position_smoothing_enabled = false
+		sea_camera.reset_smoothing()
+		await process_frame
+		await RenderingServer.frame_post_draw
+		var route_screenshot_error := root.get_texture().get_image().save_png(ROUTE_SCREENSHOT_PATH)
+		_expect(route_screenshot_error == OK, "Continuous-route fog preview screenshot could not be saved.")
 
 	var revealed_probe := reveal_center
 	current_scene = null

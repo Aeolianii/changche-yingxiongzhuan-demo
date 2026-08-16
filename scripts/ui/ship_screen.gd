@@ -34,6 +34,10 @@ var _description: RichTextLabel
 var _durability: ProgressBar
 var _durability_label: Label
 var _stats: GridContainer
+var _upgrade_title: Label
+var _upgrade_grid: GridContainer
+var _upgrade_controls: Dictionary = {}
+var _upgrade_status: Label
 var _crew_label: Label
 var _construction_label: Label
 var _hull_nodes: Array[CanvasItem] = []
@@ -369,23 +373,25 @@ func _build_ship_detail() -> void:
 	_stats = GridContainer.new()
 	_stats.name = "ShipStats"
 	_stats.columns = 4
-	_stats.position = Vector2(544, 624)
-	_stats.size = Vector2(718, 92)
+	_stats.position = Vector2(544, 612)
+	_stats.size = Vector2(718, 54)
 	_stats.add_theme_constant_override("h_separation", 10)
 	_stats.add_theme_constant_override("v_separation", 8)
 	_stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_stats)
+	_build_upgrade_grid()
 
 	_crew_label = _make_label("", 16, TEXT_LIGHT)
 	_crew_label.name = "CrewLabel"
-	_crew_label.position = Vector2(548, 738)
-	_crew_label.size = Vector2(340, 28)
+	_crew_label.position = Vector2(548, 784)
+	_crew_label.size = Vector2(210, 22)
 	add_child(_crew_label)
 
 	_construction_label = _make_label("", 15, TEXT_MUTED)
 	_construction_label.name = "ConstructionLabel"
-	_construction_label.position = Vector2(548, 774)
-	_construction_label.size = Vector2(710, 30)
+	_construction_label.position = Vector2(750, 784)
+	_construction_label.size = Vector2(510, 22)
+	_construction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(_construction_label)
 
 	_repair_status = _make_label("", 14, JADE)
@@ -403,7 +409,7 @@ func _build_ship_detail() -> void:
 
 	_hull_nodes = [
 		_preview, _detail_name, _detail_role, _detail_id, _description, separator,
-		durability_title, _durability, _durability_label, _stats, _crew_label,
+		durability_title, _durability, _durability_label, _stats, _upgrade_title, _upgrade_grid, _upgrade_status, _crew_label,
 		_construction_label, _repair_status, _repair_button,
 	]
 	_build_equipment_page()
@@ -431,6 +437,68 @@ func _add_detail_tab_bottom_border(button: Button) -> void:
 	border.size = Vector2(button.size.x - 10.0, 1.0)
 	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(border)
+
+
+func _build_upgrade_grid() -> void:
+	_upgrade_title = _make_label("船体强化", 17, GOLD_BRIGHT)
+	_upgrade_title.name = "UpgradeTitle"
+	_upgrade_title.position = Vector2(544, 670)
+	_upgrade_title.size = Vector2(180, 26)
+	add_child(_upgrade_title)
+	_upgrade_status = _make_label("", 13, JADE)
+	_upgrade_status.name = "UpgradeStatus"
+	_upgrade_status.position = Vector2(760, 670)
+	_upgrade_status.size = Vector2(500, 26)
+	_upgrade_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	add_child(_upgrade_status)
+	_upgrade_grid = GridContainer.new()
+	_upgrade_grid.name = "ShipUpgradeGrid"
+	_upgrade_grid.columns = 4
+	_upgrade_grid.position = Vector2(544, 699)
+	_upgrade_grid.size = Vector2(718, 78)
+	_upgrade_grid.add_theme_constant_override("h_separation", 10)
+	_upgrade_grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_upgrade_grid)
+	for project_data in [
+		["hull", "生命值"],
+		["weapon_slots", "武器槽上限"],
+		["skill_slots", "技能槽上限"],
+		["speed", "速度"],
+	]:
+		_upgrade_grid.add_child(_make_upgrade_card(str(project_data[0]), str(project_data[1])))
+
+
+func _make_upgrade_card(project: String, title: String) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.name = "Upgrade_%s" % project
+	card.custom_minimum_size = Vector2(172, 78)
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_theme_stylebox_override("panel", _flat_style(PANEL_INK, Color(GOLD.r, GOLD.g, GOLD.b, 0.42), 1))
+	var content := Control.new()
+	content.name = "Content"
+	content.custom_minimum_size = Vector2(172, 78)
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(content)
+	var title_label := _make_label(title, 14, TEXT_LIGHT)
+	title_label.position = Vector2(9, 5)
+	title_label.size = Vector2(122, 21)
+	content.add_child(title_label)
+	var value_label := _make_label("", 13, GOLD_BRIGHT)
+	value_label.name = "Value"
+	value_label.position = Vector2(9, 26)
+	value_label.size = Vector2(122, 20)
+	content.add_child(value_label)
+	var cost_label := _make_label("", 11, TEXT_MUTED)
+	cost_label.name = "Cost"
+	cost_label.position = Vector2(9, 50)
+	cost_label.size = Vector2(154, 18)
+	content.add_child(cost_label)
+	var plus := _make_action_button("+", Vector2(134, 9), Vector2(29, 32))
+	plus.name = "Plus"
+	plus.pressed.connect(_upgrade_selected_ship.bind(project))
+	content.add_child(plus)
+	_upgrade_controls[project] = {"value": value_label, "cost": cost_label, "plus": plus}
+	return card
 
 
 func _build_equipment_page() -> void:
@@ -562,6 +630,7 @@ func _select_ship(index: int) -> void:
 		return
 	_selected_index = index
 	_repair_status.text = ""
+	_upgrade_status.text = ""
 	_equipment_status.text = ""
 	_refresh_selectors()
 	_refresh_detail()
@@ -593,6 +662,18 @@ func _repair_selected_ship() -> void:
 	_reload_selected_ship(ship_id)
 
 
+func _upgrade_selected_ship(project: String) -> void:
+	if _ships.is_empty():
+		return
+	var ship_id := str(_ships[_selected_index].get("id", ""))
+	var game_state := get_node_or_null("/root/GameState")
+	if game_state == null:
+		return
+	var result := game_state.call("upgrade_economy_ship", ship_id, project) as Dictionary
+	_upgrade_status.text = "%s强化完成" % _upgrade_name(project) if result.get("ok", false) else _upgrade_error(str(result.get("reason", "failed")))
+	_reload_selected_ship(ship_id)
+
+
 func _change_equipment(category: String, equipment_id: String, delta: int) -> void:
 	if _ships.is_empty():
 		return
@@ -617,6 +698,14 @@ func _reload_selected_ship(ship_id: String) -> void:
 
 func _equipment_error(reason: String) -> String:
 	return {"slots_full": "装备槽位已满", "none_equipped": "当前未装载", "unknown_ship": "未找到舰船"}.get(reason, "无法调整装备")
+
+
+func _upgrade_error(reason: String) -> String:
+	return {"max_level": "该项目已强化至上限", "insufficient_pay": "军饷不足", "insufficient_material": "强化材料不足", "unknown_ship": "未找到舰船"}.get(reason, "无法进行强化")
+
+
+func _upgrade_name(project: String) -> String:
+	return {"hull": "生命值", "weapon_slots": "武器槽", "skill_slots": "技能槽", "speed": "速度"}.get(project, "船体")
 
 
 func _refresh_selectors() -> void:
@@ -652,14 +741,18 @@ func _refresh_detail() -> void:
 	_preview.texture = SHIP_ICONS.get(type_id) as Texture2D
 	_detail_name.text = "[color=#f1c24f]%s[/color]" % str(definition.get("name", "未知舰船"))
 	_detail_role.text = "【%s】" % str(definition.get("role", "未分类"))
-	_detail_id.text = "舰号  %s　·　编制序列  %s" % [_ship_number(str(ship.get("id", ""))), str(ship.get("id", ""))]
+	_detail_id.text = "舰号  %s" % _ship_number(str(ship.get("id", "")))
 	_description.text = str(definition.get("description", "暂无舰船说明。"))
 	_durability.max_value = max_hp
 	_durability.value = clampi(current_hp, 0, max_hp)
 	_durability_label.text = "%d / %d" % [current_hp, max_hp]
-	_rebuild_stats(definition)
+	_rebuild_stats(definition, ship)
+	_refresh_upgrades(ship, definition)
 	_crew_label.text = "核定编制　%d 人" % int(definition.get("crew", 0))
-	_construction_label.text = "建造需求　军饷 %d　·　木材 %d　·　铁石 %d" % [int(definition.get("pay", 0)), int(definition.get("wood", 0)), int(definition.get("ironstone", 0))]
+	var economy_state := get_node("/root/GameState").call("get_economy_state") as Dictionary
+	var items := economy_state.get("items", {}) as Dictionary
+	var upgrade_materials := economy_state.get("ship_upgrade_materials", {}) as Dictionary
+	_construction_label.text = "军饷 %d　木材 %d　铁石 %d　帆布 %d" % [int(economy_state.get("pay", 0)), int(items.get("wood", 0)), int(items.get("ironstone", 0)), int(upgrade_materials.get("canvas", 0))]
 	_repair_button.disabled = current_hp >= max_hp
 	_repair_button.text = "船体完好" if _repair_button.disabled else "修复船体"
 	_refresh_equipment_page()
@@ -679,8 +772,9 @@ func _refresh_equipment_page() -> void:
 	var skills := equipment.get("skills", {}) as Dictionary
 	var used_weapons := _sum_counts(weapons)
 	var used_skills := _sum_counts(skills)
-	var weapon_cap := int(definition.get("weapon_slots", 0))
-	var skill_cap := int(definition.get("skill_slots", 0))
+	var upgrades := ship.get("upgrades", {}) as Dictionary
+	var weapon_cap := int(definition.get("weapon_slots", 0)) + int(upgrades.get("weapon_slots", 0))
+	var skill_cap := int(definition.get("skill_slots", 0)) + int(upgrades.get("skill_slots", 0))
 	var armor_level := int(equipment.get("armor_level", 0))
 	var armor_cap := int(definition.get("armor_slots", 0))
 	_equipment_name.text = "%s　·　装备整备" % str(definition.get("name", "未知舰船"))
@@ -710,15 +804,44 @@ func _sum_counts(entries: Dictionary) -> int:
 	return total
 
 
-func _rebuild_stats(definition: Dictionary) -> void:
+func _refresh_upgrades(ship: Dictionary, definition: Dictionary) -> void:
+	var economy_state := get_node("/root/GameState").call("get_economy_state") as Dictionary
+	var items := economy_state.get("items", {}) as Dictionary
+	var upgrade_materials := economy_state.get("ship_upgrade_materials", {}) as Dictionary
+	var upgrades := ship.get("upgrades", {}) as Dictionary
+	var values := {
+		"hull": "耐久 %d" % int(ship.get("max_hp", definition.get("max_hp", 1))),
+		"weapon_slots": "上限 %d" % (int(definition.get("weapon_slots", 0)) + int(upgrades.get("weapon_slots", 0))),
+		"skill_slots": "上限 %d" % (int(definition.get("skill_slots", 0)) + int(upgrades.get("skill_slots", 0))),
+		"speed": "航速 %d" % (int(definition.get("speed", 0)) + int(upgrades.get("speed", 0))),
+	}
+	var resource_names := {"wood": "木材", "ironstone": "铁石", "canvas": "帆布"}
+	for project in _upgrade_controls:
+		var controls := _upgrade_controls[project] as Dictionary
+		var cost := ECONOMY.ship_upgrade_cost(ship, str(project))
+		var at_cap := int(cost.get("level", 0)) >= int(cost.get("cap", 0))
+		var resource_id := str(cost.get("resource", ""))
+		(controls["value"] as Label).text = "%s　%d/%d级" % [str(values[project]), int(cost.get("level", 0)), int(cost.get("cap", 0))]
+		if at_cap:
+			(controls["cost"] as Label).text = "已强化至上限"
+		else:
+			(controls["cost"] as Label).text = "饷%d · %s%d" % [int(cost.get("pay", 0)), str(resource_names.get(resource_id, "材料")), int(cost.get("material", 0))]
+		var available_material := int(upgrade_materials.get("canvas", 0)) if resource_id == "canvas" else int(items.get(resource_id, 0))
+		(controls["plus"] as Button).disabled = at_cap or int(economy_state.get("pay", 0)) < int(cost.get("pay", 0)) or available_material < int(cost.get("material", 0))
+
+
+func _rebuild_stats(definition: Dictionary, ship: Dictionary) -> void:
 	_clear_stats()
+	var upgrades := ship.get("upgrades", {}) as Dictionary
+	var speed := int(definition.get("speed", 0)) + int(upgrades.get("speed", 0))
+	var speed_cap := int(definition.get("speed", 0)) + int(ECONOMY.ship_upgrade_cost(ship, "speed").get("cap", 0))
 	for data in [
-		["火力", int(definition.get("firepower", 0))],
-		["航速", int(definition.get("speed", 0))],
-		["装甲", int(definition.get("armor", 0))],
-		["载货", int(definition.get("cargo", 0))],
+		["火力", int(definition.get("firepower", 0)), 5],
+		["航速", speed, speed_cap],
+		["装甲", int(definition.get("armor", 0)), 5],
+		["载货", int(definition.get("cargo", 0)), 5],
 	]:
-		_stats.add_child(_make_stat_card(str(data[0]), int(data[1])))
+		_stats.add_child(_make_stat_card(str(data[0]), int(data[1]), int(data[2])))
 
 
 func _clear_stats() -> void:
@@ -727,19 +850,19 @@ func _clear_stats() -> void:
 		child.queue_free()
 
 
-func _make_stat_card(title: String, value: int) -> PanelContainer:
+func _make_stat_card(title: String, value: int, maximum: int) -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(172, 86)
+	panel.custom_minimum_size = Vector2(172, 54)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override("panel", _flat_style(PANEL_INK, Color(GOLD.r, GOLD.g, GOLD.b, 0.34), 1))
 	var stack := VBoxContainer.new()
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(stack)
-	var title_label := _make_label(title, 15, TEXT_MUTED)
+	var title_label := _make_label(title, 13, TEXT_MUTED)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stack.add_child(title_label)
-	var value_label := _make_label("%d / 5" % value, 23, GOLD_BRIGHT)
+	var value_label := _make_label("%d / %d" % [value, maximum], 18, GOLD_BRIGHT)
 	value_label.name = "%sValue" % title
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stack.add_child(value_label)

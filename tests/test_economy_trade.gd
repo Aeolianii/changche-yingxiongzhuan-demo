@@ -14,6 +14,7 @@ func _initialize() -> void:
 func _run() -> void:
 	_test_catalog_has_only_sourced_goods()
 	_test_default_state()
+	_test_ship_upgrades()
 	_test_material_buy_and_sell()
 	_test_sell_only_goods()
 	_test_atomic_failures()
@@ -41,11 +42,39 @@ func _test_default_state() -> void:
 	_expect(starting_types == ["patrol_boat", "cannon_warship", "escort_junk", "patrol_boat", "cannon_warship"], "New games must own five ships while retaining every available type.")
 	_expect(state["ships"][0]["current_hp"] == 42 and state["ships"][2]["current_hp"] == 70, "New games must include two damaged ships for repair testing.")
 	_expect(state["ships"][0]["equipment"]["weapons"] == {"bombardment": 1}, "Starting ships must carry persisted battle-compatible equipment IDs.")
+	_expect(state["ships"][0]["upgrades"] == {"hull": 0, "weapon_slots": 0, "skill_slots": 0, "speed": 0} and state["ship_upgrade_materials"]["canvas"] == 20, "Starting ships must expose four zero-level upgrades and an isolated test canvas stock.")
 	_expect(ECONOMY.normalize({}) == state, "An uninitialized economy dictionary must normalize to new-game defaults.")
 	var repaired_state := ECONOMY.normalize(state)
 	_expect(repaired_state["ships"][0]["current_hp"] == 42, "Economy normalization must preserve current ship durability.")
 	_expect(ECONOMY.repair_ship(repaired_state, "ship_001").get("ok", false) and repaired_state["ships"][0]["current_hp"] == 60, "Ship repair must restore and persist maximum durability.")
 	_expect(ECONOMY.adjust_ship_equipment(repaired_state, "ship_001", "weapons", "ram", 1).get("ok", false), "Ship equipment must accept battle weapon IDs while slots remain.")
+
+
+func _test_ship_upgrades() -> void:
+	var state := ECONOMY.make_default()
+	var hull_result := ECONOMY.upgrade_ship(state, "ship_001", "hull")
+	_expect(hull_result.get("ok", false) and state["ships"][0]["upgrades"]["hull"] == 1, "Hull upgrading must persist its level on the selected ship.")
+	_expect(state["ships"][0]["max_hp"] == 63 and state["ships"][0]["current_hp"] == 45, "Each hull level must add five percent of base durability while preserving existing damage.")
+	_expect(state["pay"] == 700 and state["items"]["wood"] == 22, "Hull upgrading must consume military pay and wood.")
+
+	state = ECONOMY.make_default()
+	_expect(ECONOMY.upgrade_ship(state, "ship_001", "weapon_slots").get("ok", false), "Weapon-slot upgrading must succeed with sufficient resources.")
+	_expect(state["ships"][0]["upgrades"]["weapon_slots"] == 1 and state["pay"] == 660 and state["items"]["ironstone"] == 14, "Weapon-slot upgrading must add one slot level and consume military pay plus ironstone.")
+	_expect(ECONOMY.adjust_ship_equipment(state, "ship_001", "weapons", "ram", 1).get("ok", false) and ECONOMY.adjust_ship_equipment(state, "ship_001", "weapons", "cannon", 1).get("ok", false), "An upgraded weapon-slot cap must be honored by equipment configuration.")
+
+	state = ECONOMY.make_default()
+	_expect(ECONOMY.upgrade_ship(state, "ship_001", "skill_slots").get("ok", false), "Skill-slot upgrading must succeed with sufficient resources.")
+	_expect(state["ships"][0]["upgrades"]["skill_slots"] == 1 and state["pay"] == 680 and state["items"]["ironstone"] == 15, "Skill-slot upgrading must add one slot level and consume military pay plus ironstone.")
+
+	state = ECONOMY.make_default()
+	_expect(ECONOMY.upgrade_ship(state, "ship_001", "speed").get("ok", false), "Speed upgrading must succeed with sufficient resources.")
+	_expect(state["ships"][0]["upgrades"]["speed"] == 1 and state["pay"] == 700 and state["ship_upgrade_materials"]["canvas"] == 14, "Speed upgrading must add one speed level and consume military pay plus isolated test canvas.")
+	state["pay"] = 10000
+	state["ship_upgrade_materials"]["canvas"] = 100
+	_expect(ECONOMY.upgrade_ship(state, "ship_001", "speed").get("ok", false) and ECONOMY.upgrade_ship(state, "ship_001", "speed").get("ok", false), "Test ships must allow three speed upgrade levels.")
+	var before_max_attempt := state.duplicate(true)
+	_expect(ECONOMY.upgrade_ship(state, "ship_001", "speed").get("reason") == "max_level" and state == before_max_attempt, "A fourth upgrade must be rejected atomically at the per-type level cap.")
+	_expect(ECONOMY.normalize(state)["ships"][0]["upgrades"]["speed"] == 3, "Upgrade levels must survive economy normalization.")
 
 
 func _test_material_buy_and_sell() -> void:

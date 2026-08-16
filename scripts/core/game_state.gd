@@ -215,6 +215,11 @@ func repair_economy_ship(ship_id: String) -> Dictionary:
 	return ECONOMY.repair_ship(_world_state["economy"], ship_id)
 
 
+func upgrade_economy_ship(ship_id: String, project: String) -> Dictionary:
+	_ensure_economy()
+	return ECONOMY.upgrade_ship(_world_state["economy"], ship_id, project)
+
+
 func adjust_economy_ship_equipment(ship_id: String, category: String, equipment_id: String, delta: int) -> Dictionary:
 	_ensure_economy()
 	return ECONOMY.adjust_ship_equipment(_world_state["economy"], ship_id, category, equipment_id, delta)

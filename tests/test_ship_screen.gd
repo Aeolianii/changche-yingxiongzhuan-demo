@@ -52,10 +52,11 @@ func _run() -> void:
 
 	_expect(str(screen.call("selected_ship_id_for_test")) == "ship_001", "Opening ships must select the first owned vessel.")
 	_expect((screen.get_node("SelectedShipName") as RichTextLabel).text.contains("巡哨快船"), "Default detail must describe the selected patrol boat.")
+	_expect((screen.get_node("SelectedShipId") as Label).text == "舰号  001" and not (screen.get_node("SelectedShipId") as Label).text.contains("编制序列"), "Ship detail must show only the vessel number without a formation sequence.")
 	_expect((screen.get_node("SelectedShipPreview") as TextureRect).texture.resource_path.ends_with("patrol_boat.png"), "Selected patrol boat must use its existing ship artwork.")
 	_expect(screen.get_node("ShipStats").get_child_count() == 4, "Detailed information must include firepower, speed, armor and cargo.")
 	_expect((screen.get_node("CrewLabel") as Label).text.contains("26"), "Detailed information must include crew complement.")
-	_expect((screen.get_node("ConstructionLabel") as Label).text.contains("军饷") and (screen.get_node("ConstructionLabel") as Label).text.contains("木材"), "Detailed information must include shipbuilding requirements.")
+	_expect((screen.get_node("ConstructionLabel") as Label).text.contains("军饷") and (screen.get_node("ConstructionLabel") as Label).text.contains("木材"), "Hull upgrade area must show the currently available resources.")
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "42 / 60", "The first starting ship must expose its initial hull damage.")
 	var repair_button := screen.get_node("RepairButton") as Button
 	_expect(not repair_button.disabled and repair_button.position.x > 1100.0, "Hull page must provide an enabled repair button in its upper-right corner for damaged ships.")
@@ -72,11 +73,32 @@ func _run() -> void:
 	await process_frame
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "60 / 60" and repair_button.disabled, "Repair button must restore selected ship durability and then disable itself.")
 	_expect((game_state.call("get_economy_state") as Dictionary)["ships"][0]["current_hp"] == 60, "Hull repairs must persist in GameState.")
+	var upgrade_grid := screen.get_node("ShipUpgradeGrid") as GridContainer
+	_expect(upgrade_grid.get_child_count() == 4, "Hull page must provide hull, weapon-slot, skill-slot, and speed upgrade projects.")
+	var expected_projects := ["hull", "weapon_slots", "skill_slots", "speed"]
+	for project in expected_projects:
+		var card := upgrade_grid.get_node("Upgrade_%s" % project) as PanelContainer
+		_expect(card.get_node("Content/Plus") is Button and (card.get_node("Content/Value") as Label).text.contains("0/3级"), "Every ship upgrade project must expose a plus button and a three-level test cap.")
+	var hull_upgrade := upgrade_grid.get_node("Upgrade_hull/Content/Plus") as Button
+	_expect(not hull_upgrade.disabled and (upgrade_grid.get_node("Upgrade_hull/Content/Cost") as Label).text.contains("木材"), "Hull upgrade must show and enforce military-pay plus wood costs.")
+	hull_upgrade.pressed.emit()
+	await process_frame
+	var upgraded_state := game_state.call("get_economy_state") as Dictionary
+	_expect(upgraded_state["ships"][0]["max_hp"] == 63 and upgraded_state["ships"][0]["current_hp"] == 63, "Hull upgrade UI must add five percent maximum durability and retain a fully repaired hull.")
+	_expect(upgraded_state["pay"] == 700 and upgraded_state["items"]["wood"] == 22, "Hull upgrade UI must persist its military-pay and wood costs.")
+	_expect((screen.get_node("DurabilityLabel") as Label).text == "63 / 63" and (upgrade_grid.get_node("Upgrade_hull/Content/Value") as Label).text.contains("1/3级"), "Hull page must refresh upgraded durability and level immediately.")
+	var speed_upgrade := upgrade_grid.get_node("Upgrade_speed/Content/Plus") as Button
+	speed_upgrade.pressed.emit()
+	await process_frame
+	upgraded_state = game_state.call("get_economy_state") as Dictionary
+	_expect(upgraded_state["ships"][0]["upgrades"]["speed"] == 1 and upgraded_state["ship_upgrade_materials"]["canvas"] == 14, "Speed upgrade UI must add one speed and consume the isolated test canvas stock.")
+	_expect((screen.get_node("ShipStats").find_child("航速Value", true, false) as Label).text == "6 / 8", "Speed upgrade must immediately raise the ship's effective speed toward its per-type maximum.")
 
 	(screen.get_node("EquipmentTab") as Button).pressed.emit()
 	await process_frame
 	var equipment_page := screen.get_node("EquipmentPage") as Panel
 	_expect(equipment_page.visible and not (screen.get_node("SelectedShipPreview") as TextureRect).visible, "Equipment tab must replace the hull detail page with its own interface.")
+	_expect(not (screen.get_node("UpgradeTitle") as Label).visible and not upgrade_grid.visible, "Hull upgrade controls must stay hidden on the equipment page.")
 	_expect((equipment_page.get_node("EquipmentSlotsSummary") as Label).text.contains("武器位 1 / 2"), "Equipment page must show battle-style weapon, skill, and armor slot usage.")
 	_expect(equipment_page.get_node("WeaponGrid").get_child_count() == 3 and equipment_page.get_node("SkillGrid").get_child_count() == 4, "Equipment page must reuse every weapon and skill from naval battle configuration.")
 	var armor_content := equipment_page.get_node("ArmorRow/Armor_armor/Content") as Control

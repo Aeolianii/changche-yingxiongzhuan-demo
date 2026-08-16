@@ -29,6 +29,7 @@ func _ready() -> void:
 	$Interface.add_child(dialogue_panel)
 	dialogue_panel.option_selected.connect(_on_dialogue_option)
 	shop_overlay.closed.connect(_on_shop_closed)
+	prompt_panel.pressed.connect(_handle_world_interaction)
 	_exploration_ui = get_node_or_null("/root/ExplorationUI")
 	if _exploration_ui != null:
 		exploration_hud = _exploration_ui.call("acquire", self, &"yuehuan_merchant_island") as Control

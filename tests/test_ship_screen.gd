@@ -63,7 +63,7 @@ func _run() -> void:
 	var equipment_tab := screen.get_node("EquipmentTab") as Button
 	for detail_button in [hull_tab, equipment_tab, repair_button]:
 		var detail_style := (detail_button as Button).get_theme_stylebox("normal")
-		_expect(detail_style is StyleBoxTexture and (detail_style as StyleBoxTexture).texture.resource_path.ends_with("ship_detail_button_frame_v1.png"), "Hull, equipment, and repair buttons must use the generated ink-pixel frame.")
+		_expect(detail_style is StyleBoxTexture and (detail_style as StyleBoxTexture).texture.resource_path.ends_with("ship_detail_button_frame_v2.png"), "Hull, equipment, and repair buttons must use the dark-gold ink-pixel frame.")
 	repair_button.pressed.emit()
 	await process_frame
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "60 / 60" and repair_button.disabled, "Repair button must restore selected ship durability and then disable itself.")

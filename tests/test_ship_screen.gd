@@ -18,7 +18,7 @@ func _run() -> void:
 	var starting_types: Array[String] = []
 	for ship_value in economy["ships"]:
 		starting_types.append(str((ship_value as Dictionary).get("type_id", "")))
-	_expect(starting_types == ["patrol_boat", "cannon_warship", "escort_junk"], "New games must begin with one ship of every catalog type.")
+	_expect(starting_types == ["patrol_boat", "cannon_warship", "escort_junk", "patrol_boat", "cannon_warship"], "New games must begin with five ships and include every catalog type.")
 
 	var hud := HUD.instantiate() as Control
 	root.add_child(hud)
@@ -40,9 +40,10 @@ func _run() -> void:
 	_expect(screen.get_node("ShipListTitle").text == "舰队名册" and screen.get_node("ShipDetailHeader").text == "舰船详情", "Ship screen must use a clear left-list/right-detail structure.")
 
 	var ship_list := screen.get_node("ShipListScroll/ShipList") as VBoxContainer
-	_expect(ship_list.get_child_count() == 3, "Starting fleet list must show all three owned ships.")
-	_expect((screen.get_node("FleetCount") as Label).text.contains("3 艘"), "Fleet header must show the current ship count without a capacity limit.")
-	_expect(not (screen.get_node("ShipListScroll") as ScrollContainer).get_v_scroll_bar().visible, "Scrollbar must stay hidden when the owned ships already fit in the list.")
+	_expect(ship_list.get_child_count() == 5, "Starting fleet list must show all five owned ships.")
+	_expect((screen.get_node("FleetCount") as Label).text.contains("5 艘"), "Fleet header must show the current ship count without a capacity limit.")
+	var initial_scrollbar := (screen.get_node("ShipListScroll") as ScrollContainer).get_v_scroll_bar()
+	_expect(initial_scrollbar.visible and initial_scrollbar.max_value > initial_scrollbar.page, "The five-ship starting fleet must be scrollable.")
 	for index in range(ship_list.get_child_count()):
 		var choice := ship_list.get_child(index) as Button
 		_expect(choice.get_node_or_null("ShipIcon") is TextureRect, "Every fleet row must show a ship image.")

@@ -38,7 +38,7 @@ func _test_default_state() -> void:
 	_expect(state["items"] == {"wood": 30, "ironstone": 20}, "New games must start with documented materials only.")
 	_expect((state["blueprints"] as Array).is_empty(), "New games must not own blueprints.")
 	var starting_types := (state["ships"] as Array).map(func(ship: Dictionary): return str(ship["type_id"]))
-	_expect(starting_types == ["patrol_boat", "cannon_warship", "escort_junk"], "New games must own one ship of every available type.")
+	_expect(starting_types == ["patrol_boat", "cannon_warship", "escort_junk", "patrol_boat", "cannon_warship"], "New games must own five ships while retaining every available type.")
 	_expect(ECONOMY.normalize({}) == state, "An uninitialized economy dictionary must normalize to new-game defaults.")
 
 
@@ -88,15 +88,15 @@ func _test_blueprints_and_shipbuilding() -> void:
 	ECONOMY.add_item(state, "wood", 20)
 	var built: Dictionary = TRADE.build_ship(state, "patrol_boat")
 	_expect(built.get("ok", false), "Owned blueprint and sufficient costs must build a ship.")
-	_expect((state["ships"] as Array).size() == 4 and state["ships"][3]["id"] == "ship_004", "Built ship must receive a unique sequential id after the three starting ships.")
+	_expect((state["ships"] as Array).size() == 6 and state["ships"][5]["id"] == "ship_006", "Built ship must receive a unique sequential id after the five starting ships.")
 	_expect(state["pay"] == 260 and state["items"]["wood"] == 14 and state["items"]["ironstone"] == 6, "Shipbuilding must consume the documented costs.")
 	state["pay"] = 10000
 	state["items"]["wood"] = 2000
 	state["items"]["ironstone"] = 2000
 	for _index in range(12):
 		_expect(TRADE.build_ship(state, "patrol_boat").get("ok", false), "Fleet building must remain available beyond the old ten-ship limit.")
-	_expect((state["ships"] as Array).size() == 16, "Fleet capacity must be unlimited by gameplay rules.")
-	_expect((ECONOMY.normalize(state)["ships"] as Array).size() == 16, "Saving and loading must preserve fleets larger than ten ships.")
+	_expect((state["ships"] as Array).size() == 18, "Fleet capacity must be unlimited by gameplay rules.")
+	_expect((ECONOMY.normalize(state)["ships"] as Array).size() == 18, "Saving and loading must preserve fleets larger than ten ships.")
 
 
 func _test_fishing_catch_mapping() -> void:

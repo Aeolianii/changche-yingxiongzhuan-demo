@@ -13,8 +13,10 @@ static func make_default() -> Dictionary:
 			_make_ship("ship_001", "patrol_boat"),
 			_make_ship("ship_002", "cannon_warship"),
 			_make_ship("ship_003", "escort_junk"),
+			_make_ship("ship_004", "patrol_boat"),
+			_make_ship("ship_005", "cannon_warship"),
 		],
-		"next_ship_id": 4,
+		"next_ship_id": 6,
 	}
 
 

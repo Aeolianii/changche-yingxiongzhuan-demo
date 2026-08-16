@@ -13,7 +13,7 @@ func _run() -> void:
 	_cleanup()
 	game_state.call("reset_runtime_world_state")
 	var defaults: Dictionary = game_state.call("get_economy_state")
-	_expect(defaults["pay"] == 800 and defaults["ships"].size() == 3, "GameState must expose all three starting ship types.")
+	_expect(defaults["pay"] == 800 and defaults["ships"].size() == 5, "GameState must expose the five-ship starting fleet.")
 	game_state.call("add_economy_item", "grouper", 2)
 	game_state.call("add_military_pay", 75)
 	_expect(game_state.call("buy_economy_blueprint", "patrol_boat").get("ok", false), "GameState trade facade must buy a blueprint.")

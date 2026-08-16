@@ -54,7 +54,7 @@ func _run() -> void:
 	for pirate_value in pirates:
 		var spawned_pirate := pirate_value as SeaOverworldPirate
 		_expect(spawned_pirate.spawn_origin().distance_to(HARBOR_POSITION) >= 1100.0, "Pirates must spawn well outside the expanded South Sea Harbor safety radius.")
-		_expect(spawned_pirate.move_speed < player.move_speed, "Pirate movement speed must remain lower than the player ship speed.")
+		_expect(is_equal_approx(spawned_pirate.move_speed, 168.0), "Pirate movement speed must be reduced by 20 percent from 210 to 168.")
 		_expect(is_equal_approx(spawned_pirate.detection_radius, 360.0) and is_equal_approx(spawned_pirate.disengage_radius, 520.0), "Pirate chase must use the approved hysteresis distances.")
 		_expect(is_equal_approx(spawned_pirate.pursuit_leash_radius, 720.0), "Pirate chase must use the approved birth-point leash radius.")
 	for first_index in range(pirates.size()):

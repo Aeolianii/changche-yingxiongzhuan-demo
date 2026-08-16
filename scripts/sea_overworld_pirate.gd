@@ -13,7 +13,7 @@ const WAKE_OFFSET := 52.0
 const SIDE_SPLASH_OFFSET := 3.0
 const WAKE_FRAME_TIME := 0.11
 
-@export var move_speed := 210.0
+@export var move_speed := 168.0
 @export var patrol_radius := 240.0
 @export var detection_radius := 360.0
 @export var disengage_radius := 520.0

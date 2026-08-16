@@ -4,7 +4,7 @@ signal close_requested
 
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 const MAP_FOG_SOFT_EDGE_SHADER := preload("res://shaders/sea_map_fog_soft_edge.gdshader")
-const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel.png")
+const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel_seamless_v2.png")
 const SEA_MAP_SCROLL_FRAME := preload("res://assets/ui/sea_overworld/sea_map_scroll_frame_v1.png")
 const SEA_MAP_RETURN_BRUSH := preload("res://assets/ui/sea_overworld/sea_map_return_brush_v1.png")
 

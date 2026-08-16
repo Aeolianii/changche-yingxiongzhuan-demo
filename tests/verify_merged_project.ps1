@@ -18,6 +18,14 @@ function Assert-FileExists {
     return $true
 }
 
+function Assert-PathAbsent {
+    param([string]$RelativePath)
+    $fullPath = Join-Path $projectRoot $RelativePath
+    if (Test-Path -LiteralPath $fullPath) {
+        Add-Failure "Removed legacy path must not exist: $RelativePath"
+    }
+}
+
 function Assert-Contains {
     param(
         [string]$Content,
@@ -133,6 +141,19 @@ $requiredFiles = @(
 
 foreach ($requiredFile in $requiredFiles) {
     [void](Assert-FileExists $requiredFile)
+}
+
+$removedLegacyPaths = @(
+    'scenes\official_campaign.tscn',
+    'scenes\naval_tactics.tscn',
+    'scenes\naval_tactics_v3.tscn',
+    'scripts\campaign',
+    'scripts\tactics',
+    'scripts\tactics_v3'
+)
+
+foreach ($removedLegacyPath in $removedLegacyPaths) {
+    Assert-PathAbsent $removedLegacyPath
 }
 
 if (Test-Path -LiteralPath (Join-Path $projectRoot 'assest')) {

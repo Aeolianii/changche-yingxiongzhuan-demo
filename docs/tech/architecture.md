@@ -95,6 +95,7 @@ Scene2 在场景树根节点写入一次性 `scene_two_naval_return_context` 字
 ## Development tooling
 
 - V4 项目集成 `addons/godot_ai/` 作为仅供编辑器使用的 Godot AI MCP 插件；`project.godot` 启用插件并注册 `_mcp_game_helper`，用于编辑器启动的调试游戏与 MCP 工具确认运行状态。
+- V4 的 Godot AI MCP 活跃会话必须由 Godot 4.7 .NET/Mono 编辑器进程承载。MCP 会话返回的 `godot_version` 只表示引擎版本，不能单独证明是否为 Mono；必要时以编辑器进程可执行文件路径和 C# 构建结果共同确认。
 - Codex 通过用户级 `http://127.0.0.1:8000/mcp` 连接当前打开项目的 Godot AI 服务。该配置不绑定仓库路径；同一时间只应让一个需要被 Codex 控制的 Godot 编辑器占用该端口。
 - Godot AI 及 `_mcp_game_helper` 不属于游戏玩法、正式存档或发行内容。导出时由插件的导出处理移除 helper；生产代码不得依赖它。
 - 迁移或升级插件时，先验证目标项目无未保存编辑器状态，再检查插件版本、项目解析、服务端口和当前项目路径，避免 Codex 连接到另一份工程。

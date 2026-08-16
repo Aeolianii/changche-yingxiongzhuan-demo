@@ -10,9 +10,13 @@ func _run() -> void:
 	var sea := SEA.instantiate(); root.add_child(sea); current_scene = sea
 	await process_frame
 	var found := false
+	var return_position := Vector2.ZERO
 	for area in sea.get_node("World/WorldMarkers").get_children():
 		if area.get_meta("location_name", "") == "月环商港":
 			found = area.get_meta("target_scene_path", "") == "res://scenes/yuehuan_merchant_harbor/yuehuan_merchant_harbor.tscn"
+			var entry_shape := area.get_node("EntryTriggerShape") as CollisionShape2D
+			var entry_rect := entry_shape.shape as RectangleShape2D
+			return_position = area.global_position + entry_shape.position - Vector2(entry_rect.size.x * 0.35, 0.0)
 	_expect(found, "Yuehuan map location must target the real harbor scene.")
 	current_scene = null; sea.queue_free(); await process_frame
 	var harbor := HARBOR.instantiate(); root.add_child(harbor); current_scene = harbor
@@ -34,7 +38,6 @@ func _run() -> void:
 	var after: Dictionary = root.get_node("GameState").call("get_economy_state")
 	_expect(after["pay"] == before["pay"] - 12 and after["items"]["wood"] == before["items"]["wood"] + 1, "Merchant buy action must use the economy service.")
 	harbor.call("close_shop_for_test")
-	var return_position := Vector2(3610, 520)
 	root.set_meta(TRAVEL.RETURN_CONTEXT_META, TRAVEL.make_context(return_position, 2, 3, 8.5))
 	var player := harbor.get_node("World/WorldObjects/Player") as CharacterBody2D
 	player.global_position = harbor.get_node("World/Triggers/DockReturn").global_position

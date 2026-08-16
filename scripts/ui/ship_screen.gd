@@ -479,9 +479,9 @@ func _style_ship_scrollbar(scrollbar: VScrollBar) -> void:
 	track.texture = track_texture
 	scrollbar.add_theme_stylebox_override("scroll", track)
 	scrollbar.add_theme_stylebox_override("scroll_focus", track)
-	scrollbar.add_theme_stylebox_override("grabber", _solid_scrollbar_style(Color(0.58, 0.40, 0.16, 1.0), 56.0, 6, 6, 27, 27))
-	scrollbar.add_theme_stylebox_override("grabber_highlight", _solid_scrollbar_style(Color(0.76, 0.55, 0.22, 1.0), 56.0, 6, 6, 27, 27))
-	scrollbar.add_theme_stylebox_override("grabber_pressed", _solid_scrollbar_style(Color(0.91, 0.68, 0.28, 1.0), 56.0, 6, 6, 27, 27))
+	scrollbar.add_theme_stylebox_override("grabber", _solid_scrollbar_style(Color(0.58, 0.40, 0.16, 1.0), 56.0, 6, 6, 34, 34))
+	scrollbar.add_theme_stylebox_override("grabber_highlight", _solid_scrollbar_style(Color(0.76, 0.55, 0.22, 1.0), 56.0, 6, 6, 34, 34))
+	scrollbar.add_theme_stylebox_override("grabber_pressed", _solid_scrollbar_style(Color(0.91, 0.68, 0.28, 1.0), 56.0, 6, 6, 34, 34))
 
 
 func _solid_scrollbar_style(background: Color, minimum_visible_height := 0.0, left_inset := 0, right_inset := 0, top_inset := 0, bottom_inset := 0) -> StyleBoxFlat:

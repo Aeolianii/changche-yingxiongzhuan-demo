@@ -81,7 +81,7 @@ func _run() -> void:
 	_expect(scrollbar.get_theme_stylebox("grabber") is StyleBoxFlat, "Fleet scrollbar thumb must use a non-stretched solid color.")
 	var grabber_style := scrollbar.get_theme_stylebox("grabber") as StyleBoxFlat
 	_expect(grabber_style.border_width_left + grabber_style.border_width_right == 12, "Solid scrollbar thumb must have an exact visible width of 14 pixels inside the 26-pixel track.")
-	_expect(grabber_style.border_width_top == 27 and grabber_style.border_width_bottom == 27, "Solid scrollbar thumb must leave both generated track end caps visible at its travel limits.")
+	_expect(grabber_style.border_width_top == 34 and grabber_style.border_width_bottom == 34, "Solid scrollbar thumb must leave both generated track end caps fully visible with extra clearance at its travel limits.")
 	scrollbar.value = scrollbar.max_value
 	await process_frame
 	_expect(list_scroll.scroll_vertical > 0, "Dragging the fleet scrollbar must move the ship list.")

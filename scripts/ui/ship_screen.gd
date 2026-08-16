@@ -7,7 +7,7 @@ const QUEST_BACKGROUND := preload("res://assets/ui/quest_screen/quest_screen_bac
 const FUNCTION_BUTTON_FRAME := preload("res://assets/ui/exploration_hud/function_button.png")
 const RETURN_ICON := preload("res://assets/ui/icons/menu_return_title.png")
 const SCROLLBAR_SHEET := preload("res://assets/ui/ship_screen/ship_scrollbar_sheet_v1.png")
-const DETAIL_BUTTON_FRAME := preload("res://assets/ui/ship_screen/ship_detail_button_frame_v2.png")
+const DETAIL_BUTTON_FRAME := preload("res://assets/ui/ship_screen/ship_detail_button_frame_v1.png")
 const SHIP_ICONS := {
 	"patrol_boat": preload("res://assets/ui/merchant_shop/ships/patrol_boat.png"),
 	"cannon_warship": preload("res://assets/ui/merchant_shop/ships/cannon_warship.png"),

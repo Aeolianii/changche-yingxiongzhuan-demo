@@ -199,7 +199,7 @@ func _build_ship_list() -> void:
 	scroll.position = Vector2(78, 274)
 	scroll.size = Vector2(388, 506)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	scroll.clip_contents = true
 	add_child(scroll)
@@ -469,16 +469,16 @@ func _selector_style(selected: bool, hovered: bool) -> StyleBoxFlat:
 
 func _style_ship_scrollbar(scrollbar: VScrollBar) -> void:
 	scrollbar.name = "ShipListScrollbar"
-	scrollbar.custom_minimum_size.x = 24.0
+	scrollbar.custom_minimum_size.x = 18.0
 	scrollbar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	scrollbar.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var track := _scrollbar_atlas(Rect2(440, 0, 144, 1120))
 	var thumb := _scrollbar_atlas(Rect2(440, 1152, 144, 384))
-	scrollbar.add_theme_stylebox_override("scroll", _scrollbar_style(track))
-	scrollbar.add_theme_stylebox_override("scroll_focus", _scrollbar_style(track))
-	scrollbar.add_theme_stylebox_override("grabber", _scrollbar_style(thumb))
-	scrollbar.add_theme_stylebox_override("grabber_highlight", _scrollbar_style(thumb, Color(1.12, 1.08, 0.92, 1.0)))
-	scrollbar.add_theme_stylebox_override("grabber_pressed", _scrollbar_style(thumb, Color(1.18, 1.08, 0.74, 1.0)))
+	scrollbar.add_theme_stylebox_override("scroll", _scrollbar_style(track, Color.WHITE))
+	scrollbar.add_theme_stylebox_override("scroll_focus", _scrollbar_style(track, Color.WHITE))
+	scrollbar.add_theme_stylebox_override("grabber", _scrollbar_style(thumb, Color.WHITE, 56.0))
+	scrollbar.add_theme_stylebox_override("grabber_highlight", _scrollbar_style(thumb, Color(1.12, 1.08, 0.92, 1.0), 56.0))
+	scrollbar.add_theme_stylebox_override("grabber_pressed", _scrollbar_style(thumb, Color(1.18, 1.08, 0.74, 1.0), 56.0))
 
 
 func _scrollbar_atlas(region: Rect2) -> AtlasTexture:
@@ -488,10 +488,12 @@ func _scrollbar_atlas(region: Rect2) -> AtlasTexture:
 	return texture
 
 
-func _scrollbar_style(texture: Texture2D, tint := Color.WHITE) -> StyleBoxTexture:
+func _scrollbar_style(texture: Texture2D, tint: Color, minimum_height := 0.0) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
 	style.texture = texture
 	style.modulate_color = tint
+	style.content_margin_top = minimum_height * 0.5
+	style.content_margin_bottom = minimum_height * 0.5
 	return style
 
 

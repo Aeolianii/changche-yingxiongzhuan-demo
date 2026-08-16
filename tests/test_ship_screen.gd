@@ -2,6 +2,7 @@ extends SceneTree
 
 const HUD := preload("res://scenes/ui/exploration_hud.tscn")
 const SCREENSHOT_PATH := "res://.godot/ship_screen_preview.png"
+const SCROLL_SCREENSHOT_PATH := "res://.godot/ship_screen_scroll_preview.png"
 
 var failures: Array[String] = []
 
@@ -41,6 +42,7 @@ func _run() -> void:
 	var ship_list := screen.get_node("ShipListScroll/ShipList") as VBoxContainer
 	_expect(ship_list.get_child_count() == 3, "Starting fleet list must show all three owned ships.")
 	_expect((screen.get_node("FleetCount") as Label).text.contains("3 艘"), "Fleet header must show the current ship count without a capacity limit.")
+	_expect(not (screen.get_node("ShipListScroll") as ScrollContainer).get_v_scroll_bar().visible, "Scrollbar must stay hidden when the owned ships already fit in the list.")
 	for index in range(ship_list.get_child_count()):
 		var choice := ship_list.get_child(index) as Button
 		_expect(choice.get_node_or_null("ShipIcon") is TextureRect, "Every fleet row must show a ship image.")
@@ -58,6 +60,10 @@ func _run() -> void:
 	_expect(str(screen.call("selected_ship_id_for_test")) == "ship_002", "Selecting a fleet row must update the active ship.")
 	_expect((screen.get_node("SelectedShipName") as RichTextLabel).text.contains("火炮战船"), "Right detail panel must refresh for the selected cannon warship.")
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "72 / 72", "Selected ship detail must display current and maximum durability.")
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		var initial_screenshot_error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
+		_expect(initial_screenshot_error == OK, "Initial ship screen preview screenshot could not be saved.")
 
 	var long_fleet: Array[Dictionary] = screen.get("_ships")
 	for index in range(6):
@@ -78,8 +84,8 @@ func _run() -> void:
 
 	if DisplayServer.get_name() != "headless":
 		await process_frame
-		var screenshot_error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
-		_expect(screenshot_error == OK, "Ship screen preview screenshot could not be saved.")
+		var screenshot_error := root.get_texture().get_image().save_png(SCROLL_SCREENSHOT_PATH)
+		_expect(screenshot_error == OK, "Scrollable ship screen preview screenshot could not be saved.")
 
 	(screen.get_node("ShipReturnSlot/ShipReturnButton") as Button).pressed.emit()
 	await process_frame

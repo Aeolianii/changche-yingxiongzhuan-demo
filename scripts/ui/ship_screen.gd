@@ -479,20 +479,23 @@ func _style_ship_scrollbar(scrollbar: VScrollBar) -> void:
 	track.texture = track_texture
 	scrollbar.add_theme_stylebox_override("scroll", track)
 	scrollbar.add_theme_stylebox_override("scroll_focus", track)
-	scrollbar.add_theme_stylebox_override("grabber", _solid_scrollbar_style(Color(0.58, 0.40, 0.16, 1.0), 56.0, 6, 6))
-	scrollbar.add_theme_stylebox_override("grabber_highlight", _solid_scrollbar_style(Color(0.76, 0.55, 0.22, 1.0), 56.0, 6, 6))
-	scrollbar.add_theme_stylebox_override("grabber_pressed", _solid_scrollbar_style(Color(0.91, 0.68, 0.28, 1.0), 56.0, 6, 6))
+	scrollbar.add_theme_stylebox_override("grabber", _solid_scrollbar_style(Color(0.58, 0.40, 0.16, 1.0), 56.0, 6, 6, 27, 27))
+	scrollbar.add_theme_stylebox_override("grabber_highlight", _solid_scrollbar_style(Color(0.76, 0.55, 0.22, 1.0), 56.0, 6, 6, 27, 27))
+	scrollbar.add_theme_stylebox_override("grabber_pressed", _solid_scrollbar_style(Color(0.91, 0.68, 0.28, 1.0), 56.0, 6, 6, 27, 27))
 
 
-func _solid_scrollbar_style(background: Color, minimum_height := 0.0, left_inset := 0, right_inset := 0) -> StyleBoxFlat:
+func _solid_scrollbar_style(background: Color, minimum_visible_height := 0.0, left_inset := 0, right_inset := 0, top_inset := 0, bottom_inset := 0) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = background
 	style.border_color = Color.TRANSPARENT
 	style.set_border_width(SIDE_LEFT, left_inset)
 	style.set_border_width(SIDE_RIGHT, right_inset)
+	style.set_border_width(SIDE_TOP, top_inset)
+	style.set_border_width(SIDE_BOTTOM, bottom_inset)
 	style.set_corner_radius_all(2)
-	style.content_margin_top = minimum_height * 0.5
-	style.content_margin_bottom = minimum_height * 0.5
+	var minimum_total_height := minimum_visible_height + top_inset + bottom_inset
+	style.content_margin_top = minimum_total_height * 0.5
+	style.content_margin_bottom = minimum_total_height * 0.5
 	return style
 
 

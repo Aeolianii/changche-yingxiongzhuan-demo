@@ -6,6 +6,7 @@ const ECONOMY := preload("res://scripts/economy/economy_state.gd")
 const QUEST_BACKGROUND := preload("res://assets/ui/quest_screen/quest_screen_background.png")
 const FUNCTION_BUTTON_FRAME := preload("res://assets/ui/exploration_hud/function_button.png")
 const RETURN_ICON := preload("res://assets/ui/icons/menu_return_title.png")
+const SCROLLBAR_SHEET := preload("res://assets/ui/ship_screen/ship_scrollbar_sheet_v1.png")
 const SHIP_ICONS := {
 	"patrol_boat": preload("res://assets/ui/merchant_shop/ships/patrol_boat.png"),
 	"cannon_warship": preload("res://assets/ui/merchant_shop/ships/cannon_warship.png"),
@@ -471,7 +472,11 @@ func _style_ship_scrollbar(scrollbar: VScrollBar) -> void:
 	scrollbar.custom_minimum_size.x = 26.0
 	scrollbar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	scrollbar.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var track := _solid_scrollbar_style(Color(0.025, 0.045, 0.04, 0.92), 0.0, Color(0.34, 0.27, 0.14, 0.92), 1)
+	var track := StyleBoxTexture.new()
+	var track_texture := AtlasTexture.new()
+	track_texture.atlas = SCROLLBAR_SHEET
+	track_texture.region = Rect2(440, 0, 144, 1120)
+	track.texture = track_texture
 	scrollbar.add_theme_stylebox_override("scroll", track)
 	scrollbar.add_theme_stylebox_override("scroll_focus", track)
 	scrollbar.add_theme_stylebox_override("grabber", _solid_scrollbar_style(Color(0.58, 0.40, 0.16, 1.0), 56.0))

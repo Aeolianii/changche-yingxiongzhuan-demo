@@ -58,6 +58,7 @@ func _run() -> void:
 	_expect((screen.get_node("CrewLabel") as Label).text.contains("26"), "Detailed information must include crew complement.")
 	_expect((screen.get_node("ConstructionLabel") as Label).text.contains("军饷") and (screen.get_node("ConstructionLabel") as Label).text.contains("木材"), "Hull upgrade area must show the currently available resources.")
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "42 / 60", "The first starting ship must expose its initial hull damage.")
+	_expect((screen.get_node("DetailSeparator") as ColorRect).position.y == 492.0 and (screen.get_node("DurabilityBar") as ProgressBar).position.y == 549.0, "Hull separator and the content below it must move upward to reserve more room for upgrades.")
 	var repair_button := screen.get_node("RepairButton") as Button
 	_expect(not repair_button.disabled and repair_button.position.x > 1100.0, "Hull page must provide an enabled repair button in its upper-right corner for damaged ships.")
 	var hull_tab := screen.get_node("HullTab") as Button
@@ -122,6 +123,10 @@ func _run() -> void:
 	await process_frame
 	_expect(str(screen.call("selected_ship_id_for_test")) == "ship_002", "Selecting a fleet row must update the active ship.")
 	_expect((screen.get_node("SelectedShipName") as RichTextLabel).text.contains("火炮战船"), "Right detail panel must refresh for the selected cannon warship.")
+	var cannon_texture := (screen.get_node("SelectedShipPreview") as TextureRect).texture
+	_expect(cannon_texture.resource_path.ends_with("cannon_warship_v2.png"), "Cannon warship detail must use the clean sprite without the neighboring ship fragment.")
+	var cannon_image := cannon_texture.get_image()
+	_expect(cannon_image.get_pixel(10, 75).a == 0.0 and cannon_image.get_pixel(40, 80).a > 0.9, "Clean cannon sprite must remove the detached lower-left fragment while retaining the adjacent main hull pixels.")
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "72 / 72", "Selected ship detail must display current and maximum durability.")
 	if DisplayServer.get_name() != "headless":
 		await process_frame

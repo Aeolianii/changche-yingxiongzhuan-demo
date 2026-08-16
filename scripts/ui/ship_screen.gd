@@ -10,7 +10,7 @@ const SCROLLBAR_SHEET := preload("res://assets/ui/ship_screen/ship_scrollbar_she
 const DETAIL_BUTTON_FRAME := preload("res://assets/ui/ship_screen/ship_detail_button_frame_v1.png")
 const SHIP_ICONS := {
 	"patrol_boat": preload("res://assets/ui/merchant_shop/ships/patrol_boat.png"),
-	"cannon_warship": preload("res://assets/ui/merchant_shop/ships/cannon_warship.png"),
+	"cannon_warship": preload("res://assets/ui/merchant_shop/ships/cannon_warship_v2.png"),
 	"escort_junk": preload("res://assets/ui/merchant_shop/ships/escort_junk.png"),
 }
 
@@ -342,20 +342,20 @@ func _build_ship_detail() -> void:
 
 	var separator := ColorRect.new()
 	separator.name = "DetailSeparator"
-	separator.position = Vector2(528, 510)
+	separator.position = Vector2(528, 492)
 	separator.size = Vector2(744, 1)
 	separator.color = Color(GOLD.r, GOLD.g, GOLD.b, 0.38)
 	separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(separator)
 
 	var durability_title := _make_label("船体耐久", 19, GOLD_BRIGHT)
-	durability_title.position = Vector2(544, 530)
+	durability_title.position = Vector2(544, 512)
 	durability_title.size = Vector2(180, 30)
 	add_child(durability_title)
 
 	_durability = ProgressBar.new()
 	_durability.name = "DurabilityBar"
-	_durability.position = Vector2(544, 567)
+	_durability.position = Vector2(544, 549)
 	_durability.size = Vector2(718, 34)
 	_durability.show_percentage = false
 	_durability.add_theme_stylebox_override("background", _flat_style(Color(0.015, 0.03, 0.028, 0.88), Color(GOLD.r, GOLD.g, GOLD.b, 0.28), 1))
@@ -373,7 +373,7 @@ func _build_ship_detail() -> void:
 	_stats = GridContainer.new()
 	_stats.name = "ShipStats"
 	_stats.columns = 4
-	_stats.position = Vector2(544, 612)
+	_stats.position = Vector2(544, 594)
 	_stats.size = Vector2(718, 54)
 	_stats.add_theme_constant_override("h_separation", 10)
 	_stats.add_theme_constant_override("v_separation", 8)
@@ -383,13 +383,13 @@ func _build_ship_detail() -> void:
 
 	_crew_label = _make_label("", 16, TEXT_LIGHT)
 	_crew_label.name = "CrewLabel"
-	_crew_label.position = Vector2(548, 784)
+	_crew_label.position = Vector2(548, 766)
 	_crew_label.size = Vector2(210, 22)
 	add_child(_crew_label)
 
 	_construction_label = _make_label("", 15, TEXT_MUTED)
 	_construction_label.name = "ConstructionLabel"
-	_construction_label.position = Vector2(750, 784)
+	_construction_label.position = Vector2(750, 766)
 	_construction_label.size = Vector2(510, 22)
 	_construction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(_construction_label)
@@ -442,19 +442,19 @@ func _add_detail_tab_bottom_border(button: Button) -> void:
 func _build_upgrade_grid() -> void:
 	_upgrade_title = _make_label("船体强化", 17, GOLD_BRIGHT)
 	_upgrade_title.name = "UpgradeTitle"
-	_upgrade_title.position = Vector2(544, 670)
+	_upgrade_title.position = Vector2(544, 652)
 	_upgrade_title.size = Vector2(180, 26)
 	add_child(_upgrade_title)
 	_upgrade_status = _make_label("", 13, JADE)
 	_upgrade_status.name = "UpgradeStatus"
-	_upgrade_status.position = Vector2(760, 670)
+	_upgrade_status.position = Vector2(760, 652)
 	_upgrade_status.size = Vector2(500, 26)
 	_upgrade_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(_upgrade_status)
 	_upgrade_grid = GridContainer.new()
 	_upgrade_grid.name = "ShipUpgradeGrid"
 	_upgrade_grid.columns = 4
-	_upgrade_grid.position = Vector2(544, 699)
+	_upgrade_grid.position = Vector2(544, 681)
 	_upgrade_grid.size = Vector2(718, 78)
 	_upgrade_grid.add_theme_constant_override("h_separation", 10)
 	_upgrade_grid.mouse_filter = Control.MOUSE_FILTER_IGNORE

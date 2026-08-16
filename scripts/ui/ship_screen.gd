@@ -7,6 +7,7 @@ const QUEST_BACKGROUND := preload("res://assets/ui/quest_screen/quest_screen_bac
 const FUNCTION_BUTTON_FRAME := preload("res://assets/ui/exploration_hud/function_button.png")
 const RETURN_ICON := preload("res://assets/ui/icons/menu_return_title.png")
 const SCROLLBAR_SHEET := preload("res://assets/ui/ship_screen/ship_scrollbar_sheet_v1.png")
+const DETAIL_BUTTON_FRAME := preload("res://assets/ui/ship_screen/ship_detail_button_frame_v1.png")
 const SHIP_ICONS := {
 	"patrol_boat": preload("res://assets/ui/merchant_shop/ships/patrol_boat.png"),
 	"cannon_warship": preload("res://assets/ui/merchant_shop/ships/cannon_warship.png"),
@@ -395,7 +396,7 @@ func _build_ship_detail() -> void:
 	_repair_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(_repair_status)
 
-	_repair_button = _make_action_button("修复船体", Vector2(1138, 232), Vector2(122, 38))
+	_repair_button = _make_action_button("修复船体", Vector2(1138, 232), Vector2(122, 38), true)
 	_repair_button.name = "RepairButton"
 	_repair_button.pressed.connect(_repair_selected_ship)
 	add_child(_repair_button)
@@ -410,11 +411,11 @@ func _build_ship_detail() -> void:
 
 
 func _build_detail_tabs() -> void:
-	_hull_tab = _make_action_button("船体", Vector2(544, 228), Vector2(126, 40))
+	_hull_tab = _make_action_button("船体", Vector2(544, 228), Vector2(126, 40), true)
 	_hull_tab.name = "HullTab"
 	_hull_tab.pressed.connect(_switch_detail_mode.bind("hull"))
 	add_child(_hull_tab)
-	_equipment_tab = _make_action_button("装备", Vector2(680, 228), Vector2(126, 40))
+	_equipment_tab = _make_action_button("装备", Vector2(680, 228), Vector2(126, 40), true)
 	_equipment_tab.name = "EquipmentTab"
 	_equipment_tab.pressed.connect(_switch_detail_mode.bind("equipment"))
 	add_child(_equipment_tab)
@@ -560,8 +561,8 @@ func _switch_detail_mode(mode: String) -> void:
 		node.visible = _detail_mode == "hull"
 	_equipment_page.visible = _detail_mode == "equipment"
 	var hull_selected := _detail_mode == "hull"
-	_hull_tab.add_theme_stylebox_override("normal", _tab_style(hull_selected))
-	_equipment_tab.add_theme_stylebox_override("normal", _tab_style(not hull_selected))
+	_hull_tab.add_theme_stylebox_override("normal", _detail_button_style(Color(1.0, 0.88, 0.55, 1.0) if hull_selected else Color(0.78, 0.80, 0.74, 1.0)))
+	_equipment_tab.add_theme_stylebox_override("normal", _detail_button_style(Color(1.0, 0.88, 0.55, 1.0) if not hull_selected else Color(0.78, 0.80, 0.74, 1.0)))
 	_hull_tab.add_theme_color_override("font_color", GOLD_BRIGHT if hull_selected else TEXT_MUTED)
 	_equipment_tab.add_theme_color_override("font_color", GOLD_BRIGHT if not hull_selected else TEXT_MUTED)
 	if _detail_mode == "equipment":
@@ -781,7 +782,7 @@ func _solid_scrollbar_style(background: Color, minimum_visible_height := 0.0, le
 	return style
 
 
-func _make_action_button(text_value: String, button_position: Vector2, button_size: Vector2) -> Button:
+func _make_action_button(text_value: String, button_position: Vector2, button_size: Vector2, use_detail_frame := false) -> Button:
 	var button := Button.new()
 	button.text = text_value
 	button.position = button_position
@@ -791,15 +792,28 @@ func _make_action_button(text_value: String, button_position: Vector2, button_si
 	button.add_theme_font_size_override("font_size", 16)
 	button.add_theme_color_override("font_color", TEXT_LIGHT)
 	button.add_theme_color_override("font_disabled_color", Color(TEXT_MUTED.r, TEXT_MUTED.g, TEXT_MUTED.b, 0.56))
-	button.add_theme_stylebox_override("normal", _flat_style(Color(0.025, 0.055, 0.048, 0.92), Color(GOLD.r, GOLD.g, GOLD.b, 0.54), 1))
-	button.add_theme_stylebox_override("hover", _flat_style(Color(0.13, 0.16, 0.10, 0.96), GOLD, 1))
-	button.add_theme_stylebox_override("pressed", _flat_style(Color(0.28, 0.21, 0.09, 0.96), GOLD_BRIGHT, 1))
-	button.add_theme_stylebox_override("disabled", _flat_style(Color(0.025, 0.04, 0.036, 0.54), Color(GOLD.r, GOLD.g, GOLD.b, 0.20), 1))
+	if use_detail_frame:
+		button.add_theme_stylebox_override("normal", _detail_button_style(Color(0.78, 0.80, 0.74, 1.0)))
+		button.add_theme_stylebox_override("hover", _detail_button_style(Color(1.0, 0.94, 0.72, 1.0)))
+		button.add_theme_stylebox_override("pressed", _detail_button_style(Color(0.92, 0.76, 0.42, 1.0)))
+		button.add_theme_stylebox_override("disabled", _detail_button_style(Color(0.42, 0.44, 0.40, 0.68)))
+	else:
+		button.add_theme_stylebox_override("normal", _flat_style(Color(0.025, 0.055, 0.048, 0.92), Color(GOLD.r, GOLD.g, GOLD.b, 0.54), 1))
+		button.add_theme_stylebox_override("hover", _flat_style(Color(0.13, 0.16, 0.10, 0.96), GOLD, 1))
+		button.add_theme_stylebox_override("pressed", _flat_style(Color(0.28, 0.21, 0.09, 0.96), GOLD_BRIGHT, 1))
+		button.add_theme_stylebox_override("disabled", _flat_style(Color(0.025, 0.04, 0.036, 0.54), Color(GOLD.r, GOLD.g, GOLD.b, 0.20), 1))
 	return button
 
 
-func _tab_style(selected: bool) -> StyleBoxFlat:
-	return _flat_style(Color(0.30, 0.22, 0.08, 0.88) if selected else Color(0.025, 0.05, 0.045, 0.84), Color(GOLD.r, GOLD.g, GOLD.b, 0.76 if selected else 0.34), 1)
+func _detail_button_style(tint: Color) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = DETAIL_BUTTON_FRAME
+	style.modulate_color = tint
+	style.content_margin_left = 10.0
+	style.content_margin_right = 10.0
+	style.content_margin_top = 4.0
+	style.content_margin_bottom = 4.0
+	return style
 
 
 func _make_label(text_value: String, font_size: int, font_color: Color) -> Label:

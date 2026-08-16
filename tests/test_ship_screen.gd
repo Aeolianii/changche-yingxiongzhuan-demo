@@ -59,6 +59,11 @@ func _run() -> void:
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "42 / 60", "The first starting ship must expose its initial hull damage.")
 	var repair_button := screen.get_node("RepairButton") as Button
 	_expect(not repair_button.disabled and repair_button.position.x > 1100.0, "Hull page must provide an enabled repair button in its upper-right corner for damaged ships.")
+	var hull_tab := screen.get_node("HullTab") as Button
+	var equipment_tab := screen.get_node("EquipmentTab") as Button
+	for detail_button in [hull_tab, equipment_tab, repair_button]:
+		var detail_style := (detail_button as Button).get_theme_stylebox("normal")
+		_expect(detail_style is StyleBoxTexture and (detail_style as StyleBoxTexture).texture.resource_path.ends_with("ship_detail_button_frame_v1.png"), "Hull, equipment, and repair buttons must use the generated ink-pixel frame.")
 	repair_button.pressed.emit()
 	await process_frame
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "60 / 60" and repair_button.disabled, "Repair button must restore selected ship durability and then disable itself.")
@@ -75,6 +80,7 @@ func _run() -> void:
 	var armor_minus := armor_content.get_node("Minus") as Button
 	_expect(armor_subtitle.position.y + armor_subtitle.size.y < armor_minus.position.y, "Armor description and controls must occupy separate rows without overlapping.")
 	var ram_plus := equipment_page.get_node("WeaponGrid/Weapon_ram/Content/Plus") as Button
+	_expect(ram_plus.get_theme_stylebox("normal") is StyleBoxFlat, "Compact equipment controls must keep their fitted flat button style.")
 	ram_plus.pressed.emit()
 	await process_frame
 	_expect((equipment_page.get_node("WeaponGrid/Weapon_ram/Content/Count") as Label).text == "×1", "Equipment controls must update the selected ship loadout.")

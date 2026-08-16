@@ -40,7 +40,7 @@ func _run() -> void:
 	_expect(screen.get_node("ScreenTitle").text == "船只", "Ship screen must have its own title.")
 	_expect(screen.get_node("ShipListTitle").text == "舰队名册" and screen.get_node("ShipDetailHeader").text == "舰船详情", "Ship screen must use a clear left-list/right-detail structure.")
 
-	var ship_list := screen.get_node("ShipListScroll/ShipList") as VBoxContainer
+	var ship_list := screen.get_node("ShipListScroll/ShipListInset/ShipList") as VBoxContainer
 	_expect(ship_list.get_child_count() == 5, "Starting fleet list must show all five owned ships.")
 	_expect((screen.get_node("FleetCount") as Label).text.contains("5 艘"), "Fleet header must show the current ship count without a capacity limit.")
 	var initial_scrollbar := (screen.get_node("ShipListScroll") as ScrollContainer).get_v_scroll_bar()
@@ -116,7 +116,8 @@ func _run() -> void:
 	await process_frame
 	_expect(list_scroll.scroll_vertical > 0, "Dragging the fleet scrollbar must move the ship list.")
 	var first_row := ship_list.get_child(0) as Control
-	var scrollbar_gutter := scrollbar.custom_minimum_size.x + 10.0
+	_expect(ship_list.position.x == 6.0, "Fleet rows must be shifted six pixels to the right within the list frame.")
+	var scrollbar_gutter := scrollbar.custom_minimum_size.x + 6.0
 	_expect(list_scroll.clip_contents and first_row.position.x + first_row.size.x <= list_scroll.size.x - scrollbar_gutter, "Selected ship highlights must end before the scrollbar gutter instead of extending underneath it.")
 
 	if DisplayServer.get_name() != "headless":

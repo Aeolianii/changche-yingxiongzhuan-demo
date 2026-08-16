@@ -218,13 +218,21 @@ func _build_ship_list() -> void:
 	add_child(scroll)
 	_style_ship_scrollbar(scroll.get_v_scroll_bar())
 
+	var list_inset := MarginContainer.new()
+	list_inset.name = "ShipListInset"
+	list_inset.custom_minimum_size = Vector2(356, 0)
+	list_inset.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	list_inset.add_theme_constant_override("margin_left", 6)
+	list_inset.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scroll.add_child(list_inset)
+
 	_ship_list = VBoxContainer.new()
 	_ship_list.name = "ShipList"
-	_ship_list.custom_minimum_size = Vector2(352, 0)
+	_ship_list.custom_minimum_size = Vector2(350, 0)
 	_ship_list.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_ship_list.add_theme_constant_override("separation", 10)
 	_ship_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	scroll.add_child(_ship_list)
+	list_inset.add_child(_ship_list)
 
 
 func _rebuild_ship_list() -> void:

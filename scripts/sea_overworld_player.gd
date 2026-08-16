@@ -14,6 +14,9 @@ const SHIP_FRAME_Y_OFFSETS := [-98.0, 0.0]
 const WAKE_OFFSET := 62.0
 const SIDE_SPLASH_OFFSET := 3.0
 const WAKE_FRAME_TIME := 0.11
+const CLICK_STOP_DISTANCE := 6.0
+const CLICK_STUCK_TIMEOUT := 0.5
+const CLICK_PROGRESS_EPSILON := 0.2
 
 @export var move_speed := 260.0
 @export var controls_enabled := true
@@ -31,6 +34,9 @@ var _last_ship_direction := -1
 var _wake_frame := -1
 var _wake_elapsed := 0.0
 var _bob_elapsed := 0.0
+var _has_move_target := false
+var _move_target := Vector2.ZERO
+var _click_stuck_elapsed := 0.0
 
 
 func _ready() -> void:
@@ -50,21 +56,79 @@ func restore_facing_index(value: int) -> void:
 	_update_direction_textures(false)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not controls_enabled or not event is InputEventMouseButton:
+		return
+	var mouse_event := event as InputEventMouseButton
+	if not mouse_event.pressed or mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	var world_position := get_viewport().get_canvas_transform().affine_inverse() * mouse_event.position
+	request_move_to(world_position)
+	get_viewport().set_input_as_handled()
+
+
 func _physics_process(delta: float) -> void:
 	var input_direction := Vector2.ZERO
-	if controls_enabled:
+	if not controls_enabled:
+		cancel_move_target()
+	else:
 		input_direction = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		if input_direction.length_squared() > 0.01:
+			cancel_move_target()
+		elif _has_move_target:
+			if global_position.distance_to(_move_target) <= CLICK_STOP_DISTANCE:
+				cancel_move_target()
+			else:
+				input_direction = global_position.direction_to(_move_target)
 
 	var is_moving := input_direction.length_squared() > 0.01
 	if is_moving:
 		_update_facing(input_direction)
 	velocity = input_direction * move_speed
+	var distance_before_move := global_position.distance_to(_move_target) if _has_move_target else 0.0
 	var position_before_move := global_position
 	move_and_slide()
 	global_position = global_position.clamp(movement_bounds.position, movement_bounds.end)
+	_update_click_move_progress(distance_before_move, delta)
 	if global_position.distance_squared_to(position_before_move) > 0.01:
 		sailed.emit(delta)
 	_update_motion_visuals(delta, is_moving)
+
+
+func request_move_to(world_position: Vector2) -> void:
+	_move_target = world_position.clamp(movement_bounds.position, movement_bounds.end)
+	_has_move_target = global_position.distance_to(_move_target) > CLICK_STOP_DISTANCE
+	_click_stuck_elapsed = 0.0
+
+
+func cancel_move_target() -> void:
+	_has_move_target = false
+	_click_stuck_elapsed = 0.0
+
+
+func has_move_target() -> bool:
+	return _has_move_target
+
+
+func move_target() -> Vector2:
+	return _move_target
+
+
+func _update_click_move_progress(distance_before_move: float, delta: float) -> void:
+	if not _has_move_target:
+		return
+	var distance_after_move := global_position.distance_to(_move_target)
+	if distance_after_move <= CLICK_STOP_DISTANCE:
+		cancel_move_target()
+		velocity = Vector2.ZERO
+		return
+	if distance_before_move - distance_after_move > CLICK_PROGRESS_EPSILON:
+		_click_stuck_elapsed = 0.0
+		return
+	_click_stuck_elapsed += delta
+	if _click_stuck_elapsed >= CLICK_STUCK_TIMEOUT:
+		cancel_move_target()
+		velocity = Vector2.ZERO
 
 
 func _update_facing(direction: Vector2) -> void:

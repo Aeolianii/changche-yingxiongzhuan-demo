@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://scripts/yuehuan_merchant_harbor.gd" id="1_controller"]
 [ext_resource type="Texture2D" path="res://assets/yuehuan_merchant_island/backgrounds/yuehuan_merchant_island_v4.png" id="2_background"]
@@ -7,6 +7,8 @@
 [ext_resource type="Texture2D" path="res://assets/yuehuan_merchant_island/characters/liang_trader_v2.png" id="5_liang"]
 [ext_resource type="Texture2D" path="res://assets/yuehuan_merchant_island/characters/shen_shipwright_v2.png" id="6_shen"]
 [ext_resource type="PackedScene" path="res://scenes/yuehuan_merchant_harbor/merchant_shop_overlay.tscn" id="7_overlay"]
+[ext_resource type="Texture2D" uid="uid://d4fe3kc37c3kx" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="8_prompt"]
+[ext_resource type="Texture2D" uid="uid://d2w4jmas4pnol" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="9_prompt_active"]
 
 [sub_resource type="RectangleShape2D" id="Rectangle_merchant"]
 size = Vector2(28, 18)
@@ -194,19 +196,30 @@ theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 30
 text = "月环商岛"
 
-[node name="PromptPanel" type="PanelContainer" parent="Interface"]
+[node name="PromptPanel" type="TextureButton" parent="Interface"]
 visible = false
-offset_left = 472.0
-offset_top = 808.0
-offset_right = 872.0
-offset_bottom = 872.0
+texture_filter = 1
+offset_left = 522.0
+offset_top = 800.0
+offset_right = 822.0
+offset_bottom = 874.0
+texture_normal = ExtResource("8_prompt")
+texture_pressed = ExtResource("9_prompt_active")
+ignore_texture_size = true
+stretch_mode = 0
 
 [node name="Prompt" type="Label" parent="Interface/PromptPanel"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.98, 0.86, 0.55, 1)
-theme_override_colors/font_outline_color = Color(0.02, 0.02, 0.015, 0.95)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 20
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.8784314, 0.47843137, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 19
 text = "按 E / 空格　交谈"
 horizontal_alignment = 1
 vertical_alignment = 1

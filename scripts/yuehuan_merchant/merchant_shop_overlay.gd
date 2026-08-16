@@ -15,6 +15,8 @@ const ICON_PATHS := {
 	"escort_junk": SHIP_ICON_DIR + "escort_junk.png",
 }
 const COIN_ICON := "res://assets/ui/paper/PNGs/Icons/GameIcons/IconCoin.png"
+const INK_BUTTON_NORMAL := preload("res://assets/ui/sea_overworld/interaction_button_ink_v1.png")
+const INK_BUTTON_ACTIVE := preload("res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png")
 const PAPER := Color("#d9cfb2")
 const PAPER_LIGHT := Color("#e7ddc2")
 const INK := Color("#292720")
@@ -241,16 +243,44 @@ func _build_quantity_controls(parent: VBoxContainer) -> void:
 	_quantity_controls = HBoxContainer.new()
 	_quantity_controls.name = "QuantityControls"
 	_quantity_controls.alignment = BoxContainer.ALIGNMENT_CENTER
-	_quantity_controls.add_theme_constant_override("separation", 7)
+	_quantity_controls.add_theme_constant_override("separation", 5)
 	parent.add_child(_quantity_controls)
+	var decrease := _small_button("−", "QuantityDecreaseButton")
+	decrease.custom_minimum_size = Vector2(56, 52)
+	decrease.add_theme_font_size_override("font_size", 25)
+	decrease.tooltip_text = "数量减一"
+	decrease.pressed.connect(_add_quantity.bind(-1))
+	_quantity_controls.add_child(decrease)
 	_quantity = SpinBox.new()
 	_quantity.name = "QuantityInput"
 	_quantity.min_value = 0
 	_quantity.max_value = 9999
 	_quantity.value = 1
-	_quantity.custom_minimum_size = Vector2(120, 48)
+	_quantity.update_on_text_changed = true
+	_quantity.custom_minimum_size = Vector2(88, 52)
+	var transparent_arrow_image := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+	transparent_arrow_image.fill(Color.TRANSPARENT)
+	_quantity.add_theme_icon_override("updown", ImageTexture.create_from_image(transparent_arrow_image))
 	_quantity.value_changed.connect(_on_quantity_changed)
 	_quantity_controls.add_child(_quantity)
+	var quantity_edit := _quantity.get_line_edit()
+	quantity_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	quantity_edit.editable = true
+	quantity_edit.focus_mode = Control.FOCUS_ALL
+	quantity_edit.select_all_on_focus = true
+	quantity_edit.tooltip_text = "点击后可直接输入数量"
+	quantity_edit.add_theme_font_size_override("font_size", 22)
+	quantity_edit.add_theme_color_override("font_color", INK)
+	quantity_edit.add_theme_color_override("caret_color", GOLD)
+	quantity_edit.add_theme_color_override("selection_color", Color("#9e7a3f66"))
+	quantity_edit.add_theme_stylebox_override("normal", _panel(Color("#cbbd99"), Color("#8d7950"), 1, 3, 8))
+	quantity_edit.add_theme_stylebox_override("focus", _panel(Color("#e1d5b6"), GOLD, 2, 3, 8))
+	var increase := _small_button("+", "QuantityIncreaseButton")
+	increase.custom_minimum_size = Vector2(56, 52)
+	increase.add_theme_font_size_override("font_size", 24)
+	increase.tooltip_text = "数量加一"
+	increase.pressed.connect(_add_quantity.bind(1))
+	_quantity_controls.add_child(increase)
 	for data in [["+10", "Quick10Button", 10], ["+100", "Quick100Button", 100]]:
 		var button := _small_button(str(data[0]), str(data[1]))
 		button.pressed.connect(_add_quantity.bind(int(data[2])))
@@ -394,12 +424,14 @@ func _add_tab(text_value: String, mode_value: String) -> void:
 	button.toggle_mode = true
 	button.button_pressed = _mode == mode_value
 	button.add_theme_font_size_override("font_size", 17)
-	button.add_theme_color_override("font_color", Color("#9f9682"))
-	button.add_theme_color_override("font_hover_color", OLD_WHITE)
-	button.add_theme_color_override("font_pressed_color", Color("#382d1f"))
-	button.add_theme_stylebox_override("normal", _panel(Color("#00000000"), Color("#00000000"), 0, 2, 6))
-	button.add_theme_stylebox_override("hover", _bottom_line(Color("#24302d"), Color("#77633e"), 1, 6))
-	button.add_theme_stylebox_override("pressed", _bottom_line(Color("#cfbf98"), GOLD, 3, 6))
+	button.add_theme_color_override("font_color", OLD_WHITE)
+	button.add_theme_color_override("font_hover_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_focus_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_pressed_color", Color("#fff0bc"))
+	button.add_theme_stylebox_override("normal", _ink_button_style(INK_BUTTON_NORMAL, Color("#ffffffd9"), 18.0, 7.0))
+	button.add_theme_stylebox_override("hover", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 18.0, 7.0))
+	button.add_theme_stylebox_override("focus", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 18.0, 7.0))
+	button.add_theme_stylebox_override("pressed", _ink_button_style(INK_BUTTON_ACTIVE, Color("#e9d39d"), 18.0, 7.0))
 	button.pressed.connect(_set_mode.bind(mode_value))
 	_tabs.add_child(button)
 
@@ -437,7 +469,7 @@ func _on_quantity_changed(_value: float) -> void:
 
 
 func _add_quantity(amount: int) -> void:
-	_quantity.value = mini(int(_quantity.max_value), int(_quantity.value) + amount)
+	_quantity.value = clampi(int(_quantity.value) + amount, int(_quantity.min_value), int(_quantity.max_value))
 
 
 func _set_maximum_quantity() -> void:
@@ -576,41 +608,68 @@ func _small_button(text_value: String, node_name: String) -> Button:
 	var button := Button.new()
 	button.name = node_name
 	button.text = text_value
-	button.custom_minimum_size = Vector2(72, 46)
+	button.custom_minimum_size = Vector2(86, 46)
 	button.add_theme_font_size_override("font_size", 15)
-	button.add_theme_color_override("font_color", INK)
-	button.add_theme_stylebox_override("normal", _panel(Color("#c3b693"), Color("#8d7950"), 1, 3, 6))
-	button.add_theme_stylebox_override("hover", _panel(Color("#d6c9a7"), GOLD, 2, 3, 6))
-	button.add_theme_stylebox_override("pressed", _panel(Color("#ad9c76"), Color("#75531e"), 2, 3, 6))
+	button.add_theme_color_override("font_color", OLD_WHITE)
+	button.add_theme_color_override("font_hover_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_focus_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_pressed_color", Color("#fff0bc"))
+	button.add_theme_stylebox_override("normal", _ink_button_style(INK_BUTTON_NORMAL, Color("#ffffffd1"), 12.0, 5.0))
+	button.add_theme_stylebox_override("hover", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 12.0, 5.0))
+	button.add_theme_stylebox_override("focus", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 12.0, 5.0))
+	button.add_theme_stylebox_override("pressed", _ink_button_style(INK_BUTTON_ACTIVE, Color("#e9d39d"), 12.0, 5.0))
 	return button
 
 
-func _style_action_button(button: Button, color: Color) -> void:
+func _style_action_button(button: Button, _color: Color) -> void:
 	button.add_theme_font_size_override("font_size", 18)
 	button.add_theme_color_override("font_color", OLD_WHITE)
+	button.add_theme_color_override("font_hover_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_focus_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_pressed_color", Color("#fff0bc"))
 	button.add_theme_color_override("font_disabled_color", Color("#766f60"))
-	button.add_theme_stylebox_override("normal", _panel(color, GOLD, 2, 4, 8))
-	button.add_theme_stylebox_override("hover", _panel(color.lightened(0.1), Color("#d6aa56"), 3, 4, 8))
-	button.add_theme_stylebox_override("pressed", _panel(color.darkened(0.12), Color("#8b6427"), 3, 4, 8))
-	button.add_theme_stylebox_override("disabled", _panel(Color("#5d5b52"), Color("#777064"), 1, 4, 8))
+	button.add_theme_stylebox_override("normal", _ink_button_style(INK_BUTTON_NORMAL, Color.WHITE, 24.0, 9.0))
+	button.add_theme_stylebox_override("hover", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 24.0, 9.0))
+	button.add_theme_stylebox_override("focus", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 24.0, 9.0))
+	button.add_theme_stylebox_override("pressed", _ink_button_style(INK_BUTTON_ACTIVE, Color("#dfc88f"), 24.0, 9.0))
+	button.add_theme_stylebox_override("disabled", _ink_button_style(INK_BUTTON_NORMAL, Color("#77736c66"), 24.0, 9.0))
 
 
 func _style_secondary_button(button: Button) -> void:
 	button.add_theme_font_size_override("font_size", 16)
-	button.add_theme_color_override("font_color", INK)
+	button.add_theme_color_override("font_color", OLD_WHITE)
+	button.add_theme_color_override("font_hover_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_focus_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_pressed_color", Color("#fff0bc"))
 	button.add_theme_color_override("font_disabled_color", Color("#8b8374"))
-	button.add_theme_stylebox_override("normal", _panel(Color("#c4b693"), Color("#8d7950"), 1, 4, 8))
-	button.add_theme_stylebox_override("hover", _panel(Color("#d5c8a5"), GOLD, 2, 4, 8))
-	button.add_theme_stylebox_override("pressed", _panel(Color("#a99a78"), Color("#765421"), 2, 4, 8))
-	button.add_theme_stylebox_override("disabled", _panel(Color("#aaa38f"), Color("#968d79"), 1, 4, 8))
+	button.add_theme_stylebox_override("normal", _ink_button_style(INK_BUTTON_NORMAL, Color("#ffffffd1"), 20.0, 8.0))
+	button.add_theme_stylebox_override("hover", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 20.0, 8.0))
+	button.add_theme_stylebox_override("focus", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 20.0, 8.0))
+	button.add_theme_stylebox_override("pressed", _ink_button_style(INK_BUTTON_ACTIVE, Color("#dfc88f"), 20.0, 8.0))
+	button.add_theme_stylebox_override("disabled", _ink_button_style(INK_BUTTON_NORMAL, Color("#77736c66"), 20.0, 8.0))
 
 
 func _style_text_button(button: Button) -> void:
 	button.add_theme_font_size_override("font_size", 16)
-	button.add_theme_color_override("font_color", Color("#a79e89"))
-	button.add_theme_color_override("font_hover_color", OLD_WHITE)
-	button.add_theme_stylebox_override("normal", _panel(Color("#00000000"), Color("#00000000"), 0, 0, 4))
-	button.add_theme_stylebox_override("hover", _bottom_line(Color("#00000000"), GOLD, 1, 4))
+	button.add_theme_color_override("font_color", OLD_WHITE)
+	button.add_theme_color_override("font_hover_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_focus_color", Color("#ffe4a1"))
+	button.add_theme_color_override("font_pressed_color", Color("#fff0bc"))
+	button.add_theme_stylebox_override("normal", _ink_button_style(INK_BUTTON_NORMAL, Color("#ffffffd1"), 18.0, 7.0))
+	button.add_theme_stylebox_override("hover", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 18.0, 7.0))
+	button.add_theme_stylebox_override("focus", _ink_button_style(INK_BUTTON_ACTIVE, Color.WHITE, 18.0, 7.0))
+	button.add_theme_stylebox_override("pressed", _ink_button_style(INK_BUTTON_ACTIVE, Color("#dfc88f"), 18.0, 7.0))
+
+
+func _ink_button_style(texture: Texture2D, modulate: Color, horizontal_content_margin: float, vertical_content_margin: float) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.modulate_color = modulate
+	style.content_margin_left = horizontal_content_margin
+	style.content_margin_right = horizontal_content_margin
+	style.content_margin_top = vertical_content_margin
+	style.content_margin_bottom = vertical_content_margin
+	return style
 
 
 func _paper_panel() -> StyleBoxFlat:

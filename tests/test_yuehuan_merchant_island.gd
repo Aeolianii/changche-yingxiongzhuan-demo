@@ -72,6 +72,11 @@ func _run() -> void:
 	await physics_frame
 	await physics_frame
 	_expect(island.get_node("Interface/PromptPanel").visible, "Entering Liang's Area2D must show the interaction prompt.")
+	var prompt_panel := island.get_node("Interface/PromptPanel") as TextureButton
+	_expect(prompt_panel != null, "Merchant harbor interaction feedback must reuse the system TextureButton prompt instead of a plain panel.")
+	if prompt_panel != null:
+		_expect(prompt_panel.texture_normal.resource_path.ends_with("interaction_button_ink_v1.png"), "Merchant harbor prompt must reuse the system black-gold normal texture.")
+		_expect(prompt_panel.texture_pressed.resource_path.ends_with("interaction_button_ink_active_v1.png"), "Merchant harbor prompt must reuse the system black-gold active texture.")
 	_expect(island.call("nearest_interaction_id_for_test") == "liang", "Liang must be the nearest real Area2D interaction target.")
 	_send_interact(island)
 	await process_frame
@@ -83,6 +88,17 @@ func _run() -> void:
 	_expect(not exploration_hud.visible, "Opening any merchant shop must hide the entire shared exploration HUD.")
 	var overlay := island.get_node("Interface/MerchantShopOverlay")
 	_expect(overlay.find_child("MerchantStage", true, false) is Control, "Merchant shop must reserve a dedicated merchant-and-counter atmosphere stage.")
+	var textured_controls: Array[Button] = [
+		overlay.find_child("CloseButton", true, false) as Button,
+		overlay.find_child("ShopTabs", true, false).get_child(0) as Button,
+		overlay.find_child("Quick10Button", true, false) as Button,
+		overlay.find_child("BuyButton", true, false) as Button,
+	]
+	for control in textured_controls:
+		var normal_style := control.get_theme_stylebox("normal")
+		var pressed_style := control.get_theme_stylebox("pressed")
+		_expect(normal_style is StyleBoxTexture and (normal_style as StyleBoxTexture).texture.resource_path.ends_with("interaction_button_ink_v1.png"), "%s must reuse the existing black-gold ink button texture." % control.name)
+		_expect(pressed_style is StyleBoxTexture and (pressed_style as StyleBoxTexture).texture.resource_path.ends_with("interaction_button_ink_active_v1.png"), "%s must reuse the existing active black-gold ink button texture." % control.name)
 	_expect((island.get_node("World/WorldObjects/LiangTrader/Sprite") as Sprite2D).scale.x <= 0.065, "Liang's map sprite must not exceed the player character's visible scale.")
 	_expect((island.get_node("World/WorldObjects/ShenShipwright/Sprite") as Sprite2D).scale.x <= 0.065, "Shen's map sprite must not exceed the player character's visible scale.")
 	_expect(overlay.find_child("ProductList", true, false) is VBoxContainer, "Merchant shop must use one vertical product list as the primary browsing surface.")
@@ -92,6 +108,27 @@ func _run() -> void:
 	_expect(overlay.find_child("MerchantHeaderPortrait", true, false) is TextureRect, "Merchant portrait must be integrated into the title bar instead of consuming a body column.")
 	_expect(overlay.find_child("Quick10Button", true, false) is Button, "Goods transactions must provide a +10 quantity shortcut.")
 	_expect(overlay.find_child("Quick100Button", true, false) is Button, "Goods transactions must provide a +100 quantity shortcut.")
+	var quantity_decrease := overlay.find_child("QuantityDecreaseButton", true, false) as Button
+	var quantity_increase := overlay.find_child("QuantityIncreaseButton", true, false) as Button
+	_expect(quantity_decrease != null, "Quantity input must provide a dedicated large decrease button.")
+	_expect(quantity_increase != null, "Quantity input must provide a dedicated large increase button.")
+	if quantity_decrease != null and quantity_increase != null:
+		_expect(quantity_decrease.custom_minimum_size.x >= 52.0 and quantity_decrease.custom_minimum_size.y >= 48.0, "Quantity decrease button must have a strong, easy-to-click visual target.")
+		_expect(quantity_increase.custom_minimum_size.x >= 52.0 and quantity_increase.custom_minimum_size.y >= 48.0, "Quantity increase button must have a strong, easy-to-click visual target.")
+	var quantity_input := overlay.find_child("QuantityInput", true, false) as SpinBox
+	_expect(quantity_input != null, "Goods transactions must expose the editable quantity input.")
+	if quantity_input != null:
+		var quantity_edit := quantity_input.get_line_edit()
+		_expect(quantity_edit.alignment == HORIZONTAL_ALIGNMENT_CENTER, "Quantity digits must be horizontally centered.")
+		_expect(quantity_input.custom_minimum_size.x <= 96.0, "Quantity field must stay compact instead of leaving excessive empty space around one digit.")
+		_expect(quantity_edit.get_theme_font_size("font_size") >= 22, "Quantity digits must be visually strong enough for the compact field.")
+		_expect(quantity_edit.editable and quantity_edit.focus_mode == Control.FOCUS_ALL, "Quantity input must accept keyboard focus and direct typing.")
+		_expect(quantity_edit.select_all_on_focus, "Quantity input must select the current value on focus for fast replacement.")
+		_expect(quantity_input.update_on_text_changed, "Typed quantity must update the transaction preview immediately.")
+		quantity_edit.text = "25"
+		quantity_edit.text_changed.emit("25")
+		await process_frame
+		_expect(int(quantity_input.value) == 25, "Typing 25 into the quantity field must set the transaction quantity to 25.")
 	_expect(overlay.find_child("MaximumButton", true, false) is Button, "Goods transactions must provide a maximum quantity shortcut.")
 	_expect(overlay.find_child("ClearQuantityButton", true, false) is Button, "Goods transactions must provide a clear quantity shortcut.")
 	_expect(overlay.find_child("AfterTradePreview", true, false) is Label, "Goods transactions must preview pay and holdings after the trade.")

@@ -10,8 +10,12 @@ static func make_default() -> Dictionary:
 		"pay": 800,
 		"items": {"wood": 30, "ironstone": 20},
 		"blueprints": [],
-		"ships": [_make_ship("ship_001", "patrol_boat")],
-		"next_ship_id": 2,
+		"ships": [
+			_make_ship("ship_001", "patrol_boat"),
+			_make_ship("ship_002", "cannon_warship"),
+			_make_ship("ship_003", "escort_junk"),
+		],
+		"next_ship_id": 4,
 	}
 
 
@@ -48,7 +52,7 @@ static func normalize(value: Variant) -> Dictionary:
 					var max_hp := int(definition["max_hp"])
 					ships.append({"id": ship_id, "type_id": type_id, "current_hp": max_hp, "max_hp": max_hp})
 	if ships.is_empty():
-		ships.append(_make_ship("ship_001", "patrol_boat"))
+		ships = (make_default()["ships"] as Array).duplicate(true)
 	state["ships"] = ships
 	state["next_ship_id"] = maxi(2, int(value.get("next_ship_id", ships.size() + 1)))
 	return state

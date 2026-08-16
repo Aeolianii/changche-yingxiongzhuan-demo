@@ -37,7 +37,8 @@ func _test_default_state() -> void:
 	_expect(state["pay"] == 800, "New games must start with 800 military pay.")
 	_expect(state["items"] == {"wood": 30, "ironstone": 20}, "New games must start with documented materials only.")
 	_expect((state["blueprints"] as Array).is_empty(), "New games must not own blueprints.")
-	_expect((state["ships"] as Array).size() == 1 and state["ships"][0]["type_id"] == "patrol_boat", "New games must own one patrol boat.")
+	var starting_types := (state["ships"] as Array).map(func(ship: Dictionary): return str(ship["type_id"]))
+	_expect(starting_types == ["patrol_boat", "cannon_warship", "escort_junk"], "New games must own one ship of every available type.")
 	_expect(ECONOMY.normalize({}) == state, "An uninitialized economy dictionary must normalize to new-game defaults.")
 
 
@@ -87,7 +88,7 @@ func _test_blueprints_and_shipbuilding() -> void:
 	ECONOMY.add_item(state, "wood", 20)
 	var built: Dictionary = TRADE.build_ship(state, "patrol_boat")
 	_expect(built.get("ok", false), "Owned blueprint and sufficient costs must build a ship.")
-	_expect((state["ships"] as Array).size() == 2 and state["ships"][1]["id"] == "ship_002", "Built ship must receive a unique sequential id.")
+	_expect((state["ships"] as Array).size() == 4 and state["ships"][3]["id"] == "ship_004", "Built ship must receive a unique sequential id after the three starting ships.")
 	_expect(state["pay"] == 260 and state["items"]["wood"] == 14 and state["items"]["ironstone"] == 6, "Shipbuilding must consume the documented costs.")
 	while (state["ships"] as Array).size() < 10:
 		(state["ships"] as Array).append({"id": "test_%d" % state["ships"].size(), "type_id": "patrol_boat", "current_hp": 60, "max_hp": 60})

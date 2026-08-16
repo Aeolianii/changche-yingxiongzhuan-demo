@@ -30,6 +30,7 @@ const VOLUME_SLIDER_TRACK := preload("res://assets/ui/system_menu/volume_slider_
 const VOLUME_SLIDER_KNOB := preload("res://assets/ui/system_menu/volume_slider_knob.png")
 const QUEST_SCREEN_SCENE := preload("res://scenes/ui/quest_screen.tscn")
 const SEA_MAP_SCREEN_SCENE := preload("res://scenes/ui/sea_map_screen.tscn")
+const SHIP_SCREEN_SCENE := preload("res://scenes/ui/ship_screen.tscn")
 const INVENTORY_SCREEN_SCRIPT := preload("res://scripts/ui/inventory_screen.gd")
 
 const INK := Color(0.055, 0.073, 0.075, 0.96)
@@ -56,6 +57,7 @@ var _settings_panel: Control
 var _quest_screen: Control
 var _map_screen: Control
 var _inventory_screen: Control
+var _ship_screen: Control
 var _map_icon: TextureRect
 var _moon_icon: TextureRect
 var _moon_phase_label: Label
@@ -80,6 +82,7 @@ func _ready() -> void:
 	_build_quest_screen()
 	_build_map_screen()
 	_build_inventory_screen()
+	_build_ship_screen()
 	_build_system_menu()
 	_build_settings_panel()
 	_build_toast()
@@ -95,6 +98,8 @@ func set_exploration_visible(value: bool) -> void:
 			_close_quest_screen()
 		if is_inventory_screen_open():
 			_close_inventory_screen()
+		if is_ship_screen_open():
+			_close_ship_screen()
 		if _is_system_menu_open():
 			_close_system_menu()
 	visible = value
@@ -225,11 +230,15 @@ func show_toast(message: String) -> void:
 
 
 func is_menu_open() -> bool:
-	return _is_system_menu_open() or is_quest_screen_open() or is_map_screen_open() or is_inventory_screen_open()
+	return _is_system_menu_open() or is_quest_screen_open() or is_map_screen_open() or is_inventory_screen_open() or is_ship_screen_open()
 
 
 func is_inventory_screen_open() -> bool:
 	return is_instance_valid(_inventory_screen) and _inventory_screen.visible
+
+
+func is_ship_screen_open() -> bool:
+	return is_instance_valid(_ship_screen) and _ship_screen.visible
 
 
 func is_quest_screen_open() -> bool:
@@ -631,6 +640,8 @@ func _build_function_button(parent: HBoxContainer, action_name: String, icon_tex
 		button.pressed.connect(_open_quest_screen)
 	elif node_name == "InventoryButton":
 		button.pressed.connect(_open_inventory_screen)
+	elif node_name == "ShipButton":
+		button.pressed.connect(_open_ship_screen)
 	else:
 		button.pressed.connect(_show_locked_message.bind(action_name))
 	slot.add_child(button)
@@ -669,6 +680,13 @@ func _build_inventory_screen() -> void:
 	_inventory_screen.name = "InventoryScreen"
 	_inventory_screen.close_requested.connect(_close_inventory_screen)
 	add_child(_inventory_screen)
+
+
+func _build_ship_screen() -> void:
+	_ship_screen = SHIP_SCREEN_SCENE.instantiate() as Control
+	_ship_screen.name = "ShipScreen"
+	_ship_screen.connect("close_requested", _close_ship_screen)
+	add_child(_ship_screen)
 
 
 func _build_system_menu() -> void:
@@ -1178,6 +1196,23 @@ func _close_inventory_screen() -> void:
 	if not is_inventory_screen_open():
 		return
 	_inventory_screen.hide()
+	_set_function_buttons_visible(true)
+	menu_visibility_changed.emit(false)
+
+
+func _open_ship_screen() -> void:
+	if not visible or is_menu_open() or not is_instance_valid(_ship_screen):
+		return
+	_toast_panel.hide()
+	_set_function_buttons_visible(false)
+	_ship_screen.call("show_screen")
+	menu_visibility_changed.emit(true)
+
+
+func _close_ship_screen() -> void:
+	if not is_ship_screen_open():
+		return
+	_ship_screen.hide()
 	_set_function_buttons_visible(true)
 	menu_visibility_changed.emit(false)
 

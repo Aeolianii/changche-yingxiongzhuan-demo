@@ -68,7 +68,7 @@ func _run() -> void:
 	var close_normal := close_button.get_theme_stylebox("normal")
 	_expect(close_normal is StyleBoxTexture and (close_normal as StyleBoxTexture).texture.resource_path.ends_with("interaction_button_ink_v1.png"), "Inventory close button must reuse the system black-gold UI texture.")
 	_expect((screen.find_child("PayLabel", true, false) as Label).text.contains("800"), "Inventory must display military pay.")
-	_expect((screen.find_child("FleetLabel", true, false) as Label).text.contains("1 / 10"), "Inventory must display fleet count.")
+	_expect((screen.find_child("FleetLabel", true, false) as Label).text.contains("3 / 10"), "Inventory must display the three-ship starting fleet count.")
 	var pay_label := screen.find_child("PayLabel", true, false) as Label
 	var fleet_label := screen.find_child("FleetLabel", true, false) as Label
 	_expect(not bool(pay_label.size_flags_horizontal & Control.SIZE_EXPAND) and not bool(fleet_label.size_flags_horizontal & Control.SIZE_EXPAND), "Footer labels must not expand and push resource groups off center.")

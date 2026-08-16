@@ -70,6 +70,10 @@ func _run() -> void:
 	_expect(equipment_page.visible and not (screen.get_node("SelectedShipPreview") as TextureRect).visible, "Equipment tab must replace the hull detail page with its own interface.")
 	_expect((equipment_page.get_node("EquipmentSlotsSummary") as Label).text.contains("武器位 1 / 2"), "Equipment page must show battle-style weapon, skill, and armor slot usage.")
 	_expect(equipment_page.get_node("WeaponGrid").get_child_count() == 3 and equipment_page.get_node("SkillGrid").get_child_count() == 4, "Equipment page must reuse every weapon and skill from naval battle configuration.")
+	var armor_content := equipment_page.get_node("ArmorRow/Armor_armor/Content") as Control
+	var armor_subtitle := armor_content.get_child(1) as Label
+	var armor_minus := armor_content.get_node("Minus") as Button
+	_expect(armor_subtitle.position.y + armor_subtitle.size.y < armor_minus.position.y, "Armor description and controls must occupy separate rows without overlapping.")
 	var ram_plus := equipment_page.get_node("WeaponGrid/Weapon_ram/Content/Plus") as Button
 	ram_plus.pressed.emit()
 	await process_frame

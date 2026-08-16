@@ -466,19 +466,19 @@ func _build_equipment_page() -> void:
 	_equipment_page.add_child(armor_title)
 	var armor_row := HBoxContainer.new()
 	armor_row.name = "ArmorRow"
-	armor_row.position = Vector2(18, 408)
-	armor_row.size = Vector2(716, 76)
+	armor_row.position = Vector2(18, 398)
+	armor_row.size = Vector2(716, 100)
 	_equipment_page.add_child(armor_row)
-	armor_row.add_child(_make_equipment_card("armor", "armor", "船体护甲", "每级强化减伤", 232.0, 74.0))
+	armor_row.add_child(_make_equipment_card("armor", "armor", "船体护甲", "每级强化减伤", 232.0, 100.0))
 	var armor_hint := _make_label("沿用战前配置规则：武器与技能受槽位限制，撞角最多一件。", 14, TEXT_MUTED)
-	armor_hint.position = Vector2(250, 424)
-	armor_hint.size = Vector2(470, 28)
+	armor_hint.custom_minimum_size = Vector2(470, 100)
+	armor_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	armor_row.add_child(armor_hint)
 
 	_equipment_status = _make_label("", 14, JADE)
 	_equipment_status.name = "EquipmentStatus"
-	_equipment_status.position = Vector2(18, 492)
-	_equipment_status.size = Vector2(710, 26)
+	_equipment_status.position = Vector2(18, 500)
+	_equipment_status.size = Vector2(710, 22)
 	_equipment_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_equipment_page.add_child(_equipment_status)
 

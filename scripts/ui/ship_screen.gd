@@ -221,7 +221,7 @@ func _build_ship_list() -> void:
 	_ship_list = VBoxContainer.new()
 	_ship_list.name = "ShipList"
 	_ship_list.custom_minimum_size = Vector2(352, 0)
-	_ship_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_ship_list.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_ship_list.add_theme_constant_override("separation", 10)
 	_ship_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scroll.add_child(_ship_list)

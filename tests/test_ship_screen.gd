@@ -116,7 +116,8 @@ func _run() -> void:
 	await process_frame
 	_expect(list_scroll.scroll_vertical > 0, "Dragging the fleet scrollbar must move the ship list.")
 	var first_row := ship_list.get_child(0) as Control
-	_expect(list_scroll.clip_contents and first_row.position.x + first_row.size.x <= list_scroll.size.x, "Selected ship highlights must remain clipped inside the left list frame.")
+	var scrollbar_gutter := scrollbar.custom_minimum_size.x + 10.0
+	_expect(list_scroll.clip_contents and first_row.position.x + first_row.size.x <= list_scroll.size.x - scrollbar_gutter, "Selected ship highlights must end before the scrollbar gutter instead of extending underneath it.")
 
 	if DisplayServer.get_name() != "headless":
 		await process_frame

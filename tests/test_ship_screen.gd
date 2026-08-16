@@ -75,7 +75,8 @@ func _run() -> void:
 	var list_scroll := screen.get_node("ShipListScroll") as ScrollContainer
 	var scrollbar := list_scroll.get_v_scroll_bar()
 	_expect(scrollbar.visible and scrollbar.max_value > scrollbar.page, "Long fleets must expose a usable vertical scrollbar on the right.")
-	_expect(scrollbar.has_theme_stylebox_override("scroll") and scrollbar.has_theme_stylebox_override("grabber"), "Fleet scrollbar must use the generated ink-pixel track and thumb.")
+	_expect(scrollbar.custom_minimum_size.x == 26.0, "Fleet scrollbar must be 26 pixels wide.")
+	_expect(scrollbar.get_theme_stylebox("scroll") is StyleBoxFlat and scrollbar.get_theme_stylebox("grabber") is StyleBoxFlat, "Fleet scrollbar track and thumb must use non-stretched solid colors.")
 	scrollbar.value = scrollbar.max_value
 	await process_frame
 	_expect(list_scroll.scroll_vertical > 0, "Dragging the fleet scrollbar must move the ship list.")

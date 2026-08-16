@@ -6,7 +6,6 @@ const ECONOMY := preload("res://scripts/economy/economy_state.gd")
 const QUEST_BACKGROUND := preload("res://assets/ui/quest_screen/quest_screen_background.png")
 const FUNCTION_BUTTON_FRAME := preload("res://assets/ui/exploration_hud/function_button.png")
 const RETURN_ICON := preload("res://assets/ui/icons/menu_return_title.png")
-const SCROLLBAR_SHEET := preload("res://assets/ui/ship_screen/ship_scrollbar_sheet_v1.png")
 const SHIP_ICONS := {
 	"patrol_boat": preload("res://assets/ui/merchant_shop/ships/patrol_boat.png"),
 	"cannon_warship": preload("res://assets/ui/merchant_shop/ships/cannon_warship.png"),
@@ -469,29 +468,23 @@ func _selector_style(selected: bool, hovered: bool) -> StyleBoxFlat:
 
 func _style_ship_scrollbar(scrollbar: VScrollBar) -> void:
 	scrollbar.name = "ShipListScrollbar"
-	scrollbar.custom_minimum_size.x = 18.0
+	scrollbar.custom_minimum_size.x = 26.0
 	scrollbar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	scrollbar.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var track := _scrollbar_atlas(Rect2(440, 0, 144, 1120))
-	var thumb := _scrollbar_atlas(Rect2(440, 1152, 144, 384))
-	scrollbar.add_theme_stylebox_override("scroll", _scrollbar_style(track, Color.WHITE))
-	scrollbar.add_theme_stylebox_override("scroll_focus", _scrollbar_style(track, Color.WHITE))
-	scrollbar.add_theme_stylebox_override("grabber", _scrollbar_style(thumb, Color.WHITE, 56.0))
-	scrollbar.add_theme_stylebox_override("grabber_highlight", _scrollbar_style(thumb, Color(1.12, 1.08, 0.92, 1.0), 56.0))
-	scrollbar.add_theme_stylebox_override("grabber_pressed", _scrollbar_style(thumb, Color(1.18, 1.08, 0.74, 1.0), 56.0))
+	var track := _solid_scrollbar_style(Color(0.025, 0.045, 0.04, 0.92), 0.0, Color(0.34, 0.27, 0.14, 0.92), 1)
+	scrollbar.add_theme_stylebox_override("scroll", track)
+	scrollbar.add_theme_stylebox_override("scroll_focus", track)
+	scrollbar.add_theme_stylebox_override("grabber", _solid_scrollbar_style(Color(0.58, 0.40, 0.16, 1.0), 56.0))
+	scrollbar.add_theme_stylebox_override("grabber_highlight", _solid_scrollbar_style(Color(0.76, 0.55, 0.22, 1.0), 56.0))
+	scrollbar.add_theme_stylebox_override("grabber_pressed", _solid_scrollbar_style(Color(0.91, 0.68, 0.28, 1.0), 56.0))
 
 
-func _scrollbar_atlas(region: Rect2) -> AtlasTexture:
-	var texture := AtlasTexture.new()
-	texture.atlas = SCROLLBAR_SHEET
-	texture.region = region
-	return texture
-
-
-func _scrollbar_style(texture: Texture2D, tint: Color, minimum_height := 0.0) -> StyleBoxTexture:
-	var style := StyleBoxTexture.new()
-	style.texture = texture
-	style.modulate_color = tint
+func _solid_scrollbar_style(background: Color, minimum_height := 0.0, border := Color.TRANSPARENT, border_width := 0) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = background
+	style.border_color = border
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(2)
 	style.content_margin_top = minimum_height * 0.5
 	style.content_margin_bottom = minimum_height * 0.5
 	return style

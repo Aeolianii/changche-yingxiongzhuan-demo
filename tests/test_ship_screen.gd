@@ -64,6 +64,10 @@ func _run() -> void:
 	for detail_button in [hull_tab, equipment_tab, repair_button]:
 		var detail_style := (detail_button as Button).get_theme_stylebox("normal")
 		_expect(detail_style is StyleBoxTexture and (detail_style as StyleBoxTexture).texture.resource_path.ends_with("ship_detail_button_frame_v1.png"), "Hull, equipment, and repair buttons must use the generated ink-pixel frame.")
+	for detail_tab in [hull_tab, equipment_tab]:
+		var bottom_border := (detail_tab as Button).get_node("BottomGoldBorder") as ColorRect
+		_expect(bottom_border.color == Color(0.73, 0.59, 0.32, 1.0) and bottom_border.size.y == 1.0, "Hull and equipment tabs must expose a one-pixel gold lower border without changing their interior.")
+	_expect(repair_button.get_node_or_null("BottomGoldBorder") == null, "The lower-border correction must affect only the hull and equipment tabs.")
 	repair_button.pressed.emit()
 	await process_frame
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "60 / 60" and repair_button.disabled, "Repair button must restore selected ship durability and then disable itself.")

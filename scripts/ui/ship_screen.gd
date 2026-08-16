@@ -413,12 +413,24 @@ func _build_ship_detail() -> void:
 func _build_detail_tabs() -> void:
 	_hull_tab = _make_action_button("船体", Vector2(544, 228), Vector2(126, 40), true)
 	_hull_tab.name = "HullTab"
+	_add_detail_tab_bottom_border(_hull_tab)
 	_hull_tab.pressed.connect(_switch_detail_mode.bind("hull"))
 	add_child(_hull_tab)
 	_equipment_tab = _make_action_button("装备", Vector2(680, 228), Vector2(126, 40), true)
 	_equipment_tab.name = "EquipmentTab"
+	_add_detail_tab_bottom_border(_equipment_tab)
 	_equipment_tab.pressed.connect(_switch_detail_mode.bind("equipment"))
 	add_child(_equipment_tab)
+
+
+func _add_detail_tab_bottom_border(button: Button) -> void:
+	var border := ColorRect.new()
+	border.name = "BottomGoldBorder"
+	border.color = GOLD
+	border.position = Vector2(5.0, button.size.y - 4.0)
+	border.size = Vector2(button.size.x - 10.0, 1.0)
+	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(border)
 
 
 func _build_equipment_page() -> void:

@@ -53,8 +53,6 @@ static func buy_blueprint(state: Dictionary, ship_type_id: String) -> Dictionary
 
 static func build_ship(state: Dictionary, ship_type_id: String) -> Dictionary:
 	var ships: Array = state["ships"]
-	if ships.size() >= ECONOMY.FLEET_LIMIT:
-		return _fail("fleet_full")
 	var definition := CATALOG.ship(ship_type_id)
 	if definition.is_empty():
 		return _fail("unknown_ship_type")

@@ -6,6 +6,7 @@ const ECONOMY := preload("res://scripts/economy/economy_state.gd")
 const QUEST_BACKGROUND := preload("res://assets/ui/quest_screen/quest_screen_background.png")
 const FUNCTION_BUTTON_FRAME := preload("res://assets/ui/exploration_hud/function_button.png")
 const RETURN_ICON := preload("res://assets/ui/icons/menu_return_title.png")
+const SCROLLBAR_SHEET := preload("res://assets/ui/ship_screen/ship_scrollbar_sheet_v1.png")
 const SHIP_ICONS := {
 	"patrol_boat": preload("res://assets/ui/merchant_shop/ships/patrol_boat.png"),
 	"cannon_warship": preload("res://assets/ui/merchant_shop/ships/cannon_warship.png"),
@@ -186,7 +187,7 @@ func _build_return_button() -> void:
 
 
 func _build_ship_list() -> void:
-	_fleet_count = _make_label("当前舰队  0 / 10", 16, TEXT_MUTED)
+	_fleet_count = _make_label("当前舰队  0 艘", 16, TEXT_MUTED)
 	_fleet_count.name = "FleetCount"
 	_fleet_count.position = Vector2(92, 236)
 	_fleet_count.size = Vector2(350, 30)
@@ -196,14 +197,17 @@ func _build_ship_list() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.name = "ShipListScroll"
 	scroll.position = Vector2(78, 274)
-	scroll.size = Vector2(398, 506)
+	scroll.size = Vector2(388, 506)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	scroll.clip_contents = true
 	add_child(scroll)
+	_style_ship_scrollbar(scroll.get_v_scroll_bar())
 
 	_ship_list = VBoxContainer.new()
 	_ship_list.name = "ShipList"
-	_ship_list.custom_minimum_size = Vector2(378, 0)
+	_ship_list.custom_minimum_size = Vector2(352, 0)
 	_ship_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_ship_list.add_theme_constant_override("separation", 10)
 	_ship_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -215,11 +219,11 @@ func _rebuild_ship_list() -> void:
 		_ship_list.remove_child(child)
 		child.queue_free()
 	_ship_buttons.clear()
-	_fleet_count.text = "当前舰队  %d / %d" % [_ships.size(), ECONOMY.FLEET_LIMIT]
+	_fleet_count.text = "当前舰队  %d 艘" % _ships.size()
 
 	if _ships.is_empty():
 		var empty := _make_label("当前没有可用舰船", 18, TEXT_MUTED)
-		empty.custom_minimum_size = Vector2(370, 100)
+		empty.custom_minimum_size = Vector2(350, 100)
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_ship_list.add_child(empty)
@@ -230,7 +234,7 @@ func _rebuild_ship_list() -> void:
 		var definition := CATALOG.ship(str(ship.get("type_id", "")))
 		var selector := Button.new()
 		selector.name = "ShipChoice%d" % index
-		selector.custom_minimum_size = Vector2(370, 126)
+		selector.custom_minimum_size = Vector2(350, 126)
 		selector.flat = false
 		selector.focus_mode = Control.FOCUS_NONE
 		selector.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -253,13 +257,13 @@ func _rebuild_ship_list() -> void:
 		var name_label := _make_label(str(definition.get("name", "未知舰船")), 21, TEXT_LIGHT)
 		name_label.name = "ShipName"
 		name_label.position = Vector2(120, 16)
-		name_label.size = Vector2(232, 30)
+		name_label.size = Vector2(218, 30)
 		selector.add_child(name_label)
 
 		var role_label := _make_label("【%s】" % str(definition.get("role", "未分类")), 15, JADE)
 		role_label.name = "ShipRole"
 		role_label.position = Vector2(120, 48)
-		role_label.size = Vector2(232, 24)
+		role_label.size = Vector2(218, 24)
 		selector.add_child(role_label)
 
 		var summary := _make_label(
@@ -269,7 +273,7 @@ func _rebuild_ship_list() -> void:
 		)
 		summary.name = "ShipSummary"
 		summary.position = Vector2(120, 80)
-		summary.size = Vector2(238, 26)
+		summary.size = Vector2(218, 26)
 		selector.add_child(summary)
 	_refresh_selectors()
 
@@ -460,6 +464,34 @@ func _selector_style(selected: bool, hovered: bool) -> StyleBoxFlat:
 	var style := _flat_style(background, Color(GOLD.r, GOLD.g, GOLD.b, 0.58 if selected else 0.22), 1)
 	style.set_border_width(SIDE_LEFT, 4 if selected else 2)
 	style.content_margin_left = 12.0
+	return style
+
+
+func _style_ship_scrollbar(scrollbar: VScrollBar) -> void:
+	scrollbar.name = "ShipListScrollbar"
+	scrollbar.custom_minimum_size.x = 24.0
+	scrollbar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	scrollbar.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var track := _scrollbar_atlas(Rect2(440, 0, 144, 1120))
+	var thumb := _scrollbar_atlas(Rect2(440, 1152, 144, 384))
+	scrollbar.add_theme_stylebox_override("scroll", _scrollbar_style(track))
+	scrollbar.add_theme_stylebox_override("scroll_focus", _scrollbar_style(track))
+	scrollbar.add_theme_stylebox_override("grabber", _scrollbar_style(thumb))
+	scrollbar.add_theme_stylebox_override("grabber_highlight", _scrollbar_style(thumb, Color(1.12, 1.08, 0.92, 1.0)))
+	scrollbar.add_theme_stylebox_override("grabber_pressed", _scrollbar_style(thumb, Color(1.18, 1.08, 0.74, 1.0)))
+
+
+func _scrollbar_atlas(region: Rect2) -> AtlasTexture:
+	var texture := AtlasTexture.new()
+	texture.atlas = SCROLLBAR_SHEET
+	texture.region = region
+	return texture
+
+
+func _scrollbar_style(texture: Texture2D, tint := Color.WHITE) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.modulate_color = tint
 	return style
 
 

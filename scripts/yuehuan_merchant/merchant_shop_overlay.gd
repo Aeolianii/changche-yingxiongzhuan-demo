@@ -450,7 +450,7 @@ func _select(id: String) -> void:
 	var ship := CATALOG.ship(id)
 	var state := _state()
 	_preview.texture = _icon(id)
-	_holding_label.text = "当前持有　%d" % int(state["items"].get(id, 0)) if not item.is_empty() else "舰队容量　%d / 10" % (state["ships"] as Array).size()
+	_holding_label.text = "当前持有　%d" % int(state["items"].get(id, 0)) if not item.is_empty() else "现役舰船　%d 艘" % (state["ships"] as Array).size()
 	if not item.is_empty():
 		var price := int(item["buy_price"] if _mode == "goods" else item["sell_price"])
 		_detail_name.text = str(item["name"])
@@ -526,7 +526,7 @@ func _can_use_ship_action(id: String, state: Dictionary) -> bool:
 		return false
 	if _mode == "blueprints":
 		return id not in state["blueprints"] and int(state["pay"]) >= int(ship["blueprint_price"])
-	return id in state["blueprints"] and (state["ships"] as Array).size() < 10 and int(state["pay"]) >= int(ship["pay"]) and int(state["items"].get("wood", 0)) >= int(ship["wood"]) and int(state["items"].get("ironstone", 0)) >= int(ship["ironstone"])
+	return id in state["blueprints"] and int(state["pay"]) >= int(ship["pay"]) and int(state["items"].get("wood", 0)) >= int(ship["wood"]) and int(state["items"].get("ironstone", 0)) >= int(ship["ironstone"])
 
 
 func _buy_action() -> void:
@@ -558,7 +558,7 @@ func _refresh_resources(state: Dictionary) -> void:
 		[COIN_ICON, "军饷", int(state["pay"])],
 		[ICON_PATHS["wood"], "木材", int(state["items"].get("wood", 0))],
 		[ICON_PATHS["ironstone"], "铁石", int(state["items"].get("ironstone", 0))],
-		[ICON_PATHS["patrol_boat"], "舰队", "%d / 10" % (state["ships"] as Array).size()],
+		[ICON_PATHS["patrol_boat"], "舰队", "%d 艘" % (state["ships"] as Array).size()],
 	]
 	for data in resources:
 		var block := HBoxContainer.new()
@@ -720,4 +720,4 @@ func _left_mark(bg: Color, line: Color, width: int, margin: float) -> StyleBoxFl
 
 
 func _reason(reason: String) -> String:
-	return {"insufficient_pay": "军饷不足", "insufficient_stock": "库存不足", "already_owned": "图纸已购", "blueprint_required": "尚无图纸", "fleet_full": "舰队已满", "insufficient_wood": "木材不足", "insufficient_ironstone": "铁石不足", "not_for_sale": "该货物只可出售"}.get(reason, "无法完成")
+	return {"insufficient_pay": "军饷不足", "insufficient_stock": "库存不足", "already_owned": "图纸已购", "blueprint_required": "尚无图纸", "insufficient_wood": "木材不足", "insufficient_ironstone": "铁石不足", "not_for_sale": "该货物只可出售"}.get(reason, "无法完成")

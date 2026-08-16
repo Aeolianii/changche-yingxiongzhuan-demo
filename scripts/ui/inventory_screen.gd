@@ -373,7 +373,7 @@ func _refresh() -> void:
 	_clear_grid()
 	var state: Dictionary = get_node("/root/GameState").call("get_economy_state")
 	_pay.text = "军饷  %d" % int(state["pay"])
-	_fleet.text = "舰队  %d / 10" % (state["ships"] as Array).size()
+	_fleet.text = "舰队  %d 艘" % (state["ships"] as Array).size()
 	var entries := _visible_entries(state)
 	_sort_entries(entries)
 	for entry in entries:

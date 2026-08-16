@@ -2,7 +2,6 @@ class_name EconomyState
 extends RefCounted
 
 const CATALOG := preload("res://scripts/economy/item_catalog.gd")
-const FLEET_LIMIT := 10
 
 
 static func make_default() -> Dictionary:
@@ -44,7 +43,7 @@ static func normalize(value: Variant) -> Dictionary:
 	var raw_ships = value.get("ships", [])
 	if raw_ships is Array:
 		for raw_ship in raw_ships:
-			if raw_ship is Dictionary and ships.size() < FLEET_LIMIT:
+			if raw_ship is Dictionary:
 				var type_id := str(raw_ship.get("type_id", ""))
 				var definition := CATALOG.ship(type_id)
 				var ship_id := str(raw_ship.get("id", ""))

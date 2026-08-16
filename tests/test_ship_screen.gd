@@ -40,7 +40,7 @@ func _run() -> void:
 
 	var ship_list := screen.get_node("ShipListScroll/ShipList") as VBoxContainer
 	_expect(ship_list.get_child_count() == 3, "Starting fleet list must show all three owned ships.")
-	_expect((screen.get_node("FleetCount") as Label).text.contains("3 / 10"), "Fleet header must show the current capacity.")
+	_expect((screen.get_node("FleetCount") as Label).text.contains("3 艘"), "Fleet header must show the current ship count without a capacity limit.")
 	for index in range(ship_list.get_child_count()):
 		var choice := ship_list.get_child(index) as Button
 		_expect(choice.get_node_or_null("ShipIcon") is TextureRect, "Every fleet row must show a ship image.")
@@ -58,6 +58,23 @@ func _run() -> void:
 	_expect(str(screen.call("selected_ship_id_for_test")) == "ship_002", "Selecting a fleet row must update the active ship.")
 	_expect((screen.get_node("SelectedShipName") as RichTextLabel).text.contains("火炮战船"), "Right detail panel must refresh for the selected cannon warship.")
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "72 / 72", "Selected ship detail must display current and maximum durability.")
+
+	var long_fleet: Array[Dictionary] = screen.get("_ships")
+	for index in range(6):
+		var extra := (economy["ships"][index % 3] as Dictionary).duplicate(true)
+		extra["id"] = "preview_%03d" % index
+		long_fleet.append(extra)
+	screen.call("_rebuild_ship_list")
+	await process_frame
+	var list_scroll := screen.get_node("ShipListScroll") as ScrollContainer
+	var scrollbar := list_scroll.get_v_scroll_bar()
+	_expect(scrollbar.visible and scrollbar.max_value > scrollbar.page, "Long fleets must expose a usable vertical scrollbar on the right.")
+	_expect(scrollbar.has_theme_stylebox_override("scroll") and scrollbar.has_theme_stylebox_override("grabber"), "Fleet scrollbar must use the generated ink-pixel track and thumb.")
+	scrollbar.value = scrollbar.max_value
+	await process_frame
+	_expect(list_scroll.scroll_vertical > 0, "Dragging the fleet scrollbar must move the ship list.")
+	var first_row := ship_list.get_child(0) as Control
+	_expect(list_scroll.clip_contents and first_row.position.x + first_row.size.x <= list_scroll.size.x, "Selected ship highlights must remain clipped inside the left list frame.")
 
 	if DisplayServer.get_name() != "headless":
 		await process_frame

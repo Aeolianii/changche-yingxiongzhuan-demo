@@ -90,11 +90,13 @@ func _test_blueprints_and_shipbuilding() -> void:
 	_expect(built.get("ok", false), "Owned blueprint and sufficient costs must build a ship.")
 	_expect((state["ships"] as Array).size() == 4 and state["ships"][3]["id"] == "ship_004", "Built ship must receive a unique sequential id after the three starting ships.")
 	_expect(state["pay"] == 260 and state["items"]["wood"] == 14 and state["items"]["ironstone"] == 6, "Shipbuilding must consume the documented costs.")
-	while (state["ships"] as Array).size() < 10:
-		(state["ships"] as Array).append({"id": "test_%d" % state["ships"].size(), "type_id": "patrol_boat", "current_hp": 60, "max_hp": 60})
-	var full_before := state.duplicate(true)
-	_expect(TRADE.build_ship(state, "patrol_boat").get("reason") == "fleet_full", "Fleet cap must reject the eleventh ship before cost checks.")
-	_expect(state == full_before, "Fleet-cap failure must not consume resources.")
+	state["pay"] = 10000
+	state["items"]["wood"] = 2000
+	state["items"]["ironstone"] = 2000
+	for _index in range(12):
+		_expect(TRADE.build_ship(state, "patrol_boat").get("ok", false), "Fleet building must remain available beyond the old ten-ship limit.")
+	_expect((state["ships"] as Array).size() == 16, "Fleet capacity must be unlimited by gameplay rules.")
+	_expect((ECONOMY.normalize(state)["ships"] as Array).size() == 16, "Saving and loading must preserve fleets larger than ten ships.")
 
 
 func _test_fishing_catch_mapping() -> void:

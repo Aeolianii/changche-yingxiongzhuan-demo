@@ -8,7 +8,6 @@ const EXPLORATION_QUEST_FRAME := preload("res://assets/ui/exploration_hud/quest_
 const EXPLORATION_FUNCTION_BUTTON := preload("res://assets/ui/exploration_hud/function_button.png")
 const EXPLORATION_FUNCTION_BRUSHSTROKE := preload("res://assets/ui/exploration_hud/function_buttons_brushstroke.png")
 const HUD_ICON_QUEST := preload("res://assets/ui/icons/hud_quest.png")
-const HUD_ICON_CHARACTER := preload("res://assets/ui/icons/hud_character.png")
 const HUD_ICON_INVENTORY := preload("res://assets/ui/icons/hud_inventory.png")
 const HUD_ICON_SHIP := preload("res://assets/ui/icons/hud_ship.png")
 const HUD_ICON_MENU := preload("res://assets/ui/icons/hud_menu.png")
@@ -541,7 +540,7 @@ func _build_function_buttons() -> void:
 	var brushstroke := TextureRect.new()
 	brushstroke.name = "FunctionButtonsBrushstroke"
 	brushstroke.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	brushstroke.offset_left = -680.0
+	brushstroke.offset_left = -566.0
 	brushstroke.offset_top = 32.0
 	brushstroke.offset_right = 0.0
 	brushstroke.offset_bottom = 100.0
@@ -556,7 +555,7 @@ func _build_function_buttons() -> void:
 	var actions := HBoxContainer.new()
 	actions.name = "FunctionButtons"
 	actions.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	actions.offset_left = -580.0
+	actions.offset_left = -466.0
 	actions.offset_top = 18.0
 	actions.offset_right = -18.0
 	actions.offset_bottom = 130.0
@@ -566,7 +565,6 @@ func _build_function_buttons() -> void:
 
 	var specs := [
 		["任务", HUD_ICON_QUEST, "QuestButton"],
-		["人物", HUD_ICON_CHARACTER, "CharacterButton"],
 		["物品栏", HUD_ICON_INVENTORY, "InventoryButton"],
 		["船只", HUD_ICON_SHIP, "ShipButton"],
 		["菜单", HUD_ICON_MENU, "MenuButton"],

@@ -155,29 +155,29 @@ func _verify_component_contract() -> void:
 	_expect(main_entry_style.get_border_width(SIDE_BOTTOM) == 1, "Main quest must keep one lightweight divider.")
 	_expect(side_entry_style.get_border_width(SIDE_BOTTOM) == 0, "Side quest must not add a redundant bottom card border.")
 
-	for button_name in ["QuestButton", "MenuButton", "InventoryButton", "ShipButton", "CharacterButton"]:
+	for button_name in ["QuestButton", "MenuButton", "InventoryButton", "ShipButton"]:
 		var button := hud.find_child(button_name, true, false) as Button
 		_expect(button != null, "%s is missing." % button_name)
+	_expect(hud.find_child("CharacterButton", true, false) == null, "CharacterButton must be removed while the character feature is out of scope.")
 	var action_row := hud.get_node("FunctionButtons")
 	var function_brushstroke := hud.get_node("FunctionButtonsBrushstroke") as TextureRect
 	_expect(function_brushstroke.texture != null and function_brushstroke.texture.resource_path.ends_with("function_buttons_brushstroke.png"), "Function buttons must use the shared ink brushstroke texture.")
 	_expect(function_brushstroke.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_COVERED, "Function button brushstroke must crop its transparent padding while preserving aspect ratio.")
 	_expect(function_brushstroke.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Function button brushstroke must preserve its pixel-art bristle edges.")
-	_expect(function_brushstroke.size.x >= action_row.size.x, "Function button brushstroke must span the complete five-button row.")
+	_expect(function_brushstroke.size.x >= action_row.size.x, "Function button brushstroke must span the complete four-button row.")
 	_expect(function_brushstroke.position.x <= action_row.position.x - 80.0, "Function button brushstroke must extend visibly beyond the left side of the button row.")
-	_expect(function_brushstroke.get_index() < action_row.get_index(), "Function button brushstroke must render below the five buttons.")
+	_expect(function_brushstroke.get_index() < action_row.get_index(), "Function button brushstroke must render below the four buttons.")
 	_expect(function_brushstroke.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Function button brushstroke must not block button input.")
 	_expect(
-		action_row.get_child_count() == 5
+		action_row.get_child_count() == 4
 		and action_row.get_child(0).name == "QuestButtonSlot"
-		and action_row.get_child(1).name == "CharacterButtonSlot"
-		and action_row.get_child(2).name == "InventoryButtonSlot"
-		and action_row.get_child(3).name == "ShipButtonSlot"
-		and action_row.get_child(4).name == "MenuButtonSlot",
+		and action_row.get_child(1).name == "InventoryButtonSlot"
+		and action_row.get_child(2).name == "ShipButtonSlot"
+		and action_row.get_child(3).name == "MenuButtonSlot",
 		"Function buttons must start with QuestButton and end with MenuButton."
 	)
-	_expect(action_row.size.x >= 562.0, "Function button row must expand to fit five entries.")
-	var expected_hud_icons := ["hud_quest.png", "hud_character.png", "hud_inventory.png", "hud_ship.png", "hud_menu.png"]
+	_expect(action_row.size.x >= 448.0, "Function button row must expand to fit four entries.")
+	var expected_hud_icons := ["hud_quest.png", "hud_inventory.png", "hud_ship.png", "hud_menu.png"]
 	for slot_index in range(action_row.get_child_count()):
 		var slot := action_row.get_child(slot_index)
 		var function_texture := slot.get_node("GeneratedFunctionTexture") as TextureRect
@@ -197,7 +197,7 @@ func _verify_component_contract() -> void:
 	quest_button.pressed.emit()
 	var quest_screen := hud.get_node("QuestScreen") as Control
 	_expect(quest_screen.visible and hud.call("is_quest_screen_open"), "QuestButton must open the interactive quest screen.")
-	_expect(not action_row.visible and not function_brushstroke.visible, "Opening the quest screen must hide the five function buttons and their brushstroke.")
+	_expect(not action_row.visible and not function_brushstroke.visible, "Opening the quest screen must hide the four function buttons and their brushstroke.")
 	var quest_background := quest_screen.get_node("GeneratedQuestBackground") as TextureRect
 	_expect(quest_background.texture != null and quest_background.texture.resource_path.ends_with("quest_screen_background.png"), "Quest screen must use the generated pixel ink-wash background.")
 	var screen_title := quest_screen.get_node("ScreenTitle") as Label

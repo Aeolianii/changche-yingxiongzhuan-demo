@@ -35,6 +35,19 @@ var _durability_label: Label
 var _stats: GridContainer
 var _crew_label: Label
 var _construction_label: Label
+var _hull_nodes: Array[CanvasItem] = []
+var _hull_tab: Button
+var _equipment_tab: Button
+var _repair_button: Button
+var _repair_status: Label
+var _equipment_page: Panel
+var _equipment_name: Label
+var _equipment_summary: Label
+var _equipment_status: Label
+var _equipment_controls: Dictionary = {}
+var _weapon_definitions: Array[Dictionary] = []
+var _skill_definitions: Array[Dictionary] = []
+var _detail_mode := "hull"
 
 signal close_requested
 
@@ -279,6 +292,7 @@ func _rebuild_ship_list() -> void:
 
 
 func _build_ship_detail() -> void:
+	_build_detail_tabs()
 	_preview = TextureRect.new()
 	_preview.name = "SelectedShipPreview"
 	_preview.position = Vector2(536, 260)
@@ -365,13 +379,223 @@ func _build_ship_detail() -> void:
 	_construction_label.size = Vector2(710, 30)
 	add_child(_construction_label)
 
+	_repair_status = _make_label("", 14, JADE)
+	_repair_status.name = "RepairStatus"
+	_repair_status.position = Vector2(850, 235)
+	_repair_status.size = Vector2(280, 34)
+	_repair_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_repair_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(_repair_status)
+
+	_repair_button = _make_action_button("修复船体", Vector2(1138, 232), Vector2(122, 38))
+	_repair_button.name = "RepairButton"
+	_repair_button.pressed.connect(_repair_selected_ship)
+	add_child(_repair_button)
+
+	_hull_nodes = [
+		_preview, _detail_name, _detail_role, _detail_id, _description, separator,
+		durability_title, _durability, _durability_label, _stats, _crew_label,
+		_construction_label, _repair_status, _repair_button,
+	]
+	_build_equipment_page()
+	_switch_detail_mode("hull")
+
+
+func _build_detail_tabs() -> void:
+	_hull_tab = _make_action_button("船体", Vector2(544, 228), Vector2(126, 40))
+	_hull_tab.name = "HullTab"
+	_hull_tab.pressed.connect(_switch_detail_mode.bind("hull"))
+	add_child(_hull_tab)
+	_equipment_tab = _make_action_button("装备", Vector2(680, 228), Vector2(126, 40))
+	_equipment_tab.name = "EquipmentTab"
+	_equipment_tab.pressed.connect(_switch_detail_mode.bind("equipment"))
+	add_child(_equipment_tab)
+
+
+func _build_equipment_page() -> void:
+	_load_equipment_definitions()
+	_equipment_page = Panel.new()
+	_equipment_page.name = "EquipmentPage"
+	_equipment_page.position = Vector2(520, 276)
+	_equipment_page.size = Vector2(752, 528)
+	_equipment_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_equipment_page.add_theme_stylebox_override("panel", _flat_style(Color(0.018, 0.038, 0.034, 0.80), Color(GOLD.r, GOLD.g, GOLD.b, 0.42), 1))
+	add_child(_equipment_page)
+
+	_equipment_name = _make_label("舰船装备", 23, GOLD_BRIGHT)
+	_equipment_name.name = "EquipmentShipName"
+	_equipment_name.position = Vector2(18, 10)
+	_equipment_name.size = Vector2(710, 34)
+	_equipment_page.add_child(_equipment_name)
+
+	_equipment_summary = _make_label("", 15, TEXT_MUTED)
+	_equipment_summary.name = "EquipmentSlotsSummary"
+	_equipment_summary.position = Vector2(18, 46)
+	_equipment_summary.size = Vector2(710, 28)
+	_equipment_page.add_child(_equipment_summary)
+
+	var weapon_title := _make_label("武器配置", 18, GOLD_BRIGHT)
+	weapon_title.position = Vector2(18, 80)
+	weapon_title.size = Vector2(200, 28)
+	_equipment_page.add_child(weapon_title)
+	var weapon_grid := HBoxContainer.new()
+	weapon_grid.name = "WeaponGrid"
+	weapon_grid.position = Vector2(18, 112)
+	weapon_grid.size = Vector2(716, 104)
+	weapon_grid.add_theme_constant_override("separation", 10)
+	_equipment_page.add_child(weapon_grid)
+	for definition in _weapon_definitions:
+		weapon_grid.add_child(_make_equipment_card("weapons", str(definition["Id"]), str(definition["DisplayName"]), "负载 %d" % int(definition.get("LoadCost", 0)), 232.0))
+
+	var skill_title := _make_label("战术技能", 18, GOLD_BRIGHT)
+	skill_title.position = Vector2(18, 226)
+	skill_title.size = Vector2(200, 28)
+	_equipment_page.add_child(skill_title)
+	var skill_grid := HBoxContainer.new()
+	skill_grid.name = "SkillGrid"
+	skill_grid.position = Vector2(18, 258)
+	skill_grid.size = Vector2(716, 104)
+	skill_grid.add_theme_constant_override("separation", 8)
+	_equipment_page.add_child(skill_grid)
+	for definition in _skill_definitions:
+		skill_grid.add_child(_make_equipment_card("skills", str(definition["Id"]), str(definition["DisplayName"]), "每槽 %d 次" % int(definition.get("UsesPerSlot", 0)), 173.0))
+
+	var armor_title := _make_label("护甲整备", 18, GOLD_BRIGHT)
+	armor_title.position = Vector2(18, 376)
+	armor_title.size = Vector2(200, 28)
+	_equipment_page.add_child(armor_title)
+	var armor_row := HBoxContainer.new()
+	armor_row.name = "ArmorRow"
+	armor_row.position = Vector2(18, 408)
+	armor_row.size = Vector2(716, 76)
+	_equipment_page.add_child(armor_row)
+	armor_row.add_child(_make_equipment_card("armor", "armor", "船体护甲", "每级强化减伤", 232.0, 74.0))
+	var armor_hint := _make_label("沿用战前配置规则：武器与技能受槽位限制，撞角最多一件。", 14, TEXT_MUTED)
+	armor_hint.position = Vector2(250, 424)
+	armor_hint.size = Vector2(470, 28)
+	armor_row.add_child(armor_hint)
+
+	_equipment_status = _make_label("", 14, JADE)
+	_equipment_status.name = "EquipmentStatus"
+	_equipment_status.position = Vector2(18, 492)
+	_equipment_status.size = Vector2(710, 26)
+	_equipment_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_equipment_page.add_child(_equipment_status)
+
+
+func _make_equipment_card(category: String, equipment_id: String, display_name: String, detail: String, width: float, height := 100.0) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.name = "%s_%s" % [category.trim_suffix("s").capitalize(), equipment_id]
+	card.custom_minimum_size = Vector2(width, height)
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_theme_stylebox_override("panel", _flat_style(PANEL_INK, Color(GOLD.r, GOLD.g, GOLD.b, 0.34), 1))
+	var content := Control.new()
+	content.name = "Content"
+	content.custom_minimum_size = Vector2(width, height)
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(content)
+	var title := _make_label(display_name, 16, TEXT_LIGHT)
+	title.position = Vector2(12, 8)
+	title.size = Vector2(width - 24.0, 24)
+	content.add_child(title)
+	var subtitle := _make_label(detail, 12, TEXT_MUTED)
+	subtitle.position = Vector2(12, 30)
+	subtitle.size = Vector2(width - 24.0, 20)
+	content.add_child(subtitle)
+	var minus := _make_action_button("−", Vector2(12, height - 42.0), Vector2(38, 30))
+	minus.name = "Minus"
+	minus.pressed.connect(_change_equipment.bind(category, equipment_id, -1))
+	content.add_child(minus)
+	var count := _make_label("×0", 16, GOLD_BRIGHT)
+	count.name = "Count"
+	count.position = Vector2(54, height - 42.0)
+	count.size = Vector2(maxf(40.0, width - 108.0), 30)
+	count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	content.add_child(count)
+	var plus := _make_action_button("+", Vector2(width - 50.0, height - 42.0), Vector2(38, 30))
+	plus.name = "Plus"
+	plus.pressed.connect(_change_equipment.bind(category, equipment_id, 1))
+	content.add_child(plus)
+	_equipment_controls["%s/%s" % [category, equipment_id]] = {"minus": minus, "count": count, "plus": plus}
+	return card
+
+
+func _load_equipment_definitions() -> void:
+	_weapon_definitions = _read_definition_array("res://data/naval/weapons.json")
+	_skill_definitions = _read_definition_array("res://data/naval/skills.json")
+
+
+func _read_definition_array(path: String) -> Array[Dictionary]:
+	var definitions: Array[Dictionary] = []
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if parsed is Array:
+		for value in parsed:
+			if value is Dictionary:
+				definitions.append((value as Dictionary).duplicate(true))
+	return definitions
+
 
 func _select_ship(index: int) -> void:
 	if index < 0 or index >= _ships.size():
 		return
 	_selected_index = index
+	_repair_status.text = ""
+	_equipment_status.text = ""
 	_refresh_selectors()
 	_refresh_detail()
+
+
+func _switch_detail_mode(mode: String) -> void:
+	_detail_mode = "equipment" if mode == "equipment" else "hull"
+	for node in _hull_nodes:
+		node.visible = _detail_mode == "hull"
+	_equipment_page.visible = _detail_mode == "equipment"
+	var hull_selected := _detail_mode == "hull"
+	_hull_tab.add_theme_stylebox_override("normal", _tab_style(hull_selected))
+	_equipment_tab.add_theme_stylebox_override("normal", _tab_style(not hull_selected))
+	_hull_tab.add_theme_color_override("font_color", GOLD_BRIGHT if hull_selected else TEXT_MUTED)
+	_equipment_tab.add_theme_color_override("font_color", GOLD_BRIGHT if not hull_selected else TEXT_MUTED)
+	if _detail_mode == "equipment":
+		_refresh_equipment_page()
+
+
+func _repair_selected_ship() -> void:
+	if _ships.is_empty():
+		return
+	var ship_id := str(_ships[_selected_index].get("id", ""))
+	var game_state := get_node_or_null("/root/GameState")
+	if game_state == null:
+		return
+	var result := game_state.call("repair_economy_ship", ship_id) as Dictionary
+	_repair_status.text = "船体修复完成" if result.get("ok", false) else "船体无需修复"
+	_reload_selected_ship(ship_id)
+
+
+func _change_equipment(category: String, equipment_id: String, delta: int) -> void:
+	if _ships.is_empty():
+		return
+	var ship_id := str(_ships[_selected_index].get("id", ""))
+	var game_state := get_node_or_null("/root/GameState")
+	if game_state == null:
+		return
+	var result := game_state.call("adjust_economy_ship_equipment", ship_id, category, equipment_id, delta) as Dictionary
+	_equipment_status.text = "装备配置已保存" if result.get("ok", false) else _equipment_error(str(result.get("reason", "failed")))
+	_reload_selected_ship(ship_id)
+
+
+func _reload_selected_ship(ship_id: String) -> void:
+	_load_ships()
+	for index in range(_ships.size()):
+		if str(_ships[index].get("id", "")) == ship_id:
+			_selected_index = index
+			break
+	_rebuild_ship_list()
+	_refresh_detail()
+
+
+func _equipment_error(reason: String) -> String:
+	return {"slots_full": "装备槽位已满", "none_equipped": "当前未装载", "unknown_ship": "未找到舰船"}.get(reason, "无法调整装备")
 
 
 func _refresh_selectors() -> void:
@@ -395,6 +619,8 @@ func _refresh_detail() -> void:
 		_clear_stats()
 		_crew_label.text = ""
 		_construction_label.text = ""
+		_repair_button.disabled = true
+		_refresh_equipment_page()
 		return
 
 	var ship := _ships[_selected_index]
@@ -413,6 +639,54 @@ func _refresh_detail() -> void:
 	_rebuild_stats(definition)
 	_crew_label.text = "核定编制　%d 人" % int(definition.get("crew", 0))
 	_construction_label.text = "建造需求　军饷 %d　·　木材 %d　·　铁石 %d" % [int(definition.get("pay", 0)), int(definition.get("wood", 0)), int(definition.get("ironstone", 0))]
+	_repair_button.disabled = current_hp >= max_hp
+	_repair_button.text = "船体完好" if _repair_button.disabled else "修复船体"
+	_refresh_equipment_page()
+
+
+func _refresh_equipment_page() -> void:
+	if _equipment_page == null:
+		return
+	if _ships.is_empty():
+		_equipment_name.text = "暂无舰船"
+		_equipment_summary.text = ""
+		return
+	var ship := _ships[_selected_index]
+	var definition := CATALOG.ship(str(ship.get("type_id", "")))
+	var equipment := ship.get("equipment", {}) as Dictionary
+	var weapons := equipment.get("weapons", {}) as Dictionary
+	var skills := equipment.get("skills", {}) as Dictionary
+	var used_weapons := _sum_counts(weapons)
+	var used_skills := _sum_counts(skills)
+	var weapon_cap := int(definition.get("weapon_slots", 0))
+	var skill_cap := int(definition.get("skill_slots", 0))
+	var armor_level := int(equipment.get("armor_level", 0))
+	var armor_cap := int(definition.get("armor_slots", 0))
+	_equipment_name.text = "%s　·　装备整备" % str(definition.get("name", "未知舰船"))
+	_equipment_summary.text = "武器位 %d / %d　·　技能位 %d / %d　·　护甲位 %d / %d" % [used_weapons, weapon_cap, used_skills, skill_cap, armor_level, armor_cap]
+	for definition_value in _weapon_definitions:
+		var equipment_id := str(definition_value["Id"])
+		_refresh_equipment_control("weapons", equipment_id, int(weapons.get(equipment_id, 0)), used_weapons >= weapon_cap or (equipment_id == "ram" and int(weapons.get(equipment_id, 0)) >= 1))
+	for definition_value in _skill_definitions:
+		var equipment_id := str(definition_value["Id"])
+		_refresh_equipment_control("skills", equipment_id, int(skills.get(equipment_id, 0)), used_skills >= skill_cap)
+	_refresh_equipment_control("armor", "armor", armor_level, armor_level >= armor_cap)
+
+
+func _refresh_equipment_control(category: String, equipment_id: String, count: int, at_cap: bool) -> void:
+	var controls := _equipment_controls.get("%s/%s" % [category, equipment_id], {}) as Dictionary
+	if controls.is_empty():
+		return
+	(controls["count"] as Label).text = "×%d" % count
+	(controls["minus"] as Button).disabled = count <= 0
+	(controls["plus"] as Button).disabled = at_cap
+
+
+func _sum_counts(entries: Dictionary) -> int:
+	var total := 0
+	for count in entries.values():
+		total += int(count)
+	return total
 
 
 func _rebuild_stats(definition: Dictionary) -> void:
@@ -497,6 +771,27 @@ func _solid_scrollbar_style(background: Color, minimum_visible_height := 0.0, le
 	style.content_margin_top = minimum_total_height * 0.5
 	style.content_margin_bottom = minimum_total_height * 0.5
 	return style
+
+
+func _make_action_button(text_value: String, button_position: Vector2, button_size: Vector2) -> Button:
+	var button := Button.new()
+	button.text = text_value
+	button.position = button_position
+	button.size = button_size
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_font_size_override("font_size", 16)
+	button.add_theme_color_override("font_color", TEXT_LIGHT)
+	button.add_theme_color_override("font_disabled_color", Color(TEXT_MUTED.r, TEXT_MUTED.g, TEXT_MUTED.b, 0.56))
+	button.add_theme_stylebox_override("normal", _flat_style(Color(0.025, 0.055, 0.048, 0.92), Color(GOLD.r, GOLD.g, GOLD.b, 0.54), 1))
+	button.add_theme_stylebox_override("hover", _flat_style(Color(0.13, 0.16, 0.10, 0.96), GOLD, 1))
+	button.add_theme_stylebox_override("pressed", _flat_style(Color(0.28, 0.21, 0.09, 0.96), GOLD_BRIGHT, 1))
+	button.add_theme_stylebox_override("disabled", _flat_style(Color(0.025, 0.04, 0.036, 0.54), Color(GOLD.r, GOLD.g, GOLD.b, 0.20), 1))
+	return button
+
+
+func _tab_style(selected: bool) -> StyleBoxFlat:
+	return _flat_style(Color(0.30, 0.22, 0.08, 0.88) if selected else Color(0.025, 0.05, 0.045, 0.84), Color(GOLD.r, GOLD.g, GOLD.b, 0.76 if selected else 0.34), 1)
 
 
 func _make_label(text_value: String, font_size: int, font_color: Color) -> Label:

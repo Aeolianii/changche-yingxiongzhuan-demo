@@ -210,6 +210,16 @@ func build_economy_ship(ship_type_id: String) -> Dictionary:
 	return TRADE.build_ship(_world_state["economy"], ship_type_id)
 
 
+func repair_economy_ship(ship_id: String) -> Dictionary:
+	_ensure_economy()
+	return ECONOMY.repair_ship(_world_state["economy"], ship_id)
+
+
+func adjust_economy_ship_equipment(ship_id: String, category: String, equipment_id: String, delta: int) -> Dictionary:
+	_ensure_economy()
+	return ECONOMY.adjust_ship_equipment(_world_state["economy"], ship_id, category, equipment_id, delta)
+
+
 func _ensure_economy() -> void:
 	_world_state["economy"] = ECONOMY.normalize(_world_state.get("economy", {}))
 

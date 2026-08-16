@@ -39,7 +39,13 @@ func _test_default_state() -> void:
 	_expect((state["blueprints"] as Array).is_empty(), "New games must not own blueprints.")
 	var starting_types := (state["ships"] as Array).map(func(ship: Dictionary): return str(ship["type_id"]))
 	_expect(starting_types == ["patrol_boat", "cannon_warship", "escort_junk", "patrol_boat", "cannon_warship"], "New games must own five ships while retaining every available type.")
+	_expect(state["ships"][0]["current_hp"] == 42 and state["ships"][2]["current_hp"] == 70, "New games must include two damaged ships for repair testing.")
+	_expect(state["ships"][0]["equipment"]["weapons"] == {"bombardment": 1}, "Starting ships must carry persisted battle-compatible equipment IDs.")
 	_expect(ECONOMY.normalize({}) == state, "An uninitialized economy dictionary must normalize to new-game defaults.")
+	var repaired_state := ECONOMY.normalize(state)
+	_expect(repaired_state["ships"][0]["current_hp"] == 42, "Economy normalization must preserve current ship durability.")
+	_expect(ECONOMY.repair_ship(repaired_state, "ship_001").get("ok", false) and repaired_state["ships"][0]["current_hp"] == 60, "Ship repair must restore and persist maximum durability.")
+	_expect(ECONOMY.adjust_ship_equipment(repaired_state, "ship_001", "weapons", "ram", 1).get("ok", false), "Ship equipment must accept battle weapon IDs while slots remain.")
 
 
 func _test_material_buy_and_sell() -> void:

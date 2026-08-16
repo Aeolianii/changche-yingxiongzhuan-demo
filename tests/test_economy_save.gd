@@ -22,6 +22,7 @@ func _run() -> void:
 	_expect(game_state.call("load_game").get("ok", false), "Version 2 save must load.")
 	var restored: Dictionary = game_state.call("get_economy_state")
 	_expect(restored["pay"] == 575 and restored["items"]["grouper"] == 2, "Economy must survive disk round trip.")
+	_expect(restored["ships"][0]["current_hp"] == 42 and restored["ships"][0]["equipment"]["weapons"] == {"bombardment": 1}, "Ship damage and equipment must survive disk round trip.")
 	var v1 := {"version": 1, "saved_at_unix": 1, "scene_path": PALACE, "scene_state": {}, "world_state": {}}
 	var file := FileAccess.open(TEST_SAVE, FileAccess.WRITE)
 	file.store_string(JSON.stringify(v1)); file.close()

@@ -17,16 +17,19 @@ const SHIPS := {
 		"name": "巡哨快船", "role": "近海巡哨", "description": "船体轻捷、转向灵活，适合侦察航道、传递军令和追击小股海寇。",
 		"blueprint_price": 300, "pay": 240, "wood": 36, "ironstone": 14, "max_hp": 60,
 		"firepower": 2, "speed": 5, "armor": 2, "cargo": 1, "crew": 26,
+		"weapon_slots": 2, "skill_slots": 2, "armor_slots": 2,
 	},
 	"cannon_warship": {
 		"name": "火炮战船", "role": "舰炮压制", "description": "以重炮和宽阔炮位为核心，正面火力强劲，适合在主力交战中压制敌舰。",
 		"blueprint_price": 500, "pay": 340, "wood": 52, "ironstone": 30, "max_hp": 72,
 		"firepower": 5, "speed": 2, "armor": 3, "cargo": 1, "crew": 48,
+		"weapon_slots": 3, "skill_slots": 2, "armor_slots": 3,
 	},
 	"escort_junk": {
 		"name": "护航广船", "role": "远洋护航", "description": "船身坚固、续航与载货能力出色，可保护商路并承担远海补给与兵员运输。",
 		"blueprint_price": 600, "pay": 380, "wood": 70, "ironstone": 22, "max_hp": 88,
 		"firepower": 3, "speed": 3, "armor": 5, "cargo": 5, "crew": 62,
+		"weapon_slots": 2, "skill_slots": 3, "armor_slots": 5,
 	},
 }
 const FISHING_REWARDS := {"small_fish": "yellow_croaker", "big_fish": "grouper", "crab": "green_crab", "boot": "old_boot"}

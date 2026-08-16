@@ -70,8 +70,7 @@ static func build_ship(state: Dictionary, ship_type_id: String) -> Dictionary:
 	ECONOMY.remove_item(state, "ironstone", int(definition["ironstone"]))
 	var next_id := int(state.get("next_ship_id", ships.size() + 1))
 	var ship_id := "ship_%03d" % next_id
-	var max_hp := int(definition["max_hp"])
-	ships.append({"id": ship_id, "type_id": ship_type_id, "current_hp": max_hp, "max_hp": max_hp})
+	ships.append(ECONOMY.make_ship(ship_id, ship_type_id))
 	state["next_ship_id"] = next_id + 1
 	return {"ok": true, "ship_id": ship_id}
 

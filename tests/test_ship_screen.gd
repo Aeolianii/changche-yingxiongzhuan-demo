@@ -3,6 +3,7 @@ extends SceneTree
 const HUD := preload("res://scenes/ui/exploration_hud.tscn")
 const SCREENSHOT_PATH := "res://.godot/ship_screen_preview.png"
 const SCROLL_SCREENSHOT_PATH := "res://.godot/ship_screen_scroll_preview.png"
+const EQUIPMENT_SCREENSHOT_PATH := "res://.godot/ship_equipment_preview.png"
 
 var failures: Array[String] = []
 
@@ -55,6 +56,31 @@ func _run() -> void:
 	_expect(screen.get_node("ShipStats").get_child_count() == 4, "Detailed information must include firepower, speed, armor and cargo.")
 	_expect((screen.get_node("CrewLabel") as Label).text.contains("26"), "Detailed information must include crew complement.")
 	_expect((screen.get_node("ConstructionLabel") as Label).text.contains("军饷") and (screen.get_node("ConstructionLabel") as Label).text.contains("木材"), "Detailed information must include shipbuilding requirements.")
+	_expect((screen.get_node("DurabilityLabel") as Label).text == "42 / 60", "The first starting ship must expose its initial hull damage.")
+	var repair_button := screen.get_node("RepairButton") as Button
+	_expect(not repair_button.disabled and repair_button.position.x > 1100.0, "Hull page must provide an enabled repair button in its upper-right corner for damaged ships.")
+	repair_button.pressed.emit()
+	await process_frame
+	_expect((screen.get_node("DurabilityLabel") as Label).text == "60 / 60" and repair_button.disabled, "Repair button must restore selected ship durability and then disable itself.")
+	_expect((game_state.call("get_economy_state") as Dictionary)["ships"][0]["current_hp"] == 60, "Hull repairs must persist in GameState.")
+
+	(screen.get_node("EquipmentTab") as Button).pressed.emit()
+	await process_frame
+	var equipment_page := screen.get_node("EquipmentPage") as Panel
+	_expect(equipment_page.visible and not (screen.get_node("SelectedShipPreview") as TextureRect).visible, "Equipment tab must replace the hull detail page with its own interface.")
+	_expect((equipment_page.get_node("EquipmentSlotsSummary") as Label).text.contains("武器位 1 / 2"), "Equipment page must show battle-style weapon, skill, and armor slot usage.")
+	_expect(equipment_page.get_node("WeaponGrid").get_child_count() == 3 and equipment_page.get_node("SkillGrid").get_child_count() == 4, "Equipment page must reuse every weapon and skill from naval battle configuration.")
+	var ram_plus := equipment_page.get_node("WeaponGrid/Weapon_ram/Content/Plus") as Button
+	ram_plus.pressed.emit()
+	await process_frame
+	_expect((equipment_page.get_node("WeaponGrid/Weapon_ram/Content/Count") as Label).text == "×1", "Equipment controls must update the selected ship loadout.")
+	_expect((game_state.call("get_economy_state") as Dictionary)["ships"][0]["equipment"]["weapons"]["ram"] == 1, "Equipment changes must persist in GameState.")
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		var equipment_screenshot_error := root.get_texture().get_image().save_png(EQUIPMENT_SCREENSHOT_PATH)
+		_expect(equipment_screenshot_error == OK, "Ship equipment preview screenshot could not be saved.")
+	(screen.get_node("HullTab") as Button).pressed.emit()
+	await process_frame
 
 	(ship_list.get_child(1) as Button).pressed.emit()
 	await process_frame

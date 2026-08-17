@@ -472,6 +472,7 @@ theme_override_constants/separation = 30
 theme_override_constants/separation = 30
 
 [node name="WeaponLabel" type="Label" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+visible = false
 custom_minimum_size = Vector2(34, 219)
 text = "武\n器"
 vertical_alignment = 1

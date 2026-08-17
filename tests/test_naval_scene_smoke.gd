@@ -142,6 +142,10 @@ func _init() -> void:
 		push_error("FAIL: token group header labels wrong: %s/%s/%s" % [weapon_label.text, skill_label.text, boarding_label.text])
 		quit(1)
 		return
+	if weapon_label.visible:
+		push_error("FAIL: weapon group header must stay hidden beside the command tokens")
+		quit(1)
+		return
 	if controller.WeaponGroupTokenCount() != 5 or controller.SkillGroupTokenCount() != 4:
 		push_error("FAIL: weapons/skills token groups should have 5/4 members")
 		quit(1)

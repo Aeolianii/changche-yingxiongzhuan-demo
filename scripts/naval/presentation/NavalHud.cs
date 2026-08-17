@@ -283,7 +283,7 @@ public partial class NavalHud : CanvasLayer
             ChainShot, FireOil, DamageControl, Mine, Exchange, Disengage,
         })
             StyleCommandTokenButton(button, AttackTokenTexture);
-        // R-3：组头标签（「武器」「技能」「接舷」）——赭石色竖排，与令牌竖排风格一致。
+        // R-3：组头标签使用赭石色竖排；武器页按视觉反馈隐藏组头，只保留军令牌。
         foreach (var (_, label, _) in _attackGroups)
             StyleGroupHeader(label);
         foreach (var button in new[] { TurnLeft, TurnRight })
@@ -429,17 +429,17 @@ public partial class NavalHud : CanvasLayer
             return;
         }
         var current = pages[_attackPage];
-        foreach (var (_, label, buttons) in _attackGroups)
+        foreach (var (group, label, buttons) in _attackGroups)
         {
             var isCurrent = ReferenceEquals(label, current.Label);
-            label.Visible = isCurrent;
+            label.Visible = isCurrent && group != GroupWeapon;
             foreach (var button in buttons)
                 button.Visible = isCurrent && _attackCommandAvailable.GetValueOrDefault(button);
         }
         _currentAttackLabel = current.Label.Text.Replace("\n", string.Empty);
         AttackTab.Text = $"{_currentAttackLabel}{_attackPage + 1}/{_attackPageCount}";
         AttackTab.TooltipText = _attackPageCount > 1 ? "点击翻到下一页武器栏" : "当前只有一页武器栏";
-        UpdateCommandConnector(VisibleAttackCommandCount(), hasGroupLabel: true);
+        UpdateCommandConnector(VisibleAttackCommandCount(), hasGroupLabel: current.Group != GroupWeapon);
     }
 
     private void SetCommandCategory(bool showAttack)

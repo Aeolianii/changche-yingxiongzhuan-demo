@@ -39,6 +39,10 @@ func _init() -> void:
 		push_error("FAIL: animated sea caustic brightness must stay reduced")
 		quit(1)
 		return
+	if not grid.FogMistTextureLoaded() or not grid.FogUsesLightInkStyle():
+		push_error("FAIL: naval fog must load the generated light pixel ink-mist component")
+		quit(1)
+		return
 	# 布阵控制器自 ships.json 装配双方各 4 舰
 	if deploy.PlayerShipCount() != 4 or deploy.EnemyShipCount() != 4:
 		push_error("FAIL: deployment fleet not built (player=%d enemy=%d)" % [deploy.PlayerShipCount(), deploy.EnemyShipCount()])

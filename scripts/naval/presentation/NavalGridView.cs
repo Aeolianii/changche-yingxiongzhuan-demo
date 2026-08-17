@@ -62,7 +62,9 @@ public partial class NavalGridView : Node2D
     private readonly List<(GridPos Cell, float Age)> _explosions = new();
     // F-6：战争迷雾——当前视野内格集合（玩家阵营观测）。null=未初始化（布阵/未开始战斗，不画迷雾）。
     private HashSet<GridPos>? _fogVisible;
-    private static readonly Color FogColor = new(0.02f, 0.03f, 0.04f, 0.62f); // 墨色迷雾（半透明黑墨）
+    private Texture2D? _fogMistTexture;
+    private static readonly Color FogMistFallback = new(0.84f, 0.91f, 0.90f, 0.16f);
+    private static readonly Color FogMistTextureTint = new(0.96f, 0.98f, 0.96f, 0.38f);
 
     public IGridClickReceiver? ClickReceiver
     {
@@ -77,6 +79,7 @@ public partial class NavalGridView : Node2D
         // 引用共享相机（NavalDemo 根下 Camera2D，组 naval_camera）；所有关卡 Attach 时统一以教程 3x 起步。
         _camera = GetTree().GetFirstNodeInGroup("naval_camera") as Camera2D;
         _seaTexture = GD.Load<Texture2D>("res://assets/naval/battle/sea_ink_pixel.png");
+        _fogMistTexture = GD.Load<Texture2D>("res://assets/naval/ui/fog/white_ink_mist_v1.png");
         CreateAnimatedSeaSurface();
         LoadTerrainTextures("reef", _reefTextures);
         LoadTerrainTextures("coral", _coralTextures);
@@ -524,7 +527,7 @@ public partial class NavalGridView : Node2D
     public bool DeploymentCellContains(GridPos cell) => _deploymentCells.Contains(cell);
 
     // F-6：战争迷雾——视野内可见格集合（玩家阵营观测）。由控制器经规则层 AttackRules.VisibleCells 算好传入，
-    // 迷雾随回合/行动刷新（RefreshVisibility）；视野外格子 _Draw 画墨色覆盖。
+    // 迷雾随回合/行动刷新（RefreshVisibility）；视野外格以连续白色像素水墨雾覆盖。
     public void ShowFog(IEnumerable<GridPos> visibleCells)
     {
         _fogVisible = visibleCells.ToHashSet();
@@ -533,6 +536,10 @@ public partial class NavalGridView : Node2D
 
     // F-6：格当前是否在视野内（headless 冒烟断言用；无迷雾数据=未初始化，默认全部可见）。
     public bool FogCellVisible(int x, int y) => _fogVisible is null || _fogVisible.Contains(new GridPos(x, y));
+    public bool FogMistTextureLoaded() => _fogMistTexture is not null;
+    public bool FogUsesLightInkStyle()
+        => FogMistFallback.R > 0.75f && FogMistFallback.G > 0.75f && FogMistFallback.B > 0.75f
+            && FogMistFallback.A < 0.35f;
 
     public void ClearOverlay()
     {
@@ -580,7 +587,7 @@ public partial class NavalGridView : Node2D
         DrawGridJunctions(w, h);
         // 障碍物为透明抠图，绘制在海面与网格之上；迷雾、提示与舰船仍可在其上正常叠加。
         DrawTerrainObstacles(map, w, h);
-        // F-6：战争迷雾——视野外格子覆盖墨色半透明迷雾（玩家阵营观测）。画在网格线之后、出口/射界/水雷等提示之前：
+        // F-6：战争迷雾——视野外区域覆盖连续白色像素水墨雾（玩家阵营观测）。画在网格线之后、出口/射界/水雷等提示之前：
         // 出口标记（地图边界提示）与已揭示水雷（规则层揭示机制）保留叠在迷雾之上；舰船视图在独立 Node2D 上，
         // 己方舰与可见敌舰在视野内无迷雾，隐藏敌舰视图不可见自然被迷雾盖住。
         DrawFog();
@@ -641,17 +648,53 @@ public partial class NavalGridView : Node2D
         }
     }
 
-    // F-6：战争迷雾覆盖绘制——遍历地图，视野外格盖墨色迷雾（逐格半透明，网格线透过迷雾仍可辨）。
+    // F-6：战争迷雾覆盖绘制——以大范围、透明干笔雾纹随机交叠成连续云墙；
+    // 不再按 CellFaceRect 画黑色矩形，也不使用会在高倍率下暴露扇贝边的规则圆形。
     private void DrawFog()
     {
         if (_battle is null || _fogVisible is null) return;
         var map = _battle.Map;
+
+        if (_fogMistTexture is null)
+        {
+            // 素材异常时的浅色兜底仍保持可玩性，但正式构建由冒烟测试保证纹理一定加载。
+            for (var x = 0; x < map.Width; x++)
+                for (var y = 0; y < map.Height; y++)
+                    if (!_fogVisible.Contains(new GridPos(x, y)))
+                        DrawCircle(GridToWorldCenter(new GridPos(x, y)), CellSize * 0.82f, FogMistFallback);
+            return;
+        }
+
+        // 每约四个隐藏格布置一张 4.4—5.5 格宽的雾纹；透明飞白边互相交叠，边界不会按格或按圆排列。
         for (var x = 0; x < map.Width; x++)
             for (var y = 0; y < map.Height; y++)
             {
-                if (_fogVisible.Contains(new GridPos(x, y))) continue;
-                DrawRect(CellFaceRect(new GridPos(x, y)), FogColor);
+                var cell = new GridPos(x, y);
+                if (_fogVisible.Contains(cell)) continue;
+                var neighbors = HiddenFogNeighborCount(map, cell);
+                var seed = Hash01(x, y, 53);
+                if (seed % 4 != 0 || neighbors < 3) continue;
+                var width = CellSize * (4.4f + (seed % 6) * 0.22f);
+                var size = new Vector2(width, width * 0.6875f);
+                var offset = new Vector2((seed % 17) - 8, ((seed / 19) % 13) - 6);
+                var target = new Rect2(GridToWorldCenter(cell) + offset - size * 0.5f, size);
+                var tint = FogMistTextureTint;
+                tint.A *= neighbors >= 7 ? 1f : 0.76f;
+                DrawTextureRect(_fogMistTexture, target, false, tint);
             }
+    }
+
+    private int HiddenFogNeighborCount(BattleMap map, GridPos center)
+    {
+        if (_fogVisible is null) return 0;
+        var count = 0;
+        for (var dx = -1; dx <= 1; dx++)
+            for (var dy = -1; dy <= 1; dy++)
+            {
+                var neighbor = new GridPos(center.X + dx, center.Y + dy);
+                if (map.InBounds(neighbor) && !_fogVisible.Contains(neighbor)) count++;
+            }
+        return count;
     }
 
     // F-2：地图出口边界标记（设计 16.1）——出口格：暖沙底色 + 边框高亮 + 指向地图外侧的方向箭头；

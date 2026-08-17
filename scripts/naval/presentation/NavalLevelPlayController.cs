@@ -43,6 +43,7 @@ public partial class NavalLevelPlayController : CanvasLayer
     private Label? _hintPage;             // 旧页码节点，仅为场景兼容保留并永久隐藏。
     private bool _hintBarCollapsed;       // U-1：教学提示条是否已收起（收起时不挡地图点击，内容仍随进度刷新）
     private Button? _hintCollapseButton;  // U-1：提示条收起/展开按钮（提示条右侧）
+    private TextureRect? _hintCollapsedBackdrop; // 收起态的小型干笔墨签，避免“展开”文字悬空。
     private Panel? _resultPanel;
     private Label? _resultContent;
     private Button? _nextLevelButton; // V-9：胜利结算面板「进入下一关」（存在已解锁下一关才显示）
@@ -70,6 +71,8 @@ public partial class NavalLevelPlayController : CanvasLayer
         if (_hintNext is not null) { InkWashTheme.StyleHudButton(_hintNext); _hintNext.FocusMode = Control.FocusModeEnum.None; _hintNext.Pressed += OnHintNext; }
         // U-1：提示条底板不挡地图点击；旧翻页节点隐藏，提示条右侧只保留收起/展开。
         if (_hintBar is not null) InkWashTheme.MakeClickTransparent(_hintBar);
+        _hintCollapsedBackdrop = GetNodeOrNull<TextureRect>("CollapsedHintBackdrop");
+        if (_hintCollapsedBackdrop is not null) _hintCollapsedBackdrop.Visible = false;
         _hintCollapseButton = GetNodeOrNull<Button>("CollapseHintBar");
         if (_hintCollapseButton is not null)
         {
@@ -416,10 +419,13 @@ public partial class NavalLevelPlayController : CanvasLayer
         }
         if (_hintCollapseButton is not null)
             _hintCollapseButton.Text = _hintBarCollapsed ? "展开" : "收起";
+        if (_hintCollapsedBackdrop is not null)
+            _hintCollapsedBackdrop.Visible = _hintBarCollapsed;
     }
 
     public bool HintBarCollapsed() => _hintBarCollapsed;
     public bool HintBarVisible() => _hintBar?.Visible ?? false;
+    public bool CollapsedHintBackdropVisible() => _hintCollapsedBackdrop?.Visible ?? false;
     public bool LevelEnded() => _levelEnded;
     public bool LevelVictory() => _victory;
     public bool LevelResultVisible() => _resultPanel?.Visible ?? false;

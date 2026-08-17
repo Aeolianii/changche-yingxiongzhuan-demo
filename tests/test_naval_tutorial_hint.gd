@@ -30,6 +30,7 @@ func _run() -> void:
 	_expect(is_equal_approx(float(level_play.call("HintBarHeight")), 164.0), "Tutorial brush strip must expand by about 20 percent to 164 px high.")
 	var hint_bar: Control = level_play.get_node("HintBar")
 	var collapse_button: Control = level_play.get_node("CollapseHintBar")
+	var collapsed_backdrop: TextureRect = level_play.get_node("CollapsedHintBackdrop")
 	var hint_title: Control = level_play.get_node("HintBar/Box/Title")
 	var hint_content: Control = level_play.get_node("HintBar/Box/Content")
 	_expect(is_equal_approx(hint_bar.position.y, 90.0), "Tutorial brush must sit directly below the second top HUD line.")
@@ -50,6 +51,7 @@ func _run() -> void:
 	_expect(level_play.call("HintOutlineColor") == "000000", "Tutorial text outline must be pure black.")
 	_expect(not level_play.call("HintPrevVisible") and not level_play.call("HintNextVisible"), "Tutorial hint must not show previous/next controls.")
 	_expect(float(level_play.call("HintTransitionSeconds")) >= 0.4, "Tutorial step transition must configure a visible fade out/in duration.")
+	_expect(not collapsed_backdrop.visible, "Collapsed brush tab must stay hidden while the full tutorial brush is expanded.")
 
 	controller.call("OnShipClicked", "p1")
 	await process_frame
@@ -57,6 +59,14 @@ func _run() -> void:
 	_expect(level_play.call("HintTitleText") == "第二步 · 移动舰船", "Automatic advance must show the second step title.")
 	var second_body := str(level_play.call("HintText"))
 	_expect(second_body.contains("点击目标格移动") and not second_body.contains("下一步"), "Automatic advance must show only the next hint body without next-step feedback copy.")
+
+	level_play.call("ToggleHintBarCollapse")
+	_expect(level_play.call("HintBarCollapsed") and not level_play.call("HintBarVisible"), "Collapsing must hide the full tutorial brush and copy.")
+	_expect(level_play.call("CollapsedHintBackdropVisible") and collapsed_backdrop.visible, "Collapsed state must show a compact dry-brush backdrop behind Expand.")
+	_expect(collapse_button.text == "展开", "Collapsed tutorial control must read Expand.")
+	_expect(collapsed_backdrop.texture.resource_path == "res://assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png", "Collapsed brush tab must reuse the tutorial dry-brush asset.")
+	level_play.call("ToggleHintBarCollapse")
+	_expect(level_play.call("HintBarVisible") and not level_play.call("CollapsedHintBackdropVisible"), "Expanding must restore the full tutorial brush and hide the compact tab.")
 
 	_finish()
 

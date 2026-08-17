@@ -724,6 +724,17 @@ text = "进入下一关"
 custom_minimum_size = Vector2(190, 44)
 text = "返回关卡选择"
 
+[node name="CollapsedHintBackdrop" type="TextureRect" parent="LevelPlay"]
+visible = false
+offset_left = 842.0
+offset_top = 99.0
+offset_right = 1022.0
+offset_bottom = 155.0
+mouse_filter = 2
+texture = ExtResource("14_tutorial_brush")
+expand_mode = 1
+stretch_mode = 0
+
 [node name="CollapseHintBar" type="Button" parent="LevelPlay"]
 offset_left = 932.0
 offset_top = 105.0

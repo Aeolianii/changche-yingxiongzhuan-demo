@@ -165,7 +165,7 @@ public partial class NavalHud : CanvasLayer
     private Panel SurrenderPanel => _surrenderPanel ??= GetNode<Panel>("SurrenderPanel");
     private Texture2D SurrenderBrushTexture => _surrenderBrushTexture ??= GD.Load<Texture2D>("res://assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png");
     private Label SurrenderTitle => _surrenderTitle ??= GetNode<Label>("SurrenderPanel/Box/Title");
-    private Label SurrenderCaption => _surrenderCaption ??= GetNode<Label>("SurrenderPanel/Box/Caption");
+    private Label SurrenderCaption => _surrenderCaption ??= GetNode<Label>("SurrenderPanel/Box/CaptionMargin/Caption");
     private Button AcceptSurrenderButton => _btnAcceptSurrender ??= GetNode<Button>("SurrenderPanel/Box/Buttons/AcceptSurrender");
     private Button RejectSurrenderButton => _btnRejectSurrender ??= GetNode<Button>("SurrenderPanel/Box/Buttons/RejectSurrender");
     private Button OfferSurrenderButton => _btnOfferSurrender ??= GetNode<Button>("SurrenderPanel/Box/Buttons/OfferSurrender");

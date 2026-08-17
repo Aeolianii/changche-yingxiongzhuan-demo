@@ -145,6 +145,10 @@ func _init() -> void:
 		push_error("FAIL: every sampled random map must keep deep-water escape cells even when the legacy IncludeExits flag is false")
 		quit(1)
 		return
+	if not deploy.OneSidedExitMapRebalancesAcrossBothEdges():
+		push_error("FAIL: legacy maps with exits only on one side must be rebalanced across both edges")
+		quit(1)
+		return
 	var escape_setup_error: String = deploy.PlaceShip("p1", 3, 17, "east")
 	if escape_setup_error != "":
 		push_error("FAIL: could not place flagship near escape cells: %s" % escape_setup_error)

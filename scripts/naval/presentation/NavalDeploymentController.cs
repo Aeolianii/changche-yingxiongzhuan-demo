@@ -679,8 +679,25 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             var spec = generator.Generate(options).Spec;
             if (spec.ExitCells.Count != ExitCellRules.RecommendedCount(spec.Width, spec.Height)) return false;
             if (spec.ExitCells.Any(cell => spec.TerrainAt(cell.X, cell.Y) != TerrainType.DeepWater)) return false;
+            if (!spec.ExitCells.Any(cell => cell.X == 0)
+                || !spec.ExitCells.Any(cell => cell.X == spec.Width - 1)) return false;
         }
         return true;
+    }
+
+    public bool OneSidedExitMapRebalancesAcrossBothEdges()
+    {
+        var map = new BattleMap(16, 10);
+        for (var y = 0; y < map.Height; y++) map.ExitCells.Add(new GridPos(map.Width - 1, y));
+
+        ExitCellRules.EnsureSafeExits(map);
+
+        var target = ExitCellRules.RecommendedCount(map.Width, map.Height);
+        var leftQuota = target / 2;
+        var rightQuota = target - leftQuota;
+        return map.ExitCells.Count == target
+               && map.ExitCells.Count(cell => cell.X == 0) == leftQuota
+               && map.ExitCells.Count(cell => cell.X == map.Width - 1) == rightQuota;
     }
 
     // 只读状态访问（供 headless 布阵冒烟断言闭环）：Bow/Facing；Facing 索引 0=N 1=E 2=S 3=W

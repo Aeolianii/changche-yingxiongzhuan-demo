@@ -43,6 +43,10 @@ func _init() -> void:
 		push_error("FAIL: naval fog must load the generated light pixel ink-mist component")
 		quit(1)
 		return
+	if not grid.EscapeCellTextureLoaded():
+		push_error("FAIL: naval escape cells must load the generated green footprint component")
+		quit(1)
+		return
 	# 布阵控制器自 ships.json 装配双方各 4 舰
 	if deploy.PlayerShipCount() != 4 or deploy.EnemyShipCount() != 4:
 		push_error("FAIL: deployment fleet not built (player=%d enemy=%d)" % [deploy.PlayerShipCount(), deploy.EnemyShipCount()])
@@ -123,6 +127,22 @@ func _init() -> void:
 			push_error("FAIL: deployment title style wrong: %s" % title_path)
 			quit(1)
 			return
+	# 逃跑格必须每图存在且缩成左右各一组双格；把旗舰放到左出口两步内，验证鼠标点脚印可直接逃跑。
+	if deploy.ExitCellCount() != 4 or not deploy.IsExitCell(0, 17) or not deploy.IsExitCell(0, 18) \
+			or not deploy.IsExitCell(47, 17) or not deploy.IsExitCell(47, 18):
+		push_error("FAIL: free map must expose two safe paired escape cells on each side")
+		quit(1)
+		return
+	if not deploy.RandomMapsAlwaysHaveSafeExits(36):
+		push_error("FAIL: every sampled random map must keep deep-water escape cells even when the legacy IncludeExits flag is false")
+		quit(1)
+		return
+	var escape_setup_error: String = deploy.PlaceShip("p1", 3, 17, "east")
+	if escape_setup_error != "":
+		push_error("FAIL: could not place flagship near escape cells: %s" % escape_setup_error)
+		quit(1)
+		return
+	expected_flagship_camera = Vector2(deploy.ShipStateCenterX("p1"), deploy.ShipStateCenterY("p1"))
 	# 控制器能经布阵确认构建种子战斗
 	var err: String = deploy.ConfirmDeployment()
 	if err != "":
@@ -170,6 +190,12 @@ func _init() -> void:
 		return
 	if not controller.OnRightClick() or controller.LastMessage() != "":
 		push_error("FAIL: player deselect should clear the second battle header line")
+		quit(1)
+		return
+	controller.OnShipClicked("p1")
+	controller.OnGridClicked(controller.CellToWorld(0, 17))
+	if controller.ShipHitPoints("p1") != -1:
+		push_error("FAIL: clicking a footprint escape cell must route the ship to it and trigger escape")
 		quit(1)
 		return
 	# T13/UX-7：行动面板按钮全部存在（场景接线完成）；普攻区含 箭雨/砲击/火炮/撞击/接舷

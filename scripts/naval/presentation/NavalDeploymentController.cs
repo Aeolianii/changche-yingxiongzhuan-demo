@@ -104,6 +104,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         _grid = GetNode<NavalGridView>("DeployGrid");
         _grid.ClickReceiver = this;
         _grid.Attach(_battle);
+        ShowLevelObjectiveHighlight();
         _shipsRoot = GetNode<Node2D>("DeployShips");
         _statusLabel = GetNode<Label>("DeployHud/StatusLabel");
         _messageLabel = GetNode<Label>("DeployHud/MessageLabel");
@@ -140,6 +141,8 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         if (_fleetToggleButton is not null) _fleetToggleButton.Pressed += FleetToggleFromButton;
         if (_level is null) BuildDefaultLineups();
         BuildFleet(); // L-3：关卡模式经 BuildFleet 内分支按 LevelDefinition 装配（下方）；自由模式沿用默认阵型
+        ExitCellRules.EnsureSafeExits(_battle.Map, _battle.Ships.Values.SelectMany(s => s.OccupiedCells()));
+        _grid.QueueRedraw();
         // GridView Attach 早于舰队装配；舰船齐备后把镜头移到已指定指挥舰，未指定时随机落在我方舰上。
         _grid.FocusCameraOnPlayerFleet();
         // 布阵区：关卡模式按玩家舰队初始位置计算；随机遭遇模式直接用遭遇的玩家/敌区。
@@ -255,13 +258,6 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         map.SetTerrain(new GridPos(11, 16), TerrainType.Reef);
         map.SetTerrain(new GridPos(23, 30), TerrainType.Reef);
         map.SetTerrain(new GridPos(40, 18), TerrainType.Reef);
-        // F-2：地图出口边界（设计 16.1）——左右最外列（x=0 与 x=47 整列）为出口格，任一方"开到边缘即逃"。
-        // 布阵区域（玩家 x[1,23)、敌 x[26,47)）不含出口列 → 出口必须"开"到边缘才能触达，直观。
-        for (var y = 0; y < 36; y++)
-        {
-            map.ExitCells.Add(new GridPos(0, y));
-            map.ExitCells.Add(new GridPos(47, y));
-        }
         return map;
     }
 
@@ -324,6 +320,14 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                 map.SetTerrain(new GridPos(x, y), spec.TerrainAt(x, y));
         foreach (var exit in spec.ExitCells) map.ExitCells.Add(exit);
         return map;
+    }
+
+    private void ShowLevelObjectiveHighlight()
+    {
+        if (_level?.Objective.TargetCell is { } target)
+            _grid.ShowPersistentHighlights(new[] { (target, $"{target.X},{target.Y}") });
+        else
+            _grid.ClearPersistentHighlights();
     }
 
     // L-3：关卡是否需人工布阵（Hints 含 布阵/装备/确认布阵/开始战斗 关键词）→ 否则自动开始战斗（1-1 直入战斗）。
@@ -619,6 +623,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             var err = ValidatePlacement(ship, ship.Bow, ship.Facing);
             if (err is not null) return err;
         }
+        ExitCellRules.EnsureSafeExits(_battle.Map, _battle.Ships.Values.SelectMany(s => s.OccupiedCells()));
         // L-3：关卡模式固定天气/风向（LevelDefinition，跳过 RollStartWeather）；空舰队阵营不登记指挥舰。
         if (_battle.Ships.Values.Any(s => s.Faction == FactionId.Player))
             _battle.Flagships[FactionId.Player] = PlayerFlagship();
@@ -665,6 +670,18 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     // F-2：出口格只读（headless 冒烟断言"地图有出口边界"）。
     public int ExitCellCount() => _battle?.Map.ExitCells.Count ?? 0;
     public bool IsExitCell(int x, int y) => _battle?.Map.ExitCells.Contains(new GridPos(x, y)) ?? false;
+    public bool RandomMapsAlwaysHaveSafeExits(int sampleCount = 24)
+    {
+        var generator = new RandomMapGenerator();
+        for (var seed = 0; seed < Math.Max(1, sampleCount); seed++)
+        {
+            var options = new RandomMapOptions(24, 18, seed % 3 + 1, seed, IncludeExits: false);
+            var spec = generator.Generate(options).Spec;
+            if (spec.ExitCells.Count == 0) return false;
+            if (spec.ExitCells.Any(cell => spec.TerrainAt(cell.X, cell.Y) != TerrainType.DeepWater)) return false;
+        }
+        return true;
+    }
 
     // 只读状态访问（供 headless 布阵冒烟断言闭环）：Bow/Facing；Facing 索引 0=N 1=E 2=S 3=W
     public int BowX(string shipId) => _battle.ShipOrNull(shipId)?.Bow.X ?? -1;
@@ -1363,8 +1380,11 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         _shipViews.Clear();
         _battle = _encounter is not null ? BuildBattleForEncounter(_encounter) : BuildBattle();
         _grid.Attach(_battle);
+        ShowLevelObjectiveHighlight();
         BuildDefaultLineups();
         BuildFleet();
+        ExitCellRules.EnsureSafeExits(_battle.Map, _battle.Ships.Values.SelectMany(s => s.OccupiedCells()));
+        _grid.QueueRedraw();
         _grid.FocusCameraOnPlayerFleet();
         if (_level is not null) ComputeLevelPlayerZone();
         else if (_encounter is not null)

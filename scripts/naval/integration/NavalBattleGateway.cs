@@ -64,6 +64,7 @@ public sealed class NavalBattleGateway
             battle.FactionsEverDeployed.Add(faction);
             if (req.IsFlagship) battle.Flagships[faction] = req.Id;
         }
+        ExitCellRules.EnsureSafeExits(battle.Map, battle.Ships.Values.SelectMany(s => s.OccupiedCells()));
 
         // 技能：先按舰型布局默认播种（与布阵 ConfirmDeployment 一致），请求显式携带的技能覆盖默认。
         SkillSeeding.Seed(battle);

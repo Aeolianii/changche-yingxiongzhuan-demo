@@ -57,12 +57,15 @@ public partial class NavalGridView : Node2D
     private readonly List<(GridPos Cell, Color Color, bool Solid)> _cellOverlays = new();
     // 待定战术（撞击/接舷）目标舰 id 高亮。
     private readonly HashSet<string> _highlightShipIds = new();
+    // 关卡特殊目标格常驻高亮：独立于选船/移动/攻击临时覆盖，ClearOverlay 不会清除。
+    private readonly Dictionary<GridPos, string> _persistentHighlights = new();
     // 瞬态特效：撞击方向箭头 + 水雷爆炸圈（_Process 按年龄淡出，不随 ClearOverlay 清除）。
     private (Vector2 From, Vector2 To, float Age)? _ramLine;
     private readonly List<(GridPos Cell, float Age)> _explosions = new();
     // F-6：战争迷雾——当前视野内格集合（玩家阵营观测）。null=未初始化（布阵/未开始战斗，不画迷雾）。
     private HashSet<GridPos>? _fogVisible;
     private Texture2D? _fogMistTexture;
+    private Texture2D? _escapeCellTexture;
     private static readonly Color FogMistFallback = new(0.84f, 0.91f, 0.90f, 0.16f);
     private static readonly Color FogMistTextureTint = new(0.96f, 0.98f, 0.96f, 0.38f);
 
@@ -80,6 +83,7 @@ public partial class NavalGridView : Node2D
         _camera = GetTree().GetFirstNodeInGroup("naval_camera") as Camera2D;
         _seaTexture = GD.Load<Texture2D>("res://assets/naval/battle/sea_ink_pixel.png");
         _fogMistTexture = GD.Load<Texture2D>("res://assets/naval/ui/fog/white_ink_mist_v1.png");
+        _escapeCellTexture = GD.Load<Texture2D>("res://assets/naval/ui/escape/escape_footprints_tile_v1.png");
         CreateAnimatedSeaSurface();
         LoadTerrainTextures("reef", _reefTextures);
         LoadTerrainTextures("coral", _coralTextures);
@@ -489,6 +493,24 @@ public partial class NavalGridView : Node2D
         QueueRedraw();
     }
 
+    public void ShowPersistentHighlights(IEnumerable<(GridPos Cell, string Label)> highlights)
+    {
+        _persistentHighlights.Clear();
+        foreach (var (cell, label) in highlights)
+            if (_battle?.Map.InBounds(cell) == true)
+                _persistentHighlights[cell] = label;
+        QueueRedraw();
+    }
+
+    public void ClearPersistentHighlights()
+    {
+        _persistentHighlights.Clear();
+        QueueRedraw();
+    }
+
+    public int PersistentHighlightCount() => _persistentHighlights.Count;
+    public bool PersistentHighlightContains(int x, int y) => _persistentHighlights.ContainsKey(new GridPos(x, y));
+
     // 撞击方向箭头（瞬态，_Process 淡出）。
     public void ShowRamArrow(Vector2 fromWorld, Vector2 toWorld)
     {
@@ -537,6 +559,7 @@ public partial class NavalGridView : Node2D
     // F-6：格当前是否在视野内（headless 冒烟断言用；无迷雾数据=未初始化，默认全部可见）。
     public bool FogCellVisible(int x, int y) => _fogVisible is null || _fogVisible.Contains(new GridPos(x, y));
     public bool FogMistTextureLoaded() => _fogMistTexture is not null;
+    public bool EscapeCellTextureLoaded() => _escapeCellTexture is not null;
     public bool FogUsesLightInkStyle()
         => FogMistFallback.R > 0.75f && FogMistFallback.G > 0.75f && FogMistFallback.B > 0.75f
             && FogMistFallback.A < 0.35f;
@@ -591,8 +614,17 @@ public partial class NavalGridView : Node2D
         // 出口标记（地图边界提示）与已揭示水雷（规则层揭示机制）保留叠在迷雾之上；舰船视图在独立 Node2D 上，
         // 己方舰与可见敌舰在视野内无迷雾，隐藏敌舰视图不可见自然被迷雾盖住。
         DrawFog();
-        // F-2：地图出口边界标记（设计 16.1）——出口格暖沙底色 + 边框 + 指向外侧的方向箭头。
+        // F-2：绿色双脚印逃跑格常驻显示在迷雾之上。
         DrawExitCells(map);
+        // 坐标目标绘制在迷雾与出口之上；金边、青绿底与坐标标签共同指明玩家要抵达的精确格。
+        foreach (var (cell, label) in _persistentHighlights)
+        {
+            var rect = CellFaceRect(cell).Grow(-1f);
+            var gold = new Color(0.96f, 0.76f, 0.20f, 0.96f);
+            DrawRect(rect, new Color(0.20f, 0.78f, 0.60f, 0.42f));
+            DrawRect(rect, gold, false, 3f);
+            DrawTextAt(rect.GetCenter() + new Vector2(-10f, 4f), label, new Color(1f, 0.94f, 0.72f, 1f), 10);
+        }
         // 2.5D 舰船阴影由 NavalShipView 按素材实际水线绘制；这里不再使用占格矩形代替船影。
         // 移动范围水墨半透明高亮
         foreach (var cell in _moveRange)
@@ -697,33 +729,25 @@ public partial class NavalGridView : Node2D
         return count;
     }
 
-    // F-2：地图出口边界标记（设计 16.1）——出口格：暖沙底色 + 边框高亮 + 指向地图外侧的方向箭头；
-    // 每列中部一格加「出口」文字标签。提示"开到边缘即逃"。
+    // F-2：逃跑格采用青绿色像素水墨底 + 双脚印，直接贴合单格；不再使用整列箭头与「出口」文字。
     private void DrawExitCells(BattleMap map)
     {
         if (map.ExitCells.Count == 0) return;
-        var midY = map.Height / 2;
         foreach (var c in map.ExitCells)
         {
             var rect = CellFaceRect(c);
-            DrawRect(rect, new Color(0.82f, 0.70f, 0.42f, 0.20f));
-            DrawRect(rect, new Color(0.62f, 0.48f, 0.22f, 0.55f), false, 2f);
-            // 箭头指向地图外侧：x=0 列朝左、其余（右边缘）朝右。
-            var dir = c.X <= 0 ? new Vector2(-1, 0) : new Vector2(1, 0);
-            var center = rect.GetCenter();
-            var head = center + dir * CellSize * 0.28f;
-            var tail = center - dir * CellSize * 0.18f;
-            var perp = new Vector2(-dir.Y, dir.X);
-            var ink = new Color(0.55f, 0.42f, 0.18f, 0.85f);
-            DrawLine(tail, head, ink, 3f);
-            DrawColoredPolygon(new[]
+            if (_escapeCellTexture is not null)
             {
-                head,
-                head - dir * 8f + perp * 6f,
-                head - dir * 8f - perp * 6f,
-            }, ink);
-            if (c.Y == midY)
-                DrawTextAt(center + new Vector2(-8, -CellSize * 0.42f), "出口", new Color(0.50f, 0.36f, 0.12f, 0.95f), 13);
+                DrawTextureRect(_escapeCellTexture, rect, false);
+                continue;
+            }
+
+            // 素材加载失败时仍给出清晰的绿色双脚印标识。
+            DrawRect(rect, new Color(0.25f, 0.62f, 0.30f, 0.88f));
+            var center = rect.GetCenter();
+            var ink = new Color(0.10f, 0.19f, 0.13f, 0.92f);
+            DrawCircle(center + new Vector2(-4f, -4f), 4.2f, ink);
+            DrawCircle(center + new Vector2(4f, 4f), 4.2f, ink);
         }
     }
 

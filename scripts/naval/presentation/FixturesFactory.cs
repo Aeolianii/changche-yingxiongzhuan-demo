@@ -1,5 +1,6 @@
 #nullable enable
 using NavalCombat.Core;
+using System.Linq;
 
 namespace NanjiangNaval;
 
@@ -26,13 +27,6 @@ public static class FixturesFactory
         map.SetTerrain(new GridPos(11, 16), TerrainType.Reef);
         map.SetTerrain(new GridPos(23, 30), TerrainType.Reef);
         map.SetTerrain(new GridPos(40, 18), TerrainType.Reef);
-        // F-2：地图出口边界（设计 16.1）——左右最外列（x=0 与 x=47 整列）为出口格（与 NavalDeploymentController.BuildMap 保持一致）。
-        for (var y = 0; y < 36; y++)
-        {
-            map.ExitCells.Add(new GridPos(0, y));
-            map.ExitCells.Add(new GridPos(47, y));
-        }
-
         var battle = new BattleState { Map = map, Config = NavalRulesConfig.Default(), Random = new SeedRandomSource(1) };
 
         AddShip(battle, "p1", Flagship(), FactionId.Player, new GridPos(21, 6), CardinalDirection.East);
@@ -43,6 +37,7 @@ public static class FixturesFactory
         AddShip(battle, "e2", Frigate(), FactionId.Enemy, new GridPos(26, 13), CardinalDirection.West);
         AddShip(battle, "e3", Frigate(), FactionId.Enemy, new GridPos(30, 22), CardinalDirection.West);
         AddShip(battle, "e4", Transport(), FactionId.Enemy, new GridPos(26, 26), CardinalDirection.West);
+        ExitCellRules.EnsureSafeExits(map, battle.Ships.Values.SelectMany(s => s.OccupiedCells()));
         return battle;
     }
 

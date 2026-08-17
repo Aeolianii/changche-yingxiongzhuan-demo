@@ -138,6 +138,11 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         _battle = battle;
         _grid.Attach(_battle);
         _grid.ClearOverlay();
+        var level = LevelRegistry.GetById(LevelSession.PendingLevelId);
+        if (level is not null && level.Id != "free" && level.Objective.TargetCell is { } target)
+            _grid.ShowPersistentHighlights(new[] { (target, $"{target.X},{target.Y}") });
+        else
+            _grid.ClearPersistentHighlights();
         SpawnShipViews();
         // V-3（CHG-20260810-fx-vision-recall）：战斗开始种子化视野滞留——初始阵型视野足迹置新鲜度 0。
         // 否则首回合开过的足迹在首次完整回合边界即瞬间归雾（AdvanceVisionRecall 只在玩家回合开始推进）。
@@ -240,6 +245,13 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             && _selectedShip is not null && _grid.AttackTargetOverlayContains(cell))
         {
             TryWeaponAttack(_pendingWeapon ?? "arrow_rain", cell); // UX-7：点哪个攻击方式发哪个命令
+            return;
+        }
+        // F-2：逃跑格是舰体触碰判定，并不一定是多格舰的船头目标，故它通常不在普通船头移动覆盖中。
+        // 鼠标点脚印格时，把它换算成“移动后任一舰体格触碰该出口”的最近可达船头，再复用区域移动路径。
+        if (_selectedShip is not null && _mode == InteractionMode.Move && _battle.Map.ExitCells.Contains(cell))
+        {
+            TryMoveToExit(cell);
             return;
         }
         // 点舰船格 → 选中该舰
@@ -1172,6 +1184,38 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         _hud.SetMessage($"第 {_battle.Round} 回合 · 敌方回合");
     }
 
+    private void TryMoveToExit(GridPos exitCell)
+    {
+        var ship = SelectedOwnedShip();
+        if (ship is null) return;
+        var direction = ship.Facing.Vector();
+        GridPos? bestTarget = null;
+        var bestSteps = int.MaxValue;
+
+        // 船头向后第 i 格落在出口时，船头应位于 exit + facing * i。
+        for (var i = 0; i < ship.Length; i++)
+        {
+            var bowTarget = exitCell + direction * i;
+            var footprint = Enumerable.Range(0, ship.Length)
+                .Select(segment => bowTarget - direction * segment)
+                .ToList();
+            if (!MovementRules.FootprintValid(_battle, footprint, ship)) continue;
+            var path = ActionResolver.QueryMovePath(_battle, ship, bowTarget);
+            var steps = path.Count > 0 ? path.Count - 1 : int.MaxValue;
+            if (steps <= 0 || steps > ship.RemainingMovement) continue;
+            if (steps >= bestSteps) continue;
+            bestSteps = steps;
+            bestTarget = bowTarget;
+        }
+
+        if (bestTarget is { } target)
+        {
+            MoveAreaTo(target);
+            return;
+        }
+        _hud.SetMessage($"{ship.Definition.DisplayName} 本回合无法抵达该逃跑格");
+    }
+
     // 敌方行动结束后主动把控制权交到一艘可指挥的我方舰上。
     // 优先指挥舰；若指挥舰已沉没/自沉，则选择第一艘仍可正常机动的存活舰。
     private ShipState? AutoSelectPlayerShipAtTurnStart()
@@ -1501,6 +1545,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         // 按移动/转向/击沉事件推进教学提示、评估目标（达成/超回合即时收尾）、刷新目标条+提示条。
         // 敌方 AI 命令（command=null）只评估目标（回合/存活类），不计入玩家目标计数。
         _levelPlay?.PostEvents(_battle, events, command);
+        if (_battle.BattleEnded) _grid.ClearPersistentHighlights();
     }
 
     // ---- T16 战斗结束闭环（BattleEnded → 结果 → 免费维修 → 返回 Demo 入口） ----
@@ -1511,6 +1556,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     {
         if (_result is not null) return;
         _grid.ClearOverlay();
+        _grid.ClearPersistentHighlights();
         _hud.HidePanel();
         _hud.HideSurrenderPanel(); // F-3：战斗结束 → 投降交涉面板不再有意义
         _hud.HideDeliveryPanel(); // F-7c：战斗结束 → 交付选舰面板不再有意义

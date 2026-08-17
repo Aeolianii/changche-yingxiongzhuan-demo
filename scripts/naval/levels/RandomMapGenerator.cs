@@ -8,7 +8,7 @@ namespace NavalCombat.Levels;
 
 // R-1 随机地图生成器（纯 C#，无 Godot 依赖）：以深水为主生成可玩的随机战斗地图。
 // 按难度放置少量山地/岛屿簇（不可通行）、几处浅滩与几处礁石（可通行但减速/损血）；
-// 左右各留一个布阵区（恒为深水 → 舰队恒可放置）；可选左右出口列（语义同 BuildMap 出口边界）。
+// 左右各留一个布阵区（恒为深水 → 舰队恒可放置）；每张地图左右各生成一组相邻双格逃跑区。
 //
 // 可玩性保障（连通性）：地形放完后做 BFS 连通性检查（玩家区中心 → 敌区中心，可通行格=非山地）。
 // 不连通则整图重生成重试（同一种子随机序列推进，可复现）；至多 MaxAttempts 次后兜底纯深水图
@@ -53,6 +53,7 @@ public sealed class RandomMapGenerator
             for (var y = 0; y < spec.Height; y++)
                 map.SetTerrain(new GridPos(x, y), spec.TerrainAt(x, y));
         foreach (var exit in spec.ExitCells) map.ExitCells.Add(exit);
+        ExitCellRules.EnsureSafeExits(map);
         return map;
     }
 
@@ -123,12 +124,16 @@ public sealed class RandomMapGenerator
             for (var x = 0; x < o.Width; x++)
                 grid[x, y] = '.'; // 深水底
 
-        // 特征可放格：界内、深水、不在布阵区、不在出口列（出口列保留给出口）。
+        var exitY = Math.Max(0, (o.Height - 2) / 2);
+        bool IsReservedExit(int x, int y)
+            => (x == 0 || x == o.Width - 1) && (y == exitY || y == exitY + 1);
+
+        // 特征可放格：界内、深水、不在布阵区，也不占用两侧双格逃跑区。
         bool AllowFeature(int x, int y)
             => x >= 0 && x < o.Width && y >= 0 && y < o.Height
                && grid[x, y] == '.'
                && !playerZone.Contains(x, y) && !enemyZone.Contains(x, y)
-               && !(o.IncludeExits && (x == 0 || x == o.Width - 1));
+               && !IsReservedExit(x, y);
 
         // 山地/岛屿簇：diff1 1-2 簇、diff2 2-3 簇、diff3 3-4 簇；每簇中心 + 0-2 随机邻居（1-3 格）。
         var clusterCount = o.Difficulty switch
@@ -157,13 +162,12 @@ public sealed class RandomMapGenerator
         PlaceScattered(o, rng, grid, AllowFeature, '~', rng.NextInt(2, 5));
         PlaceScattered(o, rng, grid, AllowFeature, '#', rng.NextInt(1, 4));
 
-        // 出口列（可选）：左右最外列整列为 'E'（地形=深水 + 记入 ExitCells）。
-        if (o.IncludeExits)
-            for (var y = 0; y < o.Height; y++)
-            {
-                grid[0, y] = 'E';
-                grid[o.Width - 1, y] = 'E';
-            }
+        // 每张随机地图强制生成左右各一组双格出口；旧 IncludeExits 参数仅保留调用兼容性。
+        for (var y = exitY; y <= exitY + 1; y++)
+        {
+            grid[0, y] = 'E';
+            grid[o.Width - 1, y] = 'E';
+        }
 
         var rows = new string[o.Height];
         for (var y = 0; y < o.Height; y++)
@@ -199,16 +203,17 @@ public sealed class RandomMapGenerator
     private static string[] AllDeepRows(RandomMapOptions o)
     {
         var rows = new string[o.Height];
+        var exitY = Math.Max(0, (o.Height - 2) / 2);
         for (var y = 0; y < o.Height; y++)
-            rows[y] = new string(o.IncludeExits
-                ? Enumerable.Range(0, o.Width).Select(x => x == 0 || x == o.Width - 1 ? 'E' : '.').ToArray()
-                : Enumerable.Repeat('.', o.Width).ToArray());
+            rows[y] = new string(Enumerable.Range(0, o.Width)
+                .Select(x => (x == 0 || x == o.Width - 1) && (y == exitY || y == exitY + 1) ? 'E' : '.')
+                .ToArray());
         return rows;
     }
 }
 
 // R-1 随机地图参数。Width/Height 尺寸（默认 24×18）；Difficulty 1-3（地形密度）；Seed 种子（可复现）；
-// IncludeExits 是否生成左右出口列。
+// IncludeExits 为旧接口兼容字段；当前规则要求所有地图始终生成逃跑格，因此 false 也不会关闭出口。
 public sealed record RandomMapOptions(
     int Width = 24,
     int Height = 18,

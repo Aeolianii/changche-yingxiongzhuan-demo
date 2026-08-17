@@ -23,8 +23,10 @@ func _run() -> void:
 	var demo := current_scene
 	var level_play := demo.get_node_or_null("LevelPlay")
 	var controller := demo.get_node_or_null("Battle/BattleController")
+	var grid := demo.get_node_or_null("Battle/GridView")
 	var hud := demo.get_node_or_null("Battle/Hud")
 	_expect(level_play != null and level_play.call("LevelMode"), "Tutorial hint layer must be active in level 1-1.")
+	_expect(grid != null and int(grid.call("PersistentHighlightCount")) == 1 and grid.call("PersistentHighlightContains", 8, 4), "Tutorial coordinate target (8,4) must remain visibly highlighted on the battle grid.")
 	_expect(level_play.get_node_or_null("ObjectiveBar") == null, "Tutorial overlay must not keep the rectangular objective card.")
 	_expect(level_play.call("HintUsesBrushTexture"), "Tutorial hint must use the generated dry-brush texture.")
 	_expect(is_equal_approx(float(level_play.call("HintBarWidth")), 720.0), "Tutorial brush strip must expand by 20 percent to 720 px wide.")
@@ -56,6 +58,7 @@ func _run() -> void:
 
 	controller.call("OnShipClicked", "p1")
 	await process_frame
+	_expect(int(grid.call("PersistentHighlightCount")) == 1 and grid.call("PersistentHighlightContains", 8, 4), "Selecting a ship and showing move range must not clear the persistent target highlight.")
 	_expect(int(level_play.call("HintIndex")) == 1, "Selecting the tutorial ship must automatically advance the hint index.")
 	_expect(level_play.call("HintTitleText") == "第二步 · 移动舰船", "Automatic advance must show the second step title.")
 	var second_body := str(level_play.call("HintText"))

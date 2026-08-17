@@ -52,6 +52,7 @@ public partial class NavalHud : CanvasLayer
     private Button? _btnReroll; // U-2c：随机遭遇「重掷换一场」按钮（仅结算面板出现）
     // F-3：投降交涉面板（顶栏下方独立面板）——接受/拒绝敌方劝降 + 我方发起劝降。
     private Panel? _surrenderPanel;
+    private Label? _surrenderTitle;
     private Label? _surrenderCaption;
     private Button? _btnAcceptSurrender, _btnRejectSurrender, _btnOfferSurrender;
     // F-7c：交付舰选择面板（金币不足时接受劝降弹出）——动态 CheckBox 列表 + 确认/取消。
@@ -161,6 +162,7 @@ public partial class NavalHud : CanvasLayer
     private Label TopLeftContent => _topLeftContent ??= GetNode<Label>("TopBarLeft/Box/Content");
     // F-3：投降交涉面板节点。
     private Panel SurrenderPanel => _surrenderPanel ??= GetNode<Panel>("SurrenderPanel");
+    private Label SurrenderTitle => _surrenderTitle ??= GetNode<Label>("SurrenderPanel/Box/Title");
     private Label SurrenderCaption => _surrenderCaption ??= GetNode<Label>("SurrenderPanel/Box/Caption");
     private Button AcceptSurrenderButton => _btnAcceptSurrender ??= GetNode<Button>("SurrenderPanel/Box/Buttons/AcceptSurrender");
     private Button RejectSurrenderButton => _btnRejectSurrender ??= GetNode<Button>("SurrenderPanel/Box/Buttons/RejectSurrender");
@@ -240,9 +242,12 @@ public partial class NavalHud : CanvasLayer
         ActionPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
         ShipStatusPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
         ResultPanel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
-        // F-3：投降交涉面板同纸卡片风格。
-        SurrenderPanel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
-        StyleText(SurrenderCaption, 14, InkWashTheme.Ochre);
+        // F-3：劝降交涉改用生成式破边军情牒文，程序只叠加可靠文字与印章色决策按钮。
+        SurrenderPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
+        StyleText(SurrenderTitle, 20, new Color("b8863b"));
+        SurrenderTitle.AddThemeColorOverride("font_outline_color", InkWashTheme.InkDeep);
+        SurrenderTitle.AddThemeConstantOverride("outline_size", 3);
+        StyleText(SurrenderCaption, 16, InkWashTheme.BrownText);
         // F-7c：交付舰选择面板同纸卡片风格。
         DeliveryPanel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
         StyleText(DeliveryCaption, 14, InkWashTheme.Ochre);
@@ -290,8 +295,9 @@ public partial class NavalHud : CanvasLayer
             StyleCommandTokenButton(button, TurnTokenTexture);
         foreach (var button in new[] { SelfSinkButton, EndTurnButton })
             StyleCommandTokenButton(button, EndTokenTexture);
-        foreach (var node in SurrenderPanel.FindChildren("*", "Button", true, false))
-            if (node is Button b) StylePanelButton(b);
+        StyleSurrenderButton(AcceptSurrenderButton, primary: true);
+        StyleSurrenderButton(RejectSurrenderButton, primary: false);
+        StyleSurrenderButton(OfferSurrenderButton, primary: true);
         foreach (var node in DeliveryPanel.FindChildren("*", "Button", true, false))
             if (node is Button b) StylePanelButton(b);
         StylePanelButton(NewGameButton);
@@ -609,6 +615,45 @@ public partial class NavalHud : CanvasLayer
         _attackPage = 0;
     }
 
+    private static void StyleSurrenderButton(Button button, bool primary)
+    {
+        var baseColor = primary ? new Color("74352d") : new Color("36443d");
+        var borderColor = primary ? new Color("9b5140") : InkWashTheme.InkDeep;
+        button.AddThemeStyleboxOverride("normal", SurrenderButtonStyle(baseColor, borderColor));
+        button.AddThemeStyleboxOverride("hover", SurrenderButtonStyle(baseColor.Lightened(0.14f), InkWashTheme.Khaki));
+        button.AddThemeStyleboxOverride("pressed", SurrenderButtonStyle(baseColor.Darkened(0.16f), InkWashTheme.InkDeep));
+        button.AddThemeStyleboxOverride("disabled", SurrenderButtonStyle(new Color(InkWashTheme.InkFaded, 0.62f), InkWashTheme.InkFaded));
+        button.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        button.AddThemeFontOverride("font", InkWashTheme.Font());
+        button.AddThemeFontSizeOverride("font_size", 16);
+        button.AddThemeColorOverride("font_color", InkWashTheme.PaperLight);
+        button.AddThemeColorOverride("font_hover_color", Colors.White);
+        button.AddThemeColorOverride("font_pressed_color", InkWashTheme.PaperLight);
+        button.AddThemeColorOverride("font_disabled_color", new Color(InkWashTheme.PaperLight, 0.58f));
+        button.AddThemeColorOverride("font_outline_color", InkWashTheme.InkDeep);
+        button.AddThemeConstantOverride("outline_size", 2);
+        button.FocusMode = Control.FocusModeEnum.None;
+        button.MouseDefaultCursorShape = Control.CursorShape.PointingHand;
+    }
+
+    private static StyleBoxFlat SurrenderButtonStyle(Color background, Color border)
+        => new()
+        {
+            BgColor = background,
+            BorderColor = border,
+            BorderWidthLeft = 2,
+            BorderWidthTop = 2,
+            BorderWidthRight = 2,
+            BorderWidthBottom = 2,
+            CornerRadiusTopLeft = 2,
+            CornerRadiusTopRight = 2,
+            CornerRadiusBottomLeft = 2,
+            CornerRadiusBottomRight = 2,
+            ShadowColor = new Color(InkWashTheme.InkDeep, 0.35f),
+            ShadowSize = 3,
+            ShadowOffset = new Vector2(0, 2),
+        };
+
     public void ShowShipStatus(BattleState battle, ShipState ship)
     {
         ShipStatusPanel.Visible = true;
@@ -772,7 +817,7 @@ public partial class NavalHud : CanvasLayer
     // 敌方劝降待决（PendingSurrenderFrom==Enemy）：显示 接受投降/拒绝投降 按钮（玩家响应）。
     public void ShowSurrenderButtons()
     {
-        SurrenderCaption.Text = "敌方提议你方投降";
+        SurrenderCaption.Text = "敌方提出停战条件，请决定是否接受";
         AcceptSurrenderButton.Visible = true;
         RejectSurrenderButton.Visible = true;
         SetSurrenderPanelVisible(true);
@@ -789,7 +834,7 @@ public partial class NavalHud : CanvasLayer
     // 我方劝降按钮：enabled=true 显示且启用；enabled=false 显示但禁用（本回合已发起，每回合一次门禁）；无优势时由控制器调 HideSurrenderOffer。
     public void ShowSurrenderOffer(bool enabled)
     {
-        SurrenderCaption.Text = "劝降：要求敌方投降";
+        SurrenderCaption.Text = "我军占据优势，可向敌军发出劝降";
         OfferSurrenderButton.Visible = true;
         OfferSurrenderButton.Disabled = !enabled;
         SetSurrenderPanelVisible(true);
@@ -814,6 +859,14 @@ public partial class NavalHud : CanvasLayer
     public bool OfferSurrenderButtonEnabled() => OfferSurrenderButton.Visible && !OfferSurrenderButton.Disabled;
     public bool AcceptSurrenderButtonVisible() => AcceptSurrenderButton.Visible;
     public bool RejectSurrenderButtonVisible() => RejectSurrenderButton.Visible;
+    public bool SurrenderUsesGeneratedBackdrop()
+        => GetNodeOrNull<TextureRect>("SurrenderPanel/Backdrop")?.Texture?.ResourcePath
+            == "res://assets/naval/ui/surrender/surrender_dispatch_panel_v1.png";
+    public float SurrenderPanelWidth() => SurrenderPanel.Size.X;
+    public float SurrenderPanelHeight() => SurrenderPanel.Size.Y;
+    public string SurrenderTitleText() => SurrenderTitle.Text;
+    public int SurrenderTitleFontSize() => SurrenderTitle.GetThemeFontSize("font_size");
+    public int SurrenderCaptionFontSize() => SurrenderCaption.GetThemeFontSize("font_size");
 
     // ---- 左上角全局摘要：选中舰船时也保持不变，舰船详情由左下角状态区承载 ----
 

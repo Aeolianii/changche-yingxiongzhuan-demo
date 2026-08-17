@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://scripts/naval/presentation/NavalBattleController.cs" id="1_battle"]
 [ext_resource type="Script" path="res://scripts/naval/presentation/NavalGridView.cs" id="2_grid"]
@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" path="res://assets/naval/ui/ship_status/ship_name_brush_v2.png" id="12_name_brush"]
 [ext_resource type="Texture2D" path="res://assets/naval/ui/action_tokens/command_connector_brush.png" id="13_command_connector"]
 [ext_resource type="Texture2D" path="res://assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png" id="14_tutorial_brush"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/surrender/surrender_dispatch_panel_v1.png" id="15_surrender_dispatch"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bar_fill"]
 atlas = ExtResource("9_status_bars")
@@ -161,42 +162,66 @@ vertical_alignment = 1
 
 [node name="SurrenderPanel" type="Panel" parent="Battle/Hud"]
 visible = false
-offset_left = 500.0
-offset_top = 138.0
-offset_right = 844.0
-offset_bottom = 196.0
+offset_left = 442.0
+offset_top = 108.0
+offset_right = 902.0
+offset_bottom = 252.0
 mouse_filter = 2
+
+[node name="Backdrop" type="TextureRect" parent="Battle/Hud/SurrenderPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("15_surrender_dispatch")
+expand_mode = 1
+stretch_mode = 0
 
 [node name="Box" type="VBoxContainer" parent="Battle/Hud/SurrenderPanel"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = 8.0
-offset_right = -12.0
-offset_bottom = -8.0
+offset_left = 58.0
+offset_top = 20.0
+offset_right = -58.0
+offset_bottom = -18.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 2
+
+[node name="Title" type="Label" parent="Battle/Hud/SurrenderPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "劝降交涉"
+horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="Battle/Hud/SurrenderPanel/Box"]
-theme_override_colors/font_color = Color(0.54, 0.35, 0.17, 1)
-theme_override_font_sizes/font_size = 14
-text = "投降交涉"
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "我军占据优势，可向敌军发出劝降"
+horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="Buttons" type="HBoxContainer" parent="Battle/Hud/SurrenderPanel/Box"]
-theme_override_constants/separation = 8
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1
+theme_override_constants/separation = 12
 
 [node name="AcceptSurrender" type="Button" parent="Battle/Hud/SurrenderPanel/Box/Buttons"]
-custom_minimum_size = Vector2(104, 40)
+custom_minimum_size = Vector2(116, 40)
 text = "接受投降"
 
 [node name="RejectSurrender" type="Button" parent="Battle/Hud/SurrenderPanel/Box/Buttons"]
-custom_minimum_size = Vector2(104, 40)
+custom_minimum_size = Vector2(116, 40)
 text = "拒绝投降"
 
 [node name="OfferSurrender" type="Button" parent="Battle/Hud/SurrenderPanel/Box/Buttons"]
-custom_minimum_size = Vector2(104, 40)
+custom_minimum_size = Vector2(116, 40)
 text = "劝降"
 
 [node name="DeliveryPanel" type="Panel" parent="Battle/Hud"]

@@ -249,10 +249,10 @@ public partial class NavalHud : CanvasLayer
         // 左上角固定全局摘要：透明面板上由场景中的像素水墨笔触打底。
         if (GetNodeOrNull<Panel>("TopBarLeft") is { } topLeftPanel)
             topLeftPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
-        StyleText(StatusLabel, 24, InkWashTheme.TextInk);
-        StyleText(MessageLabel, 18, InkWashTheme.BrownText);
-        StyleFloatingText(StatusLabel, 5);
-        StyleFloatingText(MessageLabel, 4);
+        StyleText(StatusLabel, 26, InkWashTheme.TextInk);
+        StyleText(MessageLabel, 20, InkWashTheme.BrownText);
+        StyleFloatingText(StatusLabel, 6);
+        StyleFloatingText(MessageLabel, 5);
         TurnBanner.AddThemeStyleboxOverride("panel", CategoryBrushStyle(Colors.White));
         StyleText(TurnBannerLabel, 28, InkWashTheme.PaperLight);
         TurnBannerLabel.AddThemeColorOverride("font_outline_color", InkWashTheme.InkDeep);

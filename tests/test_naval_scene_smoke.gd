@@ -79,18 +79,25 @@ func _init() -> void:
 	# 战斗顶部两行文字试调：只增大字号与描边，不依赖背景底板。
 	var battle_status := demo.get_node_or_null("Battle/Hud/StatusLabel") as Label
 	var battle_message := demo.get_node_or_null("Battle/Hud/MessageLabel") as Label
-	if battle_status == null or battle_status.get_theme_font_size("font_size") != 24 \
-			or battle_status.get_theme_constant("outline_size") != 5:
+	if battle_status == null or battle_status.get_theme_font_size("font_size") != 26 \
+			or battle_status.get_theme_constant("outline_size") != 6:
 		push_error("FAIL: battle top status typography wrong")
 		quit(1)
 		return
-	if battle_message == null or battle_message.get_theme_font_size("font_size") != 18 \
-			or battle_message.get_theme_constant("outline_size") != 4:
+	if battle_message == null or battle_message.get_theme_font_size("font_size") != 20 \
+			or battle_message.get_theme_constant("outline_size") != 5:
 		push_error("FAIL: battle top message typography wrong")
 		quit(1)
 		return
-	if battle_message.size.x < 700.0:
+	if battle_message.size.x < 800.0:
 		push_error("FAIL: battle top message label too narrow for enlarged text")
+		quit(1)
+		return
+	var viewport_center_x := demo.get_viewport().get_visible_rect().size.x * 0.5
+	var status_center_x := battle_status.position.x + battle_status.size.x * 0.5
+	var message_center_x := battle_message.position.x + battle_message.size.x * 0.5
+	if not is_equal_approx(status_center_x, viewport_center_x) or not is_equal_approx(message_center_x, viewport_center_x):
+		push_error("FAIL: battle top labels not centered (viewport=%s status=%s message=%s)" % [viewport_center_x, status_center_x, message_center_x])
 		quit(1)
 		return
 	# 选船第二行只保留决策信息，不重复船名；玩家主动退选后清空该行。

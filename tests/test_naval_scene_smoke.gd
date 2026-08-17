@@ -93,6 +93,17 @@ func _init() -> void:
 		push_error("FAIL: battle top message label too narrow for enlarged text")
 		quit(1)
 		return
+	# 选船第二行只保留决策信息，不重复船名；玩家主动退选后清空该行。
+	controller.OnShipClicked("p1")
+	var selected_message: String = controller.LastMessage()
+	if not selected_message.begins_with("剩余移动 ") or selected_message.contains("选中") or selected_message.contains("旗舰"):
+		push_error("FAIL: selected ship message should omit selection wording and ship name: %s" % selected_message)
+		quit(1)
+		return
+	if not controller.OnRightClick() or controller.LastMessage() != "":
+		push_error("FAIL: player deselect should clear the second battle header line")
+		quit(1)
+		return
 	# T13/UX-7：行动面板按钮全部存在（场景接线完成）；普攻区含 箭雨/砲击/火炮/撞击/接舷
 	var new_buttons: Array[String] = [
 		"Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands/ArrowRain",

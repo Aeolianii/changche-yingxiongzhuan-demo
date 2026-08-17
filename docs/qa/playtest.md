@@ -11,6 +11,7 @@
 
 | Scenario | Setup | Action | Expected | Result/build |
 |---|---|---|---|---|
+| 战斗选船提示精简 | 进入战斗并轮到我方 | 选中己方舰，再以右键或点空白退选 | 选中时第二行不显示船名，只保留剩余移动与操作提示；退选后第二行为空 | passed / focused smoke + selected/deselected OpenGL captures 2026-08-17 |
 | 战斗顶部文字可读性 | 进入水师操演并开始战斗 | 检查顶部回合信息与最长开战提示 | 仅增大两行字号并加粗原有描边；不增加底板、不改颜色；提示首尾完整且不重叠 | passed / focused smoke + font pixel metrics + 1344×896 OpenGL capture 2026-08-17 |
 | 布阵台卷轴底板 | 进入水师操演布阵并点选一艘己方舰 | 检查底部操作台、全部按钮与棋盘遮挡 | 不显示褐色军令案；指定图集右侧卷轴完整承托原按钮，轴头不裁切，按钮尺寸、排列、文字和样式不变 | passed / Godot 4.7.1 .NET smoke + 1344×896 OpenGL capture 2026-08-17 |
 | 布阵选船镜头与标题 | 进入水师操演布阵 | 依次点选己方舰并检查卷轴上的三个分组标题 | 镜头平滑移到所选舰几何中心且保留边界约束；“舰船调度”“舰队整备”“决战军令”为白字粗黑边，按钮样式不变 | passed / focused smoke + 1344×896 OpenGL capture 2026-08-17 |

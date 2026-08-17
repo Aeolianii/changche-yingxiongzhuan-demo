@@ -100,12 +100,18 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         if (OnRightClick()) GetViewport().SetInputAsHandled();
     }
 
+    // 玩家主动退选：退出选择上下文，同时清空只服务于当前选船的第二行提示。
+    private void DeselectForPlayer()
+    {
+        SetSelected(null);
+        _hud.SetMessage("");
+    }
+
     public bool OnRightClick()
     {
         if (_battle is null || PlayerInputLocked()) return false;
         if (_selectedShip is null && _pendingTactic is null && _pendingSkill is null && _pendingWeapon is null) return false;
-        SetSelected(null);
-        _hud.SetMessage("已退出选择");
+        DeselectForPlayer();
         return true;
     }
 
@@ -199,7 +205,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             _mode = InteractionMode.None;
             _grid.ClearOverlay();
             _hud.HideActionPanel();
-            _hud.SetMessage($"查看敌方 {ship.Definition.DisplayName} 状态");
+            _hud.SetMessage("查看敌方舰船状态");
             return;
         }
         // V-5：单结束令——不再有「本回合行动已结束」的舰（每单位结束已移除），任何我方舰都可下指令。
@@ -207,10 +213,9 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         EnterMoveMode(); // UX-3：点单位默认只显示移动范围（水墨高亮），不显示射界红晕（两者互斥）
         _hud.ShowShipActions(ship, ComputeActionFlags(ship));
         _hud.SetActiveAction(CurrentActionId()); // UX-4：新选中默认移动模式 → 无武器高亮
-        var acted = ship.HasAttacked ? "（本回合已攻击）" : "";
         _hud.SetMessage(ship.HasAttacked
-            ? $"选中 {ship.Definition.DisplayName}{acted} · 本回合不可再移动 · 右键退选"
-            : $"选中 {ship.Definition.DisplayName} · 剩余移动 {ship.RemainingMovement} · 点击底部栏武器查看射界，或点移动范围格行动 · 右键退选");
+            ? "本回合已攻击 · 本回合不可再移动 · 右键退选"
+            : $"剩余移动 {ship.RemainingMovement} · 点击底部栏武器查看射界，或点移动范围格行动 · 右键退选");
     }
 
     public void OnGridClicked(Vector2 worldPos)
@@ -260,7 +265,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         }
         // UX-3（需求 C）：点击空白（无舰/无覆盖）→ 恢复待选状态，清空移动范围与红晕/目标覆盖。
         if (_selectedShip is not null || _pendingTactic is not null || _pendingSkill is not null)
-            SetSelected(null);
+            DeselectForPlayer();
     }
 
     public void OnAction(string actionId)
@@ -297,7 +302,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             case "mine": BeginSkill("mine"); break;
             case "self_sink": DoSelfSink(); break; // F-7b：战斗内浅滩自沉（设计 15）
             case "end_turn": EndTurn(); break; // V-5：单结束令——整体结束回合是唯一结束方式
-            case "deselect": SetSelected(null); break;
+            case "deselect": DeselectForPlayer(); break;
             case "new_game": NewGame(); break;
             case "reroll_encounter": RerollEncounter(); break; // U-2c：随机遭遇重掷（换一场，保留难度）
             // F-3：投降交涉（设计 16.2/16.3）——接受/拒绝敌方劝降、我方发起劝降。不走舰船动作，直接调规则层命令。
@@ -1158,8 +1163,8 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         if (_battle.BattleEnded) return; // AI 歼灭玩家已由 HandleBattleEnded 展示结算面板，不再覆写回合提示
         if (_battle.CurrentFaction == FactionId.Player)
         {
-            var selected = AutoSelectPlayerShipAtTurnStart();
-            _hud.ShowPlayerTurnStart(_battle.Round, selected?.Definition.DisplayName ?? "");
+            AutoSelectPlayerShipAtTurnStart();
+            _hud.ShowPlayerTurnStart(_battle.Round);
             return;
         }
 

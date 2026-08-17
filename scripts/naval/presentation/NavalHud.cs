@@ -730,12 +730,11 @@ public partial class NavalHud : CanvasLayer
     private static int Count(BattleResult result, ShipLossKind kind)
         => result.Ships.Count(r => r.Kind == kind);
 
-    public void ShowPlayerTurnStart(int round, string selectedShipName)
+    public void ShowPlayerTurnStart(int round)
     {
         HideTurnBanner();
-        var selectedText = string.IsNullOrEmpty(selectedShipName) ? "" : $" · 已选中 {selectedShipName}";
         StatusLabel.Text = $"第 {round} 回合 · 我方回合开始";
-        MessageLabel.Text = $"敌方回合结束 · 现在轮到我方行动{selectedText}";
+        MessageLabel.Text = "敌方回合结束 · 现在轮到我方行动";
         TurnBannerLabel.Text = "我方回合开始";
         TurnBanner.Modulate = Colors.White;
         TurnBanner.Visible = true;

@@ -611,10 +611,10 @@ visible = false
 script = ExtResource("7_levelplay")
 
 [node name="HintBar" type="Panel" parent="LevelPlay"]
-offset_left = 372.0
-offset_top = 126.0
-offset_right = 972.0
-offset_bottom = 262.0
+offset_left = 312.0
+offset_top = 90.0
+offset_right = 1032.0
+offset_bottom = 254.0
 mouse_filter = 2
 
 [node name="Backdrop" type="TextureRect" parent="LevelPlay/HintBar"]
@@ -633,10 +633,10 @@ stretch_mode = 0
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 54.0
+offset_left = 114.0
 offset_top = 24.0
-offset_right = -132.0
-offset_bottom = -20.0
+offset_right = -192.0
+offset_bottom = -48.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 2
@@ -725,9 +725,9 @@ text = "返回关卡选择"
 
 [node name="CollapseHintBar" type="Button" parent="LevelPlay"]
 offset_left = 866.0
-offset_top = 172.0
+offset_top = 136.0
 offset_right = 946.0
-offset_bottom = 216.0
+offset_bottom = 180.0
 text = "收起"
 
 [node name="Deployment" parent="." instance=ExtResource("4_deploy")]

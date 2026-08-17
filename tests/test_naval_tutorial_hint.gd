@@ -23,6 +23,7 @@ func _run() -> void:
 	var demo := current_scene
 	var level_play := demo.get_node_or_null("LevelPlay")
 	var controller := demo.get_node_or_null("Battle/BattleController")
+	var hud := demo.get_node_or_null("Battle/Hud")
 	_expect(level_play != null and level_play.call("LevelMode"), "Tutorial hint layer must be active in level 1-1.")
 	_expect(level_play.get_node_or_null("ObjectiveBar") == null, "Tutorial overlay must not keep the rectangular objective card.")
 	_expect(level_play.call("HintUsesBrushTexture"), "Tutorial hint must use the generated dry-brush texture.")
@@ -69,6 +70,13 @@ func _run() -> void:
 	level_play.call("ToggleHintBarCollapse")
 	_expect(level_play.call("HintBarVisible") and not level_play.call("CollapsedHintBackdropVisible"), "Expanding must restore the full tutorial brush and hide the compact tab.")
 	_expect(is_equal_approx(collapse_button.position.x, 932.0), "Collapse text must return to the full brush's top-right safe area after expanding.")
+
+	hud.call("ShowSurrenderOffer", true)
+	_expect(hud.call("SurrenderPanelVisible"), "Surrender decision card must be visible for the overlap test.")
+	_expect(level_play.call("HintSuppressedByModal"), "Visible surrender card must suppress the tutorial overlay.")
+	_expect(not level_play.call("HintBarVisible") and not level_play.call("CollapsedHintBackdropVisible") and not level_play.call("HintToggleVisible"), "Surrender card must hide every expanded and collapsed tutorial visual.")
+	hud.call("HideSurrenderOffer")
+	_expect(not level_play.call("HintSuppressedByModal") and level_play.call("HintBarVisible") and level_play.call("HintToggleVisible"), "Closing surrender card must restore the prior expanded tutorial state.")
 
 	_finish()
 

@@ -46,6 +46,7 @@ public partial class NavalLevelPlayController : CanvasLayer
     private bool _hintBarCollapsed;       // U-1：教学提示条是否已收起（收起时不挡地图点击，内容仍随进度刷新）
     private Button? _hintCollapseButton;  // U-1：提示条收起/展开按钮（提示条右侧）
     private TextureRect? _hintCollapsedBackdrop; // 收起态的小型干笔墨签，避免“展开”文字悬空。
+    private bool _hintSuppressedByModal; // 劝降等高优先级临时决策面板显示时，暂停整套教程浮层。
     private Panel? _resultPanel;
     private Label? _resultContent;
     private Button? _nextLevelButton; // V-9：胜利结算面板「进入下一关」（存在已解锁下一关才显示）
@@ -316,7 +317,7 @@ public partial class NavalLevelPlayController : CanvasLayer
     private void RefreshHintBar()
     {
         if (_hintTitle is null || _hintContent is null || _hintBar is null) return;
-        if (!LevelMode()) { _hintBar.Visible = false; return; }
+        if (!LevelMode()) { ApplyHintVisibility(); return; }
         var count = _level!.Hints.Count;
         var done = _hintIndex >= count; // 教学完成 / 结算后：显示完成反馈，不展示单条提示
         if (done)
@@ -332,8 +333,8 @@ public partial class NavalLevelPlayController : CanvasLayer
             _hintContent.Text = text;
         }
         RefreshHintNav(count, done);
-        // U-1：收起状态保持条隐藏（内容仍随进度刷新，展开即见最新）。
-        _hintBar.Visible = !_hintBarCollapsed;
+        // U-1：收起状态保持条隐藏；劝降面板显示时整套教程浮层临时让位。
+        ApplyHintVisibility();
     }
 
     // 教程只展示当前步骤并自动推进；旧翻页节点保留兼容场景结构，但始终隐藏。
@@ -418,7 +419,6 @@ public partial class NavalLevelPlayController : CanvasLayer
             _hintTransitionPending = false;
             _hintBar.Modulate = Colors.White;
             if (!_hintBarCollapsed) RefreshHintBar();
-            _hintBar.Visible = !_hintBarCollapsed;
         }
         if (_hintCollapseButton is not null)
         {
@@ -427,13 +427,41 @@ public partial class NavalLevelPlayController : CanvasLayer
                 ? HintToggleCollapsedPosition
                 : HintToggleExpandedPosition;
         }
+        ApplyHintVisibility();
+    }
+
+    // 高优先级临时决策面板（当前为劝降）出现时隐藏完整教程、收起态墨签和切换入口；
+    // 面板关闭后按原先的展开/收起状态恢复，不改变教程步骤与进度。
+    public void SetModalOverlayVisible(bool visible)
+    {
+        _hintSuppressedByModal = visible;
+        if (_hintBar is not null)
+        {
+            _hintTransitionTween?.Kill();
+            _hintTransitionTween = null;
+            _hintTransitionPending = false;
+            _hintBar.Modulate = Colors.White;
+        }
+        if (!visible && !_hintBarCollapsed) RefreshHintBar();
+        else ApplyHintVisibility();
+    }
+
+    private void ApplyHintVisibility()
+    {
+        var showTutorialUi = LevelMode() && !_hintSuppressedByModal;
+        if (_hintBar is not null)
+            _hintBar.Visible = showTutorialUi && !_hintBarCollapsed;
         if (_hintCollapsedBackdrop is not null)
-            _hintCollapsedBackdrop.Visible = _hintBarCollapsed;
+            _hintCollapsedBackdrop.Visible = showTutorialUi && _hintBarCollapsed;
+        if (_hintCollapseButton is not null)
+            _hintCollapseButton.Visible = showTutorialUi;
     }
 
     public bool HintBarCollapsed() => _hintBarCollapsed;
     public bool HintBarVisible() => _hintBar?.Visible ?? false;
     public bool CollapsedHintBackdropVisible() => _hintCollapsedBackdrop?.Visible ?? false;
+    public bool HintToggleVisible() => _hintCollapseButton?.Visible ?? false;
+    public bool HintSuppressedByModal() => _hintSuppressedByModal;
     public bool LevelEnded() => _levelEnded;
     public bool LevelVictory() => _victory;
     public bool LevelResultVisible() => _resultPanel?.Visible ?? false;

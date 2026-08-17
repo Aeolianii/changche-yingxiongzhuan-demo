@@ -775,7 +775,7 @@ public partial class NavalHud : CanvasLayer
         SurrenderCaption.Text = "敌方提议你方投降";
         AcceptSurrenderButton.Visible = true;
         RejectSurrenderButton.Visible = true;
-        SurrenderPanel.Visible = true;
+        SetSurrenderPanelVisible(true);
     }
 
     public void HideSurrenderButtons()
@@ -783,7 +783,7 @@ public partial class NavalHud : CanvasLayer
         AcceptSurrenderButton.Visible = false;
         RejectSurrenderButton.Visible = false;
         // 无任何按钮可见时隐藏整面板。
-        if (!OfferSurrenderButton.Visible) SurrenderPanel.Visible = false;
+        SetSurrenderPanelVisible(OfferSurrenderButton.Visible);
     }
 
     // 我方劝降按钮：enabled=true 显示且启用；enabled=false 显示但禁用（本回合已发起，每回合一次门禁）；无优势时由控制器调 HideSurrenderOffer。
@@ -792,16 +792,22 @@ public partial class NavalHud : CanvasLayer
         SurrenderCaption.Text = "劝降：要求敌方投降";
         OfferSurrenderButton.Visible = true;
         OfferSurrenderButton.Disabled = !enabled;
-        SurrenderPanel.Visible = true;
+        SetSurrenderPanelVisible(true);
     }
 
     public void HideSurrenderOffer()
     {
         OfferSurrenderButton.Visible = false;
-        if (!AcceptSurrenderButton.Visible && !RejectSurrenderButton.Visible) SurrenderPanel.Visible = false;
+        SetSurrenderPanelVisible(AcceptSurrenderButton.Visible || RejectSurrenderButton.Visible);
     }
 
-    public void HideSurrenderPanel() => SurrenderPanel.Visible = false;
+    public void HideSurrenderPanel() => SetSurrenderPanelVisible(false);
+
+    private void SetSurrenderPanelVisible(bool visible)
+    {
+        SurrenderPanel.Visible = visible;
+        GetNodeOrNull<NavalLevelPlayController>("../../LevelPlay")?.SetModalOverlayVisible(visible);
+    }
 
     // 只读访问（headless 冒烟断言：接受/拒绝弹出、劝降可用、每回合一次门禁禁用态）。
     public bool SurrenderPanelVisible() => SurrenderPanel.Visible;

@@ -30,6 +30,15 @@ func _init() -> void:
 		push_error("FAIL: GridView missing")
 		quit(1)
 		return
+	# 动态海面必须使用边界连续的镜像采样，避免非无缝底图被 fract 硬拼后出现矩形分割线。
+	if not grid.AnimatedSeaUsesSeamlessMirrorSampling():
+		push_error("FAIL: animated sea must use seamless mirror sampling without hard fract texture wraps")
+		quit(1)
+		return
+	if not grid.AnimatedSeaCausticsReduced():
+		push_error("FAIL: animated sea caustic brightness must stay reduced")
+		quit(1)
+		return
 	# 布阵控制器自 ships.json 装配双方各 4 舰
 	if deploy.PlayerShipCount() != 4 or deploy.EnemyShipCount() != 4:
 		push_error("FAIL: deployment fleet not built (player=%d enemy=%d)" % [deploy.PlayerShipCount(), deploy.EnemyShipCount()])

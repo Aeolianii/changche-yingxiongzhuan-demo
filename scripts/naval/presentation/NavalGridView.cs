@@ -237,20 +237,26 @@ public partial class NavalGridView : Node2D
 
                 uniform float flow_speed = 0.014;
                 uniform float warp_strength = 0.052;
-                uniform float caustic_strength = 0.24;
+                uniform float caustic_strength = 0.14;
 
                 float sea_luma(vec3 color) {
                     return dot(color, vec3(0.24, 0.67, 0.09));
                 }
 
+                // 镜像循环在每个周期边界连续折返，不再把原图不匹配的左右/上下边缘硬拼到一起。
+                vec2 mirror_repeat(vec2 coord) {
+                    vec2 period = mod(coord, vec2(2.0));
+                    return vec2(1.0) - abs(period - vec2(1.0));
+                }
+
                 void fragment() {
-                    vec2 uv = fract(UV);
+                    vec2 uv = UV;
                     float time = TIME * flow_speed;
 
                     // 两层低频水色反向流动，形成大块缓慢变化的明暗水团。
-                    float broad_a = sea_luma(texture(TEXTURE, fract(
+                    float broad_a = sea_luma(texture(TEXTURE, mirror_repeat(
                         uv * 0.58 + vec2(time * 0.34, time * 0.09))).rgb);
-                    float broad_b = sea_luma(texture(TEXTURE, fract(
+                    float broad_b = sea_luma(texture(TEXTURE, mirror_repeat(
                         uv * 0.82 + vec2(-time * 0.22, time * 0.13))).rgb);
                     float broad = broad_a * 0.62 + broad_b * 0.38;
 
@@ -263,9 +269,9 @@ public partial class NavalGridView : Node2D
                     vec2 flow_c = uv * 0.91 + warp * 0.55
                         + vec2(time * 0.20, -time * 0.36);
 
-                    float light_a = sea_luma(texture(TEXTURE, fract(flow_a)).rgb);
-                    float light_b = sea_luma(texture(TEXTURE, fract(flow_b)).rgb);
-                    float light_c = sea_luma(texture(TEXTURE, fract(flow_c)).rgb);
+                    float light_a = sea_luma(texture(TEXTURE, mirror_repeat(flow_a)).rgb);
+                    float light_b = sea_luma(texture(TEXTURE, mirror_repeat(flow_b)).rgb);
+                    float light_c = sea_luma(texture(TEXTURE, mirror_repeat(flow_c)).rgb);
 
                     // 两股水流亮度相近处提取细带，再以第三层打断，得到聚散的折射光纹。
                     float ridge_a = 1.0 - smoothstep(0.020, 0.095, abs(light_a - light_b));
@@ -275,7 +281,7 @@ public partial class NavalGridView : Node2D
                     caustic *= 0.86 + 0.14 * sin(TIME * 0.72 + broad * 6.28318);
 
                     // 底纹只做很轻的漂移和扭曲；墨青暗部与米青亮带保持水墨像素配色。
-                    vec4 base_texel = texture(TEXTURE, fract(uv + warp * 0.34
+                    vec4 base_texel = texture(TEXTURE, mirror_repeat(uv + warp * 0.34
                         + vec2(time * 0.08, time * 0.025)));
                     vec3 base = base_texel.rgb;
                     float shade = mix(0.84, 1.10, smoothstep(0.34, 0.70, broad));
@@ -311,7 +317,7 @@ public partial class NavalGridView : Node2D
             topLeft + size,
             topLeft + new Vector2(0f, size.Y),
         };
-        // Polygon2D UV 使用纹理像素坐标；按世界像素展开后由 shader fract 循环，保持水墨纹理密度。
+        // Polygon2D UV 使用纹理像素坐标；按世界像素展开后由 shader 镜像循环，保持水墨纹理密度且消除硬接缝。
         _animatedSeaSurface.UV = new[]
         {
             Vector2.Zero,
@@ -358,6 +364,17 @@ public partial class NavalGridView : Node2D
     public int CellOverlayCount() => _cellOverlays.Count;
     public int HighlightShipCount() => _highlightShipIds.Count;
     public float CameraZoomValue() => _camera?.Zoom.X ?? 1f;
+    public bool AnimatedSeaUsesSeamlessMirrorSampling()
+    {
+        var code = ((_animatedSeaSurface?.Material as ShaderMaterial)?.Shader?.Code) ?? string.Empty;
+        return code.Contains("vec2 mirror_repeat") && code.Contains("texture(TEXTURE, mirror_repeat")
+            && !code.Contains("texture(TEXTURE, fract");
+    }
+    public bool AnimatedSeaCausticsReduced()
+    {
+        var code = ((_animatedSeaSurface?.Material as ShaderMaterial)?.Shader?.Code) ?? string.Empty;
+        return code.Contains("caustic_strength = 0.14");
+    }
     public Vector2 CameraPositionValue() => _camera?.Position ?? Vector2.Zero;
     public Rect2 CameraBackgroundBounds() => _backgroundBounds;
     public bool CameraViewInsideBackground()

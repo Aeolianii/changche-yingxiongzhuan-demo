@@ -18,8 +18,9 @@ namespace NanjiangNaval;
 //   战斗结束由 HandleBattleEnded → OnBattleEnded 走同一结算（ResolveLevelEnd）。
 public partial class NavalLevelPlayController : CanvasLayer
 {
-    private const int HintTitleFontSize = 19;
-    private const int HintContentFontSize = 18;
+    private const int HintTitleFontSize = 22;
+    private const int HintContentFontSize = 20;
+    private const int HintToggleFontSize = 20;
     private const float HintFadeOutSeconds = 0.18f;
     private const float HintFadeInSeconds = 0.24f;
     private static readonly Color HintTitleGold = new("f0c865");
@@ -387,6 +388,7 @@ public partial class NavalLevelPlayController : CanvasLayer
     public bool HintNextEnabled() => _hintNext is { Visible: true, Disabled: false };
     public int HintFontSize() => _hintContent?.GetThemeFontSize("font_size") ?? 0;
     public int HintTitleFontSizeValue() => _hintTitle?.GetThemeFontSize("font_size") ?? 0;
+    public int HintToggleFontSizeValue() => _hintCollapseButton?.GetThemeFontSize("font_size") ?? 0;
     public int HintTitleOutlineSize() => _hintTitle?.GetThemeConstant("outline_size") ?? 0;
     public int HintBodyOutlineSize() => _hintContent?.GetThemeConstant("outline_size") ?? 0;
     public string HintTitleColor() => _hintTitle?.GetThemeColor("font_color").ToHtml(false) ?? "";
@@ -483,7 +485,7 @@ public partial class NavalLevelPlayController : CanvasLayer
         foreach (var state in new[] { "normal", "hover", "pressed", "disabled", "focus" })
             button.AddThemeStyleboxOverride(state, new StyleBoxEmpty());
         button.AddThemeFontOverride("font", InkWashTheme.Font());
-        button.AddThemeFontSizeOverride("font_size", 15);
+        button.AddThemeFontSizeOverride("font_size", HintToggleFontSize);
         button.AddThemeColorOverride("font_color", HintBodyPaper);
         button.AddThemeColorOverride("font_hover_color", HintTitleGold);
         button.AddThemeColorOverride("font_pressed_color", Colors.White);

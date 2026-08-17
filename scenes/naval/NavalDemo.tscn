@@ -643,7 +643,7 @@ theme_override_constants/separation = 2
 
 [node name="Title" type="Label" parent="LevelPlay/HintBar/Box"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 22
 text = "第一步 · 选中舰船"
 horizontal_alignment = 1
 
@@ -651,7 +651,7 @@ horizontal_alignment = 1
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/line_spacing = 4
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 20
 text = "点击己方舰选中；鼠标右键可随时退选"
 horizontal_alignment = 1
 vertical_alignment = 1

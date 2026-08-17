@@ -51,6 +51,10 @@ func _init() -> void:
 		push_error("FAIL: naval escape-cell material must remain visibly semi-transparent")
 		quit(1)
 		return
+	if float(grid.EscapeIconOpacityValue()) < 0.9 or not grid.EscapeCellUsesThreeLayers():
+		push_error("FAIL: escape cells must render sea/waves, translucent green overlay, and an independent opaque sailboat icon")
+		quit(1)
+		return
 	# 布阵控制器自 ships.json 装配双方各 4 舰
 	if deploy.PlayerShipCount() != 4 or deploy.EnemyShipCount() != 4:
 		push_error("FAIL: deployment fleet not built (player=%d enemy=%d)" % [deploy.PlayerShipCount(), deploy.EnemyShipCount()])

@@ -65,8 +65,10 @@ public partial class NavalGridView : Node2D
     // F-6：战争迷雾——当前视野内格集合（玩家阵营观测）。null=未初始化（布阵/未开始战斗，不画迷雾）。
     private HashSet<GridPos>? _fogVisible;
     private Texture2D? _fogMistTexture;
-    private Texture2D? _escapeCellTexture;
-    private const float EscapeCellOpacity = 0.68f;
+    private Texture2D? _escapeIconTexture;
+    private static readonly Color EscapeCellGreen = new(0.18f, 0.72f, 0.32f, 0.34f);
+    private static readonly Color EscapeCellBorder = new(0.32f, 0.88f, 0.42f, 0.58f);
+    private const float EscapeIconOpacity = 0.96f;
     private static readonly Color FogMistFallback = new(0.84f, 0.91f, 0.90f, 0.16f);
     private static readonly Color FogMistTextureTint = new(0.96f, 0.98f, 0.96f, 0.38f);
 
@@ -84,7 +86,7 @@ public partial class NavalGridView : Node2D
         _camera = GetTree().GetFirstNodeInGroup("naval_camera") as Camera2D;
         _seaTexture = GD.Load<Texture2D>("res://assets/naval/battle/sea_ink_pixel.png");
         _fogMistTexture = GD.Load<Texture2D>("res://assets/naval/ui/fog/white_ink_mist_v1.png");
-        _escapeCellTexture = GD.Load<Texture2D>("res://assets/naval/ui/escape/escape_footprints_tile_v1.png");
+        _escapeIconTexture = GD.Load<Texture2D>("res://assets/naval/ui/escape/escape_sailboat_icon_v1.png");
         CreateAnimatedSeaSurface();
         LoadTerrainTextures("reef", _reefTextures);
         LoadTerrainTextures("coral", _coralTextures);
@@ -560,8 +562,11 @@ public partial class NavalGridView : Node2D
     // F-6：格当前是否在视野内（headless 冒烟断言用；无迷雾数据=未初始化，默认全部可见）。
     public bool FogCellVisible(int x, int y) => _fogVisible is null || _fogVisible.Contains(new GridPos(x, y));
     public bool FogMistTextureLoaded() => _fogMistTexture is not null;
-    public bool EscapeCellTextureLoaded() => _escapeCellTexture is not null;
-    public float EscapeCellOpacityValue() => EscapeCellOpacity;
+    public bool EscapeCellTextureLoaded() => _escapeIconTexture is not null;
+    public float EscapeCellOpacityValue() => EscapeCellGreen.A;
+    public float EscapeIconOpacityValue() => EscapeIconOpacity;
+    public bool EscapeCellUsesThreeLayers()
+        => _animatedSeaSurface is not null && EscapeCellGreen.A < 0.5f && _escapeIconTexture is not null;
     public bool FogUsesLightInkStyle()
         => FogMistFallback.R > 0.75f && FogMistFallback.G > 0.75f && FogMistFallback.B > 0.75f
             && FogMistFallback.A < 0.35f;
@@ -731,25 +736,34 @@ public partial class NavalGridView : Node2D
         return count;
     }
 
-    // F-2：逃跑格采用青绿色像素水墨底 + 双脚印，直接贴合单格；不再使用整列箭头与「出口」文字。
+    // F-2：三层逃跑格——底层沿用动态海面与水浪；中层仅画半透明绿色覆盖；顶层贴独立帆船+尾浪图标。
     private void DrawExitCells(BattleMap map)
     {
         if (map.ExitCells.Count == 0) return;
         foreach (var c in map.ExitCells)
         {
             var rect = CellFaceRect(c);
-            if (_escapeCellTexture is not null)
+            // 中层：不使用任何烘焙水墨底图，海面 shader 与水浪可从绿色覆盖下直接透出。
+            DrawRect(rect.Grow(-0.75f), EscapeCellGreen);
+            DrawRect(rect.Grow(-1f), EscapeCellBorder, false, 1.4f);
+
+            // 顶层：仅包含已抠图的像素帆船和尾浪，保持清晰，不跟随绿色底一起变淡。
+            if (_escapeIconTexture is not null)
             {
-                DrawTextureRect(_escapeCellTexture, rect, false, new Color(1f, 1f, 1f, EscapeCellOpacity));
+                DrawTextureRect(_escapeIconTexture, rect.Grow(-1f), false, new Color(1f, 1f, 1f, EscapeIconOpacity));
                 continue;
             }
 
-            // 素材加载失败时仍给出清晰的绿色双脚印标识。
-            DrawRect(rect, new Color(0.25f, 0.62f, 0.30f, 0.88f));
+            // 素材加载失败时以简化船身和尾浪占位，绿色中层仍保持正确透明度。
             var center = rect.GetCenter();
-            var ink = new Color(0.10f, 0.19f, 0.13f, 0.92f);
-            DrawCircle(center + new Vector2(-4f, -4f), 4.2f, ink);
-            DrawCircle(center + new Vector2(4f, 4f), 4.2f, ink);
+            var ink = new Color(0.22f, 0.14f, 0.07f, 0.95f);
+            DrawLine(center + new Vector2(-6f, 6f), center + new Vector2(5f, -5f), Colors.White, 2f);
+            DrawColoredPolygon(new[]
+            {
+                center + new Vector2(-1f, 4f),
+                center + new Vector2(6f, -4f),
+                center + new Vector2(5f, 5f),
+            }, ink);
         }
     }
 

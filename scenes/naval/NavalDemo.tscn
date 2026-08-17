@@ -724,10 +724,10 @@ custom_minimum_size = Vector2(190, 44)
 text = "返回关卡选择"
 
 [node name="CollapseHintBar" type="Button" parent="LevelPlay"]
-offset_left = 866.0
-offset_top = 146.0
-offset_right = 946.0
-offset_bottom = 190.0
+offset_left = 886.0
+offset_top = 152.0
+offset_right = 966.0
+offset_bottom = 196.0
 text = "收起"
 
 [node name="Deployment" parent="." instance=ExtResource("4_deploy")]

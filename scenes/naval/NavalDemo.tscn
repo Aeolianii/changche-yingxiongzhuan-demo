@@ -161,23 +161,23 @@ vertical_alignment = 1
 
 [node name="SurrenderPanel" type="Panel" parent="Battle/Hud"]
 visible = false
-offset_left = 412.0
-offset_top = 90.0
-offset_right = 932.0
-offset_bottom = 290.0
+offset_left = 372.0
+offset_top = 100.0
+offset_right = 972.0
+offset_bottom = 250.0
 mouse_filter = 2
 
 [node name="Box" type="VBoxContainer" parent="Battle/Hud/SurrenderPanel"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 66.0
-offset_top = 30.0
-offset_right = -66.0
-offset_bottom = -30.0
+offset_left = 72.0
+offset_top = 20.0
+offset_right = -72.0
+offset_bottom = -18.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="Title" type="Label" parent="Battle/Hud/SurrenderPanel/Box"]
 layout_mode = 2
@@ -196,18 +196,18 @@ autowrap_mode = 3
 layout_mode = 2
 size_flags_vertical = 4
 alignment = 1
-theme_override_constants/separation = 10
+theme_override_constants/separation = 18
 
 [node name="AcceptSurrender" type="Button" parent="Battle/Hud/SurrenderPanel/Box/Buttons"]
-custom_minimum_size = Vector2(94, 34)
+custom_minimum_size = Vector2(92, 30)
 text = "接受投降"
 
 [node name="RejectSurrender" type="Button" parent="Battle/Hud/SurrenderPanel/Box/Buttons"]
-custom_minimum_size = Vector2(94, 34)
+custom_minimum_size = Vector2(92, 30)
 text = "拒绝投降"
 
 [node name="OfferSurrender" type="Button" parent="Battle/Hud/SurrenderPanel/Box/Buttons"]
-custom_minimum_size = Vector2(88, 34)
+custom_minimum_size = Vector2(76, 30)
 text = "劝降"
 
 [node name="DeliveryPanel" type="Panel" parent="Battle/Hud"]
@@ -509,6 +509,7 @@ custom_minimum_size = Vector2(79, 219)
 text = "砲\n击"
 
 [node name="SkillLabel" type="Label" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+visible = false
 custom_minimum_size = Vector2(34, 219)
 text = "技\n能"
 vertical_alignment = 1

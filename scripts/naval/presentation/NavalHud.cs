@@ -52,7 +52,7 @@ public partial class NavalHud : CanvasLayer
     private Button? _btnReroll; // U-2c：随机遭遇「重掷换一场」按钮（仅结算面板出现）
     // F-3：投降交涉面板（顶栏下方独立面板）——接受/拒绝敌方劝降 + 我方发起劝降。
     private Panel? _surrenderPanel;
-    private Texture2D? _surrenderBackdropTexture;
+    private Texture2D? _surrenderBrushTexture;
     private Label? _surrenderTitle;
     private Label? _surrenderCaption;
     private Button? _btnAcceptSurrender, _btnRejectSurrender, _btnOfferSurrender;
@@ -163,7 +163,7 @@ public partial class NavalHud : CanvasLayer
     private Label TopLeftContent => _topLeftContent ??= GetNode<Label>("TopBarLeft/Box/Content");
     // F-3：投降交涉面板节点。
     private Panel SurrenderPanel => _surrenderPanel ??= GetNode<Panel>("SurrenderPanel");
-    private Texture2D SurrenderBackdropTexture => _surrenderBackdropTexture ??= GD.Load<Texture2D>("res://assets/naval/ui/surrender/surrender_dispatch_panel_v2.png");
+    private Texture2D SurrenderBrushTexture => _surrenderBrushTexture ??= GD.Load<Texture2D>("res://assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png");
     private Label SurrenderTitle => _surrenderTitle ??= GetNode<Label>("SurrenderPanel/Box/Title");
     private Label SurrenderCaption => _surrenderCaption ??= GetNode<Label>("SurrenderPanel/Box/Caption");
     private Button AcceptSurrenderButton => _btnAcceptSurrender ??= GetNode<Button>("SurrenderPanel/Box/Buttons/AcceptSurrender");
@@ -244,12 +244,14 @@ public partial class NavalHud : CanvasLayer
         ActionPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
         ShipStatusPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
         ResultPanel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
-        // F-3：劝降交涉改用生成式破边军情牒文，程序只叠加可靠文字与印章色决策按钮。
-        SurrenderPanel.AddThemeStyleboxOverride("panel", SurrenderBackdropStyle());
+        // F-3：劝降交涉复用教程干笔墨条，标题、正文与操作文字直接叠加在墨迹上。
+        SurrenderPanel.AddThemeStyleboxOverride("panel", SurrenderBrushStyle());
         StyleText(SurrenderTitle, 20, new Color("b8863b"));
         SurrenderTitle.AddThemeColorOverride("font_outline_color", InkWashTheme.InkDeep);
         SurrenderTitle.AddThemeConstantOverride("outline_size", 3);
-        StyleText(SurrenderCaption, 16, InkWashTheme.InkDeep);
+        StyleText(SurrenderCaption, 16, InkWashTheme.PaperLight);
+        SurrenderCaption.AddThemeColorOverride("font_outline_color", Colors.Black);
+        SurrenderCaption.AddThemeConstantOverride("outline_size", 3);
         // F-7c：交付舰选择面板同纸卡片风格。
         DeliveryPanel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
         StyleText(DeliveryCaption, 14, InkWashTheme.Ochre);
@@ -290,7 +292,7 @@ public partial class NavalHud : CanvasLayer
             ChainShot, FireOil, DamageControl, Mine, Exchange, Disengage,
         })
             StyleCommandTokenButton(button, AttackTokenTexture);
-        // R-3：组头标签使用赭石色竖排；武器页按视觉反馈隐藏组头，只保留军令牌。
+        // R-3：组头标签使用赭石色竖排；武器与技能页隐藏组头，只保留军令牌。
         foreach (var (_, label, _) in _attackGroups)
             StyleGroupHeader(label);
         foreach (var button in new[] { TurnLeft, TurnRight })
@@ -440,15 +442,17 @@ public partial class NavalHud : CanvasLayer
         foreach (var (group, label, buttons) in _attackGroups)
         {
             var isCurrent = ReferenceEquals(label, current.Label);
-            label.Visible = isCurrent && group != GroupWeapon;
+            label.Visible = isCurrent && ShowsAttackGroupHeader(group);
             foreach (var button in buttons)
                 button.Visible = isCurrent && _attackCommandAvailable.GetValueOrDefault(button);
         }
         _currentAttackLabel = current.Label.Text.Replace("\n", string.Empty);
         AttackTab.Text = $"{_currentAttackLabel}{_attackPage + 1}/{_attackPageCount}";
         AttackTab.TooltipText = _attackPageCount > 1 ? "点击翻到下一页武器栏" : "当前只有一页武器栏";
-        UpdateCommandConnector(VisibleAttackCommandCount(), hasGroupLabel: current.Group != GroupWeapon);
+        UpdateCommandConnector(VisibleAttackCommandCount(), hasGroupLabel: ShowsAttackGroupHeader(current.Group));
     }
+
+    private static bool ShowsAttackGroupHeader(string group) => group == GroupBoarding;
 
     private void SetCommandCategory(bool showAttack)
     {
@@ -464,7 +468,7 @@ public partial class NavalHud : CanvasLayer
             UpdateCommandConnector(2);
     }
 
-    // R-3：组头标签样式——赭石色竖排文字（「武\n器」「技\n能」「接\n舷」），与令牌竖排风格一致、视觉区分。
+    // R-3：仅接舷管理页显示赭石色竖排组头；武器与技能页由令牌文字自行表达语义。
     private static void StyleGroupHeader(Label label)
     {
         label.AddThemeFontOverride("font", InkWashTheme.Font());
@@ -619,49 +623,42 @@ public partial class NavalHud : CanvasLayer
 
     private static void StyleSurrenderButton(Button button, bool primary)
     {
-        var baseColor = primary ? new Color("74352d") : new Color("36443d");
-        var borderColor = primary ? new Color("9b5140") : InkWashTheme.InkDeep;
-        button.AddThemeStyleboxOverride("normal", SurrenderButtonStyle(baseColor, borderColor));
-        button.AddThemeStyleboxOverride("hover", SurrenderButtonStyle(baseColor.Lightened(0.14f), InkWashTheme.Khaki));
-        button.AddThemeStyleboxOverride("pressed", SurrenderButtonStyle(baseColor.Darkened(0.16f), InkWashTheme.InkDeep));
-        button.AddThemeStyleboxOverride("disabled", SurrenderButtonStyle(new Color(InkWashTheme.InkFaded, 0.62f), InkWashTheme.InkFaded));
+        var accent = primary ? new Color("9a4639") : new Color("35453f");
+        button.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
+        button.AddThemeStyleboxOverride("hover", SurrenderButtonHoverStyle(new Color(accent, 0.66f)));
+        button.AddThemeStyleboxOverride("pressed", SurrenderButtonHoverStyle(new Color(accent.Darkened(0.18f), 0.82f)));
+        button.AddThemeStyleboxOverride("disabled", new StyleBoxEmpty());
         button.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
         button.AddThemeFontOverride("font", InkWashTheme.Font());
-        button.AddThemeFontSizeOverride("font_size", 14);
-        button.AddThemeColorOverride("font_color", InkWashTheme.PaperLight);
+        button.AddThemeFontSizeOverride("font_size", 16);
+        button.AddThemeColorOverride("font_color", primary ? new Color("e5c66e") : InkWashTheme.PaperLight);
         button.AddThemeColorOverride("font_hover_color", Colors.White);
         button.AddThemeColorOverride("font_pressed_color", InkWashTheme.PaperLight);
         button.AddThemeColorOverride("font_disabled_color", new Color(InkWashTheme.PaperLight, 0.58f));
-        button.AddThemeColorOverride("font_outline_color", InkWashTheme.InkDeep);
-        button.AddThemeConstantOverride("outline_size", 2);
+        button.AddThemeColorOverride("font_outline_color", Colors.Black);
+        button.AddThemeConstantOverride("outline_size", 3);
         button.FocusMode = Control.FocusModeEnum.None;
         button.MouseDefaultCursorShape = Control.CursorShape.PointingHand;
     }
 
-    // 所有关卡都在 NavalHud 初始化时将同一素材直接设为 Panel 底纹，避免依赖关卡场景里的子级贴图节点。
-    private StyleBoxTexture SurrenderBackdropStyle()
+    // 所有关卡都在 NavalHud 初始化时复用教程墨条，避免独立卡片素材与战场风格割裂。
+    private StyleBoxTexture SurrenderBrushStyle()
         => new()
         {
-            Texture = SurrenderBackdropTexture,
+            Texture = SurrenderBrushTexture,
             ModulateColor = Colors.White,
         };
 
-    private static StyleBoxFlat SurrenderButtonStyle(Color background, Color border)
+    private static StyleBoxFlat SurrenderButtonHoverStyle(Color background)
         => new()
         {
             BgColor = background,
-            BorderColor = border,
-            BorderWidthLeft = 1,
-            BorderWidthTop = 1,
-            BorderWidthRight = 1,
-            BorderWidthBottom = 1,
             CornerRadiusTopLeft = 2,
             CornerRadiusTopRight = 2,
             CornerRadiusBottomLeft = 2,
             CornerRadiusBottomRight = 2,
-            ShadowColor = new Color(InkWashTheme.InkDeep, 0.35f),
-            ShadowSize = 3,
-            ShadowOffset = new Vector2(0, 2),
+            ShadowColor = new Color(0.02f, 0.03f, 0.03f, 0.38f),
+            ShadowSize = 1,
         };
 
     public void ShowShipStatus(BattleState battle, ShipState ship)
@@ -871,7 +868,7 @@ public partial class NavalHud : CanvasLayer
     public bool RejectSurrenderButtonVisible() => RejectSurrenderButton.Visible;
     public bool SurrenderUsesGeneratedBackdrop()
         => SurrenderPanel.GetThemeStylebox("panel") is StyleBoxTexture style
-            && style.Texture?.ResourcePath == "res://assets/naval/ui/surrender/surrender_dispatch_panel_v2.png";
+            && style.Texture?.ResourcePath == "res://assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png";
     public float SurrenderPanelWidth() => SurrenderPanel.Size.X;
     public float SurrenderPanelHeight() => SurrenderPanel.Size.Y;
     public string SurrenderTitleText() => SurrenderTitle.Text;

@@ -23,13 +23,16 @@ public partial class NavalGridView : Node2D
     private const float CellGap = 3f;
     private const float CameraPanSpeed = 520f;
     private const float CameraScreenMargin = 80f;
-    private const float TutorialMapFitThreshold = 2f;
-    private const float TutorialCameraZoom = 3f;
+    private const float InitialCameraZoom = 3f;
+    private const float MaximumCameraZoom = 4f;
+    private const float CameraZoomStep = 0.25f;
+    private const float OverviewZoomScale = 0.90f;
 
-    // 整数倍率跟随相机：教学地图 3x、大地图 1x；切换/移动当前舰时平滑居中。
+    // 全模式以 3x 起步；滚轮在动态全图概览下限与 4x 上限间缩放，选船/移动当前舰时平滑居中。
     private Camera2D? _camera;
     private Tween? _cameraTween;
     private Rect2 _backgroundBounds;
+    private float _minimumCameraZoom = 1f;
     private Texture2D? _seaTexture;
     private Polygon2D? _animatedSeaSurface;
     private readonly List<Texture2D> _reefTextures = new();
@@ -71,7 +74,7 @@ public partial class NavalGridView : Node2D
     {
         SetProcessUnhandledInput(true);
         SetProcess(true);
-        // 引用共享相机（NavalDemo 根下 Camera2D，组 naval_camera）；Attach 时按地图选择 1x/3x。
+        // 引用共享相机（NavalDemo 根下 Camera2D，组 naval_camera）；所有关卡 Attach 时统一以教程 3x 起步。
         _camera = GetTree().GetFirstNodeInGroup("naval_camera") as Camera2D;
         _seaTexture = GD.Load<Texture2D>("res://assets/naval/battle/sea_ink_pixel.png");
         CreateAnimatedSeaSurface();
@@ -112,11 +115,19 @@ public partial class NavalGridView : Node2D
         }
     }
 
-    // 捕获点击：相机由当前舰自动跟随，并允许 WASD 在背景边界内查看战场；不再使用滚轮缩放。
+    // 捕获点击与滚轮：相机由当前舰自动跟随，允许 WASD 平移，并以鼠标所在战场位置为锚点缩放。
     public override void _UnhandledInput(InputEvent @event)
     {
         if (_battle is null) return;
-        if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+        if (@event is not InputEventMouseButton { Pressed: true } mouseEvent) return;
+        if (mouseEvent.ButtonIndex == MouseButton.WheelUp || mouseEvent.ButtonIndex == MouseButton.WheelDown)
+        {
+            var direction = mouseEvent.ButtonIndex == MouseButton.WheelUp ? 1f : -1f;
+            if (ZoomCameraAt(direction * Mathf.Max(0.1f, mouseEvent.Factor), mouseEvent.Position))
+                GetViewport().SetInputAsHandled();
+            return;
+        }
+        if (mouseEvent.ButtonIndex == MouseButton.Left)
         {
             _clickReceiver?.OnGridClicked(GetGlobalMousePosition());
             GetViewport().SetInputAsHandled();
@@ -147,6 +158,26 @@ public partial class NavalGridView : Node2D
             _camera.Position + direction * (CameraPanSpeed / zoom) * delta);
     }
 
+    public bool ZoomCameraAt(float steps, Vector2 screenPosition)
+    {
+        if (_camera is null || Mathf.IsZeroApprox(steps)) return false;
+        var currentZoom = Mathf.Max(0.001f, _camera.Zoom.X);
+        var targetZoom = Mathf.Clamp(
+            currentZoom + steps * CameraZoomStep,
+            _minimumCameraZoom,
+            MaximumCameraZoom);
+        if (Mathf.IsEqualApprox(currentZoom, targetZoom)) return false;
+
+        _cameraTween?.Kill();
+        _cameraTween = null;
+        var viewportRect = GetViewport().GetVisibleRect();
+        var screenOffset = screenPosition - viewportRect.GetCenter();
+        var worldAnchor = _camera.Position + screenOffset / currentZoom;
+        _camera.Zoom = Vector2.One * targetZoom;
+        _camera.Position = ClampCameraPosition(worldAnchor - screenOffset / targetZoom);
+        return true;
+    }
+
     private Vector2 ClampCameraPosition(Vector2 position)
     {
         if (_camera is null || _backgroundBounds.Size == Vector2.Zero) return position;
@@ -174,40 +205,67 @@ public partial class NavalGridView : Node2D
     {
         var viewport = GetViewport().GetVisibleRect().Size;
         var mapSize = new Vector2(width * CellSize, height * CellSize);
-        var zoom = _camera?.Zoom ?? Vector2.One;
-        var safeZoom = new Vector2(Mathf.Max(0.001f, zoom.X), Mathf.Max(0.001f, zoom.Y));
-        // 视口外再留两格海面，使边缘舰船可居中且镜头不会露出背景。
+        var safeZoom = Vector2.One * Mathf.Max(0.001f, _minimumCameraZoom);
+        // 按最远视角预留海面，再加两格安全边，使滚轮缩到全图概览时也不会露出背景。
         var padding = viewport / safeZoom * 0.5f + Vector2.One * (CellSize * 2f);
         return new Rect2(Origin - padding, mapSize + padding * 2f);
     }
 
-    private float CameraZoomForMap(int width, int height)
+    private float MapFitZoom(int width, int height)
     {
         var viewport = GetViewport().GetVisibleRect().Size;
         var available = new Vector2(
             Mathf.Max(CellSize, viewport.X - CameraScreenMargin * 2f),
             Mathf.Max(CellSize, viewport.Y - CameraScreenMargin * 2f));
         var mapSize = new Vector2(width * CellSize, height * CellSize);
-        var fitZoom = Mathf.Min(available.X / mapSize.X, available.Y / mapSize.Y);
-
-        // 能以 2x 完整适配的教学棋盘进一步放大到 3x；48x36 等大地图保持 1x。
-        return fitZoom >= TutorialMapFitThreshold ? TutorialCameraZoom : 1f;
+        return Mathf.Min(available.X / mapSize.X, available.Y / mapSize.Y);
     }
 
     private void ConfigureFixedCamera(BattleState battle)
     {
         if (_camera is null) return;
         _cameraTween?.Kill();
-        var zoom = CameraZoomForMap(battle.Map.Width, battle.Map.Height);
-        _camera.Zoom = Vector2.One * zoom;
+        var fitZoom = MapFitZoom(battle.Map.Width, battle.Map.Height);
+        // 最远视角比完整适配再退 10%，保留地图四周水墨留白；初始视角统一使用教程 3x。
+        _minimumCameraZoom = Mathf.Clamp(
+            Mathf.Min(InitialCameraZoom, fitZoom * OverviewZoomScale),
+            0.25f,
+            InitialCameraZoom);
+        _camera.Zoom = Vector2.One * InitialCameraZoom;
         _backgroundBounds = BackgroundRect(battle.Map.Width, battle.Map.Height);
         _camera.PositionSmoothingEnabled = false;
         _camera.LimitLeft = Mathf.FloorToInt(_backgroundBounds.Position.X);
         _camera.LimitTop = Mathf.FloorToInt(_backgroundBounds.Position.Y);
         _camera.LimitRight = Mathf.CeilToInt(_backgroundBounds.End.X);
         _camera.LimitBottom = Mathf.CeilToInt(_backgroundBounds.End.Y);
+        var mapCenter = Origin + new Vector2(battle.Map.Width * CellSize, battle.Map.Height * CellSize) * 0.5f;
+        _camera.Position = ClampCameraPosition(mapCenter);
+        FocusCameraOnPlayerFleet();
+    }
+
+    public bool FocusCameraOnPlayerFleet()
+    {
+        if (_camera is null || _battle is null) return false;
+        ShipState? focusShip = null;
+        // 只把规则层已明确登记且仍存活的舰视作指挥舰；尚未指定时随机挑一艘我方存活舰。
+        if (_battle.Flagships.TryGetValue(FactionId.Player, out var flagshipId))
+        {
+            var flagship = _battle.ShipOrNull(flagshipId);
+            if (flagship is { HitPoints: > 0, Faction: FactionId.Player }) focusShip = flagship;
+        }
+        if (focusShip is null)
+        {
+            var candidates = _battle.Ships.Values
+                .Where(ship => ship.Faction == FactionId.Player && ship.HitPoints > 0)
+                .ToArray();
+            if (candidates.Length > 0) focusShip = candidates[Random.Shared.Next(candidates.Length)];
+        }
+        if (focusShip is null) return false;
+        _cameraTween?.Kill();
+        _cameraTween = null;
         _camera.Position = ClampCameraPosition(
-            Origin + new Vector2(battle.Map.Width * CellSize, battle.Map.Height * CellSize) * 0.5f);
+            ShipCenterToWorld(focusShip.Bow, focusShip.Length, focusShip.Facing));
+        return true;
     }
 
     public void FocusCameraOnShip(ShipState ship)
@@ -364,6 +422,10 @@ public partial class NavalGridView : Node2D
     public int CellOverlayCount() => _cellOverlays.Count;
     public int HighlightShipCount() => _highlightShipIds.Count;
     public float CameraZoomValue() => _camera?.Zoom.X ?? 1f;
+    public float CameraMinimumZoomValue() => _minimumCameraZoom;
+    public float CameraMaximumZoomValue() => MaximumCameraZoom;
+    public float CameraFitZoomValue()
+        => _battle is null ? 1f : MapFitZoom(_battle.Map.Width, _battle.Map.Height);
     public bool AnimatedSeaUsesSeamlessMirrorSampling()
     {
         var code = ((_animatedSeaSurface?.Material as ShaderMaterial)?.Shader?.Code) ?? string.Empty;

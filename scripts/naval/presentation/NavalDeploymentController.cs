@@ -140,6 +140,8 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         if (_fleetToggleButton is not null) _fleetToggleButton.Pressed += FleetToggleFromButton;
         if (_level is null) BuildDefaultLineups();
         BuildFleet(); // L-3：关卡模式经 BuildFleet 内分支按 LevelDefinition 装配（下方）；自由模式沿用默认阵型
+        // GridView Attach 早于舰队装配；舰船齐备后把镜头移到已指定指挥舰，未指定时随机落在我方舰上。
+        _grid.FocusCameraOnPlayerFleet();
         // 布阵区：关卡模式按玩家舰队初始位置计算；随机遭遇模式直接用遭遇的玩家/敌区。
         if (_level is not null) ComputeLevelPlayerZone();
         else if (_encounter is not null)
@@ -1363,6 +1365,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         _grid.Attach(_battle);
         BuildDefaultLineups();
         BuildFleet();
+        _grid.FocusCameraOnPlayerFleet();
         if (_level is not null) ComputeLevelPlayerZone();
         else if (_encounter is not null)
         {

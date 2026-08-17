@@ -50,13 +50,57 @@ func _init() -> void:
 		push_error("FAIL: shared naval camera missing")
 		quit(1)
 		return
+	var deploy_grid: Node = demo.get_node_or_null("Deployment/DeployGrid")
+	if deploy_grid == null:
+		push_error("FAIL: deployment GridView missing")
+		quit(1)
+		return
+	var viewport_center := demo.get_viewport().get_visible_rect().get_center()
+	var expected_flagship_camera := Vector2(deploy.ShipStateCenterX("p1"), deploy.ShipStateCenterY("p1"))
+	var player_ship_ids: Array[String] = ["p1", "p2", "p3", "p4"]
+	var initial_ship_camera_positions: Array[Vector2] = []
+	for ship_id: String in player_ship_ids:
+		initial_ship_camera_positions.append(Vector2(deploy.ShipStateCenterX(ship_id), deploy.ShipStateCenterY(ship_id)))
+	if not is_equal_approx(camera.zoom.x, 3.0) or not initial_ship_camera_positions.any(func(pos: Vector2) -> bool: return camera.position.is_equal_approx(pos)):
+		push_error("FAIL: deployment must start at tutorial zoom centered on a player ship when no flagship is assigned (zoom=%s actual=%s candidates=%s)" % [camera.zoom.x, camera.position, initial_ship_camera_positions])
+		quit(1)
+		return
+	# 滚轮范围：最近可超过教程倍率，最远比完整适配再退一点，并始终受海面背景边界约束。
+	var anchor_screen := viewport_center + Vector2(120.0, 80.0)
+	var anchor_offset := anchor_screen - viewport_center
+	var anchor_world_before := camera.position + anchor_offset / camera.zoom.x
+	deploy_grid.ZoomCameraAt(1.0, anchor_screen)
+	var anchor_world_after := camera.position + anchor_offset / camera.zoom.x
+	if not anchor_world_after.is_equal_approx(anchor_world_before):
+		push_error("FAIL: naval camera wheel zoom did not preserve mouse world anchor (before=%s after=%s)" % [anchor_world_before, anchor_world_after])
+		quit(1)
+		return
+	for i in range(8):
+		deploy_grid.ZoomCameraAt(1.0, viewport_center)
+	if not is_equal_approx(camera.zoom.x, deploy_grid.CameraMaximumZoomValue()) or camera.zoom.x <= 3.0:
+		push_error("FAIL: naval camera maximum zoom must exceed tutorial zoom: %s" % camera.zoom.x)
+		quit(1)
+		return
+	for i in range(32):
+		deploy_grid.ZoomCameraAt(-1.0, viewport_center)
+	if not is_equal_approx(camera.zoom.x, deploy_grid.CameraMinimumZoomValue()) \
+			or camera.zoom.x >= deploy_grid.CameraFitZoomValue() or not deploy_grid.CameraViewInsideBackground():
+		push_error("FAIL: naval camera overview zoom/bounds wrong (zoom=%s min=%s fit=%s inside=%s)" % [camera.zoom.x, deploy_grid.CameraMinimumZoomValue(), deploy_grid.CameraFitZoomValue(), deploy_grid.CameraViewInsideBackground()])
+		quit(1)
+		return
 	var camera_before := camera.position
-	var select_err: String = deploy.SelectShipForDeploy("p1")
+	var focus_ship_id := ""
+	for ship_id: String in player_ship_ids:
+		var ship_center := Vector2(deploy.ShipStateCenterX(ship_id), deploy.ShipStateCenterY(ship_id))
+		if not camera_before.is_equal_approx(ship_center):
+			focus_ship_id = ship_id
+			break
+	var select_err: String = deploy.SelectShipForDeploy(focus_ship_id)
 	if select_err != "":
 		push_error("FAIL: deployment select ship error: %s" % select_err)
 		quit(1)
 		return
-	var expected_camera := Vector2(deploy.ShipStateCenterX("p1"), deploy.ShipStateCenterY("p1"))
+	var expected_camera := Vector2(deploy.ShipStateCenterX(focus_ship_id), deploy.ShipStateCenterY(focus_ship_id))
 	if camera.position.is_equal_approx(camera_before) or not camera.position.is_equal_approx(expected_camera):
 		push_error("FAIL: deployment camera did not focus selected ship (before=%s actual=%s expected=%s)" % [camera_before, camera.position, expected_camera])
 		quit(1)
@@ -83,6 +127,10 @@ func _init() -> void:
 		return
 	if controller.CurrentFaction() != 0 or controller.Round() != 1:
 		push_error("FAIL: battle not started from deployment")
+		quit(1)
+		return
+	if not is_equal_approx(camera.zoom.x, 3.0) or not camera.position.is_equal_approx(expected_flagship_camera):
+		push_error("FAIL: battle must reset tutorial zoom and center on player flagship (zoom=%s actual=%s expected=%s)" % [camera.zoom.x, camera.position, expected_flagship_camera])
 		quit(1)
 		return
 	# 战斗顶部两行文字试调：只增大字号与描边，不依赖背景底板。

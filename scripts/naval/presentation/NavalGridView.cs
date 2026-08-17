@@ -66,7 +66,7 @@ public partial class NavalGridView : Node2D
     private HashSet<GridPos>? _fogVisible;
     private Texture2D? _fogMistTexture;
     private Texture2D? _escapeIconTexture;
-    private static readonly Color EscapeCellGreen = new(0.46f, 0.64f, 0.60f, 0.38f);
+    private static readonly Color EscapeCellGreen = new(0.54f, 0.71f, 0.67f, 0.40f);
     private const float EscapeIconOpacity = 0.96f;
     private static readonly Color FogMistFallback = new(0.84f, 0.91f, 0.90f, 0.16f);
     private static readonly Color FogMistTextureTint = new(0.96f, 0.98f, 0.96f, 0.38f);

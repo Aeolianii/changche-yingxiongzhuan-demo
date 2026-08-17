@@ -181,9 +181,9 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             var label = GetNode<Label>($"DeployHud/Panel/Box/Columns/{titlePath}");
             label.AddThemeFontOverride("font", InkWashTheme.Font());
             label.AddThemeFontSizeOverride("font_size", 24);
-            label.AddThemeColorOverride("font_color", new Color("f2d992"));
-            label.AddThemeColorOverride("font_outline_color", InkWashTheme.InkDeep);
-            label.AddThemeConstantOverride("outline_size", 5);
+            label.AddThemeColorOverride("font_color", Colors.White);
+            label.AddThemeColorOverride("font_outline_color", Colors.Black);
+            label.AddThemeConstantOverride("outline_size", 8);
         }
     }
 
@@ -516,6 +516,8 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         if (_selectedShip is not null && _shipViews.TryGetValue(_selectedShip, out var old)) old.SetSelected(false);
         _selectedShip = shipId;
         if (_shipViews.TryGetValue(shipId, out var view)) view.SetSelected(true);
+        // 与战斗阶段一致：选中舰船后将共享相机平滑居中到舰船几何中心。
+        _grid.FocusCameraOnShip(ship);
         RefreshDeploymentHighlights();
         // F-4：自沉舰选中提示固守浅滩（移动/转向已锁），仍可指定指挥舰/开始战斗。
         SetMessage(ship.SelfSunk

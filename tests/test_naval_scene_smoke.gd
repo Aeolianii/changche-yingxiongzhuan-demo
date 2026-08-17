@@ -35,6 +35,37 @@ func _init() -> void:
 		push_error("FAIL: deployment fleet not built (player=%d enemy=%d)" % [deploy.PlayerShipCount(), deploy.EnemyShipCount()])
 		quit(1)
 		return
+	# 布阵选舰复用战斗阶段镜头聚焦：headless 下立即落到舰船几何中心。
+	var camera := demo.get_node_or_null("Camera2D") as Camera2D
+	if camera == null:
+		push_error("FAIL: shared naval camera missing")
+		quit(1)
+		return
+	var camera_before := camera.position
+	var select_err: String = deploy.SelectShipForDeploy("p1")
+	if select_err != "":
+		push_error("FAIL: deployment select ship error: %s" % select_err)
+		quit(1)
+		return
+	var expected_camera := Vector2(deploy.ShipStateCenterX("p1"), deploy.ShipStateCenterY("p1"))
+	if camera.position.is_equal_approx(camera_before) or not camera.position.is_equal_approx(expected_camera):
+		push_error("FAIL: deployment camera did not focus selected ship (before=%s actual=%s expected=%s)" % [camera_before, camera.position, expected_camera])
+		quit(1)
+		return
+	# 三个卷轴小标题统一为白字、纯黑粗描边；按钮样式不在本次改动范围。
+	var deployment_titles: Array[String] = [
+		"Deployment/DeployHud/Panel/Box/Columns/ShipCommands/Title",
+		"Deployment/DeployHud/Panel/Box/Columns/FleetCommands/Title",
+		"Deployment/DeployHud/Panel/Box/Columns/BattleCommand/Title",
+	]
+	for title_path: String in deployment_titles:
+		var title := demo.get_node_or_null(title_path) as Label
+		if title == null or title.get_theme_color("font_color") != Color.WHITE \
+				or title.get_theme_color("font_outline_color") != Color.BLACK \
+				or title.get_theme_constant("outline_size") != 8:
+			push_error("FAIL: deployment title style wrong: %s" % title_path)
+			quit(1)
+			return
 	# 控制器能经布阵确认构建种子战斗
 	var err: String = deploy.ConfirmDeployment()
 	if err != "":

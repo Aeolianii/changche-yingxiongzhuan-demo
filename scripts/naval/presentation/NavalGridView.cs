@@ -66,6 +66,7 @@ public partial class NavalGridView : Node2D
     private HashSet<GridPos>? _fogVisible;
     private Texture2D? _fogMistTexture;
     private Texture2D? _escapeCellTexture;
+    private const float EscapeCellOpacity = 0.68f;
     private static readonly Color FogMistFallback = new(0.84f, 0.91f, 0.90f, 0.16f);
     private static readonly Color FogMistTextureTint = new(0.96f, 0.98f, 0.96f, 0.38f);
 
@@ -560,6 +561,7 @@ public partial class NavalGridView : Node2D
     public bool FogCellVisible(int x, int y) => _fogVisible is null || _fogVisible.Contains(new GridPos(x, y));
     public bool FogMistTextureLoaded() => _fogMistTexture is not null;
     public bool EscapeCellTextureLoaded() => _escapeCellTexture is not null;
+    public float EscapeCellOpacityValue() => EscapeCellOpacity;
     public bool FogUsesLightInkStyle()
         => FogMistFallback.R > 0.75f && FogMistFallback.G > 0.75f && FogMistFallback.B > 0.75f
             && FogMistFallback.A < 0.35f;
@@ -738,7 +740,7 @@ public partial class NavalGridView : Node2D
             var rect = CellFaceRect(c);
             if (_escapeCellTexture is not null)
             {
-                DrawTextureRect(_escapeCellTexture, rect, false);
+                DrawTextureRect(_escapeCellTexture, rect, false, new Color(1f, 1f, 1f, EscapeCellOpacity));
                 continue;
             }
 

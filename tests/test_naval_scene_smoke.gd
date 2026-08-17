@@ -44,7 +44,11 @@ func _init() -> void:
 		quit(1)
 		return
 	if not grid.EscapeCellTextureLoaded():
-		push_error("FAIL: naval escape cells must load the generated green footprint component")
+		push_error("FAIL: naval escape cells must load the generated pixel sailboat component")
+		quit(1)
+		return
+	if float(grid.EscapeCellOpacityValue()) >= 0.75:
+		push_error("FAIL: naval escape-cell material must remain visibly semi-transparent")
 		quit(1)
 		return
 	# 布阵控制器自 ships.json 装配双方各 4 舰
@@ -127,10 +131,10 @@ func _init() -> void:
 			push_error("FAIL: deployment title style wrong: %s" % title_path)
 			quit(1)
 			return
-	# 逃跑格必须每图存在且缩成左右各一组双格；把旗舰放到左出口两步内，验证鼠标点脚印可直接逃跑。
-	if deploy.ExitCellCount() != 4 or not deploy.IsExitCell(0, 17) or not deploy.IsExitCell(0, 18) \
-			or not deploy.IsExitCell(47, 17) or not deploy.IsExitCell(47, 18):
-		push_error("FAIL: free map must expose two safe paired escape cells on each side")
+	# 逃跑格必须每图存在且按大地图扩展为 6 格；把旗舰放到左出口两步内，验证鼠标点帆船格可直接逃跑。
+	if deploy.ExitCellCount() != 6 or not deploy.IsExitCell(0, 16) or not deploy.IsExitCell(0, 17) or not deploy.IsExitCell(0, 18) \
+			or not deploy.IsExitCell(47, 16) or not deploy.IsExitCell(47, 17) or not deploy.IsExitCell(47, 18):
+		push_error("FAIL: large free map must expose three safe escape cells on each side")
 		quit(1)
 		return
 	if not deploy.RandomMapsAlwaysHaveSafeExits(36):

@@ -124,9 +124,14 @@ public sealed class RandomMapGenerator
             for (var x = 0; x < o.Width; x++)
                 grid[x, y] = '.'; // 深水底
 
-        var exitY = Math.Max(0, (o.Height - 2) / 2);
+        var exitCount = ExitCellRules.RecommendedCount(o.Width, o.Height);
+        var leftExitCount = exitCount / 2;
+        var rightExitCount = exitCount - leftExitCount;
+        var leftExitY = Math.Max(0, (o.Height - leftExitCount) / 2);
+        var rightExitY = Math.Max(0, (o.Height - rightExitCount) / 2);
         bool IsReservedExit(int x, int y)
-            => (x == 0 || x == o.Width - 1) && (y == exitY || y == exitY + 1);
+            => x == 0 && y >= leftExitY && y < leftExitY + leftExitCount
+               || x == o.Width - 1 && y >= rightExitY && y < rightExitY + rightExitCount;
 
         // 特征可放格：界内、深水、不在布阵区，也不占用两侧双格逃跑区。
         bool AllowFeature(int x, int y)
@@ -162,12 +167,9 @@ public sealed class RandomMapGenerator
         PlaceScattered(o, rng, grid, AllowFeature, '~', rng.NextInt(2, 5));
         PlaceScattered(o, rng, grid, AllowFeature, '#', rng.NextInt(1, 4));
 
-        // 每张随机地图强制生成左右各一组双格出口；旧 IncludeExits 参数仅保留调用兼容性。
-        for (var y = exitY; y <= exitY + 1; y++)
-        {
-            grid[0, y] = 'E';
-            grid[o.Width - 1, y] = 'E';
-        }
+        // 每张随机地图按规模生成 4-6 个出口，并在左右边缘平衡分布。
+        for (var y = leftExitY; y < leftExitY + leftExitCount; y++) grid[0, y] = 'E';
+        for (var y = rightExitY; y < rightExitY + rightExitCount; y++) grid[o.Width - 1, y] = 'E';
 
         var rows = new string[o.Height];
         for (var y = 0; y < o.Height; y++)
@@ -203,10 +205,16 @@ public sealed class RandomMapGenerator
     private static string[] AllDeepRows(RandomMapOptions o)
     {
         var rows = new string[o.Height];
-        var exitY = Math.Max(0, (o.Height - 2) / 2);
+        var exitCount = ExitCellRules.RecommendedCount(o.Width, o.Height);
+        var leftExitCount = exitCount / 2;
+        var rightExitCount = exitCount - leftExitCount;
+        var leftExitY = Math.Max(0, (o.Height - leftExitCount) / 2);
+        var rightExitY = Math.Max(0, (o.Height - rightExitCount) / 2);
         for (var y = 0; y < o.Height; y++)
             rows[y] = new string(Enumerable.Range(0, o.Width)
-                .Select(x => (x == 0 || x == o.Width - 1) && (y == exitY || y == exitY + 1) ? 'E' : '.')
+                .Select(x => x == 0 && y >= leftExitY && y < leftExitY + leftExitCount
+                             || x == o.Width - 1 && y >= rightExitY && y < rightExitY + rightExitCount
+                    ? 'E' : '.')
                 .ToArray());
         return rows;
     }

@@ -677,7 +677,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         {
             var options = new RandomMapOptions(24, 18, seed % 3 + 1, seed, IncludeExits: false);
             var spec = generator.Generate(options).Spec;
-            if (spec.ExitCells.Count == 0) return false;
+            if (spec.ExitCells.Count != ExitCellRules.RecommendedCount(spec.Width, spec.Height)) return false;
             if (spec.ExitCells.Any(cell => spec.TerrainAt(cell.X, cell.Y) != TerrainType.DeepWater)) return false;
         }
         return true;

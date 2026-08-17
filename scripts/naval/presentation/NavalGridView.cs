@@ -622,14 +622,13 @@ public partial class NavalGridView : Node2D
         DrawFog();
         // F-2：绿色双脚印逃跑格常驻显示在迷雾之上。
         DrawExitCells(map);
-        // 坐标目标绘制在迷雾与出口之上；金边、青绿底与坐标标签共同指明玩家要抵达的精确格。
-        foreach (var (cell, label) in _persistentHighlights)
+        // 特殊目标格常驻高亮；只保留金边与青绿底，不在格子内重复绘制坐标文字。
+        foreach (var cell in _persistentHighlights.Keys)
         {
             var rect = CellFaceRect(cell).Grow(-1f);
             var gold = new Color(0.96f, 0.76f, 0.20f, 0.96f);
             DrawRect(rect, new Color(0.20f, 0.78f, 0.60f, 0.42f));
             DrawRect(rect, gold, false, 3f);
-            DrawTextAt(rect.GetCenter() + new Vector2(-10f, 4f), label, new Color(1f, 0.94f, 0.72f, 1f), 10);
         }
         // 2.5D 舰船阴影由 NavalShipView 按素材实际水线绘制；这里不再使用占格矩形代替船影。
         // 移动范围水墨半透明高亮

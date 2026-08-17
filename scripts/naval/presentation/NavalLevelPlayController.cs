@@ -10,7 +10,7 @@ using System.Linq;
 namespace NanjiangNaval;
 
 // L-3 关卡游玩协调（NavalDemo 根节点下的顶层 CanvasLayer，不随 Node2D 隐藏）：
-//   目标条（ObjectiveBar）+ 教学提示条（HintBar）+ 关卡结算面板（ResultPanel：重试/返回关卡选择）。
+//   干笔教学提示条（HintBar）+ 关卡结算面板（ResultPanel：重试/返回关卡选择）。
 //   数据源 = LevelSession.PendingLevelId → LevelRegistry 关卡定义；进度 = LevelProgress(user://progress.json)。
 //   目标判定（LevelObjective.IsComplete）+ 实时进度（DescribeProgress）+ 教学提示分步推进（随动作触发）。
 //   自由模式（PendingLevelId=="free"）→ 本层完全惰性（Visible=false），不干扰自由战斗结算。
@@ -35,8 +35,6 @@ public partial class NavalLevelPlayController : CanvasLayer
     private BattleResult? _lastResult;
     private string? _hintFeedback; // 教学完成、通关或失败时的收尾反馈。
 
-    private Panel? _objectiveBar;
-    private Label? _objectiveContent;
     private Panel? _hintBar;
     private Label? _hintTitle;
     private Label? _hintContent;
@@ -53,8 +51,6 @@ public partial class NavalLevelPlayController : CanvasLayer
     public override void _Ready()
     {
         Visible = false;
-        _objectiveBar = GetNodeOrNull<Panel>("ObjectiveBar");
-        _objectiveContent = GetNodeOrNull<Label>("ObjectiveBar/Box/Content");
         _hintBar = GetNodeOrNull<Panel>("HintBar");
         _hintTitle = GetNodeOrNull<Label>("HintBar/Box/Title");
         _hintContent = GetNodeOrNull<Label>("HintBar/Box/Content");
@@ -63,18 +59,15 @@ public partial class NavalLevelPlayController : CanvasLayer
         _hintPage = GetNodeOrNull<Label>("HintBar/Box/Nav/Page");
         _resultPanel = GetNodeOrNull<Panel>("ResultPanel");
         _resultContent = GetNodeOrNull<Label>("ResultPanel/Box/Content");
-        StyleRibbon(_objectiveBar);
         StyleBrushHint(_hintBar);
         StylePanel(_resultPanel);
-        if (_objectiveContent is not null) StyleText(_objectiveContent, 15, InkWashTheme.InkDeep);
         if (_hintTitle is not null) StyleOutlinedText(_hintTitle, HintTitleFontSize, HintTitleGold, 4);
         if (_hintContent is not null) StyleOutlinedText(_hintContent, HintContentFontSize, HintBodyPaper, 4);
         if (_hintPage is not null) StyleText(_hintPage, 13, HintTitleGold);
         if (_resultContent is not null) StyleText(_resultContent, 18, InkWashTheme.TextInk);
         if (_hintPrev is not null) { InkWashTheme.StyleHudButton(_hintPrev); _hintPrev.FocusMode = Control.FocusModeEnum.None; _hintPrev.Pressed += OnHintPrev; }
         if (_hintNext is not null) { InkWashTheme.StyleHudButton(_hintNext); _hintNext.FocusMode = Control.FocusModeEnum.None; _hintNext.Pressed += OnHintNext; }
-        // U-1：目标条/提示条底板不挡地图点击；旧翻页节点隐藏，提示条右侧只保留收起/展开。
-        if (_objectiveBar is not null) InkWashTheme.MakeClickTransparent(_objectiveBar);
+        // U-1：提示条底板不挡地图点击；旧翻页节点隐藏，提示条右侧只保留收起/展开。
         if (_hintBar is not null) InkWashTheme.MakeClickTransparent(_hintBar);
         _hintCollapseButton = GetNodeOrNull<Button>("CollapseHintBar");
         if (_hintCollapseButton is not null)
@@ -310,12 +303,6 @@ public partial class NavalLevelPlayController : CanvasLayer
 
     private void RefreshBars()
     {
-        if (_objectiveContent is not null)
-        {
-            var text = _level!.ObjectiveText;
-            if (_battle is not null) text += "　" + _level.Objective.DescribeProgress(_battle, _tracker);
-            _objectiveContent.Text = text;
-        }
         if (!_hintTransitionPending) RefreshHintBar();
     }
 
@@ -388,7 +375,6 @@ public partial class NavalLevelPlayController : CanvasLayer
 
     public bool LevelMode() => _level is not null;
     public string LevelId() => _level?.Id ?? "";
-    public string ObjectiveBarText() => _objectiveContent?.Text ?? "";
     public int HintIndex() => _hintIndex;
     public string HintText() => _hintContent?.Text ?? "";
     // 教程提示只读状态（headless 断言用）：当前步骤、旧翻页节点隐藏态、字体与墨条规格。
@@ -483,11 +469,6 @@ public partial class NavalLevelPlayController : CanvasLayer
     private static void StylePanel(Panel? panel)
     {
         if (panel is not null) panel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
-    }
-
-    private static void StyleRibbon(Panel? panel)
-    {
-        if (panel is not null) panel.AddThemeStyleboxOverride("panel", InkWashTheme.HudRibbon());
     }
 
     private static void StyleBrushHint(Panel? panel)

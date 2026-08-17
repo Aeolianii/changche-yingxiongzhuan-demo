@@ -610,33 +610,11 @@ text = "重掷换一场"
 visible = false
 script = ExtResource("7_levelplay")
 
-[node name="ObjectiveBar" type="Panel" parent="LevelPlay"]
-offset_left = 330.0
-offset_top = 96.0
-offset_right = 1014.0
-offset_bottom = 134.0
-mouse_filter = 2
-
-[node name="Box" type="VBoxContainer" parent="LevelPlay/ObjectiveBar"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 14.0
-offset_top = 8.0
-offset_right = -14.0
-offset_bottom = -8.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 4
-
-[node name="Content" type="Label" parent="LevelPlay/ObjectiveBar/Box"]
-theme_override_font_sizes/font_size = 15
-
 [node name="HintBar" type="Panel" parent="LevelPlay"]
-offset_left = 452.0
-offset_top = 140.0
-offset_right = 892.0
-offset_bottom = 252.0
+offset_left = 372.0
+offset_top = 126.0
+offset_right = 972.0
+offset_bottom = 262.0
 mouse_filter = 2
 
 [node name="Backdrop" type="TextureRect" parent="LevelPlay/HintBar"]
@@ -655,10 +633,10 @@ stretch_mode = 0
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 36.0
-offset_top = 16.0
-offset_right = -36.0
-offset_bottom = -14.0
+offset_left = 54.0
+offset_top = 24.0
+offset_right = -132.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 2
@@ -746,10 +724,10 @@ custom_minimum_size = Vector2(190, 44)
 text = "返回关卡选择"
 
 [node name="CollapseHintBar" type="Button" parent="LevelPlay"]
-offset_left = 902.0
-offset_top = 174.0
-offset_right = 982.0
-offset_bottom = 214.0
+offset_left = 866.0
+offset_top = 172.0
+offset_right = 946.0
+offset_bottom = 216.0
 text = "收起"
 
 [node name="Deployment" parent="." instance=ExtResource("4_deploy")]

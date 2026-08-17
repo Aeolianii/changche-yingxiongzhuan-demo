@@ -67,7 +67,6 @@ public partial class NavalGridView : Node2D
     private Texture2D? _fogMistTexture;
     private Texture2D? _escapeIconTexture;
     private static readonly Color EscapeCellGreen = new(0.18f, 0.72f, 0.32f, 0.34f);
-    private static readonly Color EscapeCellBorder = new(0.32f, 0.88f, 0.42f, 0.58f);
     private const float EscapeIconOpacity = 0.96f;
     private static readonly Color FogMistFallback = new(0.84f, 0.91f, 0.90f, 0.16f);
     private static readonly Color FogMistTextureTint = new(0.96f, 0.98f, 0.96f, 0.38f);
@@ -745,7 +744,6 @@ public partial class NavalGridView : Node2D
             var rect = CellFaceRect(c);
             // 中层：不使用任何烘焙水墨底图，海面 shader 与水浪可从绿色覆盖下直接透出。
             DrawRect(rect.Grow(-0.75f), EscapeCellGreen);
-            DrawRect(rect.Grow(-1f), EscapeCellBorder, false, 1.4f);
 
             // 顶层：仅包含已抠图的像素帆船和尾浪，保持清晰，不跟随绿色底一起变淡。
             if (_escapeIconTexture is not null)

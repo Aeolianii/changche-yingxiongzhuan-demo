@@ -11,7 +11,7 @@
 
 | Scenario | Setup | Action | Expected | Result/build |
 |---|---|---|---|---|
-| 海战教程干笔墨条 | 从关卡选择进入 1-1 | 查看第一步，选中旗舰触发第二步，再收起/展开提示 | 移除顶部矩形目标卡片；显示 720×164px 透明干笔墨条并紧接顶部第二行文字下方；金色标题 22px，米白正文与收起入口 20px；无翻页按钮；动作达成后自动切换下一步 | passed / dedicated hint test + OpenGL capture 2026-08-17 |
+| 海战教程干笔墨条 | 从关卡选择进入 1-1 | 查看第一步，选中旗舰触发第二步，再收起/展开提示 | 移除顶部矩形目标卡片；720×164px 墨条、24px 金色标题和 20px 米白正文均水平居中；右侧收起入口 20px 并略微下移；动作达成后自动切换下一步 | passed / dedicated hint test + OpenGL capture 2026-08-17 |
 | 战斗顶部文字居中加大 | 进入水师操演并开始战斗 | 检查顶部回合信息与最长开战提示 | 两行均以视口中线居中；字号和描边各增大一级；提示首尾完整且上下行不重叠 | passed / focused smoke + 1344×896 OpenGL capture 2026-08-17 |
 | 战斗选船提示精简 | 进入战斗并轮到我方 | 选中己方舰，再以右键或点空白退选 | 选中时第二行不显示船名，只保留剩余移动与操作提示；退选后第二行为空 | passed / focused smoke + selected/deselected OpenGL captures 2026-08-17 |
 | 战斗顶部文字可读性 | 进入水师操演并开始战斗 | 检查顶部回合信息与最长开战提示 | 仅增大两行字号并加粗原有描边；不增加底板、不改颜色；提示首尾完整且不重叠 | passed / focused smoke + font pixel metrics + 1344×896 OpenGL capture 2026-08-17 |

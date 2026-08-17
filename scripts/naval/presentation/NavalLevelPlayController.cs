@@ -18,7 +18,7 @@ namespace NanjiangNaval;
 //   战斗结束由 HandleBattleEnded → OnBattleEnded 走同一结算（ResolveLevelEnd）。
 public partial class NavalLevelPlayController : CanvasLayer
 {
-    private const int HintTitleFontSize = 22;
+    private const int HintTitleFontSize = 24;
     private const int HintContentFontSize = 20;
     private const int HintToggleFontSize = 20;
     private const float HintFadeOutSeconds = 0.18f;

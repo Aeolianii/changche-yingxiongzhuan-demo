@@ -633,9 +633,9 @@ stretch_mode = 0
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 114.0
+offset_left = 100.0
 offset_top = 24.0
-offset_right = -192.0
+offset_right = -100.0
 offset_bottom = -48.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -643,7 +643,7 @@ theme_override_constants/separation = 2
 
 [node name="Title" type="Label" parent="LevelPlay/HintBar/Box"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 24
 text = "第一步 · 选中舰船"
 horizontal_alignment = 1
 
@@ -725,9 +725,9 @@ text = "返回关卡选择"
 
 [node name="CollapseHintBar" type="Button" parent="LevelPlay"]
 offset_left = 866.0
-offset_top = 136.0
+offset_top = 146.0
 offset_right = 946.0
-offset_bottom = 180.0
+offset_bottom = 190.0
 text = "收起"
 
 [node name="Deployment" parent="." instance=ExtResource("4_deploy")]

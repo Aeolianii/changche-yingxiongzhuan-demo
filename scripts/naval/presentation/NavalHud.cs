@@ -246,12 +246,12 @@ public partial class NavalHud : CanvasLayer
         ResultPanel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
         // F-3：劝降交涉复用教程干笔墨条，标题、正文与操作文字直接叠加在墨迹上。
         SurrenderPanel.AddThemeStyleboxOverride("panel", SurrenderBrushStyle());
-        StyleText(SurrenderTitle, 20, new Color("b8863b"));
-        SurrenderTitle.AddThemeColorOverride("font_outline_color", InkWashTheme.InkDeep);
-        SurrenderTitle.AddThemeConstantOverride("outline_size", 3);
-        StyleText(SurrenderCaption, 16, InkWashTheme.PaperLight);
+        StyleText(SurrenderTitle, 24, new Color("f0c865"));
+        SurrenderTitle.AddThemeColorOverride("font_outline_color", Colors.Black);
+        SurrenderTitle.AddThemeConstantOverride("outline_size", 4);
+        StyleText(SurrenderCaption, 20, new Color("f4e8cd"));
         SurrenderCaption.AddThemeColorOverride("font_outline_color", Colors.Black);
-        SurrenderCaption.AddThemeConstantOverride("outline_size", 3);
+        SurrenderCaption.AddThemeConstantOverride("outline_size", 4);
         // F-7c：交付舰选择面板同纸卡片风格。
         DeliveryPanel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
         StyleText(DeliveryCaption, 14, InkWashTheme.Ochre);
@@ -299,9 +299,9 @@ public partial class NavalHud : CanvasLayer
             StyleCommandTokenButton(button, TurnTokenTexture);
         foreach (var button in new[] { SelfSinkButton, EndTurnButton })
             StyleCommandTokenButton(button, EndTokenTexture);
-        StyleSurrenderButton(AcceptSurrenderButton, primary: true);
-        StyleSurrenderButton(RejectSurrenderButton, primary: false);
-        StyleSurrenderButton(OfferSurrenderButton, primary: true);
+        StyleSurrenderButton(AcceptSurrenderButton);
+        StyleSurrenderButton(RejectSurrenderButton);
+        StyleSurrenderButton(OfferSurrenderButton);
         foreach (var node in DeliveryPanel.FindChildren("*", "Button", true, false))
             if (node is Button b) StylePanelButton(b);
         StylePanelButton(NewGameButton);
@@ -621,20 +621,19 @@ public partial class NavalHud : CanvasLayer
         _attackPage = 0;
     }
 
-    private static void StyleSurrenderButton(Button button, bool primary)
+    private static void StyleSurrenderButton(Button button)
     {
-        var accent = primary ? new Color("9a4639") : new Color("35453f");
         button.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
-        button.AddThemeStyleboxOverride("hover", SurrenderButtonHoverStyle(new Color(accent, 0.66f)));
-        button.AddThemeStyleboxOverride("pressed", SurrenderButtonHoverStyle(new Color(accent.Darkened(0.18f), 0.82f)));
+        button.AddThemeStyleboxOverride("hover", new StyleBoxEmpty());
+        button.AddThemeStyleboxOverride("pressed", new StyleBoxEmpty());
         button.AddThemeStyleboxOverride("disabled", new StyleBoxEmpty());
         button.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
         button.AddThemeFontOverride("font", InkWashTheme.Font());
-        button.AddThemeFontSizeOverride("font_size", 16);
-        button.AddThemeColorOverride("font_color", primary ? new Color("e5c66e") : InkWashTheme.PaperLight);
-        button.AddThemeColorOverride("font_hover_color", Colors.White);
-        button.AddThemeColorOverride("font_pressed_color", InkWashTheme.PaperLight);
-        button.AddThemeColorOverride("font_disabled_color", new Color(InkWashTheme.PaperLight, 0.58f));
+        button.AddThemeFontSizeOverride("font_size", 20);
+        button.AddThemeColorOverride("font_color", new Color("f4e8cd"));
+        button.AddThemeColorOverride("font_hover_color", new Color("f0c865"));
+        button.AddThemeColorOverride("font_pressed_color", Colors.White);
+        button.AddThemeColorOverride("font_disabled_color", new Color("8f8b80"));
         button.AddThemeColorOverride("font_outline_color", Colors.Black);
         button.AddThemeConstantOverride("outline_size", 3);
         button.FocusMode = Control.FocusModeEnum.None;
@@ -647,18 +646,6 @@ public partial class NavalHud : CanvasLayer
         {
             Texture = SurrenderBrushTexture,
             ModulateColor = Colors.White,
-        };
-
-    private static StyleBoxFlat SurrenderButtonHoverStyle(Color background)
-        => new()
-        {
-            BgColor = background,
-            CornerRadiusTopLeft = 2,
-            CornerRadiusTopRight = 2,
-            CornerRadiusBottomLeft = 2,
-            CornerRadiusBottomRight = 2,
-            ShadowColor = new Color(0.02f, 0.03f, 0.03f, 0.38f),
-            ShadowSize = 1,
         };
 
     public void ShowShipStatus(BattleState battle, ShipState ship)
@@ -874,6 +861,9 @@ public partial class NavalHud : CanvasLayer
     public string SurrenderTitleText() => SurrenderTitle.Text;
     public int SurrenderTitleFontSize() => SurrenderTitle.GetThemeFontSize("font_size");
     public int SurrenderCaptionFontSize() => SurrenderCaption.GetThemeFontSize("font_size");
+    public int SurrenderTitleOutlineSize() => SurrenderTitle.GetThemeConstant("outline_size");
+    public int SurrenderCaptionOutlineSize() => SurrenderCaption.GetThemeConstant("outline_size");
+    public int SurrenderButtonFontSize() => OfferSurrenderButton.GetThemeFontSize("font_size");
     public float SurrenderOfferButtonWidth() => OfferSurrenderButton.CustomMinimumSize.X;
     public float SurrenderOfferButtonHeight() => OfferSurrenderButton.CustomMinimumSize.Y;
 

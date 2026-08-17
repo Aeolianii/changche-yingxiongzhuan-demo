@@ -64,9 +64,11 @@ func _run() -> void:
 	_expect(level_play.call("HintBarCollapsed") and not level_play.call("HintBarVisible"), "Collapsing must hide the full tutorial brush and copy.")
 	_expect(level_play.call("CollapsedHintBackdropVisible") and collapsed_backdrop.visible, "Collapsed state must show a compact dry-brush backdrop behind Expand.")
 	_expect(collapse_button.text == "展开", "Collapsed tutorial control must read Expand.")
+	_expect(is_equal_approx(collapse_button.get_global_rect().get_center().x, collapsed_backdrop.get_global_rect().get_center().x), "Expand text must be horizontally centered in the compact brush tab.")
 	_expect(collapsed_backdrop.texture.resource_path == "res://assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png", "Collapsed brush tab must reuse the tutorial dry-brush asset.")
 	level_play.call("ToggleHintBarCollapse")
 	_expect(level_play.call("HintBarVisible") and not level_play.call("CollapsedHintBackdropVisible"), "Expanding must restore the full tutorial brush and hide the compact tab.")
+	_expect(is_equal_approx(collapse_button.position.x, 932.0), "Collapse text must return to the full brush's top-right safe area after expanding.")
 
 	_finish()
 

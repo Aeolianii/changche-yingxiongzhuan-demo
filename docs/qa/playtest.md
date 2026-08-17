@@ -11,7 +11,7 @@
 
 | Scenario | Setup | Action | Expected | Result/build |
 |---|---|---|---|---|
-| 海战教程干笔墨条 | 从关卡选择进入 1-1 | 查看长正文步骤，再收起并重新展开提示 | 完整态为 720×164px 墨条，收起入口固定于右上角且不与正文重叠；收起后隐藏完整提示，但“展开”由紧凑干笔墨签承托；重新展开恢复完整墨条并隐藏小墨签 | passed / dedicated hint test + expanded/collapsed OpenGL captures 2026-08-17 |
+| 海战教程干笔墨条 | 从关卡选择进入 1-1 | 查看长正文步骤，再收起并重新展开提示 | 完整态为 720×164px 墨条，收起入口固定于右上角且不与正文重叠；收起后“展开”水平居中于紧凑干笔墨签；重新展开恢复完整墨条、隐藏小墨签并让按钮回到右上角 | passed / dedicated hint test + expanded/collapsed OpenGL captures 2026-08-17 |
 | 战斗武器军令牌组头 | 进入战斗并选中己方舰 | 打开攻击分类查看武器军令牌左侧 | 不显示竖排“武器”小字，也不保留其横向空位；军令牌与技能/接舷分页逻辑不变 | passed / naval scene smoke + OpenGL capture 2026-08-17 |
 | 战斗顶部文字居中加大 | 进入水师操演并开始战斗 | 检查顶部回合信息与最长开战提示 | 两行均以视口中线居中；字号和描边各增大一级；提示首尾完整且上下行不重叠 | passed / focused smoke + 1344×896 OpenGL capture 2026-08-17 |
 | 战斗选船提示精简 | 进入战斗并轮到我方 | 选中己方舰，再以右键或点空白退选 | 选中时第二行不显示船名，只保留剩余移动与操作提示；退选后第二行为空 | passed / focused smoke + selected/deselected OpenGL captures 2026-08-17 |

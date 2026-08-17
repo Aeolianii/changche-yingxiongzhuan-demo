@@ -21,6 +21,8 @@ public partial class NavalLevelPlayController : CanvasLayer
     private const int HintTitleFontSize = 24;
     private const int HintContentFontSize = 20;
     private const int HintToggleFontSize = 20;
+    private static readonly Vector2 HintToggleExpandedPosition = new(932f, 105f);
+    private static readonly Vector2 HintToggleCollapsedPosition = new(892f, 105f);
     private const float HintFadeOutSeconds = 0.18f;
     private const float HintFadeInSeconds = 0.24f;
     private static readonly Color HintTitleGold = new("f0c865");
@@ -77,6 +79,7 @@ public partial class NavalLevelPlayController : CanvasLayer
         if (_hintCollapseButton is not null)
         {
             StyleHintToggle(_hintCollapseButton);
+            _hintCollapseButton.Position = HintToggleExpandedPosition;
             _hintCollapseButton.FocusMode = Control.FocusModeEnum.None;
             _hintCollapseButton.Pressed += ToggleHintBarCollapse;
         }
@@ -418,7 +421,12 @@ public partial class NavalLevelPlayController : CanvasLayer
             _hintBar.Visible = !_hintBarCollapsed;
         }
         if (_hintCollapseButton is not null)
+        {
             _hintCollapseButton.Text = _hintBarCollapsed ? "展开" : "收起";
+            _hintCollapseButton.Position = _hintBarCollapsed
+                ? HintToggleCollapsedPosition
+                : HintToggleExpandedPosition;
+        }
         if (_hintCollapsedBackdrop is not null)
             _hintCollapsedBackdrop.Visible = _hintBarCollapsed;
     }

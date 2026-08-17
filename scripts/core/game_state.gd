@@ -109,6 +109,26 @@ func is_tea_merchant_event_completed() -> bool:
 	return bool(_world_state.get("tea_merchant_event_completed", false))
 
 
+func set_sea_main_quest_state(exploration_stage: int, wokou_warning_acknowledged: bool, wokou_battle_completed: bool) -> void:
+	var completed := wokou_battle_completed
+	_world_state["sea_main_quest"] = {
+		"exploration_stage": clampi(exploration_stage, 0, 4),
+		"wokou_warning_acknowledged": wokou_warning_acknowledged or completed,
+		"wokou_battle_completed": completed,
+	}
+
+
+func get_sea_main_quest_state() -> Dictionary:
+	var raw_state: Variant = _world_state.get("sea_main_quest", {})
+	var state := (raw_state as Dictionary) if raw_state is Dictionary else {}
+	var completed := bool(state.get("wokou_battle_completed", false))
+	return {
+		"exploration_stage": clampi(int(state.get("exploration_stage", 0)), 0, 4),
+		"wokou_warning_acknowledged": bool(state.get("wokou_warning_acknowledged", false)) or completed,
+		"wokou_battle_completed": completed,
+	}
+
+
 func accept_fubo_side_quest() -> void:
 	var state := get_fubo_side_quest_state()
 	state["accepted"] = true

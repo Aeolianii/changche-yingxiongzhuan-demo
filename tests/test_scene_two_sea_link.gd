@@ -15,6 +15,7 @@ func _initialize() -> void:
 func _run() -> void:
 	root.remove_meta(SCENE_TWO_ENTRY_META)
 	root.remove_meta(RETURN_TO_SCENE_TWO_META)
+	root.get_node("GameState").call("reset_runtime_world_state")
 	var scene_two := SCENE_TWO.instantiate() as Node2D
 	root.add_child(scene_two)
 	current_scene = scene_two
@@ -65,6 +66,9 @@ func _run() -> void:
 	var prompt := sea_scene.get_node("UI/Root/InteractionPrompt") as Control
 	var location_name := sea_scene.get_node("UI/Root/InteractionPrompt/LocationName") as Label
 	_expect(prompt.visible and "南海军港" in location_name.text, "South Sea Harbor entry prompt must be available at the Scene2 spawn point.")
+	sea_scene.call("_acknowledge_wokou_warning")
+	var persisted_quest_state := root.get_node("GameState").call("get_sea_main_quest_state") as Dictionary
+	_expect(bool(persisted_quest_state.get("wokou_warning_acknowledged", false)), "Starting the Wokou campaign must persist outside the sea-map scene instance.")
 
 	var return_loading := sea_scene.get_node("UI/SceneLoadingTransition") as SceneLoadingTransition
 	_expect(is_equal_approx(return_loading.minimum_duration, 1.0), "Return loading transition must also default to one second.")
@@ -83,8 +87,8 @@ func _run() -> void:
 	await physics_frame
 	var returned_task := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label
 	var returned_objective := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/Objective") as Label
-	_expect(returned_task.text == "探索海域，完善海图", "Returning to Scene2 must preserve the completed patrol-and-drill task state.")
-	_expect(returned_objective.text == "与广州县令交谈，选择是否立即出发", "Returning to Scene2 must not restore patrol or drill objectives.")
+	_expect(returned_task.text == "讨伐倭寇", "Returning to Scene2 must retain the active Wokou main quest.")
+	_expect("返回大地图讨伐倭寇" in returned_objective.text, "Returning to Scene2 must direct the player back to the active Wokou campaign instead of chart exploration.")
 	_expect(not (returned_scene.get_node("UI/DialoguePanel") as Control).visible, "Returning from the sea must not replay the Scene2 arrival dialogue.")
 	_expect(int(returned_scene.get("_patrol_task_stage")) == 5, "Returning from the sea must restore the post-drill task stage.")
 	_expect((returned_scene.get("_heard_soldier_reports") as Dictionary).size() == 2, "Returning from the sea must keep both patrol reports completed.")
@@ -96,8 +100,19 @@ func _run() -> void:
 	var quest_screen := hud.get_node("QuestScreen") as Control
 	var selected_title := quest_screen.get_node("SelectedQuestTitle") as RichTextLabel
 	var steps := quest_screen.get_node("QuestStepsScroll/QuestSteps") as VBoxContainer
-	_expect(quest_screen.visible and "探索海域，完善海图" in selected_title.text, "Returned Scene2 quest screen must retain the sea-exploration task.")
-	_expect(steps.get_child_count() == 3, "Sea-exploration quest screen must show completed patrol, completed drill, and departure steps.")
+	_expect(quest_screen.visible and "讨伐倭寇" in selected_title.text, "Returned Scene2 quest screen must retain the active Wokou campaign.")
+	_expect(steps.get_child_count() >= 1, "The retained Wokou campaign must expose its current objective in the quest screen.")
+
+	var quest_return_button := quest_screen.find_child("QuestReturnButton", true, false) as Button
+	quest_return_button.pressed.emit()
+	returned_scene.call("_depart_to_sea_overworld")
+	var reentered_sea := await _wait_for_scene("SeaOverworld")
+	_expect(reentered_sea != null, "Scene2 must still allow returning to the sea map with the retained campaign.")
+	if reentered_sea != null:
+		await physics_frame
+		var reentered_task := root.get_node("ExplorationUI/HUD/QuestTracker/MainQuest/TaskName") as Label
+		_expect(reentered_task.text == "讨伐倭寇", "Re-entering the sea map must not reset the campaign to chart exploration.")
+		_expect(bool(reentered_sea.get("_wokou_warning_acknowledged")), "Re-entering the sea map must restore the Wokou warning acknowledgement.")
 
 	_finish()
 
@@ -130,6 +145,7 @@ func _wait_for_scene(expected_name: String) -> Node:
 func _finish() -> void:
 	root.remove_meta(SCENE_TWO_ENTRY_META)
 	root.remove_meta(RETURN_TO_SCENE_TWO_META)
+	root.get_node("GameState").call("reset_runtime_world_state")
 	if failures.is_empty():
 		print("Scene2 and sea-overworld round-trip verification passed.")
 		quit(0)

@@ -168,6 +168,7 @@ func _ready() -> void:
 		_fubo_return_context.clear()
 	else:
 		_lunar_day = float(get_tree().root.get_meta(LUNAR_DAY_META, 0.0))
+		_restore_sea_main_quest_state()
 	exploration_hud.call("set_lunar_day", _lunar_day)
 	_refresh_exploration_task()
 	exploration_hud.call("set_exploration_visible", true)
@@ -1371,6 +1372,7 @@ func _open_wokou_warning_dialogue() -> void:
 
 func _acknowledge_wokou_warning() -> void:
 	_wokou_warning_acknowledged = true
+	_store_sea_main_quest_state()
 	_remove_wokou_warning_trigger()
 	_event_dialogue.hide_dialogue()
 	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
@@ -1634,6 +1636,7 @@ func _return_to_scene_two() -> void:
 		return
 	_transitioning = true
 	_store_fog_state()
+	_store_sea_main_quest_state()
 	player.controls_enabled = false
 	_set_pirates_navigation_enabled(false)
 	interaction_prompt.hide()
@@ -1708,6 +1711,32 @@ func _restore_event_state(value: Variant) -> void:
 	_initialize_random_events()
 	if _wokou_warning_acknowledged:
 		_remove_wokou_warning_trigger()
+	_store_sea_main_quest_state()
+
+
+func _restore_sea_main_quest_state() -> void:
+	var game_state := _game_state()
+	if game_state == null or not game_state.has_method("get_sea_main_quest_state"):
+		return
+	var state := game_state.call("get_sea_main_quest_state") as Dictionary
+	_exploration_stage = clampi(int(state.get("exploration_stage", 0)), 0, 4)
+	_wokou_warning_acknowledged = bool(state.get("wokou_warning_acknowledged", false))
+	_wokou_battle_completed = bool(state.get("wokou_battle_completed", false))
+	if _wokou_battle_completed:
+		_wokou_warning_acknowledged = true
+	if _wokou_warning_acknowledged:
+		_remove_wokou_warning_trigger()
+
+
+func _store_sea_main_quest_state() -> void:
+	var game_state := _game_state()
+	if game_state != null and game_state.has_method("set_sea_main_quest_state"):
+		game_state.call(
+			"set_sea_main_quest_state",
+			_exploration_stage,
+			_wokou_warning_acknowledged,
+			_wokou_battle_completed
+		)
 
 
 func _clear_random_events_immediate() -> void:
@@ -1728,6 +1757,7 @@ func _advance_exploration_stage(next_stage: int) -> void:
 	if next_stage <= _exploration_stage:
 		return
 	_exploration_stage = next_stage
+	_store_sea_main_quest_state()
 	_refresh_exploration_task()
 
 

@@ -54,6 +54,8 @@ func _run() -> void:
 		await process_frame
 
 	_expect(bool(scene.get("_wokou_warning_acknowledged")), "Acknowledging the warning must persist its local quest state.")
+	var acknowledged_world_state := game_state.call("get_sea_main_quest_state") as Dictionary
+	_expect(bool(acknowledged_world_state.get("wokou_warning_acknowledged", false)), "Acknowledging the warning must persist the campaign in global main-quest state.")
 	_expect(not dialogue.visible and player.controls_enabled, "Acknowledging the warning must resume sailing.")
 	_expect(main_task_name.text == "讨伐倭寇", "Acknowledging the warning must replace chart exploration with the Wokou campaign title.")
 	_expect("按E发起讨伐" in main_task_objective.text, "The main objective must direct the player to interact with the stronghold.")
@@ -117,6 +119,8 @@ func _run() -> void:
 	_expect(main_task_name.text == "讨伐倭寇" and "倭寇营地已平定" in main_task_objective.text, "Victory must keep the campaign title and mark the camp pacified.")
 	var event_state := scene.call("_current_event_state") as Dictionary
 	_expect(bool(event_state.get("wokou_warning_acknowledged", false)) and bool(event_state.get("wokou_battle_completed", false)), "The warning and victory flags must be included in persistent sea event state.")
+	var completed_world_state := game_state.call("get_sea_main_quest_state") as Dictionary
+	_expect(bool(completed_world_state.get("wokou_battle_completed", false)), "Wokou victory must remain completed in global main-quest state across scene changes.")
 
 	await _finish(scene, game_state)
 

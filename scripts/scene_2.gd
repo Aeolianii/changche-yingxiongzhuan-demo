@@ -1167,6 +1167,10 @@ func _update_task_hud() -> void:
 	var task_title: String
 	var objective: String
 	var progress_stage: int
+	var sea_main_quest_state: Dictionary = {}
+	var game_state := _game_state()
+	if game_state != null and game_state.has_method("get_sea_main_quest_state"):
+		sea_main_quest_state = game_state.call("get_sea_main_quest_state") as Dictionary
 	match _patrol_task_stage:
 		PatrolTaskStage.TALK_TO_SOLDIERS:
 			task_title = "巡视水师驻地"
@@ -1185,9 +1189,16 @@ func _update_task_hud() -> void:
 			objective = "检阅水师操练"
 			progress_stage = _patrol_task_stage
 		_:
-			task_title = "探索海域，完善海图"
-			objective = "与广州县令交谈，选择是否立即出发"
-			progress_stage = _patrol_task_stage
+			if bool(sea_main_quest_state.get("wokou_battle_completed", false)):
+				task_title = "讨伐倭寇"
+				objective = "倭寇营地已平定"
+			elif bool(sea_main_quest_state.get("wokou_warning_acknowledged", false)):
+				task_title = "讨伐倭寇"
+				objective = "与广州县令交谈，返回大地图讨伐倭寇"
+			else:
+				task_title = "探索海域，完善海图"
+				objective = "与广州县令交谈，选择是否立即出发"
+			progress_stage = maxi(_patrol_task_stage, int(sea_main_quest_state.get("exploration_stage", 0)))
 	_exploration_hud.call("set_main_task_progress", task_title, objective, progress_stage)
 
 

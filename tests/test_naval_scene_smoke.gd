@@ -76,6 +76,23 @@ func _init() -> void:
 		push_error("FAIL: battle not started from deployment")
 		quit(1)
 		return
+	# 战斗顶部两行文字试调：只增大字号与描边，不依赖背景底板。
+	var battle_status := demo.get_node_or_null("Battle/Hud/StatusLabel") as Label
+	var battle_message := demo.get_node_or_null("Battle/Hud/MessageLabel") as Label
+	if battle_status == null or battle_status.get_theme_font_size("font_size") != 24 \
+			or battle_status.get_theme_constant("outline_size") != 5:
+		push_error("FAIL: battle top status typography wrong")
+		quit(1)
+		return
+	if battle_message == null or battle_message.get_theme_font_size("font_size") != 18 \
+			or battle_message.get_theme_constant("outline_size") != 4:
+		push_error("FAIL: battle top message typography wrong")
+		quit(1)
+		return
+	if battle_message.size.x < 700.0:
+		push_error("FAIL: battle top message label too narrow for enlarged text")
+		quit(1)
+		return
 	# T13/UX-7：行动面板按钮全部存在（场景接线完成）；普攻区含 箭雨/砲击/火炮/撞击/接舷
 	var new_buttons: Array[String] = [
 		"Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands/ArrowRain",

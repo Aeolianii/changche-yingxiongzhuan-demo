@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bcahnfxprs63w"
-path="res://.godot/imported/deployment_command_desk.png-1013c4be3eb3b7eb3ebd73efcb5adaa7.ctex"
+uid="uid://cmvsgncdkum46"
+path="res://.godot/imported/deployment_scroll_backdrop_v1.png-6d46d6e89240fb10c458b8d4fb17eb8d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/naval/ui/deployment_command_desk.png"
-dest_files=["res://.godot/imported/deployment_command_desk.png-1013c4be3eb3b7eb3ebd73efcb5adaa7.ctex"]
+source_file="res://assets/naval/ui/deployment_scroll_backdrop_v1.png"
+dest_files=["res://.godot/imported/deployment_scroll_backdrop_v1.png-6d46d6e89240fb10c458b8d4fb17eb8d.ctex"]
 
 [params]
 

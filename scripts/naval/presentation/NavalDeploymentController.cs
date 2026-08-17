@@ -115,7 +115,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             InkWashTheme.MakeClickTransparent(_deployPanel);
             _deployPanel.Visible = false;
         }
-        StyleDeploymentCommandDesk();
+        StyleDeploymentScroll();
         // UX-8：阶段互斥——布阵阶段只显示布阵面板，隐藏战斗 HUD（CanvasLayer 不随父节点 Visible 隐藏，须显式控制）
         if (GetNodeOrNull<CanvasLayer>("../Battle/Hud") is { } battleHud) battleHud.Visible = false;
         // F-6：布阵阶段同时隐藏天气覆盖层（CanvasLayer 不随父节点隐藏，战斗开始才由 StartBattle 显示）。
@@ -160,8 +160,8 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         }
     }
 
-    // 横向“船坞军令案”：生成的像素水墨木案负责整体轮廓，纸签按钮保持横排并拉开主次层级。
-    private void StyleDeploymentCommandDesk()
+    // 横向布阵卷轴：古风卷轴负责整体轮廓，纸签按钮保持横排并拉开主次层级。
+    private void StyleDeploymentScroll()
     {
         if (_deployPanel is null) return;
         _deployPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());

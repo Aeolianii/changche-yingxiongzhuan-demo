@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/naval/presentation/NavalDeploymentController.cs" id="1_deploy"]
 [ext_resource type="Script" path="res://scripts/naval/presentation/NavalGridView.cs" id="2_grid"]
-[ext_resource type="Texture2D" path="res://assets/naval/ui/deployment_command_desk.png" id="3_command_desk"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/deployment_scroll_backdrop_v1.png" id="3_scroll"]
 
 [node name="Deployment" type="Node2D"]
 script = ExtResource("1_deploy")
@@ -37,9 +37,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -560.0
-offset_top = -312.0
-offset_right = 560.0
+offset_left = -620.0
+offset_top = -354.0
+offset_right = 620.0
 offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -54,7 +54,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 texture_filter = 1
-texture = ExtResource("3_command_desk")
+texture = ExtResource("3_scroll")
 expand_mode = 1
 stretch_mode = 0
 
@@ -62,10 +62,10 @@ stretch_mode = 0
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 52.0
-offset_top = 52.0
-offset_right = -52.0
-offset_bottom = -18.0
+offset_left = 92.0
+offset_top = 64.0
+offset_right = -92.0
+offset_bottom = -24.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 0

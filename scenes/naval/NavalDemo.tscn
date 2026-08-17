@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/naval/presentation/NavalBattleController.cs" id="1_battle"]
 [ext_resource type="Script" path="res://scripts/naval/presentation/NavalGridView.cs" id="2_grid"]
@@ -12,6 +12,7 @@
 [ext_resource type="Texture2D" path="res://assets/naval/ui/ship_status/ship_status_backdrop_v2.png" id="11_status_backdrop"]
 [ext_resource type="Texture2D" path="res://assets/naval/ui/ship_status/ship_name_brush_v2.png" id="12_name_brush"]
 [ext_resource type="Texture2D" path="res://assets/naval/ui/action_tokens/command_connector_brush.png" id="13_command_connector"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png" id="14_tutorial_brush"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bar_fill"]
 atlas = ExtResource("9_status_bars")
@@ -632,32 +633,55 @@ theme_override_constants/separation = 4
 theme_override_font_sizes/font_size = 15
 
 [node name="HintBar" type="Panel" parent="LevelPlay"]
-offset_left = 330.0
+offset_left = 452.0
 offset_top = 140.0
-offset_right = 1014.0
-offset_bottom = 248.0
+offset_right = 892.0
+offset_bottom = 252.0
 mouse_filter = 2
 
-[node name="Box" type="HBoxContainer" parent="LevelPlay/HintBar"]
+[node name="Backdrop" type="TextureRect" parent="LevelPlay/HintBar"]
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 14.0
-offset_top = 8.0
-offset_right = -14.0
-offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+mouse_filter = 2
+texture = ExtResource("14_tutorial_brush")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Box" type="VBoxContainer" parent="LevelPlay/HintBar"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = 16.0
+offset_right = -36.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 2
+
+[node name="Title" type="Label" parent="LevelPlay/HintBar/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "第一步 · 选中舰船"
+horizontal_alignment = 1
 
 [node name="Content" type="Label" parent="LevelPlay/HintBar/Box"]
-size_flags_horizontal = 3
-theme_override_constants/line_spacing = 6
-theme_override_font_sizes/font_size = 21
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/line_spacing = 4
+theme_override_font_sizes/font_size = 18
+text = "点击己方舰选中；鼠标右键可随时退选"
+horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="Nav" type="HBoxContainer" parent="LevelPlay/HintBar/Box"]
+visible = false
+layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="Prev" type="Button" parent="LevelPlay/HintBar/Box/Nav"]
@@ -722,11 +746,11 @@ custom_minimum_size = Vector2(190, 44)
 text = "返回关卡选择"
 
 [node name="CollapseHintBar" type="Button" parent="LevelPlay"]
-offset_left = 1024.0
+offset_left = 902.0
 offset_top = 174.0
-offset_right = 1104.0
+offset_right = 982.0
 offset_bottom = 214.0
-text = "收起提示"
+text = "收起"
 
 [node name="Deployment" parent="." instance=ExtResource("4_deploy")]
 

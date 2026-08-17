@@ -1,0 +1,62 @@
+# CHG-20260817：教程干笔墨条提示
+
+- 状态：`done`
+- 日期：2026-08-17
+
+## 目标
+
+将海战新手教程从规整卡片改为横向干笔墨条：金色步骤标题、米白正文与黑色描边；玩家完成当前目标后自动淡出并切入下一步，不再依赖翻页按钮。
+
+## 范围
+
+- 使用内置 `imagegen` 生成无文字、透明背景的横向干笔墨条，裁切并保存为项目 UI 素材。
+- 教程提示宽度设为 `440px`，保持在用户要求的 `360–440px` 区间。
+- 增加独立步骤标题，例如“第一步 · 选中舰船”，正文显示原教学提示。
+- 标题使用金色填充与黑描边，正文使用米白填充与黑描边。
+- 隐藏上一页、下一页与页码控件；动作达成后淡出旧提示、自动更新步骤并淡入。
+- 保留收起/展开能力、目标条与关卡结算面板。
+
+## 非目标
+
+- 不修改关卡提示数据、动作匹配规则、胜负目标和进度存档。
+- 不在生图素材中烘焙文字、按钮、印章或场景背景。
+- 不修改自由模式、布阵台和战斗行动 HUD。
+- 不改动任务开始前已有的用户工作树修改。
+
+## 验收检查
+
+- 教程提示不再呈现规整矩形卡片，显示为完整横向干笔墨条且透明边缘正常。
+- 提示条宽度为 `440px`，标题/正文在安全区内无裁切。
+- 第一步标题为“第一步 · 选中舰船”；标题金色、正文米白，二者均为黑描边。
+- 上一页、下一页、页码不可见；完成目标后 `_hintIndex` 自动推进，实机播放淡出/淡入。
+- Godot 4.7.1 .NET 定向场景测试和 1344×896 实机截图通过。
+
+## 文档影响
+
+- 更新 `docs/design/art-direction.md` 的海战教程提示视觉约束。
+- 更新 `docs/design/naval-tactics-gameplay.md` 的教程推进交互约束。
+- 更新 `docs/qa/playtest.md` 的验收记录。
+
+## 预计文件
+
+- `assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png`
+- `assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png.import`
+- `scenes/naval/NavalDemo.tscn`
+- `scripts/naval/presentation/NavalLevelPlayController.cs`
+- `tests/test_naval_tutorial_hint.gd`
+- `docs/design/art-direction.md`
+- `docs/design/naval-tactics-gameplay.md`
+- `docs/qa/playtest.md`
+- 本变更记录
+
+## 验证证据
+
+- 内置 `imagegen` 生成透明干笔墨条；原始输出保留于 Codex 生成目录，裁切缩放后的项目素材为 `1024×236` RGBA，透明角像素为 `(0,0,0,0)`。
+- Godot 导入素材成功；教程墨条显示宽度 `440px`，使用独立金色 `19px` 标题与米白 `18px` 正文，二者均为纯黑 `4px` 描边。
+- 第一关初始标题为“第一步 · 选中舰船”；选船后自动进入“第二步 · 移动舰船”，正文不再出现“下一步”反馈拼接。
+- 上一页、下一页、页码永久隐藏；收起/展开改为无底框文字入口。
+- 实机步骤切换总时长 `0.42s`；OpenGL 采样确认动作触发后墨条 Alpha 从 `1.0` 降至约 `0.007`，随后恢复为 `1.0`。
+- `dotnet build --no-restore`：通过，0 警告、0 错误。
+- `test_naval_tutorial_hint.gd`：通过；`test_naval_scene_smoke.gd` 回归通过。
+- 1344×896 OpenGL Compatibility 第一步/第二步抓图：通过，墨锋完整、文字无裁切、提示未遮挡关键舰船。
+- `git diff --check`：通过。

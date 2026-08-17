@@ -11,7 +11,7 @@
 
 > A production-ready single-plane cutaway Chinese imperial audience hall plus exterior courtyard for a Godot narrative RPG. Upper half: roof-removed Ming-inspired audience hall with throne, red columns and broad central aisle. Lower half: gray-stone exterior courtyard. One wide central doorway connects interior and exterior without stairs or elevation change. Polished crisp pixel art compatible with native 64×64 LPC four-direction characters; vermilion, dark teal, muted gold and warm gray. Wide 1536×1024-style 3/4 top-down orthographic map, not isometric. No characters, text, UI, watermark, second floor, cliff, raised platform, closed door, roof occlusion, photorealism, painterly blur or perspective distortion. One continuous physical ground plane; walls and collision boundaries visually unambiguous.
 
-`palace_courtyard_v1.png` 是早期纯室外参考图，不用于当前可玩场景。
+`palace_courtyard_v1.png` 是早期纯室外参考图，不用于当前可玩场景，已于 2026-08-17 从工作树删除；历史版本可由 Git 恢复。
 
 ## `lingnan_command_dawn_v1.png`
 
@@ -75,10 +75,12 @@
 - 尺寸：1536×1024。
 - 项目路径：`res://assets/yuehuan_merchant_island/backgrounds/yuehuan_merchant_island_v2.png`。
 - 选择原因：连续石板商街、六组以上铺面/货棚、货栈、船行、摊台、仓储货堆和码头卸货区形成明确商港密度；中央与码头主路保持可走。
-- 被拒绝版本：`yuehuan_merchant_island_v1.png` 仅保留为生成过程记录，不用于场景；其两栋孤立建筑和大面积空地更像荒岛据点，不满足商城识别度。
+- 被拒绝版本：`yuehuan_merchant_island_v1.png` 不用于场景；其两栋孤立建筑和大面积空地更像荒岛据点，不满足商城识别度。2026-08-17 已与 V2、V3 一并从工作树删除，生成过程由本文档与 Git 历史追溯。
 - 视觉验收：Godot 4.7 Vulkan 1344×896 实际渲染已检查，截图为 `.godot/yuehuan_merchant_island_exploration.png`。
 
 > 2026-08-12 后续验收结论：V2 虽有商港密度，但商铺、摊位与货物过杂，主路狭窄且需要大量小碰撞，已被 V3 取代，不再被正式场景引用。
+
+> 2026-08-17 素材清理：V2 文件已删除，仅保留本节历史记录。
 
 ## `yuehuan_merchant_island_v3.png`
 
@@ -91,6 +93,8 @@
 - 视觉验收：Godot 4.7 Vulkan 1344×896 实际渲染检查通过，截图为 `.godot/yuehuan_merchant_island_exploration.png`、`.godot/yuehuan_merchant_island_goods.png`、`.godot/yuehuan_merchant_island_shipyard.png`。
 
 > 2026-08-12 最终用户验收结论：V3 即使加装独立大招牌，建筑仍像两间不知名路边小店，已被 V4 总埠背景取代；V3 和招牌素材不再被正式场景引用。
+
+> 2026-08-17 素材清理：V3 文件及独立招牌文件已删除，仅保留本节历史记录。
 
 ## `yuehuan_merchant_island_v4.png`
 
@@ -107,17 +111,17 @@
 - 生成方式：Codex 内置 `image_gen` 洋红色键背景，使用技能内置 `remove_chroma_key.py` 去背。
 - 正式资产：`res://assets/yuehuan_merchant_island/characters/liang_trader_v2.png`、`res://assets/yuehuan_merchant_island/characters/shen_shipwright_v2.png`。
 - 角色约束：约 2.5～3 头身的大头短身 Q 版像素地图小人；梁货郎以账册/算盘识别，沈船师以图纸/木尺识别。
-- 被拒绝版本：两张 `v1` 商人采用偏写实成人比例，仅保留生成过程记录，不得用于地图角色。
+- 被拒绝版本：两张 `v1` 商人采用偏写实成人比例，不得用于地图角色；文件与色键处理中间稿已于 2026-08-17 删除，过程由 Git 历史追溯。
 - 视觉验收：两名商人与现有 64×64 主角在商岛运行截图中并排检查，比例协调、轮廓和职业可辨。
 
 ## 月环商岛店铺招牌
 
 - 生成方式：Codex 内置 `image_gen` 使用洋红色键背景，之后通过 `remove_chroma_key.py` 去背；中文不烘焙进图像，由 Godot `Label` 叠加。
-- 正式资产：`res://assets/yuehuan_merchant_island/signs/goods_sign_v1.png`、`res://assets/yuehuan_merchant_island/signs/shipyard_sign_v1.png`。
+- 历史资产：`res://assets/yuehuan_merchant_island/signs/goods_sign_v1.png`、`res://assets/yuehuan_merchant_island/signs/shipyard_sign_v1.png`，已于 2026-08-17 从工作树删除。
 - 设计：同系列旧木悬挂门牌与铜金包角；货栈以木材/铁锭图标识别，船行以船模/图纸图标识别，中央保留店名区域。
 - 视觉验收：1344×896 初始码头镜头可同时看见“货栈”“船行”；货栈牌已避开左侧共享 HUD，两个招牌均不遮挡商人、门洞或道路，也没有碰撞节点。
 
-> 该方案在最终用户验收中被否决：超大独立招牌不能弥补小店式建筑体量，且呈现突兀。两张素材保留为过程记录，正式 V4 场景已移除全部独立招牌节点。
+> 该方案在最终用户验收中被否决：超大独立招牌不能弥补小店式建筑体量，且呈现突兀。正式 V4 场景已移除全部独立招牌节点，过程记录由本文档与 Git 历史保留。
 
 ## 月环商城商品图标
 
@@ -130,6 +134,6 @@
 ## 月环船行舰艇展示图
 
 - 来源：用户指定 `C:\Users\wangk\Desktop\美术组素材\游戏像素风\游戏像素风\舰艇1.png`、`舰艇2.png`、`舰艇3.png`，不是生图资产。
-- 处理：保存原图到 `res://assets/ui/merchant_shop/ships/source/`，去白底后以最大主体连通域提取单艘舰艇，避免相邻船只残片；未重绘或改变原像素风格。
+- 处理：原图曾保存到 `res://assets/ui/merchant_shop/ships/source/`，去白底后以最大主体连通域提取单艘舰艇，避免相邻船只残片；未重绘或改变原像素风格。一次性来源和处理目录已于 2026-08-17 删除，正式资产继续保留。
 - 正式资产：`res://assets/ui/merchant_shop/ships/patrol_boat.png`、`cannon_warship.png`、`escort_junk.png`。
 - 视觉验收：船行货架三张卡与中央大图显示三种不同舰艇，透明边缘干净，1344×896 无裁切和溢出。

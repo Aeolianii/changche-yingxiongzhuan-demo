@@ -4,7 +4,7 @@
 - 用途：海上大地图原型、生产分块与配套运行时素材
 - 风格基准：项目现有俯视像素风、主角立绘、LPC角色比例及现有舰船素材
 - 初次生成日期：2026-08-08
-- 最近更新：2026-08-10
+- 最近更新：2026-08-17
 
 ## 1. 素材文件
 
@@ -12,7 +12,6 @@
 |---|---|---:|---|
 | 主角Q版四方向 | `assets/sprites/sea_overworld/protagonist_chibi_4dir_v1.png` | 1776×887 | 4列×1行，每格444×887 |
 | 玩家船只方向与状态 | `assets/sprites/sea_overworld/player_ship_4dir_states_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
-| 可复用岛屿 | `assets/sprites/sea_overworld/island_locations_atlas_v1.png` | 1920×820 | 4列×1行，每格480×820 |
 | 海上事件船只（清理版） | `assets/sprites/sea_overworld/event_ships_atlas_v2.png` | 1560×1008 | 4列×1行，每格390×1008；已移除商船右侧残留线条 |
 | 船尾航迹与侧浪 | `assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png` | 1448×1086 | 4列×2行，每格362×543 |
 | 水墨像素交互按钮（普通态） | `assets/ui/sea_overworld/interaction_button_ink_v1.png` | 720×176 | 无文字透明PNG；场景内以360×88显示 |
@@ -23,6 +22,8 @@
 | 漂流木箱 | `assets/sprites/sea_overworld/drifting_supply_crate_v1.png` | 512×512 | 透明PNG；大地图一次性随机事件视觉，只包含木箱与少量贴身漂浮物，不烘焙地点文字；SHA-256 `D000E49495FFEF5744A268E9A0371BF25FF7BE1129CE379D5C0565471623F037` |
 | 水墨像素展开海图框 | `assets/ui/sea_overworld/sea_map_scroll_frame_v1.png` | 1536×1024 | 透明PNG；完整海图使用 `1280×853` 卷轴框，中央 `870×510` 安全区承载运行时地图；SHA-256 `DAF01DAE53DB4503A37DF6F07E76124554587908D27ADF5D0DB9DE4CDA2BBC74` |
 | 大地图阶段一构图灰模 v4 | `assets/backgrounds/sea_overworld/concepts/sea_overworld_stage1_graybox_v4.png` | 1672×941 | 当前构图；将 B 区海防堡垒迁入中央偏右，缓解中央留白与右上地标竞争，不接入游戏 |
+
+2026-08-17 清理了未接入的 `island_locations_atlas_v1.png`、已被 V2 取代的 `event_ships_atlas_v1.png` 与三张旧海怪雾影；当前事件船和海怪视觉只以运行时实际加载的 V2 素材为准。被删版本可从 Git 历史恢复。
 
 ### 1.1 v4 生产运行时分块
 

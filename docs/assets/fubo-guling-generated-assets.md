@@ -74,7 +74,7 @@ The production prompt must preserve the following meaning:
 
 ## Legacy modular plan (superseded)
 
-The module lists and generated sheets below record previous prototypes only. They are not the active composition plan and must not be assembled into the next map. Keep them until the replacement background has passed visual review; deletion is a separate cleanup decision.
+The module lists and generated sheets below record previous prototypes only. They are not the active composition plan and must not be assembled into the next map. The replacement background passed review; on 2026-08-17 the unused sheets, plates, cropped modules and processing sources were removed from the working tree. Git history remains the recovery path.
 
 ## 2026-08-12 completion transition CG
 
@@ -101,7 +101,7 @@ The module lists and generated sheets below record previous prototypes only. The
 
 ## Historical prompts and files (superseded)
 
-All four sheets were generated with the built-in image generation tool. The project keeps both chroma-key sources, alpha sheets and cropped runtime modules under `assets/fubo_guling/generated/`.
+All four sheets were generated with the built-in image generation tool. Their chroma-key sources, alpha sheets and unused cropped modules were removed on 2026-08-17; only the assets still loaded by the current game remain under `assets/fubo_guling/generated/`.
 
 ### Architecture sheet
 
@@ -131,7 +131,7 @@ All four sheets were generated with the built-in image generation tool. The proj
 
 ## Historical 2026-08-10 four-plate coarse-pixel pass (superseded)
 
-This pass replaced the dense realistic-pixel collage with four local camera plates and ten sparse foreground modules. It is retained as provenance but was rejected as the production direction because the result remained visually fragmented and more complex than the accepted first-act single-background method.
+This pass replaced the dense realistic-pixel collage with four local camera plates and ten sparse foreground modules. Its specification is retained here as provenance, but the files were removed from the working tree on 2026-08-17 because the result remained visually fragmented and more complex than the accepted first-act single-background method.
 
 ### Local background plates
 
@@ -148,6 +148,6 @@ Source guides are `generated/unified/guide_sw.png`, `guide_se.png`, `guide_nw.pn
 
 - Source: `generated/modular_sheet_source.png`.
 - Prompt: exact 5×2 contact sheet on flat `#FF00FF`; top row guard house, grain store, banyan, lychee and wind-bent coastal tree; bottom row canal marker, Chinese barrel drum, yellow flag, red flag and blue flag. Match the four plates' coarse pixel density and top-down 3/4 perspective; each object isolated with padding; no labels, grid lines, cast shadows, scenery or extra objects.
-- Runtime alpha files: `generated/modular/guard_house.png`, `grain_store.png`, `banyan_tree.png`, `lychee_tree.png`, `coastal_tree.png`, `canal_marker.png`, `drum.png`, `flag_yellow.png`, `flag_red.png`, `flag_blue.png`.
+- Historical runtime alpha files: `generated/modular/guard_house.png`, `grain_store.png`, `banyan_tree.png`, `lychee_tree.png`, `coastal_tree.png`, `canal_marker.png`, `drum.png`, `flag_yellow.png`, `flag_red.png`, `flag_blue.png`. Cleanup retains only `generated/modular/drum.png`, which the current drum minigame still loads.
 - Processing: connected-component crop using `tools/crop_fubo_modular_sheet.py`, then the installed `remove_chroma_key.py` helper with border auto-key, soft matte, thresholds `12/220`, and despill.
 - Collision: buildings and three tree trunks retain small authored foot collisions; canal marker, drum and flags are visual/trigger landmarks only.

@@ -11,13 +11,13 @@
 - `protagonist`：537 张 PNG，64×64 标准帧，另有 128×128 扩展攻击帧。
 - `new_soldier`：504 张 PNG，64×64 标准帧，另有 128/192 扩展帧。
 - `new_‌county magistrate‌`：436 张 PNG，64×64 标准帧。
-- `Paper UI`：97 张 PNG。
+- `Paper UI`：原始包含 97 张 PNG；2026-08-17 清理后，工程仅保留运行时使用的 `PNGs/Icons/GameIcons/IconCoin.png`，完整来源包可从 Git 历史恢复。
 
 ## 首版导入白名单
 
 - 三名角色的 `standard/idle/{up,left,down,right}`。
 - 三名角色的 `standard/walk/{up,left,down,right}`。
-- Paper UI 中实际被对话框引用的素材。
+- Paper UI 中当前实际引用的金币图标；其余未接入素材不留在工作树。
 - 每套角色的完整授权与元数据文件。
 
 其余战斗和特殊动作暂不导入，避免无意义的资源扫描。

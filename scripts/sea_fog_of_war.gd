@@ -7,6 +7,9 @@ const STATE_VERSION := 2
 const LEGACY_STATE_VERSION := 1
 const LEGACY_CELL_SIZE := 16.0
 const CELL_SIZE := 8.0
+const VISUAL_FOG_CELL_WORLD_SIZE := 224.0
+const NAVAL_FOG_CELL_SIZE := 26.0
+const NAVAL_FOG_STAMP_ALPHA := 0.38
 const WORLD_FOG_Z_INDEX := 40
 const VIEW_EDGE_FOG_INSET := 48.0
 const REVEAL_UPDATE_DISTANCE := 2.0
@@ -20,6 +23,9 @@ var _camera: Camera2D
 var _revealed_bits := PackedByteArray()
 var _fog_image: Image
 var _fog_texture: ImageTexture
+var _fog_stamp_image: Image
+var _fog_stamp_texture: ImageTexture
+var _visual_fog_grid_size := Vector2i.ONE
 var _world_overlay: Sprite2D
 var _last_reveal_position := Vector2(INF, INF)
 var _last_camera_center := Vector2(INF, INF)
@@ -38,6 +44,7 @@ func setup(world_size: Vector2, camera_node: Camera2D, saved_state: Dictionary =
 	_revealed_bits.fill(0)
 	_restore_state(saved_state)
 	_build_texture()
+	_build_fog_stamp_texture()
 	_build_world_overlay()
 
 
@@ -144,6 +151,43 @@ func get_fog_texture() -> Texture2D:
 	return _fog_texture
 
 
+func get_fog_stamp_texture() -> Texture2D:
+	return _fog_stamp_texture
+
+
+func get_visual_fog_grid_size() -> Vector2i:
+	return _visual_fog_grid_size
+
+
+func get_visual_fog_cell_world_size() -> float:
+	return VISUAL_FOG_CELL_WORLD_SIZE
+
+
+func get_fog_stamp_stats_for_test() -> Dictionary:
+	var transparent_count := 0
+	var light_count := 0
+	var dense_count := 0
+	var maximum_alpha := 0.0
+	if _fog_stamp_image == null:
+		return {}
+	for cell_y in range(_fog_stamp_image.get_height()):
+		for cell_x in range(_fog_stamp_image.get_width()):
+			var alpha := _fog_stamp_image.get_pixel(cell_x, cell_y).a
+			maximum_alpha = maxf(maximum_alpha, alpha)
+			if alpha < 0.04:
+				transparent_count += 1
+			elif alpha < 0.34:
+				light_count += 1
+			else:
+				dense_count += 1
+	return {
+		"transparent_count": transparent_count,
+		"light_count": light_count,
+		"dense_count": dense_count,
+		"maximum_alpha": maximum_alpha,
+	}
+
+
 func get_explored_ratio() -> float:
 	var revealed_count := 0
 	for cell_index in range(_grid_size.x * _grid_size.y):
@@ -172,6 +216,71 @@ func _build_texture() -> void:
 	_fog_texture = ImageTexture.create_from_image(_fog_image)
 
 
+func _build_fog_stamp_texture() -> void:
+	_visual_fog_grid_size = Vector2i(
+		maxi(1, ceili(_world_size.x / VISUAL_FOG_CELL_WORLD_SIZE)),
+		maxi(1, ceili(_world_size.y / VISUAL_FOG_CELL_WORLD_SIZE))
+	)
+	_fog_stamp_image = Image.create(_grid_size.x, _grid_size.y, false, Image.FORMAT_RGBA8)
+	_fog_stamp_image.fill(Color(0.0, 0.0, 0.0, 0.0))
+	var source_image := EXPLORATION_FOG_MIST_TEXTURE.get_image()
+	if source_image == null or source_image.is_empty():
+		_fog_stamp_texture = ImageTexture.create_from_image(_fog_stamp_image)
+		return
+
+	var pixels_per_visual_cell := Vector2(_grid_size) / Vector2(_visual_fog_grid_size)
+	var stamp_variants: Array[Image] = []
+	var edge_stamp_variants: Array[Image] = []
+	for size_index in range(6):
+		var stamp_width := pixels_per_visual_cell.x * (4.4 + float(size_index) * 0.22)
+		var stamp_size := Vector2i(
+			maxi(1, roundi(stamp_width)),
+			maxi(1, roundi(stamp_width * 0.6875))
+		)
+		stamp_variants.append(_make_fog_stamp_variant(source_image, stamp_size, NAVAL_FOG_STAMP_ALPHA))
+		edge_stamp_variants.append(_make_fog_stamp_variant(source_image, stamp_size, NAVAL_FOG_STAMP_ALPHA * 0.76))
+
+	for cell_x in range(_visual_fog_grid_size.x):
+		for cell_y in range(_visual_fog_grid_size.y):
+			var neighbors := _visual_fog_neighbor_count(Vector2i(cell_x, cell_y))
+			var seed := _fog_hash(cell_x, cell_y, 53)
+			if seed % 4 != 0 or neighbors < 3:
+				continue
+			var variant_index := seed % 6
+			var stamp := stamp_variants[variant_index] if neighbors >= 7 else edge_stamp_variants[variant_index]
+			var center := (Vector2(cell_x, cell_y) + Vector2(0.5, 0.5)) * pixels_per_visual_cell
+			var battle_offset := Vector2(float(seed % 17) - 8.0, float((seed / 19) % 13) - 6.0)
+			var scaled_offset := battle_offset * pixels_per_visual_cell / NAVAL_FOG_CELL_SIZE
+			var destination := Vector2i((center + scaled_offset - Vector2(stamp.get_size()) * 0.5).round())
+			_fog_stamp_image.blend_rect(stamp, Rect2i(Vector2i.ZERO, stamp.get_size()), destination)
+	_fog_stamp_texture = ImageTexture.create_from_image(_fog_stamp_image)
+
+
+func _make_fog_stamp_variant(source_image: Image, stamp_size: Vector2i, alpha_multiplier: float) -> Image:
+	var stamp := source_image.duplicate() as Image
+	stamp.resize(stamp_size.x, stamp_size.y, Image.INTERPOLATE_LANCZOS)
+	for pixel_y in range(stamp.get_height()):
+		for pixel_x in range(stamp.get_width()):
+			var color := stamp.get_pixel(pixel_x, pixel_y)
+			color.a *= alpha_multiplier
+			stamp.set_pixel(pixel_x, pixel_y, color)
+	return stamp
+
+
+func _visual_fog_neighbor_count(center: Vector2i) -> int:
+	var count := 0
+	for offset_x in range(-1, 2):
+		for offset_y in range(-1, 2):
+			var neighbor := center + Vector2i(offset_x, offset_y)
+			if neighbor.x >= 0 and neighbor.y >= 0 and neighbor.x < _visual_fog_grid_size.x and neighbor.y < _visual_fog_grid_size.y:
+				count += 1
+	return count
+
+
+func _fog_hash(cell_x: int, cell_y: int, salt: int) -> int:
+	return ((cell_x * 73856093) ^ (cell_y * 19349663) ^ (salt * 83492791)) & 0x7fffffff
+
+
 func _build_world_overlay() -> void:
 	_world_overlay = Sprite2D.new()
 	_world_overlay.name = "WorldFogOverlay"
@@ -183,14 +292,13 @@ func _build_world_overlay() -> void:
 	_world_overlay.z_index = WORLD_FOG_Z_INDEX
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = WORLD_FOG_SHADER
-	fog_material.set_shader_parameter("mist_texture", EXPLORATION_FOG_MIST_TEXTURE)
+	fog_material.set_shader_parameter("mist_texture", _fog_stamp_texture)
 	fog_material.set_shader_parameter("fog_tint", Color(0.93, 0.97, 0.95, 1.0))
-	fog_material.set_shader_parameter("fog_base_alpha", 0.32)
 	fog_material.set_shader_parameter("feather_texels", 3.4)
 	fog_material.set_shader_parameter("edge_warp_texels", 0.8)
 	fog_material.set_shader_parameter("edge_irregularity", 0.34)
 	fog_material.set_shader_parameter("alpha_dither", 0.012)
-	fog_material.set_shader_parameter("fog_opacity", 0.78)
+	fog_material.set_shader_parameter("fog_opacity", 1.0)
 	_world_overlay.material = fog_material
 	add_child(_world_overlay)
 

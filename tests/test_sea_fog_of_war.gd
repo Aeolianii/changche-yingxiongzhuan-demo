@@ -58,6 +58,15 @@ func _run() -> void:
 	var world_overlay := fog.get_node_or_null("WorldFogOverlay") as Sprite2D
 	var player := scene.get_node("World/Player") as CanvasItem
 	_expect(world_overlay != null and world_overlay.texture != null, "FogOfWar must render a world-space exploration mask.")
+	var fog_stamp_texture := fog.call("get_fog_stamp_texture") as Texture2D
+	var visual_fog_grid_size := fog.call("get_visual_fog_grid_size") as Vector2i
+	var fog_stamp_stats := fog.call("get_fog_stamp_stats_for_test") as Dictionary
+	_expect(fog_stamp_texture != null, "Sea exploration must precompose the naval white-ink stamps into a stable world-space texture.")
+	_expect(is_equal_approx(float(fog.call("get_visual_fog_cell_world_size")), 224.0), "Sea fog presentation must use a coarse visual grid without changing the 8-pixel reveal grid.")
+	_expect(visual_fog_grid_size.x > 1 and visual_fog_grid_size.y > 1 and visual_fog_grid_size.x < 40 and visual_fog_grid_size.y < 30, "The visual fog grid must stay coarse enough for broad naval-style brush stamps.")
+	_expect(int(fog_stamp_stats.get("transparent_count", 0)) > 0, "Precomposed fog must retain small transparent holes that reveal the sea beneath.")
+	_expect(int(fog_stamp_stats.get("light_count", 0)) > 0 and int(fog_stamp_stats.get("dense_count", 0)) > 0, "Precomposed fog must contain both light and dense overlap regions.")
+	_expect(float(fog_stamp_stats.get("maximum_alpha", 0.0)) > 0.45, "Overlapping naval fog stamps must form visibly denser regions.")
 	if world_overlay != null:
 		_expect(world_overlay.z_index < player.z_index, "World fog must render below the player ship.")
 		var world_fog_material := world_overlay.material as ShaderMaterial
@@ -68,10 +77,9 @@ func _run() -> void:
 		_expect("signed_distance" in world_fog_material.shader.code and "DISTANCE_SEARCH_RADIUS" in world_fog_material.shader.code, "World edge fog must derive one signed-distance alpha instead of stacking multiple translucent samples.")
 		_expect("alpha_sum" not in world_fog_material.shader.code and "weight_sum" not in world_fog_material.shader.code, "World edge fog must not accumulate weighted alpha layers.")
 		var world_mist_texture := world_fog_material.get_shader_parameter("mist_texture") as Texture2D
-		_expect(world_mist_texture != null and world_mist_texture.resource_path.ends_with("white_ink_mist_v1.png"), "World exploration fog must directly reuse the naval-battle white ink-mist asset.")
-		_expect(float(world_fog_material.get_shader_parameter("fog_base_alpha")) > 0.0, "World white mist must retain a light base veil between transparent brush edges.")
-		_expect(float(world_fog_material.get_shader_parameter("fog_opacity")) <= 0.8, "World white mist must stay translucent enough to preserve sea orientation.")
-		_expect("layered_mist" in world_fog_material.shader.code and "vec4(0.0, 0.0, 0.0" not in world_fog_material.shader.code, "World exploration fog shader must render layered white mist instead of a black overlay.")
+		_expect(world_mist_texture == fog_stamp_texture, "World exploration must sample the shared world-space naval fog-stamp texture.")
+		_expect("layered_mist" not in world_fog_material.shader.code and "fog_base_alpha" not in world_fog_material.shader.code, "World fog must preserve stamp holes instead of filling them with global layered mist.")
+		_expect("texture(mist_texture, UV)" in world_fog_material.shader.code, "World fog shader must sample each precomposed naval stamp at its stable world position.")
 
 	var hud := root.get_node("ExplorationUI/HUD") as Control
 	var map_button := hud.get_node("SeaMapStatus/MapButton") as Button
@@ -85,10 +93,9 @@ func _run() -> void:
 	_expect(float(map_fog_material.get_shader_parameter("edge_warp_texels")) >= 4.0, "Full sea map fog must visibly warp straight exploration edges.")
 	_expect(float(map_fog_material.get_shader_parameter("edge_irregularity")) >= 0.3, "Full sea map fog must vary its edge threshold with stable ink noise.")
 	var map_mist_texture := map_fog_material.get_shader_parameter("mist_texture") as Texture2D
-	_expect(map_mist_texture != null and map_mist_texture.resource_path.ends_with("white_ink_mist_v1.png"), "Full sea-map fog must directly reuse the naval-battle white ink-mist asset.")
-	_expect(float(map_fog_material.get_shader_parameter("fog_base_alpha")) > 0.0, "Full sea-map fog must keep a continuous light veil between white brush textures.")
-	_expect("layered_mist" in map_fog_material.shader.code and "vec4(0.0, 0.0, 0.0" not in map_fog_material.shader.code, "Full sea-map shader must render layered white mist instead of a black overlay.")
-	_expect("broad_layer" in map_fog_material.shader.code and "cross_layer" in map_fog_material.shader.code and "fill_layer" in map_fog_material.shader.code and "detail_layer" in map_fog_material.shader.code, "Full sea-map mist must overlap six large naval-style brush layers instead of tiling sparse patches in rows.")
+	_expect(map_mist_texture == fog_stamp_texture, "Full sea map and world view must reuse the same stable naval fog-stamp field.")
+	_expect("layered_mist" not in map_fog_material.shader.code and "fog_base_alpha" not in map_fog_material.shader.code, "Full sea-map fog must not restore the uniform white base that erased texture depth.")
+	_expect("texture(mist_texture, UV)" in map_fog_material.shader.code, "Full sea-map shader must sample the precomposed coarse-grid naval stamps directly.")
 	var close_button := map_screen.get_node("MapPanel/CloseButton") as Button
 	var close_button_style := close_button.get_theme_stylebox("normal") as StyleBoxTexture
 	_expect(close_button.text == "返回", "Sea-map brush button must display the exact Return label.")

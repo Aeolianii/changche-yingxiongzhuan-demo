@@ -2,6 +2,11 @@ shader_type canvas_item;
 render_mode unshaded;
 
 const int SAMPLE_RADIUS = 3;
+uniform sampler2D mist_texture : source_color, repeat_enable, filter_linear;
+uniform vec2 mist_tiles = vec2(5.2, 3.0);
+uniform vec4 fog_tint : source_color = vec4(0.93, 0.97, 0.95, 1.0);
+uniform float fog_base_alpha : hint_range(0.0, 1.0) = 0.32;
+uniform float fog_opacity : hint_range(0.0, 1.0) = 0.78;
 uniform float edge_warp_texels : hint_range(0.0, 8.0) = 5.0;
 uniform float edge_irregularity : hint_range(0.0, 0.5) = 0.34;
 
@@ -20,6 +25,19 @@ float ink_value_noise(vec2 position) {
 	float bottom = mix(ink_hash(cell), ink_hash(cell + vec2(1.0, 0.0)), blend.x);
 	float top = mix(ink_hash(cell + vec2(0.0, 1.0)), ink_hash(cell + vec2(1.0, 1.0)), blend.x);
 	return mix(bottom, top, blend.y);
+}
+
+
+vec4 layered_mist(vec2 uv) {
+	vec2 first_uv = uv * mist_tiles + vec2(0.11, 0.37);
+	vec2 mirrored_uv = vec2(uv.x, 1.0 - uv.y) * (mist_tiles * vec2(1.17, 0.83)) + vec2(0.58, 0.19);
+	vec4 first_layer = texture(mist_texture, first_uv);
+	vec4 second_layer = texture(mist_texture, mirrored_uv);
+	float combined_alpha = 1.0 - (1.0 - first_layer.a) * (1.0 - second_layer.a * 0.82);
+	float color_weight = second_layer.a / max(first_layer.a + second_layer.a, 0.001);
+	vec3 asset_color = mix(first_layer.rgb, second_layer.rgb, color_weight);
+	vec3 mist_color = mix(fog_tint.rgb, asset_color, clamp((first_layer.a + second_layer.a) * 0.58, 0.0, 0.86));
+	return vec4(mist_color, mix(fog_base_alpha, 1.0, combined_alpha));
 }
 
 
@@ -44,5 +62,6 @@ void fragment() {
 	float edge_noise = mix(broad_noise, detail_noise, 0.32) - 0.5;
 	float edge_shift = edge_noise * edge_irregularity;
 	float softened_alpha = smoothstep(0.16 + edge_shift, 0.84 + edge_shift, alpha_sum / weight_sum);
-	COLOR = vec4(0.0, 0.0, 0.0, softened_alpha);
+	vec4 mist = layered_mist(UV);
+	COLOR = vec4(mist.rgb, softened_alpha * fog_opacity * mist.a);
 }

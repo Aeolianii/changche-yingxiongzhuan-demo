@@ -4,6 +4,7 @@ signal close_requested
 
 const MAP_CHUNK_BLEND_SHADER := preload("res://shaders/map_chunk_blend.gdshader")
 const MAP_FOG_SOFT_EDGE_SHADER := preload("res://shaders/sea_map_fog_soft_edge.gdshader")
+const EXPLORATION_FOG_MIST_TEXTURE := preload("res://assets/naval/ui/fog/white_ink_mist_v1.png")
 const SEA_FLOW_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel_seamless_v2.png")
 const SEA_MAP_SCROLL_FRAME := preload("res://assets/ui/sea_overworld/sea_map_scroll_frame_v1.png")
 const SEA_MAP_RETURN_BRUSH := preload("res://assets/ui/sea_overworld/sea_map_return_brush_v1.png")
@@ -148,6 +149,11 @@ func _build_interface() -> void:
 	_fog_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = MAP_FOG_SOFT_EDGE_SHADER
+	fog_material.set_shader_parameter("mist_texture", EXPLORATION_FOG_MIST_TEXTURE)
+	fog_material.set_shader_parameter("mist_tiles", Vector2(5.2, 3.0))
+	fog_material.set_shader_parameter("fog_tint", Color(0.93, 0.97, 0.95, 1.0))
+	fog_material.set_shader_parameter("fog_base_alpha", 0.32)
+	fog_material.set_shader_parameter("fog_opacity", 0.78)
 	fog_material.set_shader_parameter("edge_warp_texels", 5.0)
 	fog_material.set_shader_parameter("edge_irregularity", 0.34)
 	_fog_layer.material = fog_material

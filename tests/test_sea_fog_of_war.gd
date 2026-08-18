@@ -35,7 +35,7 @@ func _run() -> void:
 	_expect(fog.has_method("is_world_position_revealed"), "FogOfWar must expose world-position reveal queries.")
 	_expect(bool(fog.call("is_world_position_revealed", SOUTH_SEA_HARBOR_SPAWN)), "South Sea Harbor must be revealed on first entry.")
 	_expect_polygon_revealed(fog, scene.get_node("World/WorldCollision/NorthwestCoast") as CollisionPolygon2D, scene.get_node("World") as Node2D)
-	_expect(not bool(fog.call("is_world_position_revealed", FAR_WATERS)), "Far waters must remain black on first entry.")
+	_expect(not bool(fog.call("is_world_position_revealed", FAR_WATERS)), "Far waters must remain covered by white ink mist on first entry.")
 	var initial_ratio := float(fog.call("get_explored_ratio"))
 	_expect(initial_ratio > 0.0 and initial_ratio < 0.35, "Initial land and harbor vision must still leave most of the chart hidden.")
 	if DisplayServer.get_name() != "headless":
@@ -57,7 +57,7 @@ func _run() -> void:
 
 	var world_overlay := fog.get_node_or_null("WorldFogOverlay") as Sprite2D
 	var player := scene.get_node("World/Player") as CanvasItem
-	_expect(world_overlay != null and world_overlay.texture != null, "FogOfWar must render a world-space black overlay texture.")
+	_expect(world_overlay != null and world_overlay.texture != null, "FogOfWar must render a world-space exploration mask.")
 	if world_overlay != null:
 		_expect(world_overlay.z_index < player.z_index, "World fog must render below the player ship.")
 		var world_fog_material := world_overlay.material as ShaderMaterial
@@ -67,7 +67,11 @@ func _run() -> void:
 		_expect(float(world_fog_material.get_shader_parameter("alpha_dither")) > 0.0, "World edge fog must dither intermediate alpha levels to break up visible gradient bands.")
 		_expect("signed_distance" in world_fog_material.shader.code and "DISTANCE_SEARCH_RADIUS" in world_fog_material.shader.code, "World edge fog must derive one signed-distance alpha instead of stacking multiple translucent samples.")
 		_expect("alpha_sum" not in world_fog_material.shader.code and "weight_sum" not in world_fog_material.shader.code, "World edge fog must not accumulate weighted alpha layers.")
-		_expect(float(world_fog_material.get_shader_parameter("fog_opacity")) <= 0.75, "World edge fog must stay gently translucent rather than covering the view with solid black.")
+		var world_mist_texture := world_fog_material.get_shader_parameter("mist_texture") as Texture2D
+		_expect(world_mist_texture != null and world_mist_texture.resource_path.ends_with("white_ink_mist_v1.png"), "World exploration fog must reuse the naval-battle white ink-mist asset.")
+		_expect(float(world_fog_material.get_shader_parameter("fog_base_alpha")) > 0.0, "World white mist must retain a light base veil between transparent brush edges.")
+		_expect(float(world_fog_material.get_shader_parameter("fog_opacity")) <= 0.8, "World white mist must stay translucent enough to preserve sea orientation.")
+		_expect("layered_mist" in world_fog_material.shader.code and "vec4(0.0, 0.0, 0.0" not in world_fog_material.shader.code, "World exploration fog shader must render layered white mist instead of a black overlay.")
 
 	var hud := root.get_node("ExplorationUI/HUD") as Control
 	var map_button := hud.get_node("SeaMapStatus/MapButton") as Button
@@ -80,6 +84,10 @@ func _run() -> void:
 	_expect(map_fog_material != null and map_fog_material.shader.resource_path.ends_with("sea_map_fog_soft_edge.gdshader"), "Full sea map alone must soften and round the shared fog edge.")
 	_expect(float(map_fog_material.get_shader_parameter("edge_warp_texels")) >= 4.0, "Full sea map fog must visibly warp straight exploration edges.")
 	_expect(float(map_fog_material.get_shader_parameter("edge_irregularity")) >= 0.3, "Full sea map fog must vary its edge threshold with stable ink noise.")
+	var map_mist_texture := map_fog_material.get_shader_parameter("mist_texture") as Texture2D
+	_expect(map_mist_texture != null and map_mist_texture.resource_path.ends_with("white_ink_mist_v1.png"), "Full sea-map fog must reuse the same naval-battle white ink-mist asset.")
+	_expect(float(map_fog_material.get_shader_parameter("fog_base_alpha")) > 0.0, "Full sea-map fog must keep a continuous light veil between white brush textures.")
+	_expect("layered_mist" in map_fog_material.shader.code and "vec4(0.0, 0.0, 0.0" not in map_fog_material.shader.code, "Full sea-map shader must render layered white mist instead of a black overlay.")
 	var close_button := map_screen.get_node("MapPanel/CloseButton") as Button
 	var close_button_style := close_button.get_theme_stylebox("normal") as StyleBoxTexture
 	_expect(close_button.text == "返回", "Sea-map brush button must display the exact Return label.")

@@ -11,6 +11,7 @@ const WORLD_FOG_Z_INDEX := 40
 const VIEW_EDGE_FOG_INSET := 48.0
 const REVEAL_UPDATE_DISTANCE := 2.0
 const WORLD_FOG_SHADER := preload("res://shaders/sea_world_fog_edge.gdshader")
+const EXPLORATION_FOG_MIST_TEXTURE := preload("res://assets/naval/ui/fog/white_ink_mist_v1.png")
 
 var _world_size := Vector2.ONE
 var _grid_size := Vector2i.ONE
@@ -182,11 +183,15 @@ func _build_world_overlay() -> void:
 	_world_overlay.z_index = WORLD_FOG_Z_INDEX
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = WORLD_FOG_SHADER
+	fog_material.set_shader_parameter("mist_texture", EXPLORATION_FOG_MIST_TEXTURE)
+	fog_material.set_shader_parameter("mist_tiles", Vector2(6.4, 3.6))
+	fog_material.set_shader_parameter("fog_tint", Color(0.93, 0.97, 0.95, 1.0))
+	fog_material.set_shader_parameter("fog_base_alpha", 0.28)
 	fog_material.set_shader_parameter("feather_texels", 3.4)
 	fog_material.set_shader_parameter("edge_warp_texels", 0.8)
 	fog_material.set_shader_parameter("edge_irregularity", 0.34)
 	fog_material.set_shader_parameter("alpha_dither", 0.012)
-	fog_material.set_shader_parameter("fog_opacity", 0.72)
+	fog_material.set_shader_parameter("fog_opacity", 0.74)
 	_world_overlay.material = fog_material
 	add_child(_world_overlay)
 

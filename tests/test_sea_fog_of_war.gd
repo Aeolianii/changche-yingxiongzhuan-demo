@@ -48,6 +48,13 @@ func _run() -> void:
 	_expect(is_equal_approx(float(fog.call("get_view_edge_fog_inset")), 48.0), "World exploration must reserve only a narrow 48-pixel fog strip at unexplored viewport edges.")
 	var reveal_center := Vector2(2500, 1350)
 	fog.call("reveal_at", reveal_center)
+	var reveal_half_size := vision_size * 0.5 - Vector2(48.0, 48.0)
+	var reveal_corner_radius := float(fog.call("get_reveal_corner_radius_world"))
+	var rounded_inside_point := reveal_center + reveal_half_size - Vector2.ONE * reveal_corner_radius * 0.4
+	var square_corner_point := reveal_center + reveal_half_size - Vector2(4.0, 4.0)
+	_expect(reveal_corner_radius >= 160.0, "Sea vision must use a visibly rounded corner radius instead of a nearly square reveal stamp.")
+	_expect(bool(fog.call("is_world_position_revealed", rounded_inside_point)), "A point inside the rounded camera corner must still be explored.")
+	_expect(not bool(fog.call("is_world_position_revealed", square_corner_point)), "The sharp tip of the old rectangular camera footprint must remain fogged.")
 	_expect(int(fog.call("get_pending_reveal_fade_count_for_test")) == 0, "Newly explored fog cells must not retain staggered per-cell alpha levels that form visible terraces.")
 	_expect(float(fog.call("get_explored_ratio")) > initial_ratio, "Sailing into new waters must increase chart completion.")
 	_expect(bool(fog.call("is_world_position_revealed", reveal_center + Vector2(vision_size.x * 0.45, 0))), "A point inside the camera-width reveal footprint must be visible.")

@@ -12,6 +12,7 @@ const NAVAL_FOG_CELL_SIZE := 26.0
 const NAVAL_FOG_STAMP_ALPHA := 0.38
 const WORLD_FOG_Z_INDEX := 40
 const VIEW_EDGE_FOG_INSET := 48.0
+const REVEAL_CORNER_RADIUS_RATIO := 0.5
 const REVEAL_UPDATE_DISTANCE := 2.0
 const WORLD_FOG_SHADER := preload("res://shaders/sea_world_fog_edge.gdshader")
 const EXPLORATION_FOG_MIST_TEXTURE := preload("res://assets/naval/ui/fog/white_ink_mist_v1.png")
@@ -56,15 +57,22 @@ func reveal_at(world_position: Vector2, immediate := false) -> bool:
 		return false
 	_last_reveal_position = world_position
 	var reveal_half_size := _get_camera_reveal_half_size()
-	return _reveal_world_rect(world_position - reveal_half_size, world_position + reveal_half_size, immediate)
+	return _reveal_world_rounded_rect(
+		world_position - reveal_half_size,
+		world_position + reveal_half_size,
+		_get_reveal_corner_radius(reveal_half_size),
+		immediate
+	)
 
 
-func _reveal_world_rect(minimum_world: Vector2, maximum_world: Vector2, immediate := false) -> bool:
+func _reveal_world_rounded_rect(minimum_world: Vector2, maximum_world: Vector2, corner_radius: float, immediate := false) -> bool:
 	var minimum := _world_to_cell(minimum_world)
 	var maximum := _world_to_cell(maximum_world)
 	var changed := false
 	for cell_y in range(minimum.y, maximum.y + 1):
 		for cell_x in range(minimum.x, maximum.x + 1):
+			if not _cell_center_in_rounded_rect(Vector2i(cell_x, cell_y), minimum_world, maximum_world, corner_radius):
+				continue
 			var cell_index := cell_y * _grid_size.x + cell_x
 			if _set_revealed(cell_index):
 				_queue_reveal_visual(cell_x, cell_y, cell_index, immediate)
@@ -91,7 +99,11 @@ func reveal_camera_view() -> bool:
 	_last_camera_target = camera_target
 	var minimum_center := Vector2(minf(camera_center.x, camera_target.x), minf(camera_center.y, camera_target.y))
 	var maximum_center := Vector2(maxf(camera_center.x, camera_target.x), maxf(camera_center.y, camera_target.y))
-	return _reveal_world_rect(minimum_center - reveal_half_size, maximum_center + reveal_half_size)
+	return _reveal_world_rounded_rect(
+		minimum_center - reveal_half_size,
+		maximum_center + reveal_half_size,
+		_get_reveal_corner_radius(reveal_half_size)
+	)
 
 
 func reveal_polygon(world_polygon: PackedVector2Array, immediate := false) -> bool:
@@ -136,6 +148,10 @@ func get_view_edge_fog_inset() -> float:
 	return VIEW_EDGE_FOG_INSET
 
 
+func get_reveal_corner_radius_world() -> float:
+	return _get_reveal_corner_radius(_get_camera_reveal_half_size())
+
+
 func get_pending_reveal_fade_count_for_test() -> int:
 	return 0
 
@@ -146,6 +162,26 @@ func _get_camera_reveal_half_size() -> Vector2:
 		maxf(_cell_world_size.x, half_vision.x - VIEW_EDGE_FOG_INSET),
 		maxf(_cell_world_size.y, half_vision.y - VIEW_EDGE_FOG_INSET)
 	)
+
+
+func _get_reveal_corner_radius(reveal_half_size: Vector2) -> float:
+	return minf(reveal_half_size.x, reveal_half_size.y) * REVEAL_CORNER_RADIUS_RATIO
+
+
+func _cell_center_in_rounded_rect(cell: Vector2i, minimum_world: Vector2, maximum_world: Vector2, corner_radius: float) -> bool:
+	var rectangle_center := (minimum_world + maximum_world) * 0.5
+	var rectangle_half_size := (maximum_world - minimum_world).abs() * 0.5
+	var safe_radius := clampf(corner_radius, 0.0, minf(rectangle_half_size.x, rectangle_half_size.y))
+	if safe_radius <= 0.0:
+		return true
+	var world_center := (Vector2(cell) + Vector2(0.5, 0.5)) * _cell_world_size
+	var local_offset := (world_center - rectangle_center).abs()
+	var inner_half_size := rectangle_half_size - Vector2(safe_radius, safe_radius)
+	var outside_corner := Vector2(
+		maxf(local_offset.x - inner_half_size.x, 0.0),
+		maxf(local_offset.y - inner_half_size.y, 0.0)
+	)
+	return outside_corner.length_squared() <= safe_radius * safe_radius
 
 
 func get_fog_texture() -> Texture2D:

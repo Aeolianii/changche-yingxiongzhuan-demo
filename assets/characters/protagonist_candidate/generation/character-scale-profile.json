@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "name": "protagonist_young_naval",
+  "processing": {
+    "cell_size": 64,
+    "fit_scale": 0.79,
+    "trim_border": 4,
+    "edge_clean_depth": 3,
+    "align": "feet",
+    "shared_scale": true,
+    "scale_strategy": "fit",
+    "component_mode": "largest",
+    "component_padding": 0,
+    "min_component_area": 1,
+    "edge_touch_margin": 0
+  },
+  "output_origin": [
+    32.0,
+    58
+  ],
+  "reference": {
+    "target": "player",
+    "mode": "player_sheet",
+    "rows": 4,
+    "cols": 4,
+    "body_scale_mean": 0.40912694924489423,
+    "body_scale_cv": 0.009891015892448878,
+    "anchor_y_mean": 0.7741803278688525
+  },
+  "qc": {
+    "max_body_scale_drift": 0.1
+  }
+}

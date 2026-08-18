@@ -1,0 +1,117 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/fubo_guling/minigames/fubo_fishing_minigame.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/fubo_guling/minigames/fishing/fishing_background_v1.png" id="2"]
+[ext_resource type="Script" path="res://scripts/fubo_guling/minigames/fubo_fishing_board.gd" id="3"]
+
+[node name="FuboFishingMinigame" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="BackdropArt" type="TextureRect" parent="."]
+modulate = Color(0.72, 0.8, 0.76, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.035, 0.09, 0.09, 0.7)
+
+[node name="Layout" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(860, 820)
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -430.0
+offset_top = -410.0
+offset_right = 430.0
+offset_bottom = 410.0
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "海岸钓鱼"
+horizontal_alignment = 1
+
+[node name="Instruction" type="Label" parent="Layout"]
+custom_minimum_size = Vector2(860, 46)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.55, 1)
+theme_override_font_sizes/font_size = 19
+text = "鱼钩会左右摆动 · 按空格 / 回车或点击海面下钩 · 抓到鱼获后自动收线"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Info" type="HBoxContainer" parent="Layout"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Score" type="Label" parent="Layout/Info"]
+custom_minimum_size = Vector2(420, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 23
+text = "渔获 0 / 500 分"
+horizontal_alignment = 1
+
+[node name="Timer" type="Label" parent="Layout/Info"]
+custom_minimum_size = Vector2(420, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 23
+text = "剩余 60 秒"
+horizontal_alignment = 1
+
+[node name="FishingBoard" type="Control" parent="Layout"]
+texture_filter = 1
+custom_minimum_size = Vector2(840, 520)
+layout_mode = 2
+mouse_filter = 0
+clip_contents = true
+script = ExtResource("3")
+
+[node name="ActionButton" type="Button" parent="Layout"]
+custom_minimum_size = Vector2(840, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "放下渔钩"
+
+[node name="Status" type="Label" parent="Layout"]
+custom_minimum_size = Vector2(840, 42)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "看准方向，按空格或点击放下渔钩。"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ExitButton" type="Button" parent="."]
+custom_minimum_size = Vector2(164, 58)
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -188.0
+offset_top = 20.0
+offset_right = -24.0
+offset_bottom = 78.0
+text = "暂时离开"

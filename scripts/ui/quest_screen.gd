@@ -1,0 +1,898 @@
+extends Control
+
+const QUEST_BACKGROUND := preload("res://assets/ui/quest_screen/quest_screen_background.png")
+const FUNCTION_BUTTON_FRAME := preload("res://assets/ui/exploration_hud/function_button.png")
+const RETURN_ICON := preload("res://assets/ui/icons/menu_return_title.png")
+const FUBO_QUEST_PROJECTION := preload("res://scripts/fubo_guling/fubo_quest_projection.gd")
+
+const GOLD := Color(0.73, 0.59, 0.32, 1.0)
+const GOLD_BRIGHT := Color(0.96, 0.78, 0.28, 1.0)
+const JADE := Color(0.28, 0.58, 0.52, 1.0)
+const TEXT_LIGHT := Color(0.94, 0.91, 0.80, 1.0)
+const TEXT_MUTED := Color(0.69, 0.70, 0.63, 1.0)
+const PANEL_INK := Color(0.025, 0.045, 0.04, 0.78)
+
+const QUESTS := [
+	{
+		"type": "主线",
+		"title": "奉诏入殿",
+		"objective": "前往标记地点推进剧情",
+		"description": "岭南军情骤变，你奉水师都督之命入宫面圣。请先抵达宣政殿，将水师急报呈交监国，再领取调兵所需的水师令。",
+		"keywords": ["宣政殿", "水师急报", "水师令"],
+		"steps": [
+			{
+				"title": "接领入宫诏命",
+				"description": "你已从传令校尉手中接过诏书，获准进入宫城。",
+				"keywords": ["诏书", "宫城"],
+				"completed": true,
+				"expanded": false,
+			},
+			{
+				"title": "前往宣政殿",
+				"description": "沿宫城中轴向北行进，前往宣政殿，将水师急报呈交监国。",
+				"keywords": ["向北", "宣政殿", "水师急报", "监国"],
+				"completed": false,
+				"expanded": true,
+			},
+			{
+				"title": "领取水师令",
+				"description": "完成觐见后，从监国处领取水师令，为后续调遣舰队做准备。",
+				"keywords": ["监国", "水师令", "舰队"],
+				"completed": false,
+				"expanded": false,
+			},
+		],
+	},
+	{
+		"type": "支线",
+		"title": "访查军港",
+		"objective": "与船匠交谈（效果占位）",
+		"description": "军港近日频繁出现修造延期。前往东侧船坞拜访老船匠，询问缺料原因，并记录可能影响舰队出航的异常。",
+		"keywords": ["东侧船坞", "老船匠", "舰队出航"],
+		"steps": [
+			{
+				"title": "前往军港",
+				"description": "离开宫城后前往东侧军港，在船坞入口寻找值守军士。",
+				"keywords": ["东侧军港", "船坞入口"],
+				"completed": false,
+				"expanded": true,
+			},
+			{
+				"title": "询问老船匠",
+				"description": "找到负责修造的老船匠，询问木料短缺与工期延误的具体情况。",
+				"keywords": ["老船匠", "木料短缺", "工期延误"],
+				"completed": false,
+				"expanded": false,
+			},
+			{
+				"title": "记录船坞异常",
+				"description": "将船匠提供的线索记入军务簿，作为后续调查的任务占位记录。",
+				"keywords": ["军务簿", "后续调查"],
+				"completed": false,
+				"expanded": false,
+			},
+		],
+	},
+]
+
+var _selected_quest := 0
+var _quests: Array[Dictionary] = []
+var _completed_quests: Array[Dictionary] = []
+var _quest_buttons: Array[Button] = []
+var _quest_choices: VBoxContainer
+var _active_tab: Button
+var _completed_tab: Button
+var _show_completed := false
+var _detail_title: RichTextLabel
+var _detail_description: RichTextLabel
+var _steps_container: VBoxContainer
+var _context_id := &"palace"
+var _task_state: Dictionary = {}
+var _main_task_title := "奉诏入殿"
+var _main_task_objective := "前往标记地点推进剧情"
+var _main_progress_stage := 0
+
+signal close_requested
+signal side_quest_selected(quest_id: StringName, title: String, objective: String)
+
+
+func _ready() -> void:
+	for quest_value in QUESTS:
+		var quest: Dictionary = quest_value
+		_quests.append(quest.duplicate(true))
+	_completed_quests = _make_completed_quests(str(_quests[0]["title"]))
+	z_index = 80
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	_build_background()
+	_build_headers()
+	_build_return_button()
+	_build_quest_list()
+	_build_quest_detail()
+	_refresh_quest_detail()
+	hide()
+
+
+func show_screen() -> void:
+	_selected_quest = 0
+	_show_completed = false
+	_refresh_filter_tabs()
+	_rebuild_quest_choices()
+	_refresh_quest_detail()
+	show()
+
+
+func set_main_task(task_title: String) -> void:
+	if task_title.is_empty():
+		return
+	if _quests.is_empty():
+		return
+	_quests[0] = _make_main_quest_state(task_title)
+	_completed_quests = _make_completed_quests(task_title)
+	_selected_quest = 0
+	if is_instance_valid(_quest_choices):
+		_rebuild_quest_choices()
+		_refresh_quest_detail()
+
+
+func set_main_task_progress(task_title: String, objective: String, progress_stage: int, task_state := {}) -> void:
+	if task_title.is_empty() or _quests.is_empty():
+		return
+	_main_task_title = task_title
+	_main_task_objective = objective
+	_main_progress_stage = progress_stage
+	_task_state = (task_state as Dictionary).duplicate(true) if task_state is Dictionary else {}
+	if _context_id in [&"sea_overworld", &"fubo_guling"]:
+		_quests = _make_sea_overworld_quests(_task_state)
+	_quests[0] = _make_main_quest_state(task_title, progress_stage, task_state)
+	_quests[0]["objective"] = objective
+	_completed_quests = _make_completed_quests(task_title)
+	_append_completed_side_quests(_task_state)
+	_selected_quest = 0
+	if is_instance_valid(_quest_choices):
+		_rebuild_quest_choices()
+		_refresh_quest_detail()
+
+
+func set_quest_context(context_id: StringName) -> void:
+	_context_id = context_id
+	match context_id:
+		&"sea_overworld":
+			_quests = _make_sea_overworld_quests(_task_state)
+			_completed_quests = _make_completed_quests(_main_task_title)
+			_append_completed_side_quests(_task_state)
+		&"fubo_guling":
+			_quests = _make_sea_overworld_quests(_task_state)
+			_completed_quests = _make_completed_quests(_main_task_title)
+			_append_completed_side_quests(_task_state)
+		_:
+			_quests.clear()
+			for quest_value in QUESTS:
+				var quest: Dictionary = quest_value
+				_quests.append(quest.duplicate(true))
+			_completed_quests = _make_completed_quests(str(_quests[0]["title"]))
+	_selected_quest = 0
+	_show_completed = false
+	if is_instance_valid(_quest_choices):
+		_refresh_filter_tabs()
+		_rebuild_quest_choices()
+		_refresh_quest_detail()
+
+
+func _build_background() -> void:
+	var background := TextureRect.new()
+	background.name = "GeneratedQuestBackground"
+	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	background.texture = QUEST_BACKGROUND
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(background)
+
+
+func _build_headers() -> void:
+	var screen_title := _make_label("任务", 36, TEXT_LIGHT)
+	screen_title.name = "ScreenTitle"
+	screen_title.position = Vector2(180, 58)
+	screen_title.size = Vector2(300, 58)
+	screen_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(screen_title)
+
+	var list_title := _make_label("任务列表", 24, TEXT_LIGHT)
+	list_title.name = "QuestListTitle"
+	list_title.position = Vector2(148, 174)
+	list_title.size = Vector2(240, 46)
+	list_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	list_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(list_title)
+
+	var detail_title := _make_label("任务详情", 24, TEXT_LIGHT)
+	detail_title.name = "QuestDetailHeader"
+	detail_title.position = Vector2(740, 174)
+	detail_title.size = Vector2(330, 46)
+	detail_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	detail_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(detail_title)
+
+
+func _build_return_button() -> void:
+	var slot := Control.new()
+	slot.name = "QuestReturnSlot"
+	slot.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	slot.offset_left = -126.0
+	slot.offset_top = 12.0
+	slot.offset_right = -16.0
+	slot.offset_bottom = 122.0
+	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(slot)
+
+	var frame := TextureRect.new()
+	frame.name = "GeneratedReturnFrame"
+	frame.position = Vector2(8, -2)
+	frame.size = Vector2(94, 94)
+	frame.texture = FUNCTION_BUTTON_FRAME
+	frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	frame.stretch_mode = TextureRect.STRETCH_SCALE
+	frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(frame)
+
+	var icon := TextureRect.new()
+	icon.name = "ReturnIcon"
+	icon.position = Vector2(28, 18)
+	icon.size = Vector2(54, 54)
+	icon.texture = RETURN_ICON
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(icon)
+
+	var label := _make_label("返回", 17, TEXT_LIGHT)
+	label.name = "ReturnLabel"
+	label.position = Vector2(5, 84)
+	label.size = Vector2(100, 24)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	slot.add_child(label)
+
+	var button := Button.new()
+	button.name = "QuestReturnButton"
+	button.position = Vector2(5, 0)
+	button.size = Vector2(100, 108)
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.tooltip_text = "返回游戏"
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", _flat_style(Color(0.82, 0.65, 0.28, 0.16), Color(0, 0, 0, 0), 0))
+	button.add_theme_stylebox_override("pressed", _flat_style(Color(0.92, 0.72, 0.30, 0.24), Color(0, 0, 0, 0), 0))
+	button.pressed.connect(_request_close)
+	slot.add_child(button)
+
+
+func _build_quest_list() -> void:
+	var tabs := HBoxContainer.new()
+	tabs.name = "QuestFilterTabs"
+	tabs.position = Vector2(104, 238)
+	tabs.size = Vector2(330, 40)
+	tabs.add_theme_constant_override("separation", 10)
+	add_child(tabs)
+
+	_active_tab = Button.new()
+	_active_tab.name = "ActiveQuestTab"
+	_active_tab.custom_minimum_size = Vector2(126, 38)
+	_active_tab.text = "进行中"
+	_active_tab.focus_mode = Control.FOCUS_NONE
+	_active_tab.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_active_tab.add_theme_font_size_override("font_size", 17)
+	_active_tab.pressed.connect(_set_quest_filter.bind(false))
+	tabs.add_child(_active_tab)
+
+	_completed_tab = Button.new()
+	_completed_tab.name = "CompletedQuestTab"
+	_completed_tab.custom_minimum_size = Vector2(126, 38)
+	_completed_tab.text = "已完成"
+	_completed_tab.focus_mode = Control.FOCUS_NONE
+	_completed_tab.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_completed_tab.add_theme_font_size_override("font_size", 17)
+	_completed_tab.pressed.connect(_set_quest_filter.bind(true))
+	tabs.add_child(_completed_tab)
+
+	_quest_choices = VBoxContainer.new()
+	_quest_choices.name = "QuestChoices"
+	_quest_choices.position = Vector2(86, 292)
+	_quest_choices.size = Vector2(368, 474)
+	_quest_choices.add_theme_constant_override("separation", 12)
+	_quest_choices.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_quest_choices)
+
+	_refresh_filter_tabs()
+	_rebuild_quest_choices()
+
+
+func _rebuild_quest_choices() -> void:
+	for old_choice in _quest_choices.get_children():
+		_quest_choices.remove_child(old_choice)
+		old_choice.queue_free()
+	_quest_buttons.clear()
+
+	var visible_quests := _visible_quests()
+	if visible_quests.is_empty():
+		var empty_label := _make_label("暂无已完成任务", 16, TEXT_MUTED)
+		empty_label.name = "EmptyQuestLabel"
+		empty_label.custom_minimum_size = Vector2(360, 80)
+		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_quest_choices.add_child(empty_label)
+		return
+
+	for quest_index in range(visible_quests.size()):
+		var quest: Dictionary = visible_quests[quest_index]
+		var selector := Button.new()
+		selector.name = "QuestChoice%d" % quest_index
+		selector.custom_minimum_size = Vector2(360, 112)
+		selector.flat = true
+		selector.focus_mode = Control.FOCUS_NONE
+		selector.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		selector.pressed.connect(_select_quest.bind(quest_index))
+		_quest_choices.add_child(selector)
+		_quest_buttons.append(selector)
+
+		var quest_type := _make_label("【%s】" % quest["type"], 16, GOLD_BRIGHT if quest_index == 0 else JADE)
+		quest_type.name = "QuestType"
+		quest_type.position = Vector2(18, 11)
+		quest_type.size = Vector2(100, 24)
+		selector.add_child(quest_type)
+
+		var quest_title := _make_label(str(quest["title"]), 21, TEXT_LIGHT)
+		quest_title.name = "QuestName"
+		quest_title.position = Vector2(18, 38)
+		quest_title.size = Vector2(320, 30)
+		selector.add_child(quest_title)
+
+		var objective := _make_label(str(quest["objective"]), 14, TEXT_MUTED)
+		objective.name = "QuestObjective"
+		objective.position = Vector2(18, 73)
+		objective.size = Vector2(320, 27)
+		selector.add_child(objective)
+
+	_refresh_quest_selectors()
+
+
+func _build_quest_detail() -> void:
+	_detail_title = _make_rich_text(22)
+	_detail_title.name = "SelectedQuestTitle"
+	_detail_title.position = Vector2(544, 274)
+	_detail_title.size = Vector2(728, 38)
+	add_child(_detail_title)
+
+	_detail_description = _make_rich_text(17)
+	_detail_description.name = "SelectedQuestDescription"
+	_detail_description.position = Vector2(544, 318)
+	_detail_description.size = Vector2(728, 64)
+	add_child(_detail_description)
+
+	var separator := ColorRect.new()
+	separator.name = "DetailSeparator"
+	separator.position = Vector2(528, 389)
+	separator.size = Vector2(744, 1)
+	separator.color = Color(GOLD.r, GOLD.g, GOLD.b, 0.38)
+	separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(separator)
+
+	var flow_title := _make_label("任务流程", 19, GOLD_BRIGHT)
+	flow_title.name = "QuestFlowTitle"
+	flow_title.position = Vector2(528, 402)
+	flow_title.size = Vector2(300, 30)
+	add_child(flow_title)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "QuestStepsScroll"
+	scroll.position = Vector2(544, 440)
+	scroll.size = Vector2(736, 335)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(scroll)
+
+	_steps_container = VBoxContainer.new()
+	_steps_container.name = "QuestSteps"
+	_steps_container.custom_minimum_size = Vector2(716, 0)
+	_steps_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_steps_container.add_theme_constant_override("separation", 5)
+	_steps_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scroll.add_child(_steps_container)
+
+
+func _select_quest(quest_index: int) -> void:
+	if quest_index < 0 or quest_index >= _visible_quests().size():
+		return
+	_selected_quest = quest_index
+	_refresh_quest_selectors()
+	_refresh_quest_detail()
+	var quest := _visible_quests()[quest_index]
+	if not _show_completed and str(quest.get("type", "")) == "支线":
+		side_quest_selected.emit(
+			StringName(str(quest.get("id", ""))),
+			str(quest.get("title", "")),
+			str(quest.get("objective", ""))
+		)
+
+
+func _refresh_quest_selectors() -> void:
+	for quest_index in range(_quest_buttons.size()):
+		var selected := quest_index == _selected_quest
+		var button := _quest_buttons[quest_index]
+		button.add_theme_stylebox_override("normal", _quest_selector_style(selected, false))
+		button.add_theme_stylebox_override("hover", _quest_selector_style(selected, true))
+		button.add_theme_stylebox_override("pressed", _quest_selector_style(true, true))
+
+
+func _refresh_quest_detail() -> void:
+	if _detail_title == null or _steps_container == null:
+		return
+	var visible_quests := _visible_quests()
+	if visible_quests.is_empty():
+		_detail_title.text = "[color=#f1c24f]暂无已完成任务[/color]"
+		_detail_description.text = "完成任务后，记录会出现在这里。"
+		_clear_quest_steps()
+		return
+	var quest: Dictionary = visible_quests[_selected_quest]
+	_detail_title.text = "[color=#f1c24f]【%s】[/color]  %s" % [quest["type"], quest["title"]]
+	_detail_description.text = _highlight_keywords(str(quest["description"]), quest["keywords"])
+
+	_clear_quest_steps()
+
+	var steps: Array = quest["steps"]
+	for step_index in range(steps.size()):
+		_build_step(steps[step_index], step_index)
+
+
+func _clear_quest_steps() -> void:
+	for old_step in _steps_container.get_children():
+		_steps_container.remove_child(old_step)
+		old_step.queue_free()
+
+
+func _set_quest_filter(show_completed: bool) -> void:
+	_show_completed = show_completed
+	_selected_quest = 0
+	_refresh_filter_tabs()
+	_rebuild_quest_choices()
+	_refresh_quest_detail()
+
+
+func _refresh_filter_tabs() -> void:
+	if not is_instance_valid(_active_tab) or not is_instance_valid(_completed_tab):
+		return
+	_apply_filter_tab_style(_active_tab, not _show_completed)
+	_apply_filter_tab_style(_completed_tab, _show_completed)
+
+
+func _apply_filter_tab_style(button: Button, selected: bool) -> void:
+	button.add_theme_color_override("font_color", GOLD_BRIGHT if selected else TEXT_MUTED)
+	button.add_theme_color_override("font_hover_color", TEXT_LIGHT)
+	button.add_theme_stylebox_override("normal", _quest_filter_style(selected, false))
+	button.add_theme_stylebox_override("hover", _quest_filter_style(selected, true))
+	button.add_theme_stylebox_override("pressed", _quest_filter_style(true, true))
+
+
+func _visible_quests() -> Array[Dictionary]:
+	return _completed_quests if _show_completed else _quests
+
+
+func _build_step(step: Dictionary, step_index: int) -> void:
+	var block := VBoxContainer.new()
+	block.name = "QuestStep%d" % step_index
+	block.custom_minimum_size = Vector2(708, 0)
+	block.add_theme_constant_override("separation", 4)
+	block.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_steps_container.add_child(block)
+
+	var header := HBoxContainer.new()
+	header.name = "StepHeader"
+	header.custom_minimum_size = Vector2(708, 42)
+	header.add_theme_constant_override("separation", 12)
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	block.add_child(header)
+
+	var marker := _make_label("✓" if bool(step["completed"]) else "●", 20, GOLD_BRIGHT if bool(step["completed"]) else JADE)
+	marker.name = "StepMarker"
+	marker.custom_minimum_size = Vector2(26, 38)
+	marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	marker.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_child(marker)
+
+	var title := _make_label(str(step["title"]), 18, TEXT_LIGHT)
+	title.name = "StepTitle"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_child(title)
+
+	var toggle := Button.new()
+	toggle.name = "StepToggle"
+	toggle.custom_minimum_size = Vector2(48, 38)
+	toggle.text = "▼" if bool(step["expanded"]) else "▶"
+	toggle.focus_mode = Control.FOCUS_NONE
+	toggle.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	toggle.add_theme_font_size_override("font_size", 18)
+	toggle.add_theme_color_override("font_color", TEXT_LIGHT)
+	toggle.add_theme_color_override("font_hover_color", GOLD_BRIGHT)
+	toggle.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	toggle.add_theme_stylebox_override("hover", _flat_style(Color(GOLD.r, GOLD.g, GOLD.b, 0.13), Color(0, 0, 0, 0), 0))
+	toggle.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	header.add_child(toggle)
+
+	var description := _make_rich_text(15)
+	description.name = "StepDescription"
+	description.custom_minimum_size = Vector2(678, 58)
+	description.text = _highlight_keywords(str(step["description"]), step["keywords"])
+	description.visible = bool(step["expanded"])
+	block.add_child(description)
+	toggle.pressed.connect(_toggle_step.bind(description, toggle))
+
+	var separator := HSeparator.new()
+	separator.name = "StepSeparator"
+	var separator_style := StyleBoxLine.new()
+	separator_style.color = Color(GOLD.r, GOLD.g, GOLD.b, 0.28)
+	separator_style.thickness = 1
+	separator.add_theme_stylebox_override("separator", separator_style)
+	block.add_child(separator)
+
+
+func _toggle_step(description: RichTextLabel, toggle: Button) -> void:
+	description.visible = not description.visible
+	toggle.text = "▼" if description.visible else "▶"
+
+
+func _request_close() -> void:
+	close_requested.emit()
+
+
+func _highlight_keywords(text_value: String, keywords: Array) -> String:
+	var highlighted := text_value
+	for keyword_value in keywords:
+		var keyword := str(keyword_value)
+		highlighted = highlighted.replace(keyword, "[color=#f1c24f]%s[/color]" % keyword)
+	return highlighted
+
+
+func _make_main_quest_state(task_title: String, progress_stage: int = 0, task_state := {}) -> Dictionary:
+	if task_title == "探索海域，完善海图" and _context_id in [&"sea_overworld", &"fubo_guling"]:
+		return _make_sea_overworld_main_task(progress_stage)
+	if task_title == "伏波古岭":
+		return _make_fubo_guling_main_task(progress_stage, bool(task_state.get("keeper_intro_completed", false)))
+	if task_title == "奉诏入殿":
+		var default_main: Dictionary = QUESTS[0]
+		return default_main.duplicate(true)
+	if task_title == "巡视水师驻地":
+		return {
+			"type": "主线",
+			"title": task_title,
+			"objective": "与甲板值守士兵交谈（0/2）",
+			"description": "抵达南疆水师驻地后，先听取中军楼船两舷值守士兵的汇报，再向中军军官复命，完成此次驻地巡视。",
+			"keywords": ["南疆水师驻地", "值守士兵", "中军军官", "驻地巡视"],
+			"steps": [
+				{
+					"title": "听取甲板士兵汇报",
+					"description": "分别与左右两舷的值守士兵交谈，了解岗哨、缆索和舰船战备情况。",
+					"keywords": ["左右两舷", "值守士兵", "岗哨", "舰船战备"],
+					"completed": progress_stage >= 2,
+					"expanded": progress_stage < 2,
+				},
+				{
+					"title": "向中军军官复命",
+					"description": "汇总两名士兵的报告，向中军军官下达整顿值守与检修缆索的军令。",
+					"keywords": ["士兵报告", "中军军官", "整顿值守", "检修缆索"],
+					"completed": progress_stage >= 3,
+					"expanded": progress_stage >= 2,
+				},
+			],
+		}
+	if task_title == "筹备水师操练":
+		return {
+			"type": "主线",
+			"title": task_title,
+			"objective": "与广州县令交谈",
+			"description": "驻地巡视已经完成。广州县令正在甲板候命，与其商议粮草、器械和地方协同，随后开启水师操练。",
+			"keywords": ["驻地巡视", "广州县令", "粮草", "水师操练"],
+			"steps": [
+				{
+					"title": "与广州县令会谈",
+					"description": "听取广州县令关于军需筹措与地方支援的说明。",
+					"keywords": ["广州县令", "军需筹措", "地方支援"],
+					"completed": progress_stage >= 4,
+					"expanded": progress_stage < 4,
+				},
+				{
+					"title": "开始水师操练",
+					"description": "完成会谈后检阅水师操练。",
+					"keywords": ["完成会谈", "水师操练"],
+					"completed": false,
+					"expanded": progress_stage >= 4,
+				},
+			],
+		}
+	if task_title == "探索海域，完善海图":
+		return {
+			"type": "主线",
+			"title": task_title,
+			"objective": "与广州县令交谈，选择是否立即出发",
+			"description": "驻地巡视与水师操演均已完成。再次与广州县令交谈，决定是否从南海军港启程巡视岭南海域。",
+			"keywords": ["驻地巡视", "水师操演", "广州县令", "南海军港", "岭南海域"],
+			"steps": [
+				{
+					"title": "完成驻地巡视",
+					"description": "两舷士兵汇报及中军军官复命均已完成。",
+					"keywords": ["两舷士兵", "中军军官", "已完成"],
+					"completed": true,
+					"expanded": false,
+				},
+				{
+					"title": "完成水师操演",
+					"description": "与广州县令完成军需会谈，并检阅水师操演。",
+					"keywords": ["广州县令", "军需会谈", "水师操演"],
+					"completed": true,
+					"expanded": false,
+				},
+				{
+					"title": "启程巡视岭南海域",
+					"description": "再次与广州县令交谈，选择“立即出发”进入海上大地图。",
+					"keywords": ["广州县令", "立即出发", "海上大地图"],
+					"completed": false,
+					"expanded": true,
+				},
+			],
+		}
+	return {
+		"type": "主线",
+		"title": task_title,
+		"objective": "前往标记地点推进剧情",
+		"description": "当前剧情已推进至“%s”。请按照场景中的标记与对话提示完成这一阶段的主线目标。" % task_title,
+		"keywords": [task_title, "场景标记", "主线目标"],
+		"steps": [
+			{
+				"title": task_title,
+				"description": "跟随场景标记与剧情对话，完成“%s”。" % task_title,
+				"keywords": ["场景标记", task_title],
+				"completed": false,
+				"expanded": true,
+			},
+			{
+				"title": "继续推进剧情",
+				"description": "完成当前目标后，新的主线步骤会随剧情自动更新。",
+				"keywords": ["当前目标", "自动更新"],
+				"completed": false,
+				"expanded": false,
+			},
+		],
+	}
+
+
+func _make_sea_overworld_quests(task_state := {}) -> Array[Dictionary]:
+	var quests: Array[Dictionary] = [
+		_make_sea_overworld_main_task(0),
+		{
+			"id": "sea_encounters",
+			"type": "支线",
+			"title": "海上见闻",
+			"objective": "接触海上的船只或漂流事件",
+			"description": "岭南海域往来船只众多，海面也不时出现漂流物。主动接近这些目标，了解大地图上的自动事件触发方式。",
+			"keywords": ["岭南海域", "往来船只", "漂流物", "自动事件"],
+			"steps": [
+				{
+					"title": "发现海上目标",
+					"description": "在航行途中寻找渔船、商船或漂流木箱。",
+					"keywords": ["渔船", "商船", "漂流木箱"],
+					"completed": false,
+					"expanded": true,
+				},
+				{
+					"title": "靠近并触发见闻",
+					"description": "驶入目标附近后，海上船只和事件会自动显示开发中提示。",
+					"keywords": ["驶入目标附近", "自动", "开发中"],
+					"completed": false,
+					"expanded": false,
+				},
+			],
+		},
+	]
+	var fubo_state: Dictionary = task_state.get("fubo_side_quest", {}) if task_state is Dictionary else {}
+	if bool(fubo_state.get("accepted", false)) and not _is_fubo_side_quest_completed(fubo_state):
+		quests.append(_make_fubo_guling_main_task(
+			int(fubo_state.get("progress_stage", 0)),
+			bool(fubo_state.get("keeper_intro_completed", false))
+		))
+	quests[0] = _make_sea_overworld_main_task(_main_progress_stage)
+	quests[0]["objective"] = _main_task_objective
+	return quests
+
+
+func _make_fubo_guling_quests() -> Array[Dictionary]:
+	return [
+		_make_fubo_guling_main_task(0),
+		{
+			"type": "支线",
+			"title": "岛上见闻",
+			"objective": "完成码头渔获与古校场鼓令",
+			"description": "伏波古岭保留着岭南海防、水利与军镇遗迹。完成两项轻量挑战，熟悉岛屿的主要互动地点。",
+			"keywords": ["伏波古岭", "码头渔获", "古校场鼓令"],
+			"steps": [
+				{
+					"title": "体验码头渔获",
+					"description": "在码头使用摆钩捕捞鱼获。",
+					"keywords": ["码头", "摆钩", "鱼获"],
+					"completed": false,
+					"expanded": true,
+				},
+				{
+					"title": "体验古校场鼓令",
+					"description": "按示范顺序和节奏敲响三面战鼓。",
+					"keywords": ["古校场", "战鼓", "节奏"],
+					"completed": false,
+					"expanded": false,
+				},
+			],
+		},
+	]
+
+
+func _make_fubo_guling_main_task(progress_stage: int, keeper_intro_completed := false) -> Dictionary:
+	return {
+		"id": "fubo_guling",
+		"type": "支线",
+		"title": "伏波古岭",
+		"objective": FUBO_QUEST_PROJECTION.current_step_title(progress_stage, keeper_intro_completed),
+		"description": "从码头登陆伏波古岭，拜访守岭人，完成码头渔获与古校场鼓令，最后登岭眺望南海。",
+		"keywords": ["伏波古岭", "守岭人", "码头渔获", "古校场", "南海"],
+		"steps": [
+			{"title": "寻找守岭人", "description": "沿红土山路前往房前，与守岭人交谈。", "keywords": ["红土山路", "守岭人"], "completed": keeper_intro_completed, "expanded": not keeper_intro_completed},
+			{"title": "码头摆钩钓鱼", "description": "前往码头旁海岸，在鱼竿处完成摆钩钓鱼。", "keywords": ["码头旁海岸", "鱼竿", "摆钩钓鱼"], "completed": progress_stage >= 2, "expanded": progress_stage < 2},
+			{"title": "完成古校场鼓令", "description": "前往古校场，听令后依次敲响三面战鼓。", "keywords": ["古校场", "三面战鼓"], "completed": progress_stage >= 3, "expanded": progress_stage == 2},
+			{"title": "登岭眺望南海", "description": "鼓令完成后登上观景台。", "keywords": ["观景台", "南海"], "completed": progress_stage >= 4, "expanded": progress_stage >= 3},
+		],
+	}
+
+
+func _append_completed_side_quests(task_state: Dictionary) -> void:
+	var fubo_state: Dictionary = task_state.get("fubo_side_quest", {})
+	if not bool(fubo_state.get("accepted", false)) or not _is_fubo_side_quest_completed(fubo_state):
+		return
+	var completed_fubo := _make_fubo_guling_main_task(4, bool(fubo_state.get("keeper_intro_completed", true)))
+	completed_fubo["objective"] = "已完成"
+	var completed_steps: Array = completed_fubo["steps"]
+	for step_value in completed_steps:
+		var step := step_value as Dictionary
+		step["completed"] = true
+		step["expanded"] = false
+	_completed_quests.append(completed_fubo)
+
+
+func _is_fubo_side_quest_completed(state: Dictionary) -> bool:
+	return bool(state.get("completed", false)) or int(state.get("progress_stage", 0)) >= 4
+
+
+func quest_context_for_test() -> StringName:
+	return _context_id
+
+
+func _make_sea_overworld_main_task(progress_stage: int) -> Dictionary:
+	return {
+		"type": "主线",
+		"title": "探索海域，完善海图",
+		"objective": "使用WASD或方向键驾驶船只",
+		"description": "驾驶座船探索岭南海域，熟悉海上大地图的移动、地点接近、进入提示以及海上目标自动触发流程。",
+		"keywords": ["岭南海域", "海上大地图", "地点接近", "进入提示", "自动触发"],
+		"steps": [
+			{
+				"title": "熟悉海上航行",
+				"description": "使用WASD或方向键在海图上驾驶船只，自由往返各片海域。",
+				"keywords": ["WASD", "方向键", "驾驶船只"],
+				"completed": progress_stage >= 1,
+				"expanded": progress_stage == 0,
+			},
+			{
+				"title": "靠近海岛地点",
+				"description": "靠近任意可进入地点，查看地点名称与进入提示。",
+				"keywords": ["可进入地点", "地点名称", "进入提示"],
+				"completed": progress_stage >= 2,
+				"expanded": progress_stage == 1,
+			},
+			{
+				"title": "尝试进入地点",
+				"description": "点击地点按钮或按E尝试进入；当前版本会显示该地点即将开放。",
+				"keywords": ["点击地点按钮", "按E", "即将开放"],
+				"completed": progress_stage >= 3,
+				"expanded": progress_stage == 2,
+			},
+			{
+				"title": "触发海上目标",
+				"description": "接触海上的事件或船只，查看自动触发的开发中提示。",
+				"keywords": ["海上事件", "船只", "自动触发", "开发中"],
+				"completed": progress_stage >= 4,
+				"expanded": progress_stage >= 3,
+			},
+		],
+	}
+
+
+func _make_completed_quests(task_title: String) -> Array[Dictionary]:
+	var previous_by_current := {
+		"听取内侍传召": "阅看岭南急报",
+		"奉诏入殿": "听取内侍传召",
+		"聆听圣谕": "奉诏入殿",
+		"领旨南下": "聆听圣谕",
+		"巡视水师驻地": "奉诏入殿",
+		"筹备水师操练": "巡视水师驻地",
+		"参加水师操练": "筹备水师操练",
+		"探索海域，完善海图": "参加水师操练",
+	}
+	var completed_quests: Array[Dictionary] = []
+	if not previous_by_current.has(task_title):
+		return completed_quests
+	var completed_quest := _make_main_quest_state(str(previous_by_current[task_title]))
+	completed_quest["objective"] = "已完成"
+	var completed_steps: Array = completed_quest["steps"]
+	for step_value in completed_steps:
+		var step: Dictionary = step_value
+		step["completed"] = true
+		step["expanded"] = false
+	completed_quests.append(completed_quest)
+	return completed_quests
+
+
+func _quest_selector_style(selected: bool, hovered: bool) -> StyleBoxFlat:
+	var background := Color(0.38, 0.30, 0.13, 0.50) if selected else PANEL_INK
+	if hovered:
+		background = background.lightened(0.08)
+	var style := _flat_style(background, Color(GOLD.r, GOLD.g, GOLD.b, 0.58 if selected else 0.22), 1)
+	style.set_border_width(SIDE_LEFT, 4 if selected else 2)
+	style.content_margin_left = 12.0
+	return style
+
+
+func _quest_filter_style(selected: bool, hovered: bool) -> StyleBoxFlat:
+	var background := Color(0.34, 0.27, 0.12, 0.70) if selected else Color(0.02, 0.04, 0.035, 0.62)
+	if hovered:
+		background = background.lightened(0.08)
+	var style := _flat_style(background, Color(GOLD.r, GOLD.g, GOLD.b, 0.66 if selected else 0.28), 1)
+	style.set_border_width(SIDE_BOTTOM, 3 if selected else 1)
+	return style
+
+
+func _make_label(text_value: String, font_size: int, font_color: Color) -> Label:
+	var label := Label.new()
+	label.text = text_value
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", font_color)
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
+
+
+func _make_rich_text(font_size: int) -> RichTextLabel:
+	var label := RichTextLabel.new()
+	label.bbcode_enabled = true
+	label.fit_content = false
+	label.scroll_active = false
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("normal_font_size", font_size)
+	label.add_theme_color_override("default_color", TEXT_LIGHT)
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
+
+
+func _flat_style(background: Color, border: Color, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = background
+	style.border_color = border
+	style.set_border_width_all(border_width)
+	style.corner_radius_top_left = 2
+	style.corner_radius_top_right = 2
+	style.corner_radius_bottom_left = 2
+	style.corner_radius_bottom_right = 2
+	return style

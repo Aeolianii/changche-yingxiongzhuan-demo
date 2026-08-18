@@ -1,0 +1,6 @@
+[
+  { "Id": "chain_shot", "DisplayName": "连锁弹", "UsesPerSlot": 2, "MinRange": 3, "MaxRange": 5, "SlowLevels": 1, "SlowRounds": 3 },
+  { "Id": "fire_oil", "DisplayName": "火油", "UsesPerSlot": 1, "MinRange": 3, "MaxRange": 4, "BurnRounds": 3 },
+  { "Id": "damage_control", "DisplayName": "损管", "UsesPerSlot": 3, "MinRange": 0, "MaxRange": 0, "InstantHealPercent": 15, "RegenRounds": 5, "RegenPercent": 2 },
+  { "Id": "mine", "DisplayName": "水雷", "UsesPerSlot": 2, "MinRange": 1, "MaxRange": 1 }
+]

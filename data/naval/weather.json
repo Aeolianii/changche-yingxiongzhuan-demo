@@ -1,0 +1,6 @@
+[
+  { "Id": "clear", "DisplayName": "晴天", "AllowsWind": false, "SpeedModifier": 0, "VisionModifier": 0, "TyphoonDamagePercent": 0.0 },
+  { "Id": "cloudy", "DisplayName": "阴天", "AllowsWind": true, "SpeedModifier": 0, "VisionModifier": -1, "TyphoonDamagePercent": 0.0 },
+  { "Id": "rainy", "DisplayName": "雨天", "AllowsWind": true, "SpeedModifier": -1, "VisionModifier": -1, "TyphoonDamagePercent": 0.0 },
+  { "Id": "typhoon", "DisplayName": "台风", "AllowsWind": true, "SpeedModifier": -2, "VisionModifier": -3, "TyphoonDamagePercent": 0.05 }
+]

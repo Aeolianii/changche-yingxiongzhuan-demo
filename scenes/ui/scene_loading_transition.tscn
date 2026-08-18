@@ -1,0 +1,124 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/scene_loading_transition.gd" id="1_loading"]
+[ext_resource type="Texture2D" path="res://assets/ui/loading/lingnan_sea_loading_v1.png" id="2_loading_art"]
+[ext_resource type="Texture2D" path="res://assets/ui/loading/loading_progress_frame_v1.png" id="3_progress_frame"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_bg"]
+bg_color = Color(0.019607844, 0.043137256, 0.039215688, 0.94)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_fill"]
+bg_color = Color(0.7529412, 0.60784316, 0.2784314, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.9490196, 0.84313726, 0.5254902, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[node name="SceneLoadingTransition" type="Control"]
+visible = false
+z_index = 300
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_loading")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.008, 0.012, 0.012, 1)
+
+[node name="LoadingImage" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("2_loading_art")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.015, 0.02, 0.018, 0.14)
+
+[node name="LoadingText" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.18
+anchor_top = 0.75
+anchor_right = 0.82
+anchor_bottom = 0.84
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.96, 0.9, 0.73, 1)
+theme_override_colors/font_outline_color = Color(0.025, 0.025, 0.02, 1)
+theme_override_constants/outline_size = 7
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 31
+text = "正在进入大地图"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LoadingBar" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.885
+anchor_right = 0.5
+anchor_bottom = 0.885
+offset_left = -286.0
+offset_top = -43.0
+offset_right = 286.0
+offset_bottom = 43.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Progress" type="ProgressBar" parent="LoadingBar"]
+layout_mode = 0
+offset_left = 63.0
+offset_top = 25.0
+offset_right = 509.0
+offset_bottom = 63.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_progress_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_progress_fill")
+show_percentage = false
+
+[node name="Frame" type="TextureRect" parent="LoadingBar"]
+layout_mode = 0
+offset_right = 572.0
+offset_bottom = 86.0
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("3_progress_frame")
+expand_mode = 1
+stretch_mode = 5

@@ -1,0 +1,228 @@
+[gd_scene load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://scripts/yuehuan_merchant_harbor.gd" id="1_controller"]
+[ext_resource type="Texture2D" path="res://assets/yuehuan_merchant_island/backgrounds/yuehuan_merchant_island_v4.png" id="2_background"]
+[ext_resource type="PackedScene" path="res://scenes/characters/player.tscn" id="3_player"]
+[ext_resource type="Script" path="res://scripts/yuehuan_merchant/merchant_npc.gd" id="4_merchant"]
+[ext_resource type="Texture2D" path="res://assets/yuehuan_merchant_island/characters/liang_trader_v2.png" id="5_liang"]
+[ext_resource type="Texture2D" path="res://assets/yuehuan_merchant_island/characters/shen_shipwright_v2.png" id="6_shen"]
+[ext_resource type="PackedScene" path="res://scenes/yuehuan_merchant_harbor/merchant_shop_overlay.tscn" id="7_overlay"]
+[ext_resource type="Texture2D" uid="uid://d4fe3kc37c3kx" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="8_prompt"]
+[ext_resource type="Texture2D" uid="uid://d2w4jmas4pnol" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="9_prompt_active"]
+
+[sub_resource type="RectangleShape2D" id="Rectangle_merchant"]
+size = Vector2(28, 18)
+
+[sub_resource type="CircleShape2D" id="Circle_interaction"]
+radius = 82.0
+
+[sub_resource type="CircleShape2D" id="Circle_dock"]
+radius = 62.0
+
+[sub_resource type="RectangleShape2D" id="Boundary_top"]
+size = Vector2(1536, 125)
+
+[sub_resource type="RectangleShape2D" id="Boundary_upper_left"]
+size = Vector2(555, 420)
+
+[sub_resource type="RectangleShape2D" id="Boundary_upper_right"]
+size = Vector2(576, 420)
+
+[sub_resource type="RectangleShape2D" id="Boundary_middle_left"]
+size = Vector2(175, 155)
+
+[sub_resource type="RectangleShape2D" id="Boundary_middle_right"]
+size = Vector2(321, 155)
+
+[sub_resource type="RectangleShape2D" id="Boundary_dock_entry_left"]
+size = Vector2(570, 30)
+
+[sub_resource type="RectangleShape2D" id="Boundary_dock_entry_right"]
+size = Vector2(606, 30)
+
+[sub_resource type="RectangleShape2D" id="Boundary_lower_left"]
+size = Vector2(590, 294)
+
+[sub_resource type="RectangleShape2D" id="Boundary_lower_right"]
+size = Vector2(631, 294)
+
+[sub_resource type="RectangleShape2D" id="Boundary_dock_end"]
+size = Vector2(315, 40)
+
+[node name="YuehuanMerchantHarbor" type="Node2D"]
+script = ExtResource("1_controller")
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="Ground" type="Node2D" parent="World"]
+z_index = -20
+
+[node name="Background" type="Sprite2D" parent="World/Ground"]
+texture_filter = 1
+texture = ExtResource("2_background")
+centered = false
+
+[node name="WorldObjects" type="Node2D" parent="World"]
+y_sort_enabled = true
+
+[node name="Player" parent="World/WorldObjects" instance=ExtResource("3_player")]
+position = Vector2(768, 875)
+
+[node name="Camera2D" parent="World/WorldObjects/Player"]
+zoom = Vector2(1.08, 1.08)
+
+[node name="LiangTrader" type="Node2D" parent="World/WorldObjects"]
+position = Vector2(460, 655)
+script = ExtResource("4_merchant")
+merchant_id = "liang"
+display_name = "梁货郎"
+shop_role = "goods"
+dialogue_text = "军中造船离不开木铁。这里既卖木材、铁石，也收你从岭南海域带回的鱼货与海货。"
+portrait = ExtResource("5_liang")
+bark_lines = PackedStringArray("木材铁石，明码实价！", "南北海货，都可来问！", "造船备料，莫误潮时！")
+bark_bubble_offset = Vector2(-10, -94)
+
+[node name="Sprite" type="Sprite2D" parent="World/WorldObjects/LiangTrader"]
+texture_filter = 1
+position = Vector2(0, -31)
+scale = Vector2(0.065, 0.065)
+texture = ExtResource("5_liang")
+
+[node name="Body" type="StaticBody2D" parent="World/WorldObjects/LiangTrader"]
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/WorldObjects/LiangTrader/Body"]
+position = Vector2(0, -7)
+shape = SubResource("Rectangle_merchant")
+
+[node name="Interaction" type="Area2D" parent="World/WorldObjects/LiangTrader"]
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/WorldObjects/LiangTrader/Interaction"]
+shape = SubResource("Circle_interaction")
+
+[node name="ShenShipwright" type="Node2D" parent="World/WorldObjects"]
+position = Vector2(1105, 620)
+script = ExtResource("4_merchant")
+merchant_id = "shen"
+display_name = "沈船师"
+shop_role = "shipyard"
+dialogue_text = "先买下船型图纸，往后图纸永久有效。备齐军饷、木材和铁石，我便能照图再造。"
+portrait = ExtResource("6_shen")
+bark_lines = PackedStringArray("新到船图，诸位请看！", "有图有料，即可开工！", "好船要看骨架与工料！")
+
+[node name="Sprite" type="Sprite2D" parent="World/WorldObjects/ShenShipwright"]
+texture_filter = 1
+position = Vector2(0, -29)
+scale = Vector2(0.065, 0.065)
+texture = ExtResource("6_shen")
+
+[node name="Body" type="StaticBody2D" parent="World/WorldObjects/ShenShipwright"]
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/WorldObjects/ShenShipwright/Body"]
+position = Vector2(0, -7)
+shape = SubResource("Rectangle_merchant")
+
+[node name="Interaction" type="Area2D" parent="World/WorldObjects/ShenShipwright"]
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/WorldObjects/ShenShipwright/Interaction"]
+shape = SubResource("Circle_interaction")
+
+[node name="Collision" type="Node2D" parent="World"]
+
+[node name="WalkableBoundary" type="StaticBody2D" parent="World/Collision"]
+
+[node name="TopBlock" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(768, 62.5)
+shape = SubResource("Boundary_top")
+
+[node name="UpperLeftBlock" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(277.5, 335)
+shape = SubResource("Boundary_upper_left")
+
+[node name="UpperRightBlock" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(1248, 335)
+shape = SubResource("Boundary_upper_right")
+
+[node name="MiddleLeftBlock" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(87.5, 622.5)
+shape = SubResource("Boundary_middle_left")
+
+[node name="MiddleRightBlock" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(1375.5, 622.5)
+shape = SubResource("Boundary_middle_right")
+
+[node name="DockEntryLeft" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(285, 715)
+shape = SubResource("Boundary_dock_entry_left")
+
+[node name="DockEntryRight" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(1233, 715)
+shape = SubResource("Boundary_dock_entry_right")
+
+[node name="LowerLeftSea" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(295, 877)
+shape = SubResource("Boundary_lower_left")
+
+[node name="LowerRightSea" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(1220.5, 877)
+shape = SubResource("Boundary_lower_right")
+
+[node name="DockEndBlock" type="CollisionShape2D" parent="World/Collision/WalkableBoundary"]
+position = Vector2(747.5, 1044)
+shape = SubResource("Boundary_dock_end")
+
+[node name="Triggers" type="Node2D" parent="World"]
+
+[node name="DockReturn" type="Area2D" parent="World/Triggers"]
+position = Vector2(768, 860)
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Triggers/DockReturn"]
+shape = SubResource("Circle_dock")
+
+[node name="Interface" type="CanvasLayer" parent="."]
+
+[node name="LocationLabel" type="Label" parent="Interface"]
+offset_left = 28.0
+offset_top = 22.0
+offset_right = 330.0
+offset_bottom = 66.0
+theme_override_colors/font_color = Color(0.97, 0.9, 0.72, 1)
+theme_override_colors/font_outline_color = Color(0.04, 0.035, 0.025, 0.9)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 30
+text = "月环商岛"
+
+[node name="PromptPanel" type="TextureButton" parent="Interface"]
+visible = false
+texture_filter = 1
+offset_left = 522.0
+offset_top = 800.0
+offset_right = 822.0
+offset_bottom = 874.0
+texture_normal = ExtResource("8_prompt")
+texture_pressed = ExtResource("9_prompt_active")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Prompt" type="Label" parent="Interface/PromptPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.8784314, 0.47843137, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 19
+text = "按 E / 空格　交谈"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MerchantShopOverlay" parent="Interface" instance=ExtResource("7_overlay")]

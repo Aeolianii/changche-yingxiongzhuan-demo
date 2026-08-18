@@ -1,0 +1,41 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/sea_overworld_pirate.gd" id="1_pirate"]
+
+[sub_resource type="CircleShape2D" id="CircleBody"]
+radius = 22.0
+
+[sub_resource type="CircleShape2D" id="CircleContact"]
+radius = 38.0
+
+[node name="SeaOverworldPirate" type="CharacterBody2D" groups=["sea_pirate"]]
+z_index = 45
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_pirate")
+
+[node name="WakeSprite" type="Sprite2D" parent="."]
+z_index = -2
+texture_filter = 1
+scale = Vector2(0.22, 0.22)
+
+[node name="SideSplashSprite" type="Sprite2D" parent="."]
+z_index = -1
+texture_filter = 1
+scale = Vector2(0.22, 0.22)
+
+[node name="VisualRoot" type="Node2D" parent="."]
+
+[node name="ShipSprite" type="Sprite2D" parent="VisualRoot"]
+texture_filter = 1
+scale = Vector2(0.266, 0.266)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleBody")
+
+[node name="ContactArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactArea"]
+shape = SubResource("CircleContact")

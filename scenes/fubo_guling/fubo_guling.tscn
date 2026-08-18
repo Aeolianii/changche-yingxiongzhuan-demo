@@ -1,0 +1,332 @@
+[gd_scene format=3 uid="uid://dvyfo1qrbh33n"]
+
+[ext_resource type="Script" uid="uid://bdb5k2podbgs" path="res://scripts/fubo_guling/fubo_guling.gd" id="1_xewfn"]
+[ext_resource type="Texture2D" uid="uid://clehfc6w1nkii" path="res://assets/fubo_guling/backgrounds/fubo_guling_complete.png" id="3_erm8w"]
+[ext_resource type="PackedScene" uid="uid://cwdko3gfnx6h3" path="res://scenes/characters/player.tscn" id="3_hkqpv"]
+[ext_resource type="Script" uid="uid://dkcte25ysvqxe" path="res://scripts/fubo_guling/fubo_world_prop.gd" id="4_erm8w"]
+[ext_resource type="Texture2D" uid="uid://cbfn4y6xno5sx" path="res://assets/ui/dialogue/ink_speaker_nameplate.png" id="4_qs51d"]
+[ext_resource type="Texture2D" uid="uid://bomw7nfbwseu2" path="res://assets/characters/soldier/standard/idle/down/1.png" id="10_qcq6o"]
+[ext_resource type="Texture2D" uid="uid://b2gm3a17vabh8" path="res://assets/fubo_guling/generated/road_barrier.png" id="22_5dl1x"]
+[ext_resource type="Script" uid="uid://cny8xf0r0eepe" path="res://scripts/fubo_guling/minigames/fubo_minigame_host.gd" id="29_p58l7"]
+[ext_resource type="Texture2D" uid="uid://cofirowu5vner" path="res://assets/ui/dialogue/ink_dialogue_backdrop.png" id="30_dialogue"]
+[ext_resource type="Texture2D" uid="uid://d4fe3kc37c3kx" path="res://assets/ui/sea_overworld/interaction_button_ink_v1.png" id="31_prompt"]
+[ext_resource type="Texture2D" uid="uid://d2w4jmas4pnol" path="res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png" id="32_prompt_active"]
+[ext_resource type="Texture2D" uid="uid://creavmnshu75m" path="res://assets/fubo_guling/generated/fishing_station_v1.png" id="33_fishing_station"]
+[ext_resource type="Script" uid="uid://cm22osuq25apn" path="res://scripts/fubo_guling/fubo_fishing_station.gd" id="34_fishing_station"]
+[ext_resource type="PackedScene" path="res://scenes/fubo_guling/fubo_completion_cutscene.tscn" id="35_completion_cutscene"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yewv4"]
+size = Vector2(18, 10)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_iuhai"]
+size = Vector2(18, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_eyqv8"]
+size = Vector2(57.98996, 29.362701)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_drum_body"]
+radius = 32.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_fishing_station_body"]
+radius = 47.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_qs51d"]
+radius = 59.008472
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_o7m5c"]
+radius = 50.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_avxio"]
+radius = 91.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_sea_return"]
+radius = 64.0
+
+[node name="FuboGuling" type="Node2D" unique_id=579197751]
+script = ExtResource("1_xewfn")
+
+[node name="Audio" type="AudioStreamPlayer" parent="." unique_id=86385048]
+
+[node name="Interface" type="CanvasLayer" parent="." unique_id=869282089]
+
+[node name="HUD" type="Control" parent="Interface" unique_id=495363611]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1344.0
+offset_bottom = 896.0
+mouse_filter = 2
+
+[node name="PromptPanel" type="TextureButton" parent="Interface/HUD" unique_id=222740050]
+visible = false
+texture_filter = 1
+layout_mode = 0
+offset_left = 522.0
+offset_top = 800.0
+offset_right = 822.0
+offset_bottom = 874.0
+texture_normal = ExtResource("31_prompt")
+texture_pressed = ExtResource("32_prompt_active")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Prompt" type="Label" parent="Interface/HUD/PromptPanel" unique_id=1409687728]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.8784314, 0.47843137, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 19
+text = "按 E / 空格 互动"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DialoguePanel" type="TextureRect" parent="Interface/HUD" unique_id=891830751]
+visible = false
+texture_filter = 1
+layout_mode = 0
+offset_left = 220.0
+offset_top = 664.0
+offset_right = 1124.0
+offset_bottom = 820.0
+mouse_filter = 2
+texture = ExtResource("30_dialogue")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SpeakerPlate" type="TextureRect" parent="Interface/HUD/DialoguePanel" unique_id=1841254327]
+texture_filter = 1
+layout_mode = 0
+offset_left = 12.0
+offset_top = 6.0
+offset_right = 260.0
+offset_bottom = 50.0
+mouse_filter = 2
+texture = ExtResource("4_qs51d")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Speaker" type="Label" parent="Interface/HUD/DialoguePanel" unique_id=766310247]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 12.0
+offset_right = 880.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(0.9411765, 0.80784315, 0.47058824, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 22
+text = "守岭人"
+vertical_alignment = 1
+
+[node name="Dialogue" type="Label" parent="Interface/HUD/DialoguePanel" unique_id=1734370144]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 52.0
+offset_right = 880.0
+offset_bottom = 134.0
+theme_override_colors/font_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 19
+autowrap_mode = 2
+
+[node name="Overlay" type="ColorRect" parent="Interface/HUD" unique_id=1299744194]
+visible = false
+layout_mode = 0
+offset_left = 272.0
+offset_top = 330.0
+offset_right = 1072.0
+offset_bottom = 510.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="NoticeBackdrop" type="TextureRect" parent="Interface/HUD/Overlay" unique_id=945664907]
+texture_filter = 1
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 180.0
+mouse_filter = 2
+texture = ExtResource("30_dialogue")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="OverlayText" type="Label" parent="Interface/HUD/Overlay" unique_id=2082976102]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 20.0
+offset_right = 768.0
+offset_bottom = 160.0
+theme_override_colors/font_color = Color(0.9647059, 0.92941177, 0.8117647, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6666667)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="MinigameHost" type="Control" parent="Interface" unique_id=848775043]
+process_mode = 3
+z_index = 100
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("29_p58l7")
+
+[node name="CompletionCutscene" parent="Interface" unique_id=212031276 instance=ExtResource("35_completion_cutscene")]
+
+[node name="World" type="Node2D" parent="." unique_id=1095094591]
+
+[node name="Ground" type="Node2D" parent="World" unique_id=358007687]
+z_index = -20
+
+[node name="Background" type="Sprite2D" parent="World/Ground" unique_id=796931721]
+texture = ExtResource("3_erm8w")
+centered = false
+
+[node name="WorldObjects" type="Node2D" parent="World" unique_id=385194643]
+y_sort_enabled = true
+
+[node name="Player" parent="World/WorldObjects" unique_id=2095704430 instance=ExtResource("3_hkqpv")]
+position = Vector2(220, 868)
+
+[node name="AnimatedSprite2D2" type="AnimatedSprite2D" parent="World/WorldObjects/Player" unique_id=2007126433]
+texture_filter = 1
+position = Vector2(0, -25)
+
+[node name="FootCollision2" type="CollisionShape2D" parent="World/WorldObjects/Player" unique_id=906449486]
+position = Vector2(0, -5)
+shape = SubResource("RectangleShape2D_yewv4")
+
+[node name="Camera2D2" type="Camera2D" parent="World/WorldObjects/Player" unique_id=359799915]
+zoom = Vector2(1.15, 1.15)
+limit_left = 0
+limit_top = 0
+limit_right = 1536
+limit_bottom = 1024
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+
+[node name="Keeper" type="Node2D" parent="World/WorldObjects" unique_id=65810067]
+texture_filter = 1
+position = Vector2(450, 475)
+script = ExtResource("4_erm8w")
+kind = "keeper"
+prop_size = Vector2(60, 74)
+main_color = Color(0.23137255, 0.29411766, 0.32156864, 1)
+art_texture = ExtResource("10_qcq6o")
+
+[node name="FishingStation" type="Node2D" parent="World/WorldObjects" unique_id=722454668]
+position = Vector2(585, 835)
+script = ExtResource("34_fishing_station")
+
+[node name="Sprite" type="Sprite2D" parent="World/WorldObjects/FishingStation" unique_id=369967614]
+show_behind_parent = true
+texture_filter = 1
+position = Vector2(0, -88)
+texture = ExtResource("33_fishing_station")
+
+[node name="SchoolBarrier" type="Node2D" parent="World/WorldObjects" unique_id=190706852]
+texture_filter = 1
+position = Vector2(960, 465)
+rotation = -0.22
+script = ExtResource("4_erm8w")
+kind = "barrier"
+prop_size = Vector2(110, 85)
+main_color = Color(0.6117647, 0.28627452, 0.22352941, 1)
+art_texture = ExtResource("22_5dl1x")
+art_scale = Vector2(0.7, 0.7)
+
+[node name="Foreground" type="Node2D" parent="World" unique_id=1061311423]
+z_index = 20
+
+[node name="Collision" type="Node2D" parent="World" unique_id=1022803271]
+
+[node name="KeeperBody" type="StaticBody2D" parent="World/Collision" unique_id=52014167]
+position = Vector2(450, 475)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Collision/KeeperBody" unique_id=188710918]
+shape = SubResource("RectangleShape2D_iuhai")
+
+[node name="SchoolBlocker" type="StaticBody2D" parent="World/Collision" unique_id=337605248]
+position = Vector2(960, 465)
+rotation = -0.22
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Collision/SchoolBlocker" unique_id=1195475284]
+position = Vector2(-2.0032349, -2.4974365)
+scale = Vector2(1.0000002, 1.0000002)
+shape = SubResource("RectangleShape2D_eyqv8")
+
+[node name="DrumBody" type="StaticBody2D" parent="World/Collision" unique_id=122627216]
+position = Vector2(1132, 247)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Collision/DrumBody" unique_id=1394047936]
+shape = SubResource("CircleShape2D_drum_body")
+
+[node name="FishingStationBody" type="StaticBody2D" parent="World/Collision" unique_id=1066939967]
+position = Vector2(585, 810)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Collision/FishingStationBody" unique_id=1835292061]
+shape = SubResource("CircleShape2D_fishing_station_body")
+
+[node name="BlockedRegions" type="Node2D" parent="World/Collision" unique_id=1079472491]
+
+[node name="WalkableBoundary" type="StaticBody2D" parent="World/Collision/BlockedRegions" unique_id=767887569]
+
+[node name="Boundary" type="CollisionPolygon2D" parent="World/Collision/BlockedRegions/WalkableBoundary" unique_id=544021498]
+position = Vector2(1, -1)
+build_mode = 1
+polygon = PackedVector2Array(1070, 55, 1120, 58, 1190, 78, 1240, 86, 1285, 120, 1330, 137, 1351, 229, 1280, 288, 1210, 338, 1109, 366, 1056, 401, 1020, 491, 980, 589, 930, 640, 886, 672, 823, 702, 760, 731, 755, 811, 775, 857, 810, 903, 868, 970, 784, 1018, 730, 989, 680, 971, 620, 926, 570, 880, 550, 768, 515, 800, 480, 808, 420, 823, 350, 868, 275, 918, 255, 933, 175, 882, 128, 849, 169, 832, 250, 788, 320, 738, 380, 688, 470, 663, 470, 629, 440, 606, 410, 606, 385, 549, 365, 457, 380, 434, 417, 413, 459, 396, 484, 390, 500, 400, 505, 457, 530, 514, 575, 571, 620, 589, 720, 589, 769, 586, 835, 558, 870, 491, 900, 411, 930, 320, 960, 194, 950, 149, 965, 109, 1010, 74)
+
+[node name="Triggers" type="Node2D" parent="World" unique_id=236146207]
+
+[node name="SchoolTrigger" type="Area2D" parent="World/Triggers" unique_id=1621426876]
+position = Vector2(1110, 330)
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Triggers/SchoolTrigger" unique_id=1850016409]
+position = Vector2(22, -83)
+shape = SubResource("CircleShape2D_qs51d")
+
+[node name="ViewpointTrigger" type="Area2D" parent="World/Triggers" unique_id=13324334]
+position = Vector2(1290, 105)
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Triggers/ViewpointTrigger" unique_id=1482719123]
+position = Vector2(-32, 74)
+shape = SubResource("CircleShape2D_o7m5c")
+
+[node name="FishingTrigger" type="Area2D" parent="World/Triggers" unique_id=1435280955]
+position = Vector2(585, 810)
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Triggers/FishingTrigger" unique_id=1179949765]
+position = Vector2(28, -15)
+shape = SubResource("CircleShape2D_avxio")
+
+[node name="SeaReturnTrigger" type="Area2D" parent="World/Triggers" unique_id=1204877489]
+position = Vector2(235, 835)
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape2D" parent="World/Triggers/SeaReturnTrigger" unique_id=1541688146]
+shape = SubResource("CircleShape2D_sea_return")
+
+[node name="CollisionDebug" type="Node2D" parent="World" unique_id=515053450]
+visible = false
+z_index = 80

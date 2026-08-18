@@ -1,0 +1,7 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://dajrmcean4e15"]
+
+[ext_resource type="Shader" uid="uid://v02ksyhuni2l" path="res://shaders/fubo_plate_feather.gdshader" id="1_fdbqx"]
+
+[resource]
+shader = ExtResource("1_fdbqx")
+shader_parameter/edge_softness = 0.065

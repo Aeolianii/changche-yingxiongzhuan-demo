@@ -1,0 +1,71 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/sea_overworld/wokou_victory_cutscene.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sea_overworld/cutscenes/wokou_victory_cg_v1.png" id="2_cg"]
+
+[node name="WokouVictoryCutscene" type="Control"]
+visible = false
+process_mode = 3
+z_index = 320
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.008, 0.009, 0.008, 1)
+
+[node name="CGImage" type="TextureRect" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("2_cg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="CGShade" type="ColorRect" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.015, 0.018, 0.016, 0.18)
+
+[node name="StoryText" type="Label" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchor_left = 0.13
+anchor_top = 0.72
+anchor_right = 0.87
+anchor_bottom = 0.82
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.96, 0.9, 0.73, 1)
+theme_override_colors/font_outline_color = Color(0.035, 0.03, 0.02, 0.98)
+theme_override_constants/outline_size = 9
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1

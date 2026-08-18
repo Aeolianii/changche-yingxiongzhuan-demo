@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://cwdko3gfnx6h3"]
+
+[ext_resource type="Script" uid="uid://tjspssr6lhjl" path="res://scripts/player.gd" id="1_rp718"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yewv4"]
+size = Vector2(18, 10)
+
+[node name="Player" type="CharacterBody2D" unique_id=2095704430]
+script = ExtResource("1_rp718")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2007126433]
+texture_filter = 1
+position = Vector2(0, -25)
+
+[node name="FootCollision" type="CollisionShape2D" parent="." unique_id=906449486]
+position = Vector2(0, -5)
+shape = SubResource("RectangleShape2D_yewv4")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=359799915]
+limit_left = 0
+limit_top = 0
+limit_right = 1536
+limit_bottom = 1024
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0

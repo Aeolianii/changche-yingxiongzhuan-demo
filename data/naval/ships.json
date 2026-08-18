@@ -1,0 +1,6 @@
+[
+  { "Id": "flagship", "DisplayName": "旗舰", "Cost": { "Iron": 0, "Wood": 2, "Hemp": 1, "Gold": 100 }, "MaxHp": 100, "BaseArmor": 1, "SpeedCap": "V3", "LoadCapacity": 5, "Length": 3, "Passability": 1, "WeaponSlots": 7, "SkillSlots": 4, "ArmorSlots": 5, "BoardingDamage": 350, "ArrowRainDamage": 200 },
+  { "Id": "frigate", "DisplayName": "护卫舰", "Cost": { "Iron": 1, "Wood": 3, "Hemp": 3, "Gold": 350 }, "MaxHp": 200, "BaseArmor": 2, "SpeedCap": "V4", "LoadCapacity": 15, "Length": 2, "Passability": 2, "WeaponSlots": 3, "SkillSlots": 2, "ArmorSlots": 3, "BoardingDamage": 200, "ArrowRainDamage": 100 },
+  { "Id": "merchant", "DisplayName": "商船", "Cost": { "Iron": 5, "Wood": 8, "Hemp": 5, "Gold": 2000 }, "MaxHp": 1000, "BaseArmor": 3, "SpeedCap": "V4", "LoadCapacity": 35, "Length": 1, "Passability": 3, "WeaponSlots": 2, "SkillSlots": 2, "ArmorSlots": 2, "BoardingDamage": 100, "ArrowRainDamage": 70 },
+  { "Id": "transport", "DisplayName": "运输船", "Cost": { "Iron": 3, "Wood": 4, "Hemp": 3, "Gold": 500 }, "MaxHp": 350, "BaseArmor": 2, "SpeedCap": "V4", "LoadCapacity": 20, "Length": 1, "Passability": 2, "WeaponSlots": 1, "SkillSlots": 1, "ArmorSlots": 1, "BoardingDamage": 120, "ArrowRainDamage": 50 }
+]

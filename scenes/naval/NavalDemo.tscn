@@ -1,0 +1,790 @@
+[gd_scene load_steps=22 format=3]
+
+[ext_resource type="Script" path="res://scripts/naval/presentation/NavalBattleController.cs" id="1_battle"]
+[ext_resource type="Script" path="res://scripts/naval/presentation/NavalGridView.cs" id="2_grid"]
+[ext_resource type="Script" path="res://scripts/naval/presentation/NavalHud.cs" id="3_hud"]
+[ext_resource type="PackedScene" path="res://scenes/naval/NavalDeployment.tscn" id="4_deploy"]
+[ext_resource type="Script" path="res://scripts/naval/presentation/NavalWeatherOverlay.cs" id="5_weather"]
+[ext_resource type="Script" path="res://scripts/naval/presentation/NavalBackController.cs" id="6_back"]
+[ext_resource type="Script" path="res://scripts/naval/presentation/NavalLevelPlayController.cs" id="7_levelplay"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/ship_status/status_bar_kit.png" id="9_status_bars"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/ship_status/attribute_icons.png" id="10_attribute_icons"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/ship_status/ship_status_backdrop_v2.png" id="11_status_backdrop"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/ship_status/ship_name_brush_v2.png" id="12_name_brush"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/action_tokens/command_connector_brush.png" id="13_command_connector"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png" id="14_tutorial_brush"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bar_fill"]
+atlas = ExtResource("9_status_bars")
+region = Rect2(80, 480, 1760, 240)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_armor"]
+atlas = ExtResource("10_attribute_icons")
+region = Rect2(0, 0, 724, 724)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_speed"]
+atlas = ExtResource("10_attribute_icons")
+region = Rect2(724, 0, 724, 724)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_movement"]
+atlas = ExtResource("10_attribute_icons")
+region = Rect2(1448, 0, 724, 724)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bar"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_command_connector"]
+atlas = ExtResource("13_command_connector")
+region = Rect2(0, 390, 1024, 240)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_hp_fill"]
+texture = SubResource("AtlasTexture_bar_fill")
+modulate_color = Color(0.68, 0.17, 0.12, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_load_fill"]
+texture = SubResource("AtlasTexture_bar_fill")
+modulate_color = Color(0.12, 0.48, 0.72, 1)
+
+[node name="NavalDemo" type="Node2D"]
+
+[node name="Camera2D" type="Camera2D" parent="." groups=["naval_camera"]]
+position = Vector2(672, 488)
+zoom = Vector2(1, 1)
+
+[node name="Battle" type="Node2D" parent="."]
+visible = false
+
+[node name="BattleController" type="Node" parent="Battle"]
+script = ExtResource("1_battle")
+
+[node name="GridView" type="Node2D" parent="Battle"]
+script = ExtResource("2_grid")
+
+[node name="Ships" type="Node2D" parent="Battle"]
+
+[node name="WeatherFx" type="CanvasLayer" parent="Battle"]
+visible = false
+
+[node name="Fx" type="Control" parent="Battle/WeatherFx"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5_weather")
+
+[node name="Hud" type="CanvasLayer" parent="Battle"]
+script = ExtResource("3_hud")
+
+[node name="TopBarLeft" type="Panel" parent="Battle/Hud"]
+offset_left = 28.0
+offset_top = 22.0
+offset_right = 278.0
+offset_bottom = 110.0
+mouse_filter = 2
+
+[node name="Accent" type="ColorRect" parent="Battle/Hud/TopBarLeft"]
+offset_top = 5.0
+offset_right = 3.0
+offset_bottom = 82.0
+mouse_filter = 2
+color = Color(0.66, 0.45, 0.2, 0.82)
+
+[node name="Box" type="VBoxContainer" parent="Battle/Hud/TopBarLeft"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_right = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="Battle/Hud/TopBarLeft/Box"]
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 20
+text = "我方 · 晴天 / 无风"
+
+[node name="Content" type="Label" parent="Battle/Hud/TopBarLeft/Box"]
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/line_spacing = 5
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 18
+text = "待命1\n舰1：0"
+vertical_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="Battle/Hud"]
+offset_left = 407.0
+offset_top = 8.0
+offset_right = 937.0
+offset_bottom = 48.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.08, 0.12, 0.08, 1)
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+
+[node name="MessageLabel" type="Label" parent="Battle/Hud"]
+offset_left = 252.0
+offset_top = 54.0
+offset_right = 1092.0
+offset_bottom = 90.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.25, 0.2, 0.1, 1)
+theme_override_font_sizes/font_size = 20
+clip_text = true
+horizontal_alignment = 1
+
+[node name="TurnBanner" type="Panel" parent="Battle/Hud"]
+visible = false
+z_index = 50
+offset_left = 432.0
+offset_top = 286.0
+offset_right = 912.0
+offset_bottom = 370.0
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="Battle/Hud/TurnBanner"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+text = "我方回合开始"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SurrenderPanel" type="Panel" parent="Battle/Hud"]
+visible = false
+offset_left = 312.0
+offset_top = 90.0
+offset_right = 1032.0
+offset_bottom = 254.0
+mouse_filter = 2
+
+[node name="Box" type="VBoxContainer" parent="Battle/Hud/SurrenderPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 100.0
+offset_top = 20.0
+offset_right = -100.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Battle/Hud/SurrenderPanel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "劝降交涉"
+horizontal_alignment = 1
+
+[node name="CaptionMargin" type="MarginContainer" parent="Battle/Hud/SurrenderPanel/Box"]
+layout_mode = 2
+theme_override_constants/margin_top = 4
+
+[node name="Caption" type="Label" parent="Battle/Hud/SurrenderPanel/Box/CaptionMargin"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "我军占据优势，可向敌军发出劝降"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="Battle/Hud/SurrenderPanel/Box"]
+layout_mode = 2
+size_flags_vertical = 4
+alignment = 1
+theme_override_constants/separation = 18
+
+[node name="AcceptSurrender" type="Button" parent="Battle/Hud/SurrenderPanel/Box/Buttons"]
+custom_minimum_size = Vector2(110, 44)
+text = "接受投降"
+
+[node name="RejectSurrender" type="Button" parent="Battle/Hud/SurrenderPanel/Box/Buttons"]
+custom_minimum_size = Vector2(110, 44)
+text = "拒绝投降"
+
+[node name="OfferSurrender" type="Button" parent="Battle/Hud/SurrenderPanel/Box/Buttons"]
+custom_minimum_size = Vector2(80, 44)
+text = "劝降"
+
+[node name="DeliveryPanel" type="Panel" parent="Battle/Hud"]
+visible = false
+offset_left = 440.0
+offset_top = 220.0
+offset_right = 904.0
+offset_bottom = 560.0
+mouse_filter = 2
+
+[node name="Box" type="VBoxContainer" parent="Battle/Hud/DeliveryPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = -14.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="Caption" type="Label" parent="Battle/Hud/DeliveryPanel/Box"]
+theme_override_colors/font_color = Color(0.54, 0.35, 0.17, 1)
+theme_override_font_sizes/font_size = 14
+text = "交付舰船"
+
+[node name="List" type="VBoxContainer" parent="Battle/Hud/DeliveryPanel/Box"]
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="Buttons" type="HBoxContainer" parent="Battle/Hud/DeliveryPanel/Box"]
+theme_override_constants/separation = 8
+
+[node name="ConfirmDelivery" type="Button" parent="Battle/Hud/DeliveryPanel/Box/Buttons"]
+custom_minimum_size = Vector2(140, 40)
+size_flags_horizontal = 3
+text = "确认交付"
+
+[node name="CancelDelivery" type="Button" parent="Battle/Hud/DeliveryPanel/Box/Buttons"]
+custom_minimum_size = Vector2(140, 40)
+size_flags_horizontal = 3
+text = "取消"
+
+[node name="ShipStatusPanel" type="Panel" parent="Battle/Hud"]
+visible = false
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -226.0
+offset_right = 506.0
+offset_bottom = -8.0
+grow_vertical = 0
+
+[node name="Backdrop" type="TextureRect" parent="Battle/Hud/ShipStatusPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("11_status_backdrop")
+expand_mode = 1
+
+[node name="PortraitShip" type="TextureRect" parent="Battle/Hud/ShipStatusPanel"]
+z_index = 1
+offset_left = -2.0
+offset_top = -42.0
+offset_right = 252.0
+offset_bottom = 190.0
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameBrush" type="TextureRect" parent="Battle/Hud/ShipStatusPanel"]
+z_index = 2
+offset_left = 10.0
+offset_top = 158.0
+offset_right = 238.0
+offset_bottom = 214.0
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("12_name_brush")
+expand_mode = 1
+
+[node name="ShipName" type="Label" parent="Battle/Hud/ShipStatusPanel"]
+z_index = 3
+offset_left = 24.0
+offset_top = 164.0
+offset_right = 224.0
+offset_bottom = 206.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 23
+text = "旗舰"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HpBar" type="ProgressBar" parent="Battle/Hud/ShipStatusPanel"]
+z_index = 2
+offset_left = 238.0
+offset_top = 88.0
+offset_right = 470.0
+offset_bottom = 119.0
+mouse_filter = 2
+value = 100.0
+show_percentage = false
+theme_override_styles/background = SubResource("StyleBoxEmpty_bar")
+theme_override_styles/fill = SubResource("StyleBoxTexture_hp_fill")
+
+[node name="HpText" type="Label" parent="Battle/Hud/ShipStatusPanel"]
+z_index = 3
+offset_left = 244.0
+offset_top = 89.0
+offset_right = 464.0
+offset_bottom = 118.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
+text = "生命值 100/100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LoadBar" type="ProgressBar" parent="Battle/Hud/ShipStatusPanel"]
+z_index = 2
+offset_left = 238.0
+offset_top = 130.0
+offset_right = 470.0
+offset_bottom = 161.0
+mouse_filter = 2
+value = 60.0
+show_percentage = false
+theme_override_styles/background = SubResource("StyleBoxEmpty_bar")
+theme_override_styles/fill = SubResource("StyleBoxTexture_load_fill")
+
+[node name="LoadText" type="Label" parent="Battle/Hud/ShipStatusPanel"]
+z_index = 3
+offset_left = 244.0
+offset_top = 131.0
+offset_right = 464.0
+offset_bottom = 160.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
+text = "负载 3/5"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Attributes" type="HBoxContainer" parent="Battle/Hud/ShipStatusPanel"]
+z_index = 2
+offset_left = 238.0
+offset_top = 44.0
+offset_right = 470.0
+offset_bottom = 84.0
+theme_override_constants/separation = 8
+
+[node name="Armor" type="HBoxContainer" parent="Battle/Hud/ShipStatusPanel/Attributes"]
+custom_minimum_size = Vector2(72, 40)
+theme_override_constants/separation = 4
+
+[node name="Icon" type="TextureRect" parent="Battle/Hud/ShipStatusPanel/Attributes/Armor"]
+custom_minimum_size = Vector2(38, 38)
+mouse_default_cursor_shape = 2
+tooltip_text = "护甲"
+texture_filter = 1
+texture = SubResource("AtlasTexture_armor")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Value" type="Label" parent="Battle/Hud/ShipStatusPanel/Attributes/Armor"]
+theme_override_font_sizes/font_size = 17
+text = "1"
+vertical_alignment = 1
+
+[node name="Speed" type="HBoxContainer" parent="Battle/Hud/ShipStatusPanel/Attributes"]
+custom_minimum_size = Vector2(72, 40)
+theme_override_constants/separation = 4
+
+[node name="Icon" type="TextureRect" parent="Battle/Hud/ShipStatusPanel/Attributes/Speed"]
+custom_minimum_size = Vector2(38, 38)
+mouse_default_cursor_shape = 2
+tooltip_text = "速度"
+texture_filter = 1
+texture = SubResource("AtlasTexture_speed")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Value" type="Label" parent="Battle/Hud/ShipStatusPanel/Attributes/Speed"]
+theme_override_font_sizes/font_size = 17
+text = "V3"
+vertical_alignment = 1
+
+[node name="Movement" type="HBoxContainer" parent="Battle/Hud/ShipStatusPanel/Attributes"]
+custom_minimum_size = Vector2(72, 40)
+theme_override_constants/separation = 4
+
+[node name="Icon" type="TextureRect" parent="Battle/Hud/ShipStatusPanel/Attributes/Movement"]
+custom_minimum_size = Vector2(38, 38)
+mouse_default_cursor_shape = 2
+tooltip_text = "剩余移动"
+texture_filter = 1
+texture = SubResource("AtlasTexture_movement")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Value" type="Label" parent="Battle/Hud/ShipStatusPanel/Attributes/Movement"]
+theme_override_font_sizes/font_size = 17
+text = "4"
+vertical_alignment = 1
+
+[node name="ActionPanel" type="Panel" parent="Battle/Hud"]
+visible = false
+anchors_preset = 12
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 514.0
+offset_top = -291.0
+offset_right = -20.0
+offset_bottom = -8.0
+grow_vertical = 0
+
+[node name="Box" type="Control" parent="Battle/Hud/ActionPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CategoryTabs" type="HBoxContainer" parent="Battle/Hud/ActionPanel/Box"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -278.0
+offset_right = -2.0
+offset_bottom = 40.0
+grow_horizontal = 0
+alignment = 2
+theme_override_constants/separation = 6
+
+[node name="AttackTab" type="Button" parent="Battle/Hud/ActionPanel/Box/CategoryTabs"]
+custom_minimum_size = Vector2(110, 40)
+toggle_mode = true
+button_pressed = true
+text = "攻击"
+
+[node name="TurnTab" type="Button" parent="Battle/Hud/ActionPanel/Box/CategoryTabs"]
+custom_minimum_size = Vector2(110, 40)
+toggle_mode = true
+text = "转向"
+
+[node name="CommandConnector" type="TextureRect" parent="Battle/Hud/ActionPanel/Box"]
+offset_left = 116.0
+offset_top = 207.0
+offset_right = 800.0
+offset_bottom = 281.0
+mouse_filter = 2
+modulate = Color(0.9, 0.94, 0.92, 0.92)
+texture_filter = 1
+texture = SubResource("AtlasTexture_command_connector")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="CommandStrip" type="HBoxContainer" parent="Battle/Hud/ActionPanel/Box"]
+offset_left = 2.0
+offset_top = 62.0
+offset_right = 788.0
+offset_bottom = 281.0
+alignment = 2
+theme_override_constants/separation = 30
+
+[node name="AttackCommands" type="HBoxContainer" parent="Battle/Hud/ActionPanel/Box/CommandStrip"]
+theme_override_constants/separation = 30
+
+[node name="WeaponLabel" type="Label" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+visible = false
+custom_minimum_size = Vector2(34, 219)
+text = "武\n器"
+vertical_alignment = 1
+
+[node name="ArrowRain" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "箭\n雨"
+
+[node name="Ram" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "撞\n击"
+
+[node name="Cannon" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "火\n炮"
+
+[node name="Board" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "接\n舷"
+
+[node name="Bombardment" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "砲\n击"
+
+[node name="SkillLabel" type="Label" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+visible = false
+custom_minimum_size = Vector2(34, 219)
+text = "技\n能"
+vertical_alignment = 1
+
+[node name="DamageControl" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "损\n管\n×3"
+
+[node name="FireOil" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "火\n油\n×1"
+
+[node name="ChainShot" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "连\n锁\n弹\n×2"
+
+[node name="Mine" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "布\n雷\n×2"
+
+[node name="BoardingLabel" type="Label" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(34, 219)
+text = "接\n舷"
+vertical_alignment = 1
+
+[node name="Exchange" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "俘\n获\n交\n换"
+
+[node name="Disengage" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/AttackCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "脱\n离"
+
+[node name="TurnCommands" type="HBoxContainer" parent="Battle/Hud/ActionPanel/Box/CommandStrip"]
+visible = false
+theme_override_constants/separation = 30
+
+[node name="TurnLeft" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/TurnCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "左\n转"
+
+[node name="TurnRight" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/TurnCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "右\n转"
+
+[node name="EndCommands" type="HBoxContainer" parent="Battle/Hud/ActionPanel/Box/CommandStrip"]
+theme_override_constants/separation = 30
+
+[node name="SelfSink" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/EndCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "浅\n滩\n自\n沉"
+
+[node name="EndTurn" type="Button" parent="Battle/Hud/ActionPanel/Box/CommandStrip/EndCommands"]
+custom_minimum_size = Vector2(79, 219)
+text = "结\n束\n回\n合"
+
+[node name="ResultPanel" type="Panel" parent="Battle/Hud"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -140.0
+offset_right = 320.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResultLabel" type="Label" parent="Battle/Hud/ResultPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -72.0
+theme_override_colors/font_color = Color(0.12, 0.16, 0.12, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="NewGameButton" type="Button" parent="Battle/Hud/ResultPanel"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -58.0
+offset_right = 120.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+custom_minimum_size = Vector2(240, 44)
+text = "再来一局"
+
+[node name="RerollButton" type="Button" parent="Battle/Hud/ResultPanel"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -280.0
+offset_top = -58.0
+offset_right = -140.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+custom_minimum_size = Vector2(140, 44)
+text = "重掷换一场"
+
+[node name="ReturnToSeaButton" type="Button" parent="Battle/Hud/ResultPanel"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 140.0
+offset_top = -58.0
+offset_right = 280.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+custom_minimum_size = Vector2(140, 44)
+text = "返回海上大地图"
+visible = false
+
+[node name="LevelPlay" type="CanvasLayer" parent="."]
+visible = false
+script = ExtResource("7_levelplay")
+
+[node name="HintBar" type="Panel" parent="LevelPlay"]
+offset_left = 312.0
+offset_top = 90.0
+offset_right = 1032.0
+offset_bottom = 254.0
+mouse_filter = 2
+
+[node name="Backdrop" type="TextureRect" parent="LevelPlay/HintBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("14_tutorial_brush")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Box" type="VBoxContainer" parent="LevelPlay/HintBar"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 100.0
+offset_top = 24.0
+offset_right = -100.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 2
+
+[node name="Title" type="Label" parent="LevelPlay/HintBar/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "第一步 · 选中舰船"
+horizontal_alignment = 1
+
+[node name="Content" type="Label" parent="LevelPlay/HintBar/Box"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/line_spacing = 4
+theme_override_font_sizes/font_size = 20
+text = "点击己方舰选中；鼠标右键可随时退选"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Nav" type="HBoxContainer" parent="LevelPlay/HintBar/Box"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Prev" type="Button" parent="LevelPlay/HintBar/Box/Nav"]
+custom_minimum_size = Vector2(72, 26)
+text = "上一页"
+
+[node name="Page" type="Label" parent="LevelPlay/HintBar/Box/Nav"]
+theme_override_font_sizes/font_size = 13
+text = "第 1/4 步"
+vertical_alignment = 1
+
+[node name="Next" type="Button" parent="LevelPlay/HintBar/Box/Nav"]
+custom_minimum_size = Vector2(72, 26)
+text = "下一页"
+
+[node name="ResultPanel" type="Panel" parent="LevelPlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -130.0
+offset_right = 300.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="LevelPlay/ResultPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 14.0
+offset_right = -18.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+
+[node name="Content" type="Label" parent="LevelPlay/ResultPanel/Box"]
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="LevelPlay/ResultPanel/Box"]
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="Retry" type="Button" parent="LevelPlay/ResultPanel/Box/Buttons"]
+custom_minimum_size = Vector2(150, 44)
+text = "重试"
+
+[node name="Next" type="Button" parent="LevelPlay/ResultPanel/Box/Buttons"]
+visible = false
+custom_minimum_size = Vector2(190, 44)
+text = "进入下一关"
+
+[node name="Back" type="Button" parent="LevelPlay/ResultPanel/Box/Buttons"]
+custom_minimum_size = Vector2(190, 44)
+text = "返回关卡选择"
+
+[node name="CollapsedHintBackdrop" type="TextureRect" parent="LevelPlay"]
+visible = false
+offset_left = 842.0
+offset_top = 99.0
+offset_right = 1022.0
+offset_bottom = 155.0
+mouse_filter = 2
+texture = ExtResource("14_tutorial_brush")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="CollapseHintBar" type="Button" parent="LevelPlay"]
+offset_left = 932.0
+offset_top = 105.0
+offset_right = 1012.0
+offset_bottom = 149.0
+text = "收起"
+
+[node name="Deployment" parent="." instance=ExtResource("4_deploy")]
+
+[node name="BackToLevelSelect" type="CanvasLayer" parent="."]
+script = ExtResource("6_back")
+
+[node name="BackButton" type="Button" parent="BackToLevelSelect"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -264.0
+offset_top = 16.0
+offset_right = -20.0
+offset_bottom = 76.0
+grow_horizontal = 0
+text = "返回关卡选择"

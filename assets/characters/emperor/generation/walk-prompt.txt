@@ -1,0 +1,9 @@
+Create one production-oriented 4-direction walking sprite sheet for a fictional Lingnan maritime emperor.
+
+Use the four project direction sprites as the exact project style, body proportion, pixel density, camera angle, directional rendering, framing, and costume-material language reference. Preserve their compact chibi full-body scale, crisp dark pixel outlines, restrained red/black/gold palette, hair-bun silhouette, and slightly elevated top-down RPG view. Create a distinct fictional emperor rather than a real historical person: dignified adult male, composed expression, simplified small gold ceremonial crown/diadem, deep vermilion and black imperial robe with restrained gold trim and jade belt. Keep the same character identity, face, crown, hairstyle, robe pattern, palette, anatomy and scale in every cell.
+
+Exact sheet contract: exactly 4 rows by 4 columns, sixteen equal invisible cells, no visible grid, no dividers and no borders. Row order: down/front, left, right, up/back. Column order: neutral passing pose, left foot forward, subtly different neutral passing pose, right foot forward. The animation is an in-place grounded walk cycle. Alternate legs clearly, with restrained robe and sleeve secondary motion. No whole-character travel across cells.
+
+Authentic crisp pixel art matching the references, no antialiasing, painterly texture, or pseudo-pixel blur. Full body visible. Same camera distance and standing-equivalent anatomical scale in all frames. Keep the body centered in every cell and within the central 60–65% safe area. Use one stable foot-contact line per row. Leave generous background margin on every side. Nothing may touch or cross a cell edge. No detached effects, shadows, floor, props, weapons, text, labels, UI, watermark, guide marks, or frame numbers.
+
+Background: perfectly uniform flat solid #FF00FF magenta with no gradient, texture, lighting, shadow, grid line, or color variation. Do not use #FF00FF on the emperor.

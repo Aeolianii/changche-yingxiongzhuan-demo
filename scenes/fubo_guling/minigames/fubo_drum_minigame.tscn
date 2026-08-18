@@ -1,0 +1,308 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scripts/fubo_guling/minigames/fubo_drum_minigame.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/fubo_guling/backgrounds/fubo_guling_complete.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/fubo_guling/generated/modular/drum.png" id="3"]
+[ext_resource type="Script" path="res://scripts/fubo_guling/minigames/fubo_drum_stage.gd" id="4"]
+[ext_resource type="AudioStream" path="res://assets/audio/fubo_guling/drum_low.wav" id="5"]
+[ext_resource type="AudioStream" path="res://assets/audio/fubo_guling/drum_mid.wav" id="6"]
+[ext_resource type="AudioStream" path="res://assets/audio/fubo_guling/drum_rim.wav" id="7"]
+[ext_resource type="AudioStream" path="res://assets/audio/fubo_guling/drum_fail.wav" id="8"]
+[ext_resource type="Script" path="res://scripts/fubo_guling/minigames/fubo_timing_meter.gd" id="9"]
+
+[sub_resource type="StyleBoxFlat" id="StagePanel"]
+bg_color = Color(0.07, 0.13, 0.12, 0.82)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.83, 0.68, 0.34, 0.8)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="KeyNormal"]
+bg_color = Color(0.22, 0.13, 0.1, 0.94)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.7, 0.38, 0.2, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="KeyHover"]
+bg_color = Color(0.34, 0.18, 0.11, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.96, 0.76, 0.3, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="KeyPressed"]
+bg_color = Color(0.48, 0.21, 0.12, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 0.87, 0.45, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="TrackBackground"]
+bg_color = Color(0.05, 0.12, 0.11, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.46, 0.29, 1)
+
+[sub_resource type="StyleBoxFlat" id="TrackFill"]
+bg_color = Color(0.92, 0.66, 0.22, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.86, 0.46, 1)
+
+[node name="FuboDrumMinigame" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+standalone_return_scene_path = "res://scenes/fubo_guling/fubo_guling.tscn"
+
+[node name="BackdropArt" type="TextureRect" parent="."]
+modulate = Color(0.78, 0.74, 0.66, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.035, 0.08, 0.07, 0.72)
+
+[node name="Layout" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(1040, 820)
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -520.0
+offset_top = -410.0
+offset_right = 520.0
+offset_bottom = 410.0
+theme_override_constants/separation = 7
+alignment = 1
+
+[node name="Title" type="Label" parent="Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.72, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 36
+text = "岭南鼓令"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Layout"]
+custom_minimum_size = Vector2(1040, 34)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 18
+text = "先听三面鼓的音色与节拍，再点击鼓面或用 A / S / D 跟敲"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RoundLabel" type="Label" parent="Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.42, 1)
+theme_override_font_sizes/font_size = 23
+text = "第 1 / 3 轮"
+horizontal_alignment = 1
+
+[node name="BeatTrack" type="Control" parent="Layout"]
+custom_minimum_size = Vector2(1020, 26)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("9")
+
+[node name="TimingLabels" type="HBoxContainer" parent="Layout"]
+custom_minimum_size = Vector2(1020, 24)
+layout_mode = 2
+
+[node name="Early" type="Label" parent="Layout/TimingLabels"]
+custom_minimum_size = Vector2(408, 24)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.9, 0.84, 1)
+theme_override_font_sizes/font_size = 16
+text = "提前 · 通过"
+horizontal_alignment = 1
+
+[node name="Perfect" type="Label" parent="Layout/TimingLabels"]
+custom_minimum_size = Vector2(204, 24)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.86, 0.46, 1)
+theme_override_font_sizes/font_size = 16
+text = "正拍"
+horizontal_alignment = 1
+
+[node name="Late" type="Label" parent="Layout/TimingLabels"]
+custom_minimum_size = Vector2(408, 24)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.64, 0.34, 1)
+theme_override_font_sizes/font_size = 16
+text = "稍晚 · 通过"
+horizontal_alignment = 1
+
+[node name="RuleLabel" type="Label" parent="Layout"]
+custom_minimum_size = Vector2(1020, 28)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.88, 0.7, 1)
+theme_override_font_sizes/font_size = 17
+text = "失败条件：按错鼓，或慢拍超过 0.52 秒。提前按下不会失败。"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ReadyButton" type="Button" parent="Layout"]
+visible = false
+custom_minimum_size = Vector2(1020, 50)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.62, 1)
+theme_override_colors/font_hover_color = Color(1, 0.96, 0.76, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("KeyNormal")
+theme_override_styles/hover = SubResource("KeyHover")
+theme_override_styles/pressed = SubResource("KeyPressed")
+text = "准备好了 · 开始跟敲"
+
+[node name="DrumStage" type="Control" parent="Layout"]
+custom_minimum_size = Vector2(1020, 356)
+layout_mode = 2
+mouse_filter = 0
+texture_filter = 1
+clip_contents = true
+script = ExtResource("4")
+drum_texture = ExtResource("3")
+
+[node name="Drums" type="HBoxContainer" parent="Layout"]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="LeftDrum" type="Button" parent="Layout/Drums"]
+custom_minimum_size = Vector2(320, 62)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.62, 1)
+theme_override_colors/font_disabled_color = Color(0.72, 0.68, 0.58, 1)
+theme_override_font_sizes/font_size = 21
+theme_override_styles/normal = SubResource("KeyNormal")
+theme_override_styles/hover = SubResource("KeyHover")
+theme_override_styles/pressed = SubResource("KeyPressed")
+theme_override_styles/disabled = SubResource("KeyNormal")
+text = "A　大鼓 · 低沉长音"
+
+[node name="CenterDrum" type="Button" parent="Layout/Drums"]
+custom_minimum_size = Vector2(320, 62)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.62, 1)
+theme_override_colors/font_disabled_color = Color(0.72, 0.68, 0.58, 1)
+theme_override_font_sizes/font_size = 21
+theme_override_styles/normal = SubResource("KeyNormal")
+theme_override_styles/hover = SubResource("KeyHover")
+theme_override_styles/pressed = SubResource("KeyPressed")
+theme_override_styles/disabled = SubResource("KeyNormal")
+text = "S　堂鼓 · 饱满结实"
+
+[node name="RightDrum" type="Button" parent="Layout/Drums"]
+custom_minimum_size = Vector2(320, 62)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.62, 1)
+theme_override_colors/font_disabled_color = Color(0.72, 0.68, 0.58, 1)
+theme_override_font_sizes/font_size = 21
+theme_override_styles/normal = SubResource("KeyNormal")
+theme_override_styles/hover = SubResource("KeyHover")
+theme_override_styles/pressed = SubResource("KeyPressed")
+theme_override_styles/disabled = SubResource("KeyNormal")
+text = "D　鼓边 · 清脆短音"
+
+[node name="StatusPanel" type="PanelContainer" parent="Layout"]
+custom_minimum_size = Vector2(1020, 58)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StagePanel")
+
+[node name="Status" type="Label" parent="Layout/StatusPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.93, 0.8, 1)
+theme_override_font_sizes/font_size = 20
+text = "先听鼓点，再跟着敲。"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ExitButton" type="Button" parent="."]
+custom_minimum_size = Vector2(176, 58)
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 20.0
+offset_right = -24.0
+offset_bottom = 78.0
+text = "返回古岭"
+
+[node name="ResumeCountdown" type="Label" parent="."]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -90.0
+offset_top = -90.0
+offset_right = 90.0
+offset_bottom = 90.0
+theme_override_colors/font_color = Color(1, 0.82, 0.35, 1)
+theme_override_font_sizes/font_size = 96
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AudioLow" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5")
+
+[node name="AudioMid" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6")
+
+[node name="AudioRim" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("7")
+
+[node name="AudioFail" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("8")

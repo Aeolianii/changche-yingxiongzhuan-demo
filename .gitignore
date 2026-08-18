@@ -1,0 +1,8 @@
+/.godot/
+/.mono/
+/bin/
+/obj/
+/.superpowers/
+/addons/godot_ai/
+*.user
+*.userprefs

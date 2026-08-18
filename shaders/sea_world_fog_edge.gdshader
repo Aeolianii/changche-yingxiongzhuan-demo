@@ -3,9 +3,8 @@ render_mode unshaded;
 
 const int DISTANCE_SEARCH_RADIUS = 4;
 uniform sampler2D mist_texture : source_color, repeat_enable, filter_linear;
-uniform vec2 mist_tiles = vec2(6.4, 3.6);
 uniform vec4 fog_tint : source_color = vec4(0.93, 0.97, 0.95, 1.0);
-uniform float fog_base_alpha : hint_range(0.0, 1.0) = 0.28;
+uniform float fog_base_alpha : hint_range(0.0, 1.0) = 0.32;
 uniform float feather_texels : hint_range(0.5, 4.0) = 3.4;
 uniform float edge_warp_texels : hint_range(0.0, 2.0) = 0.8;
 uniform float edge_irregularity : hint_range(0.0, 1.0) = 0.34;
@@ -31,14 +30,22 @@ float ink_noise(vec2 position) {
 
 
 vec4 layered_mist(vec2 uv) {
-	vec2 first_uv = uv * mist_tiles + vec2(0.17, 0.31);
-	vec2 mirrored_uv = vec2(1.0 - uv.x, uv.y) * (mist_tiles * vec2(0.79, 1.13)) + vec2(0.63, 0.08);
+	vec2 first_uv = uv * vec2(1.82, 1.14) + vec2(0.13, 0.27);
+	vec2 mirrored_uv = vec2(1.0 - uv.x, uv.y) * vec2(1.57, 1.31) + vec2(0.61, 0.08);
+	vec2 cross_uv = vec2(uv.y, 1.0 - uv.x) * vec2(1.36, 1.68) + vec2(0.29, 0.54);
+	vec2 broad_uv = vec2(uv.x, 1.0 - uv.y) * vec2(2.14, 1.39) + vec2(0.78, 0.42);
+	vec2 fill_uv = vec2(1.0 - uv.y, uv.x) * vec2(1.24, 1.09) + vec2(0.47, 0.71);
+	vec2 detail_uv = uv * vec2(2.47, 1.73) + vec2(0.92, 0.16);
 	vec4 first_layer = texture(mist_texture, first_uv);
 	vec4 second_layer = texture(mist_texture, mirrored_uv);
-	float combined_alpha = 1.0 - (1.0 - first_layer.a) * (1.0 - second_layer.a * 0.78);
-	float color_weight = second_layer.a / max(first_layer.a + second_layer.a, 0.001);
-	vec3 asset_color = mix(first_layer.rgb, second_layer.rgb, color_weight);
-	vec3 mist_color = mix(fog_tint.rgb, asset_color, clamp((first_layer.a + second_layer.a) * 0.58, 0.0, 0.86));
+	vec4 cross_layer = texture(mist_texture, cross_uv);
+	vec4 broad_layer = texture(mist_texture, broad_uv);
+	vec4 fill_layer = texture(mist_texture, fill_uv);
+	vec4 detail_layer = texture(mist_texture, detail_uv);
+	float combined_alpha = 1.0 - (1.0 - first_layer.a) * (1.0 - second_layer.a * 0.9) * (1.0 - cross_layer.a * 0.78) * (1.0 - broad_layer.a * 0.7) * (1.0 - fill_layer.a * 0.72) * (1.0 - detail_layer.a * 0.64);
+	float total_alpha = max(first_layer.a + second_layer.a + cross_layer.a + broad_layer.a + fill_layer.a + detail_layer.a, 0.001);
+	vec3 asset_color = (first_layer.rgb * first_layer.a + second_layer.rgb * second_layer.a + cross_layer.rgb * cross_layer.a + broad_layer.rgb * broad_layer.a + fill_layer.rgb * fill_layer.a + detail_layer.rgb * detail_layer.a) / total_alpha;
+	vec3 mist_color = mix(fog_tint.rgb, asset_color, clamp(total_alpha * 0.27, 0.0, 0.88));
 	return vec4(mist_color, mix(fog_base_alpha, 1.0, combined_alpha));
 }
 

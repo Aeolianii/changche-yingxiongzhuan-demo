@@ -150,12 +150,11 @@ func _build_interface() -> void:
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = MAP_FOG_SOFT_EDGE_SHADER
 	fog_material.set_shader_parameter("mist_texture", EXPLORATION_FOG_MIST_TEXTURE)
-	fog_material.set_shader_parameter("mist_tiles", Vector2(5.2, 3.0))
 	fog_material.set_shader_parameter("fog_tint", Color(0.93, 0.97, 0.95, 1.0))
-	fog_material.set_shader_parameter("fog_base_alpha", 0.32)
-	fog_material.set_shader_parameter("fog_opacity", 0.78)
-	fog_material.set_shader_parameter("edge_warp_texels", 5.0)
-	fog_material.set_shader_parameter("edge_irregularity", 0.34)
+	fog_material.set_shader_parameter("fog_base_alpha", 0.72)
+	fog_material.set_shader_parameter("fog_opacity", 0.72)
+	fog_material.set_shader_parameter("edge_warp_texels", 7.0)
+	fog_material.set_shader_parameter("edge_irregularity", 0.46)
 	_fog_layer.material = fog_material
 	_fog_layer.hide()
 	_map_viewport.add_child(_fog_layer)

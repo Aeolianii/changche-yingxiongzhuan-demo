@@ -2,15 +2,8 @@ shader_type canvas_item;
 render_mode unshaded;
 
 const int DISTANCE_SEARCH_RADIUS = 4;
-uniform sampler2D fog_back_texture : source_color, filter_linear;
-uniform sampler2D fog_mid_texture : source_color, filter_linear;
-uniform sampler2D fog_detail_texture : source_color, filter_linear;
-uniform vec4 fog_back_tint : source_color = vec4(0.59, 0.69, 0.72, 1.0);
-uniform vec4 fog_mid_tint : source_color = vec4(0.78, 0.86, 0.87, 1.0);
-uniform vec4 fog_detail_tint : source_color = vec4(0.78, 0.81, 0.80, 1.0);
-uniform float fog_back_opacity : hint_range(0.0, 1.0) = 0.78;
-uniform float fog_mid_opacity : hint_range(0.0, 1.0) = 0.86;
-uniform float fog_detail_opacity : hint_range(0.0, 1.0) = 0.70;
+uniform sampler2D mist_texture : source_color, filter_linear;
+uniform vec4 fog_tint : source_color = vec4(0.93, 0.97, 0.95, 1.0);
 uniform sampler2D concealment_texture : source_color, repeat_enable, filter_linear;
 uniform vec4 concealment_tint : source_color = vec4(0.05, 0.56, 0.68, 1.0);
 uniform vec2 concealment_uv_scale = vec2(4.0, 2.8);
@@ -18,6 +11,7 @@ uniform float feather_texels : hint_range(0.5, 4.0) = 3.4;
 uniform float edge_warp_texels : hint_range(0.0, 2.0) = 0.8;
 uniform float edge_irregularity : hint_range(0.0, 1.0) = 0.34;
 uniform float alpha_dither : hint_range(0.0, 0.08) = 0.012;
+uniform float fog_opacity : hint_range(0.0, 1.0) = 0.72;
 
 
 float ink_hash(vec2 position) {
@@ -82,17 +76,11 @@ void fragment() {
 	float transition_mask = 4.0 * softened_alpha * (1.0 - softened_alpha);
 	float stable_dither = ink_hash(floor(fog_texel_position * 2.0) + vec2(83.0, 29.0)) - 0.5;
 	softened_alpha = clamp(softened_alpha + stable_dither * alpha_dither * transition_mask, 0.0, 1.0);
-	vec4 fog_back = texture(fog_back_texture, UV);
-	vec4 fog_mid = texture(fog_mid_texture, UV);
-	vec4 fog_detail = texture(fog_detail_texture, UV);
+	vec4 mist = texture(mist_texture, UV);
+	vec3 mist_color = mix(fog_tint.rgb, mist.rgb, 0.72);
 	vec3 concealment_sample = texture(concealment_texture, fract(UV * concealment_uv_scale)).rgb;
 	float concealment_luma = dot(concealment_sample, vec3(0.24, 0.67, 0.09));
 	vec3 concealed_sea = concealment_tint.rgb * mix(0.74, 1.22, concealment_luma);
-	vec3 fog_back_color = mix(fog_back_tint.rgb, fog_back.rgb, 0.24);
-	vec3 fog_mid_color = mix(fog_mid_tint.rgb, fog_mid.rgb, 0.34);
-	vec3 fog_detail_color = mix(fog_detail_tint.rgb, fog_detail.rgb, 0.28);
-	vec3 concealed_fog = mix(concealed_sea, fog_back_color, clamp(fog_back.a * fog_back_opacity, 0.0, 1.0));
-	concealed_fog = mix(concealed_fog, fog_mid_color, clamp(fog_mid.a * fog_mid_opacity, 0.0, 1.0));
-	concealed_fog = mix(concealed_fog, fog_detail_color, clamp(fog_detail.a * fog_detail_opacity, 0.0, 1.0));
+	vec3 concealed_fog = mix(concealed_sea, mist_color, clamp(mist.a * fog_opacity, 0.0, 1.0));
 	COLOR = vec4(concealed_fog, softened_alpha);
 }

@@ -1,7 +1,7 @@
 class_name TitleScreen
 extends Control
 
-const PALACE_SCENE := "res://scenes/palace/palace_demo.tscn"
+const OPENING_CUTSCENE := "res://scenes/ui/opening_cutscene.tscn"
 const MUSIC_BUS_NAME := &"Music"
 const SFX_BUS_NAME := &"SFX"
 const AUDIO_FLOOR_DB := -80.0
@@ -96,7 +96,7 @@ func _start_new_game() -> void:
 	if game_state != null:
 		game_state.call("clear_pending_scene_state")
 		game_state.call("reset_runtime_world_state")
-	var change_error := get_tree().change_scene_to_file(PALACE_SCENE)
+	var change_error := get_tree().change_scene_to_file(OPENING_CUTSCENE)
 	if change_error == OK:
 		return
 	_show_error("scene_change_failed")

@@ -92,6 +92,7 @@ $requiredFiles = @(
 	'scenes\yuehuan_merchant_harbor\merchant_shop_overlay.tscn',
 	'scenes\ui\exploration_hud.tscn',
 	'scenes\ui\title_screen.tscn',
+	'scenes\ui\opening_cutscene.tscn',
     'scenes\ui\chapter_transition.tscn',
     'scripts\palace_demo.gd',
     'scripts\scene_2.gd',
@@ -260,7 +261,7 @@ if (Test-Path -LiteralPath $titleScreenScript -PathType Leaf) {
 	$titleScreenContent = [System.IO.File]::ReadAllText($titleScreenScript)
 	Assert-Contains $titleScreenContent 'game_state\.call\("load_game"\)' 'Title continue must use the formal GameState load contract.'
 	Assert-Contains $titleScreenContent 'game_state\.call\("clear_pending_scene_state"\)' 'Title new game must clear only the pending in-memory snapshot.'
-	Assert-Contains $titleScreenContent 'res://scenes/palace/palace_demo\.tscn' 'Title new game must enter the palace opening.'
+	Assert-Contains $titleScreenContent 'res://scenes/ui/opening_cutscene\.tscn' 'Title new game must enter the opening CG.'
 	Assert-Contains $titleScreenContent 'AudioServer\.set_bus_volume_db' 'Title settings must update project audio buses.'
 	Assert-Contains $titleScreenContent 'assets/ui/title_screen/menu_button_ink_v1\.png' 'Title options must use the generated ink button asset.'
 	Assert-Contains $titleScreenContent 'StyleBoxTexture\.new\(\)' 'Title options must render their generated backing through texture styles.'
@@ -333,6 +334,7 @@ Test-SceneResourceReferences 'scenes\yuehuan_merchant_harbor\merchant_shop_overl
 Test-SceneResourceReferences 'scenes\ui\exploration_hud.tscn'
 Test-SceneResourceReferences 'scenes\ui\chapter_transition.tscn'
 Test-SceneResourceReferences 'scenes\ui\title_screen.tscn'
+Test-SceneResourceReferences 'scenes\ui\opening_cutscene.tscn'
 
 if ($failures.Count -gt 0) {
     Write-Host "Merged project verification failed with $($failures.Count) issue(s):" -ForegroundColor Red

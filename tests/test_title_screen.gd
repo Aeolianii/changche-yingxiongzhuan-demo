@@ -110,7 +110,17 @@ func _verify_new_game_preserves_save() -> void:
 	(title.get_node("%NewGameButton") as Button).pressed.emit()
 	await process_frame
 	await process_frame
-	_expect(current_scene != null and current_scene.scene_file_path == "res://scenes/palace/palace_demo.tscn", "New game must enter the palace opening scene.")
+	_expect(current_scene != null and current_scene.scene_file_path == "res://scenes/ui/opening_cutscene.tscn", "New game must enter the opening CG before the palace scene.")
+	if current_scene != null and current_scene.scene_file_path == "res://scenes/ui/opening_cutscene.tscn":
+		var captions: Array = current_scene.call("opening_captions_for_test")
+		var texture_paths: Array = current_scene.call("texture_paths_for_test")
+		_expect(captions.size() == 5 and "八百里加急" in "".join(captions), "Opening CG must pair the five supplied images with the approved prologue text.")
+		_expect(texture_paths.size() == 5 and texture_paths[0].ends_with("开局过场动画/1.png") and texture_paths[4].ends_with("开局过场动画/5.png"), "Opening CG must load all five supplied images in numeric order.")
+		_expect(float(current_scene.call("estimated_duration_seconds_for_test")) > 10.0, "Opening CG must retain the ending CG's readable full-speed pacing.")
+		current_scene.call("finish_immediately_for_test")
+		await process_frame
+		await process_frame
+	_expect(current_scene != null and current_scene.scene_file_path == "res://scenes/palace/palace_demo.tscn", "Opening CG must continue into the palace audience scene.")
 	_expect(FileAccess.file_exists(TEST_SAVE_PATH), "New game must not delete the existing save.")
 	_expect(FileAccess.get_file_as_string(TEST_SAVE_PATH) == save_before, "New game must not rewrite the existing save.")
 	_expect((game_state.call("get_sea_fog_state") as Dictionary).is_empty(), "New game must clear runtime chart exploration without touching the disk save.")

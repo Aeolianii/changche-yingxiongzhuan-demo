@@ -8,10 +8,10 @@ using NavalCombat.Core;
 namespace NavalCombat.Levels;
 
 // U-2c（CHG-20260812-random-encounter-flow）随机遭遇战生成器（纯 C#，无 Godot 依赖）：
-// 「随机遭遇战」= 从四张固定海战地图中抽取一张，再随机组装敌方舰队的合法可玩战斗。
+// 「随机遭遇战」= 从五张固定海战地貌地图中抽取一张，再随机组装敌方舰队的合法可玩战斗。
 //
-// 地图来源：RandomMapGenerator 按子种子从森林岛、岩山岛、港口小镇、河口岛四套模板中选择；
-// 模板内部地形不随难度或种子变化，保留人工设计的主航道、绕行方向与伴生障碍关系。
+// 地图来源：RandomMapGenerator 按子种子从峡湾、群岛、孤岛、半岛、泻湖五套模板中选择；
+// 模板内部地形不随难度或种子变化，保留人工设计的主航道与绕行方向。
 //
 // 敌人两来源（掷 0-99）：
 //   <50  固定配置   → 按难度池选 EnemyFleetConfig + PlaceInEnemyZone 确定性放置；奖励 = 配置 Rewards；
@@ -186,7 +186,7 @@ public static class RandomEncounterGenerator
         var rng = new SeedRandomSource(options.Seed);
 
         // —— 固定地图四选一 ——
-        // 随机性只决定选中哪张模板；模板内部的主印章、伴生印章、散点装饰和航道均不再变化。
+        // 随机性只决定选中哪张模板；模板内部的大型主地貌印章、散点装饰和航道均不再变化。
         var rr = new RandomMapGenerator().Generate(new RandomMapOptions(
             Difficulty: options.Difficulty, Seed: NextSubSeed(rng), IncludeExits: options.IncludeExits));
         var map = rr.Spec;

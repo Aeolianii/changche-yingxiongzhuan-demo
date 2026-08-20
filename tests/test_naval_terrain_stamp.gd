@@ -1,10 +1,11 @@
 extends SceneTree
 
 const FIXED_MAP_MAIN_STAMP_IDS: Array[String] = [
-	"forest_island_v1",
-	"rocky_island_v1",
-	"harbor_town_v1",
-	"river_mouth_island_v2",
+	"fjord_v1",
+	"archipelago_v1",
+	"solitary_island_v1",
+	"peninsula_v1",
+	"lagoon_v1",
 ]
 func _fail(message: String) -> void:
 	push_error("FAIL: " + message)
@@ -26,10 +27,10 @@ func _init() -> void:
 		_fail("deployment terrain preview nodes missing")
 		return
 	if not deploy.FixedTerrainMapsAreCoherent(32):
-		_fail("fixed naval map selector must cover four stable, non-overlapping and connected templates")
+		_fail("fixed naval map selector must cover five stable and connected landform templates")
 		return
 	if not deploy.RandomEncountersUseFixedTerrainMaps(32):
-		_fail("random encounter entry must select only the four fixed naval maps and expose their names")
+		_fail("random encounter entry must select only the five fixed naval maps and expose their names")
 		return
 
 	for stamp_id: String in FIXED_MAP_MAIN_STAMP_IDS:
@@ -39,8 +40,8 @@ func _init() -> void:
 		await process_frame
 		await process_frame
 		var covered_cells: int = grid.TerrainStampCoveredCellCount()
-		if grid.TerrainStampCount() != 2 or covered_cells < 53 or covered_cells > 95:
-			_fail("main plus companion stamp metadata invalid for %s (count=%d covered=%d)" % [stamp_id, grid.TerrainStampCount(), covered_cells])
+		if grid.TerrainStampCount() != 1 or covered_cells < 64 or covered_cells > 112:
+			_fail("single main landform stamp metadata invalid for %s (count=%d covered=%d)" % [stamp_id, grid.TerrainStampCount(), covered_cells])
 			return
 		if not grid.TerrainStampTexturesReady():
 			_fail("terrain stamp textures were not imported and loaded for %s" % stamp_id)
@@ -54,5 +55,5 @@ func _init() -> void:
 			if screenshot_error != OK:
 				_fail("could not save terrain stamp preview for %s" % stamp_id)
 				return
-	print("PASS: four fixed naval maps, deterministic layouts, textures, and whole-image rendering")
+	print("PASS: five fixed naval landform maps, deterministic layouts, textures, and whole-image rendering")
 	quit(0)

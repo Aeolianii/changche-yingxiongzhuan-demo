@@ -725,29 +725,27 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         var generator = new RandomMapGenerator();
         var expectedSizes = new Dictionary<string, (int Width, int Height)>(StringComparer.Ordinal)
         {
-            [RandomMapGenerator.RiverMouthStampId] = (8, 10),
-            [RandomMapGenerator.ForestIslandStampId] = (6, 6),
-            [RandomMapGenerator.GrassSandbarStampId] = (6, 4),
-            [RandomMapGenerator.ReefShoalStampId] = (5, 3),
-            [RandomMapGenerator.BrokenRockSkerryStampId] = (7, 4),
-            [RandomMapGenerator.ReedSandbarStampId] = (6, 4),
-            [RandomMapGenerator.RockyIslandStampId] = (5, 5),
-            [RandomMapGenerator.HarborTownStampId] = (7, 6),
+            [RandomMapGenerator.FjordStampId] = (8, 14),
+            [RandomMapGenerator.ArchipelagoStampId] = (8, 10),
+            [RandomMapGenerator.SolitaryIslandStampId] = (8, 8),
+            [RandomMapGenerator.PeninsulaStampId] = (8, 13),
+            [RandomMapGenerator.LagoonStampId] = (8, 10),
         };
-        var expectedLayouts = new Dictionary<string, (string CompanionId, GridPos MainOrigin, GridPos CompanionOrigin)>(StringComparer.Ordinal)
+        var expectedOrigins = new Dictionary<string, GridPos>(StringComparer.Ordinal)
         {
-            [RandomMapGenerator.ForestIslandStampId] = (RandomMapGenerator.GrassSandbarStampId, new GridPos(8, 1), new GridPos(10, 10)),
-            [RandomMapGenerator.RockyIslandStampId] = (RandomMapGenerator.BrokenRockSkerryStampId, new GridPos(11, 6), new GridPos(8, 1)),
-            [RandomMapGenerator.HarborTownStampId] = (RandomMapGenerator.ReedSandbarStampId, new GridPos(8, 6), new GridPos(10, 1)),
-            [RandomMapGenerator.RiverMouthStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 5), new GridPos(10, 0)),
+            [RandomMapGenerator.FjordStampId] = new GridPos(8, 2),
+            [RandomMapGenerator.ArchipelagoStampId] = new GridPos(8, 4),
+            [RandomMapGenerator.SolitaryIslandStampId] = new GridPos(8, 5),
+            [RandomMapGenerator.PeninsulaStampId] = new GridPos(8, 0),
+            [RandomMapGenerator.LagoonStampId] = new GridPos(8, 4),
         };
         var seenMapIds = new HashSet<string>(StringComparer.Ordinal);
         for (var seed = 0; seed < Math.Max(1, sampleCount); seed++)
         {
             var result = generator.Generate(new RandomMapOptions(24, 18, seed % 3 + 1, seed));
             var repeat = generator.Generate(new RandomMapOptions(24, 18, (seed + 1) % 3 + 1, seed));
-            var sameTemplate = generator.Generate(new RandomMapOptions(24, 18, (seed + 2) % 3 + 1, seed + 4));
-            if (result.Spec.TerrainStamps.Count != 2
+            var sameTemplate = generator.Generate(new RandomMapOptions(24, 18, (seed + 2) % 3 + 1, seed + 5));
+            if (result.Spec.TerrainStamps.Count != 1
                 || repeat.Spec.TerrainStamps.Count != result.Spec.TerrainStamps.Count)
                 return false;
             if (!result.Spec.TerrainRows.SequenceEqual(repeat.Spec.TerrainRows)
@@ -762,62 +760,51 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                 return false;
             seenMapIds.Add(mapId);
             var mainStamp = result.Spec.TerrainStamps[0];
-            var companionStamp = result.Spec.TerrainStamps[1];
-            if (!expectedLayouts.TryGetValue(mainStamp.Id, out var expectedLayout)
-                || companionStamp.Id != expectedLayout.CompanionId
-                || mainStamp.Origin != expectedLayout.MainOrigin
-                || companionStamp.Origin != expectedLayout.CompanionOrigin)
+            if (!expectedOrigins.TryGetValue(mainStamp.Id, out var expectedOrigin)
+                || mainStamp.Origin != expectedOrigin)
                 return false;
 
-            for (var index = 0; index < result.Spec.TerrainStamps.Count; index++)
+            if (!expectedSizes.TryGetValue(mainStamp.Id, out var expectedSize)
+                || mainStamp.Width != expectedSize.Width || mainStamp.Height != expectedSize.Height
+                || mainStamp.QuarterTurns != 0
+                || !ResourceLoader.Exists(mainStamp.TexturePath))
+                return false;
+            for (var y = mainStamp.Origin.Y; y < mainStamp.Origin.Y + mainStamp.Height; y++)
             {
-                var stamp = result.Spec.TerrainStamps[index];
-                if (!expectedSizes.TryGetValue(stamp.Id, out var expectedSize)
-                    || stamp.Width != expectedSize.Width || stamp.Height != expectedSize.Height
-                    || stamp.QuarterTurns != 0
-                    || !ResourceLoader.Exists(stamp.TexturePath))
-                    return false;
-                for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+                for (var x = mainStamp.Origin.X; x < mainStamp.Origin.X + mainStamp.Width; x++)
                 {
-                    for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
-                    {
-                        var cell = new GridPos(x, y);
-                        if (!result.Spec.InBounds(cell)
-                            || result.PlayerZone.Contains(cell)
-                            || result.EnemyZone.Contains(cell)
-                            || result.Spec.IsExit(cell))
-                            return false;
-                    }
+                    var cell = new GridPos(x, y);
+                    if (!result.Spec.InBounds(cell)
+                        || result.PlayerZone.Contains(cell)
+                        || result.EnemyZone.Contains(cell)
+                        || result.Spec.IsExit(cell))
+                        return false;
                 }
-                if (index > 0 && StampRectanglesOverlap(result.Spec.TerrainStamps[0], stamp)) return false;
             }
 
-            var riverStamp = result.Spec.TerrainStamps.FirstOrDefault(stamp => stamp.Id == RandomMapGenerator.RiverMouthStampId);
-            if (riverStamp is not null
-                && (!RiverReachesStampMouth(result.Spec, riverStamp)
-                    || riverStamp.Width != 8 || riverStamp.Height != 10
-                    || riverStamp.Origin.Y != 5
-                    || !CentralRowIsDeepWater(result, 3)
-                    || !CentralRowIsDeepWater(result, 4)))
+            if (mainStamp.Id == RandomMapGenerator.FjordStampId
+                && (!HasDeepWaterPathInsideStamp(result.Spec, mainStamp, vertical: true)
+                    || !CentralRowIsDeepWater(result, 1)
+                    || !CentralRowIsDeepWater(result, 16)))
                 return false;
-            var harborStamp = result.Spec.TerrainStamps.FirstOrDefault(stamp => stamp.Id == RandomMapGenerator.HarborTownStampId);
-            if (harborStamp is not null)
-            {
-                for (var localY = 2; localY <= 6; localY++)
-                    if (result.Spec.TerrainAt(harborStamp.Origin.X + 3, harborStamp.Origin.Y + localY) != TerrainType.DeepWater)
-                        return false;
-            }
-            if (mainStamp.Id == RandomMapGenerator.ForestIslandStampId
-                && (mainStamp.Origin.X >= companionStamp.Origin.X
-                    || mainStamp.Origin.Y >= companionStamp.Origin.Y
-                    || !CentralRowIsDeepWater(result, 8)))
+            if (mainStamp.Id == RandomMapGenerator.ArchipelagoStampId
+                && (CountLandComponents(result.Spec, mainStamp) < 4
+                    || !HasDeepWaterPathInsideStamp(result.Spec, mainStamp, vertical: false)))
                 return false;
-            if (mainStamp.Id == RandomMapGenerator.RockyIslandStampId
-                && (mainStamp.Origin.X <= companionStamp.Origin.X
-                    || companionStamp.Width < mainStamp.Width + 2
-                    || !CentralRowIsDeepWater(result, 12)))
+            if (mainStamp.Id == RandomMapGenerator.SolitaryIslandStampId
+                && (!TerrainRules.IsLand(result.Spec.TerrainAt(mainStamp.Origin.X + 3, mainStamp.Origin.Y + 3))
+                    || !CentralRowIsDeepWater(result, 4)
+                    || !CentralRowIsDeepWater(result, 13)))
                 return false;
-            if (!CompanionStampIsImpassable(result.Spec, companionStamp)) return false;
+            if (mainStamp.Id == RandomMapGenerator.PeninsulaStampId
+                && (!TerrainRules.IsLand(result.Spec.TerrainAt(mainStamp.Origin.X + 7, mainStamp.Origin.Y))
+                    || result.Spec.TerrainAt(mainStamp.Origin.X + 1, mainStamp.Origin.Y + 5) != TerrainType.DeepWater
+                    || !CentralRowIsDeepWater(result, 13)))
+                return false;
+            if (mainStamp.Id == RandomMapGenerator.LagoonStampId
+                && (result.Spec.TerrainAt(mainStamp.Origin.X + 3, mainStamp.Origin.Y + 4) != TerrainType.DeepWater
+                    || !HasDeepWaterPathInsideStamp(result.Spec, mainStamp, vertical: false)))
+                return false;
             if (RandomMapGenerator.ToBattleMap(result.Spec).TerrainStamps.Count != result.Spec.TerrainStamps.Count
                 || !result.Connected)
                 return false;
@@ -829,24 +816,59 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         => Enumerable.Range(result.PlayerZone.Right, result.EnemyZone.X - result.PlayerZone.Right)
             .All(x => result.Spec.TerrainAt(x, y) == TerrainType.DeepWater);
 
-    // 新生成/重做的三种障碍印章整块占格均为陆地；旧草洲允许透明角保持深水，但不得混入可驶入浅滩/礁石格。
-    private static bool CompanionStampIsImpassable(LevelMapSpec spec, TerrainVisualStamp stamp)
+    private static bool HasDeepWaterPathInsideStamp(LevelMapSpec spec, TerrainVisualStamp stamp, bool vertical)
     {
-        var requiresFullFootprint = stamp.Id is RandomMapGenerator.ReefShoalStampId
-            or RandomMapGenerator.BrokenRockSkerryStampId
-            or RandomMapGenerator.ReedSandbarStampId;
-        var hasLand = false;
-        for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+        var starts = new Queue<GridPos>();
+        var visited = new HashSet<GridPos>();
+        var startCount = vertical ? stamp.Width : stamp.Height;
+        for (var index = 0; index < startCount; index++)
         {
-            for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
+            var cell = vertical
+                ? new GridPos(stamp.Origin.X + index, stamp.Origin.Y)
+                : new GridPos(stamp.Origin.X, stamp.Origin.Y + index);
+            if (spec.TerrainAt(cell) == TerrainType.DeepWater && visited.Add(cell)) starts.Enqueue(cell);
+        }
+        while (starts.Count > 0)
+        {
+            var cell = starts.Dequeue();
+            if (vertical && cell.Y == stamp.Origin.Y + stamp.Height - 1
+                || !vertical && cell.X == stamp.Origin.X + stamp.Width - 1)
+                return true;
+            foreach (var direction in new[] { CardinalDirection.North, CardinalDirection.East, CardinalDirection.South, CardinalDirection.West })
             {
-                var terrain = spec.TerrainAt(x, y);
-                if (terrain == TerrainType.DeepWater && !requiresFullFootprint) continue;
-                if (!TerrainRules.IsLand(terrain)) return false;
-                hasLand = true;
+                var next = cell + direction.Vector();
+                if (!stamp.Contains(next) || spec.TerrainAt(next) != TerrainType.DeepWater || !visited.Add(next)) continue;
+                starts.Enqueue(next);
             }
         }
-        return hasLand;
+        return false;
+    }
+
+    private static int CountLandComponents(LevelMapSpec spec, TerrainVisualStamp stamp)
+    {
+        var remaining = new HashSet<GridPos>();
+        for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+            for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
+                if (TerrainRules.IsLand(spec.TerrainAt(x, y))) remaining.Add(new GridPos(x, y));
+        var count = 0;
+        while (remaining.Count > 0)
+        {
+            count++;
+            var queue = new Queue<GridPos>();
+            var start = remaining.First();
+            remaining.Remove(start);
+            queue.Enqueue(start);
+            while (queue.Count > 0)
+            {
+                var cell = queue.Dequeue();
+                foreach (var direction in new[] { CardinalDirection.North, CardinalDirection.East, CardinalDirection.South, CardinalDirection.West })
+                {
+                    var next = cell + direction.Vector();
+                    if (remaining.Remove(next)) queue.Enqueue(next);
+                }
+            }
+        }
+        return count;
     }
 
     public bool RandomTerrainStampsAreCoherent(int sampleCount = 24)
@@ -864,45 +886,11 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             var mapId = RandomMapGenerator.FixedMapId(encounter.Map);
             if (!RandomMapGenerator.FixedMapIds.Contains(mapId)
                 || encounter.MapSourceLabel != RandomMapGenerator.FixedMapDisplayName(encounter.Map)
-                || encounter.Map.TerrainStamps.Count != 2)
+                || encounter.Map.TerrainStamps.Count != 1)
                 return false;
             seenMapIds.Add(mapId);
         }
         return RandomMapGenerator.FixedMapIds.All(seenMapIds.Contains);
-    }
-
-    private static bool StampRectanglesOverlap(TerrainVisualStamp first, TerrainVisualStamp second)
-        => first.Origin.X < second.Origin.X + second.Width
-           && first.Origin.X + first.Width > second.Origin.X
-           && first.Origin.Y < second.Origin.Y + second.Height
-           && first.Origin.Y + first.Height > second.Origin.Y;
-
-    private static bool RiverReachesStampMouth(LevelMapSpec spec, TerrainVisualStamp stamp)
-    {
-        var riverCells = new HashSet<GridPos>();
-        for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
-            for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
-                if (spec.TerrainAt(x, y) == TerrainType.River)
-                    riverCells.Add(new GridPos(x, y));
-        var queue = new Queue<GridPos>(riverCells.Where(cell => cell.Y == stamp.Origin.Y + 1));
-        var visited = new HashSet<GridPos>(queue);
-        while (queue.Count > 0)
-        {
-            var cell = queue.Dequeue();
-            if (cell.Y == stamp.Origin.Y + stamp.Height - 1) return true;
-            foreach (var direction in new[]
-                     {
-                         CardinalDirection.North,
-                         CardinalDirection.East,
-                         CardinalDirection.South,
-                         CardinalDirection.West,
-                     })
-            {
-                var next = cell + direction.Vector();
-                if (riverCells.Contains(next) && visited.Add(next)) queue.Enqueue(next);
-            }
-        }
-        return false;
     }
 
     // 聚焦首版印章的可视化测试钩子：清空舰船与布阵叠层，只保留随机海图和整张地貌素材。

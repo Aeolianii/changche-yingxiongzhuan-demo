@@ -6,11 +6,11 @@ using NavalCombat.Core;
 
 namespace NavalCombat.Levels;
 
-// R-1 固定地图选择器（纯 C#，无 Godot 依赖）：维护四张经过构图验证的海战地图模板。
-// Seed 只负责选择森林岛、岩山岛、港口小镇或河口岛；模板内部的印章、散点装饰与出口均固定。
+// R-1 固定地图选择器（纯 C#，无 Godot 依赖）：维护五张经过构图验证的海战地貌模板。
+// Seed 只负责选择峡湾、群岛、孤岛、半岛或泻湖；模板内部的主地貌印章、散点装饰与出口均固定。
 // 左右各留一个布阵区（恒为深水 → 舰队恒可放置）；每张地图左右各生成一组安全逃跑区。
 //
-// 可玩性保障（连通性）：地形放完后做 BFS 连通性检查（玩家区中心 → 敌区中心，可通行格=非山地）。
+// 可玩性保障（连通性）：地形放完后做 BFS 连通性检查（玩家区中心 → 敌区中心，可通行格=非陆地）。
 // 固定模板若因非标准尺寸无法放置或未通过连通性检查，则兜底纯深水图，保证旧尺寸接口仍可用。
 //
 // 种子化可复现：同 seed → 同模板 / TerrainRows / 出口（LevelMapSpec.FromAscii 确定性解析）。
@@ -24,15 +24,11 @@ public sealed class RandomMapGenerator
 
     public const int FixedMapWidth = 24;
     public const int FixedMapHeight = 18;
-    public const string RiverMouthStampId = "river_mouth_island_v2";
-    public const string RiverMouthStampTexturePath = "res://assets/naval/battle/terrain_stamps/river_mouth_island_v2.png";
-    public const string ForestIslandStampId = "forest_island_v1";
-    public const string GrassSandbarStampId = "grass_sandbar_v1";
-    public const string ReefShoalStampId = "reef_shoal_impassable_v2";
-    public const string BrokenRockSkerryStampId = "broken_rock_skerry_v1";
-    public const string ReedSandbarStampId = "reed_sandbar_v1";
-    public const string RockyIslandStampId = "rocky_island_v1";
-    public const string HarborTownStampId = "harbor_town_v1";
+    public const string FjordStampId = "fjord_v1";
+    public const string ArchipelagoStampId = "archipelago_v1";
+    public const string SolitaryIslandStampId = "solitary_island_v1";
+    public const string PeninsulaStampId = "peninsula_v1";
+    public const string LagoonStampId = "lagoon_v1";
     private const string TerrainStampAssetRoot = "res://assets/naval/battle/terrain_stamps/";
 
     private sealed record TerrainStampDefinition(
@@ -51,126 +47,146 @@ public sealed class RandomMapGenerator
         string DisplayName,
         TerrainStampDefinition MainStamp,
         GridPos MainOrigin,
-        TerrainStampDefinition CompanionStamp,
-        GridPos CompanionOrigin,
         TerrainDecoration[] Decorations);
 
-    private static readonly TerrainStampDefinition RiverMouthStamp = new(
-        RiverMouthStampId,
-        RiverMouthStampTexturePath,
+    private static readonly TerrainStampDefinition FjordStamp = new(
+        FjordStampId,
+        TerrainStampAssetRoot + "fjord_v1.png",
         new[]
         {
-            "...FF...",
-            "..FRRF..",
-            ".BFRRFB.",
-            "BBGGRGBB",
-            "BBGGRGBB",
-            "BBGRRGBB",
-            "BBGRRGBB",
-            "BBGRRGBB",
-            "BBGRRGBB",
-            "BBBRRBBB",
+            "^^....^^",
+            "^^^..^^^",
+            "^^...^^^",
+            "^^^...^^",
+            "^^....^^",
+            "^^^...^^",
+            "^^....^^",
+            "^^...^^^",
+            "^^....^^",
+            "^^^...^^",
+            "^^....^^",
+            "^^...^^^",
+            "^^^...^^",
+            "^^....^^",
         });
 
-    private static readonly TerrainStampDefinition ForestIslandStamp = new(
-        ForestIslandStampId,
-        TerrainStampAssetRoot + "forest_island_v1.png",
-        new[] { "..BB..", ".BFFB.", "BFFFFB", "BFFFFB", ".BFFB.", "..BB.." });
+    private static readonly TerrainStampDefinition ArchipelagoStamp = new(
+        ArchipelagoStampId,
+        TerrainStampAssetRoot + "archipelago_v1.png",
+        new[]
+        {
+            "FFF...^^",
+            "FFFF..^^",
+            "FFF.....",
+            "...^^GGG",
+            "...^.GGG",
+            "........",
+            ".^^...GG",
+            ".^^..GGG",
+            ".....GGG",
+            "........",
+        });
 
-    private static readonly TerrainStampDefinition GrassSandbarStamp = new(
-        GrassSandbarStampId,
-        TerrainStampAssetRoot + "grass_sandbar_v1.png",
-        new[] { ".BBBB.", "BGGGGB", "BGGGGB", ".BBBB." });
+    private static readonly TerrainStampDefinition SolitaryIslandStamp = new(
+        SolitaryIslandStampId,
+        TerrainStampAssetRoot + "solitary_island_v1.png",
+        new[]
+        {
+            "..BBBB..",
+            ".BFFFFB.",
+            "BFF^^FFB",
+            "BFF^^FFB",
+            "BFFFFFFB",
+            "BFGGGGFB",
+            ".BGGGGB.",
+            "..BBBB..",
+        });
 
-    private static readonly TerrainStampDefinition ReefShoalStamp = new(
-        ReefShoalStampId,
-        TerrainStampAssetRoot + "reef_shoal_impassable_v2.png",
-        new[] { "^^^^^", "^^^^^", "^^^^^" });
+    private static readonly TerrainStampDefinition PeninsulaStamp = new(
+        PeninsulaStampId,
+        TerrainStampAssetRoot + "peninsula_v1.png",
+        new[]
+        {
+            "....BBBB",
+            "....BBBB",
+            ".....BBB",
+            ".....BBB",
+            "......BB",
+            "......BB",
+            ".....BBB",
+            ".....BBB",
+            "....BBBB",
+            "...BBBBB",
+            ".BBBBBBB",
+            "BBBBBBBB",
+            "BBBBBBBB",
+        });
 
-    private static readonly TerrainStampDefinition BrokenRockSkerryStamp = new(
-        BrokenRockSkerryStampId,
-        TerrainStampAssetRoot + "broken_rock_skerry_v1.png",
-        new[] { "^^^^^^^", "^^^^^^^", "^^^^^^^", "^^^^^^^" });
-
-    private static readonly TerrainStampDefinition ReedSandbarStamp = new(
-        ReedSandbarStampId,
-        TerrainStampAssetRoot + "reed_sandbar_v1.png",
-        new[] { "BBBBBB", "BGGGGB", "BGGGGB", "BBBBBB" });
-
-    private static readonly TerrainStampDefinition RockyIslandStamp = new(
-        RockyIslandStampId,
-        TerrainStampAssetRoot + "rocky_island_v1.png",
-        new[] { "..B..", ".B^B.", "B^^^B", ".B^B.", "..B.." });
-
-    private static readonly TerrainStampDefinition HarborTownStamp = new(
-        HarborTownStampId,
-        TerrainStampAssetRoot + "harbor_town_v1.png",
-        new[] { "..BBB..", ".BTTTB.", "BTT.TTB", "BPP.PPB", "BPP.PPB", ".BB.BB." });
+    private static readonly TerrainStampDefinition LagoonStamp = new(
+        LagoonStampId,
+        TerrainStampAssetRoot + "lagoon_v1.png",
+        new[]
+        {
+            "..BBBB..",
+            ".BB..BB.",
+            "BB....BB",
+            "BB....BB",
+            "........",
+            "........",
+            "BB....BB",
+            "BB....BB",
+            ".BB..BB.",
+            "..BBBB..",
+        });
 
     private static readonly FixedMapTemplate[] FixedMapTemplates =
     {
         new(
-            "forest_island",
-            "森林岛",
-            ForestIslandStamp,
-            new GridPos(8, 1),
-            GrassSandbarStamp,
-            new GridPos(10, 10),
-            new[]
-            {
-                new TerrainDecoration(new GridPos(15, 7), '~'),
-                new TerrainDecoration(new GridPos(8, 15), '#'),
-            }),
+            "fjord",
+            "峡湾",
+            FjordStamp,
+            new GridPos(8, 2),
+            Array.Empty<TerrainDecoration>()),
         new(
-            "rocky_island",
-            "岩山岛",
-            RockyIslandStamp,
-            new GridPos(11, 6),
-            BrokenRockSkerryStamp,
-            new GridPos(8, 1),
-            new[]
-            {
-                new TerrainDecoration(new GridPos(8, 13), '~'),
-                new TerrainDecoration(new GridPos(10, 16), '#'),
-            }),
+            "archipelago",
+            "群岛",
+            ArchipelagoStamp,
+            new GridPos(8, 4),
+            Array.Empty<TerrainDecoration>()),
         new(
-            "harbor_town",
-            "港口小镇",
-            HarborTownStamp,
-            new GridPos(8, 6),
-            ReedSandbarStamp,
-            new GridPos(10, 1),
-            new[]
-            {
-                new TerrainDecoration(new GridPos(15, 16), '^'),
-            }),
-        new(
-            "river_mouth",
-            "河口岛",
-            RiverMouthStamp,
+            "solitary_island",
+            "孤岛",
+            SolitaryIslandStamp,
             new GridPos(8, 5),
-            ReefShoalStamp,
-            new GridPos(10, 0),
+            Array.Empty<TerrainDecoration>()),
+        new(
+            "peninsula",
+            "半岛",
+            PeninsulaStamp,
+            new GridPos(8, 0),
+            Array.Empty<TerrainDecoration>()),
+        new(
+            "lagoon",
+            "泻湖",
+            LagoonStamp,
+            new GridPos(8, 4),
             Array.Empty<TerrainDecoration>()),
     };
 
     public static IReadOnlyList<string> TerrainStampIds { get; } =
         new[]
         {
-            RiverMouthStampId,
-            ForestIslandStampId,
-            GrassSandbarStampId,
-            ReefShoalStampId,
-            BrokenRockSkerryStampId,
-            ReedSandbarStampId,
-            RockyIslandStampId,
-            HarborTownStampId,
+            FjordStampId,
+            ArchipelagoStampId,
+            SolitaryIslandStampId,
+            PeninsulaStampId,
+            LagoonStampId,
         };
 
     public static IReadOnlyList<string> FixedMapIds { get; } = FixedMapTemplates.Select(template => template.Id).ToArray();
     public static IReadOnlyList<string> MainTerrainStampIds { get; } = FixedMapTemplates.Select(template => template.MainStamp.Id).ToArray();
 
-    // 从四张固定地图中选择一张：返回地图规格 + 双方布阵区。非法尺寸/难度抛 ArgumentOutOfRangeException。
+    // 从五张固定地图中选择一张：返回地图规格 + 双方布阵区。非法尺寸/难度抛 ArgumentOutOfRangeException。
     public RandomMapResult Generate(RandomMapOptions options)
     {
         if (options is null) throw new ArgumentNullException(nameof(options));
@@ -179,11 +195,11 @@ public sealed class RandomMapGenerator
         var enemyZone = ComputeEnemyZone(options.Width, options.Height);
         var template = FixedMapTemplates[PositiveModulo(options.Seed, FixedMapTemplates.Length)];
         var spec = BuildFixedMap(options, playerZone, enemyZone, template);
-        if (spec.TerrainStamps.Count == 2
+        if (spec.TerrainStamps.Count == 1
             && HasPath(spec, ZoneCenter(spec, playerZone), ZoneCenter(spec, enemyZone)))
             return new RandomMapResult(spec, playerZone, enemyZone);
 
-        // 兜底：纯深水 + 出口（必然连通）。深水图保底可玩；浅滩/礁石可通行不阻塞，故不加入。
+        // 兜底：纯深水 + 出口（必然连通）。
         var fallback = LevelMapSpec.FromAscii(AllDeepRows(options));
         return new RandomMapResult(fallback, playerZone, enemyZone);
     }
@@ -278,7 +294,7 @@ public sealed class RandomMapGenerator
         return new GridRect(w - 1 - pzWidth, 1, pzWidth, Math.Max(2, h - 2));
     }
 
-    // 固定模板布局：深水底 → 两枚固定印章 → 固定散点装饰 → 安全出口 → ASCII 解析。
+    // 固定模板布局：深水底 → 一枚大型主地貌印章 → 固定散点装饰 → 安全出口 → ASCII 解析。
     private static LevelMapSpec BuildFixedMap(
         RandomMapOptions o,
         GridRect playerZone,
@@ -310,16 +326,6 @@ public sealed class RandomMapGenerator
             terrainStamps,
             template.MainStamp,
             template.MainOrigin + mapOffset);
-        PlaceFixedTerrainStamp(
-            o,
-            grid,
-            playerZone,
-            enemyZone,
-            IsReservedExit,
-            terrainStamps,
-            template.CompanionStamp,
-            template.CompanionOrigin + mapOffset);
-
         foreach (var decoration in template.Decorations)
         {
             var cell = decoration.Position + mapOffset;
@@ -420,7 +426,7 @@ public sealed class RandomMapGenerator
 }
 
 // R-1 固定地图选择参数。Width/Height 默认 24×18；Difficulty 1-3 保留给遭遇强度但不改变地图；
-// Seed 只选择四张模板之一（可复现）；
+// Seed 只选择五张模板之一（可复现）；
 // IncludeExits 为旧接口兼容字段；当前规则要求所有地图始终生成逃跑格，因此 false 也不会关闭出口。
 public sealed record RandomMapOptions(
     int Width = 24,

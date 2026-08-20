@@ -1066,9 +1066,7 @@ public partial class NavalGridView : Node2D
     }
 
     private static bool HasEmbeddedShallowWater(string stampId)
-        => stampId.StartsWith("reef_shoal", StringComparison.Ordinal)
-           || stampId == RandomMapGenerator.BrokenRockSkerryStampId
-           || stampId == RandomMapGenerator.ReedSandbarStampId;
+        => RandomMapGenerator.MainTerrainStampIds.Contains(stampId);
 
     private void DrawTerrainStampCoastTransition(Texture2D texture, Rect2 target)
     {

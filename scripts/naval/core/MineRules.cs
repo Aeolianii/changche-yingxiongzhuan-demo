@@ -146,14 +146,17 @@ public static class MineRules
     // 单舰当前占格的"经过"触发判定：敌舰任一船体格压上雷格即触发。被 AfterShipMoved/RefreshMines 复用。
     private static BattleEvent[] TriggerForShip(BattleState battle, ShipState ship)
     {
+        // CHG（海怪 Boss 战）：MineImmune（海怪01）水雷免疫，压上雷格不触发、不消耗雷。
+        if (ship.Definition.MineImmune) return Array.Empty<BattleEvent>();
         var events = new List<BattleEvent>();
         foreach (var cell in ship.OccupiedCells())
         {
             var mine = battle.Map.MineAt(cell);
             if (mine is null || mine.OwnerFaction == ship.Faction) continue; // 友军不触发
             battle.Map.RemoveMine(mine); // 触发后立即移除
+            // CHG（海怪 Boss 战）：伤害按舰型 MineDamagePercent（默认 0.30 = 旧 30% 行为）。
             var amount = DamageRules.Calculate(
-                new DamagePacket(ship.MaxHp * NormalTriggerDamagePercent / 100.0, ship.ArmorLevel, IgnoresArmor: true)).FinalDamage;
+                new DamagePacket(ship.MaxHp * ship.Definition.MineDamagePercent, ship.ArmorLevel, IgnoresArmor: true)).FinalDamage;
             ship.HitPoints -= amount;
             events.Add(new MineTriggeredEvent(ship.Id, cell, amount, ship.HitPoints));
             // 水雷伤害打断损管（设计 12.3 明列"水雷"，裁定 3）

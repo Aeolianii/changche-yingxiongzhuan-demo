@@ -28,6 +28,8 @@ public static class SurrenderRules
     //  3. 优势方留场存活舰数 > 对方。
     public static bool CanOfferSurrender(BattleState battle, FactionId advantage)
     {
+        // CHG（海怪 Boss 战）：NoSurrender 关闭本场投降（Boss 战/海怪场景）。
+        if (battle.NoSurrender) return false;
         if (battle.BattleEnded) return false;
         // 先登记"开战舰数/已部署阵营"（直接调用未走命令也可用）
         BattleEndRules.EnsureDeployedCounts(battle);
@@ -99,9 +101,10 @@ public static class SurrenderRules
     }
 
     // 玩家可交付（交付范围）舰：Player 且 HP>0 且非自沉。已逃脱/被俘舰不在 Ships 天然排除（设计 16.3）。
+    // CHG（海怪 Boss 战）：CannotSurrender（城寨/海怪）不入交付候选。
     public static List<ShipState> EligibleForDelivery(BattleState battle)
         => battle.Ships.Values
-            .Where(s => s.Faction == FactionId.Player && s.HitPoints > 0 && !s.SelfSunk)
+            .Where(s => s.Faction == FactionId.Player && s.HitPoints > 0 && !s.SelfSunk && !s.Definition.CannotSurrender)
             .ToList();
 
     // 玩家接受投降（仅我方被成功劝降且待决时合法）。持有 ≥500 金 → 支付保全；不足 → 交付 ⌊符合舰数÷3⌋（玩家指定）。

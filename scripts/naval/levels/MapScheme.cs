@@ -322,5 +322,133 @@ public static class MapSchemeRegistry
             PlayerZone: new GridRect(1, 1, 3, 16),
             EnemyZone: new GridRect(18, 6, 6, 6),
             VariantGroup: "lagoon"),
+
+        // CHG（海怪 Boss 战）：海盗据点——倭寇大本营。左港区（玩家布阵）→ 中央港口/小镇/海滩岛 → 右敌港区；
+        // 岛礁与浅滩散布；右下留出口列。讨伐章三阶段共用本图（区恒深水、玩家区在左、连通）。
+        // VariantGroup 用既有分组名（single_island），满足 U-2b「变体归组」校验。
+        new MapScheme(
+            Id: "pirate_stronghold",
+            DisplayName: "海盗据点",
+            Description: "盘踞岛礁的倭寇大本营，港口泊着城寨，炮台环伺；海怪潜行在外围深水。",
+            Map: LevelMapSpec.FromAscii(new[]
+            {
+                "........................",
+                "..........~~............",
+                "...~~..........##.......",
+                "......GFFTTTGGG.........",
+                "......BGPPPPPGG.........",
+                "......BGPPPPPGG.........",
+                "......BGTTTTTGG.........",
+                "......BGGGGGGG~~........",
+                "......BBBBBBBB..........",
+                ".......~~~..............",
+                "........##..............",
+                "............###.........",
+                ".......................E",
+                ".......................E",
+                "........................",
+                "........................",
+            }),
+            PlayerZone: new GridRect(X: 1, Y: 3, Width: 5, Height: 8),
+            EnemyZone: new GridRect(X: 17, Y: 2, Width: 6, Height: 10),
+            VariantGroup: "single_island"),
+
+        // CHG-20260819（F-2 讨伐战地图）：海怪01——稀疏分散群岛。
+        // 三个 4×4 小岛（西北/中部/西南）稀疏散布、水道开阔；东北礁群 + 零星浅滩/礁石点缀；
+        // 底部两行深水主航道贯通（海怪01 Passability=DeepWaterOnly 全程深水可达）。
+        // 玩家区在左、敌区贴右缘（2 列窄区，海怪 2×2 朝西可摆）；右下出口列。
+        new MapScheme(
+            Id: "hunt_archipelago",
+            DisplayName: "讨伐·海怪01群岛",
+            Description: "稀疏分散群岛：小岛稀疏散布、水道开阔，暗礁与浅滩点缀；深水主航道贯通，海怪潜行在外围。",
+            Map: LevelMapSpec.FromAscii(new[]
+            {
+                ".......................E",
+                ".......................E",
+                ".......BBBB......###~..E",
+                ".......BGFB......###...E",
+                ".......BGFB......###...E",
+                "......~BBBB......###~..E",
+                "......~~...~~...#......E",
+                ".......................E",
+                ".............BBBB......E",
+                ".............BGFB......E",
+                ".............BG##......E",
+                "...........~~BBBB......E",
+                "......BBBB.............E",
+                "......BGFB.......~~~...E",
+                "......BGFB.............E",
+                "......BBBB.............E",
+                ".......................E",
+                ".......................E",
+            }),
+            PlayerZone: new GridRect(1, 2, 5, 14),
+            EnemyZone: new GridRect(21, 2, 2, 14),
+            VariantGroup: "archipelago"),
+
+        // CHG-20260819（F-2 讨伐战地图）：海怪02——泻湖。
+        // 环形陆地（北/南岸草地 + 陆河注入 + 小镇/港口，东北/东南山地）围出内湖；
+        // 西侧湖口窄（col6 宽 1 列），湖内浅滩/礁石点缀；敌区贴右缘山地内侧湖缘，飞鱼群出生湖内。
+        new MapScheme(
+            Id: "hunt_lagoon",
+            DisplayName: "讨伐·海怪02泻湖",
+            Description: "环形陆地围出的泻湖：陆河自北岸注入、湖口狭窄；湖内浅滩与暗礁点缀，飞鱼群藏身湖内东缘。",
+            Map: LevelMapSpec.FromAscii(new[]
+            {
+                "GGGGGGGGGGRRGGGGGGGG^^^E",
+                "GGGGGGGGGGRRGGGGGGGG^^^E",
+                "G.....GGGGRRGGGGGGGG^^^E",
+                "G.....GGGGRRGGGGGGGG^^^E",
+                "G.....G...RR........^^^E",
+                "G......................E",
+                "G........~~..##........E",
+                "G......................E",
+                "G................~~....E",
+                "G......................E",
+                "G......................E",
+                "G...........##.........E",
+                "G.....G..~~............E",
+                "G.....G................E",
+                "G.....GGGGGGGGGGGGGG^^^E",
+                "G.....GGGTTTTTTGGGGG^^^E",
+                "GGGGGGGGGTTTTTTGGPPPP^^E",
+                "GGGGGGGGGGGGGGGGGPPPP^^E",
+            }),
+            PlayerZone: new GridRect(1, 2, 5, 14),
+            EnemyZone: new GridRect(21, 5, 2, 8),
+            VariantGroup: "lagoon"),
+
+        // CHG-20260819（F-2 讨伐战地图）：大本营——倭寇营寨。
+        // 左港区（玩家布阵）→ 中央营地岛（山地寨墙 + 营帐小镇 + 栅栏林地，东前暗礁防线）→ 右岸防带（敌区贴右缘 2 列窄区）。
+        // 城寨为 2×4 矩形、横放（East/West 占 4 列）必然越出 2 列窄区 → 只能竖放贴右缘最右；炮台 ×4 与守军护卫沿其前排布
+        // （PlaceInEnemyZone 行优先自动放置，Deterministic）。敌出生在城寨附近；右下出口列。
+        new MapScheme(
+            Id: "hunt_stronghold",
+            DisplayName: "讨伐·倭寇大本营",
+            Description: "倭寇营寨：城寨竖镇右缘、炮台沿岸防位列阵，守军停泊护航；中央营地岛与暗礁防线层层设防。",
+            Map: LevelMapSpec.FromAscii(new[]
+            {
+                ".......................E",
+                ".......................E",
+                "G......................E",
+                "G......................E",
+                "G........^GGGGGGG^.....E",
+                "G........GTTT^TTTG.....E",
+                "G........GTFFFFFTG.....E",
+                "G........GTFFFFFTG##...E",
+                "G......~.GTFFFFFTG##...E",
+                "G......~.GTFFFFFTG##...E",
+                "G........GTFFFFFTG.....E",
+                "G........GTTT^TTTG.....E",
+                "G........^GGGGGGG^.....E",
+                "G......~~~.............E",
+                "G......................E",
+                "G......................E",
+                ".......................E",
+                ".......................E",
+            }),
+            PlayerZone: new GridRect(1, 2, 5, 14),
+            EnemyZone: new GridRect(21, 2, 2, 13),
+            VariantGroup: "single_island"),
     };
 }

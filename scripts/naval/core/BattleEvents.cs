@@ -103,3 +103,13 @@ public sealed record PlayerSurrenderedEvent(string[] DeliveredShipIds, int GoldP
 public sealed record PlayerSurrenderRejectedEvent(FactionId OfferingFaction) : BattleEvent;
 // 完整回合末投降层数变化（表现层成功率进度图标用）。Tier/SuccessRate=调整后层数与成功率。
 public sealed record SurrenderTierChangedEvent(FactionId OfferingFaction, int Tier, int SuccessRate) : BattleEvent;
+
+// CHG（海怪 Boss 战）：海怪01 事件。
+// 触手命中：ShipId=目标舰（DamageEvent 基类），Target=触手线首格，Kind=触手类型，Amount=实际伤害，HitPoints=目标剩余生命。
+public sealed record TentacleStrikeEvent(string ShipId, GridPos Target, TentacleKind Kind, int Amount, int HitPoints) : DamageEvent(ShipId, Amount, HitPoints);
+public sealed record MonsterMovePreviewedEvent(string ShipId, GridPos[] Path, bool SurfaceMove) : BattleEvent;
+public sealed record MonsterMovedEvent(string ShipId, GridPos Destination, bool SurfaceMove, int[] Damages) : BattleEvent;
+
+// CHG（海怪 Boss 战）：海怪02 事件。
+public sealed record FishChargeEvent(string ShipId, GridPos Bow, string TargetId, int Amount, int HitPoints, bool Pushed) : BattleEvent;
+public sealed record FishLeapEvent(string ShipId, GridPos Bow) : BattleEvent;

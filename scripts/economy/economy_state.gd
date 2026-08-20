@@ -4,6 +4,8 @@ extends RefCounted
 const CATALOG := preload("res://scripts/economy/item_catalog.gd")
 const WEAPON_IDS := ["ram", "bombardment", "cannon"]
 const SKILL_IDS := ["chain_shot", "fire_oil", "damage_control", "mine"]
+# CHG-20260819（F-1 讨伐饰品）：讨伐专属饰品 id（与 C# FleetTreasure 宝物一一对应，见 FleetTreasure.AccessoryId）。
+const ACCESSORY_IDS := ["sea_monster_horn", "sun_piercing_spear", "wokou_banner"]
 const SHIP_UPGRADE_RULES := {
 	"hull": {"resource": "wood", "pay": 100, "material": 8},
 	"weapon_slots": {"resource": "ironstone", "pay": 140, "material": 6},
@@ -23,6 +25,8 @@ static func make_default() -> Dictionary:
 		"items": {"wood": 30, "ironstone": 20},
 		"ship_upgrade_materials": {"canvas": 20},
 		"blueprints": [],
+		# CHG-20260819（F-1 讨伐饰品）：饰品背包/装备状态（owned=已获饰品 id；equipped=饰品 id → 舰船 id）。
+		"accessories": {"owned": [], "equipped": {}},
 		"ships": [
 			make_ship("ship_001", "patrol_boat", 42),
 			make_ship("ship_002", "cannon_warship"),
@@ -81,6 +85,9 @@ static func normalize(value: Variant) -> Dictionary:
 	if ships.is_empty():
 		ships = (make_default()["ships"] as Array).duplicate(true)
 	state["ships"] = ships
+	# CHG-20260819（F-1 讨伐饰品）：饰品背包/装备状态——仅保留合法饰品 id；
+	# equipped 只保留「已持有」且「舰船存在」的条目（与 ships 同源过滤，防脏数据）。
+	state["accessories"] = _normalize_accessories(value.get("accessories", {}), ships)
 	state["next_ship_id"] = maxi(2, int(value.get("next_ship_id", ships.size() + 1)))
 	return state
 
@@ -216,6 +223,104 @@ static func adjust_ship_equipment(state: Dictionary, ship_id: String, category: 
 		ship["equipment"] = equipment
 		return {"ok": true}
 	return {"ok": false, "reason": "unknown_ship"}
+
+
+# —— CHG-20260819（F-1 讨伐饰品）：饰品背包/装备 API ——
+
+# 是否已获得某饰品（owned 含 id）。
+static func has_accessory(state: Dictionary, accessory_id: String) -> bool:
+	return accessory_id in (state.get("accessories", {}) as Dictionary).get("owned", [])
+
+
+# 饰品当前装备到的舰船 id（未装备返回空串）。
+static func equipped_accessory_ship(state: Dictionary, accessory_id: String) -> String:
+	var equipped := (state.get("accessories", {}) as Dictionary).get("equipped", {}) as Dictionary
+	return str(equipped.get(accessory_id, ""))
+
+
+# 已获得饰品 id 列表（副本）。
+static func owned_accessories(state: Dictionary) -> Array:
+	return ((state.get("accessories", {}) as Dictionary).get("owned", []) as Array).duplicate()
+
+
+# 已装备饰品 id → 舰船 id 映射（副本）。
+static func equipped_accessories(state: Dictionary) -> Dictionary:
+	var equipped := (state.get("accessories", {}) as Dictionary).get("equipped", {}) as Dictionary
+	return equipped.duplicate(true)
+
+
+# 获得饰品（写入 owned，去重；非法 id 返回 false）。
+static func add_accessory(state: Dictionary, accessory_id: String) -> bool:
+	if accessory_id not in ACCESSORY_IDS:
+		return false
+	var accessories := state.get("accessories", {}) as Dictionary
+	var owned := accessories.get("owned", []) as Array
+	if accessory_id not in owned:
+		owned.append(accessory_id)
+		accessories["owned"] = owned
+		state["accessories"] = accessories
+	return true
+
+
+# 装备饰品到指定舰船（饰品须已持有、舰船须存在；重复装备自动迁移到新舰）。
+static func equip_accessory(state: Dictionary, accessory_id: String, ship_id: String) -> Dictionary:
+	if accessory_id not in ACCESSORY_IDS:
+		return {"ok": false, "reason": "unknown_accessory"}
+	if not has_accessory(state, accessory_id):
+		return {"ok": false, "reason": "not_owned"}
+	if not _ship_exists(state, ship_id):
+		return {"ok": false, "reason": "unknown_ship"}
+	var accessories := state.get("accessories", {}) as Dictionary
+	var equipped := accessories.get("equipped", {}) as Dictionary
+	equipped[accessory_id] = ship_id
+	accessories["equipped"] = equipped
+	state["accessories"] = accessories
+	return {"ok": true}
+
+
+# 卸下饰品（装备状态清除）。
+static func unequip_accessory(state: Dictionary, accessory_id: String) -> bool:
+	if accessory_id not in ACCESSORY_IDS:
+		return false
+	var accessories := state.get("accessories", {}) as Dictionary
+	var equipped := accessories.get("equipped", {}) as Dictionary
+	if not equipped.has(accessory_id):
+		return false
+	equipped.erase(accessory_id)
+	accessories["equipped"] = equipped
+	state["accessories"] = accessories
+	return true
+
+
+# 规范化饰品状态：owned 只保留合法 id 去重；equipped 只保留已持有且舰船存在的条目。
+static func _normalize_accessories(raw_value: Variant, ships: Array) -> Dictionary:
+	var raw := raw_value as Dictionary if raw_value is Dictionary else {}
+	var raw_owned := raw.get("owned", []) as Array if raw.get("owned", []) is Array else []
+	var owned: Array = []
+	for raw_id in raw_owned:
+		var accessory_id := str(raw_id)
+		if accessory_id in ACCESSORY_IDS and accessory_id not in owned:
+			owned.append(accessory_id)
+	var ship_ids := {}
+	for ship_value in ships:
+		if ship_value is Dictionary:
+			ship_ids[str(ship_value.get("id", ""))] = true
+	var equipped: Dictionary = {}
+	var raw_equipped: Variant = raw.get("equipped", {})
+	if raw_equipped is Dictionary:
+		for raw_accessory_id in raw_equipped:
+			var accessory_id := str(raw_accessory_id)
+			var ship_id := str(raw_equipped[raw_accessory_id])
+			if accessory_id in ACCESSORY_IDS and accessory_id in owned and ship_ids.has(ship_id):
+				equipped[accessory_id] = ship_id
+	return {"owned": owned, "equipped": equipped}
+
+
+static func _ship_exists(state: Dictionary, ship_id: String) -> bool:
+	for ship_value in state.get("ships", []):
+		if ship_value is Dictionary and str(ship_value.get("id", "")) == ship_id:
+			return true
+	return false
 
 
 static func make_ship(ship_id: String, type_id: String, current_hp := -1) -> Dictionary:

@@ -46,7 +46,8 @@ public static class StatusRules
         if (attacker.HasAttacked) return "action.attack_ended_movement";
         if (attacker.SkillUsesLeft.GetValueOrDefault("chain_shot", 0) < 1) return "skill.no_uses";
         var d2 = GeometryRules.NearestSquaredDistance(attacker.OccupiedCells(), new List<GridPos> { cmd.Target });
-        if (d2 < 9 || d2 > 25) return "action.out_of_range"; // 最近格距 3-5（设计 12.1）
+        // 连锁弹：下限 9 不变，上限按倍率（最近格距 3-5，设计 12.1）。
+        if (d2 < 9 || d2 > AttackRules.ScaledMaxD2(battle, 25)) return "action.out_of_range";
         return null;
     }
 
@@ -94,7 +95,8 @@ public static class StatusRules
         if (attacker.HasAttacked) return "action.attack_ended_movement";
         if (attacker.SkillUsesLeft.GetValueOrDefault("fire_oil", 0) < 1) return "skill.no_uses";
         var d2 = GeometryRules.NearestSquaredDistance(attacker.OccupiedCells(), new List<GridPos> { cmd.Target });
-        if (d2 < 9 || d2 > 16) return "action.out_of_range"; // 最近格距 3-4（设计 12.2）
+        // 火油：下限 9 不变，上限按倍率（最近格距 3-4，设计 12.2）。
+        if (d2 < 9 || d2 > AttackRules.ScaledMaxD2(battle, 16)) return "action.out_of_range";
         return null;
     }
 
@@ -120,6 +122,9 @@ public static class StatusRules
             s.HitPoints > 0 && s.Faction != attacker.Faction && s.OccupiedCells().Contains(cmd.Target));
         if (target is null) return Array.Empty<BattleEvent>(); // 盲射落空：次数已消耗，无效果事件
         var rounds = SlowRoundsOf(battle);
+        // CHG（海怪 Boss 战）：ImmuneChainShot 免连锁弹减速（海怪01/02）。命中免疫舰不施加减速、不发施加事件，
+        // 但命中已确认（非盲射）→ 次数/动作照常消耗（与盲射落空"无效果事件"同语义）。
+        if (target.Definition.ImmuneChainShot) return Array.Empty<BattleEvent>();
         target.SpeedPenalties.Add(new TimedSpeedPenalty(rounds)); // 叠加：每条独立计时（设计 12.1）
         return new BattleEvent[] { new ChainShotAppliedEvent(target.Id, cmd.Target, rounds) };
     }
@@ -131,7 +136,7 @@ public static class StatusRules
         var attacker = battle.ShipOrNull(cmd.ShipId)!;
         attacker.SkillUsesLeft["fire_oil"] -= 1;
         var cells = FireOilAreaCells(attacker.OccupiedCells(), cmd.Target);
-        var rounds = BurnRoundsOf(battle);
+        var baseRounds = BurnRoundsOf(battle);
         var events = new List<BattleEvent>();
         var seen = new HashSet<string>();
         foreach (var cell in cells)
@@ -140,7 +145,9 @@ public static class StatusRules
             var ship = battle.Ships.Values.FirstOrDefault(s =>
                 s.HitPoints > 0 && s.Faction != attacker.Faction && s.OccupiedCells().Contains(cell));
             if (ship is null || !seen.Add(ship.Id)) continue;
-            if (ApplyBurn(ship, rounds)) events.Add(new BurnAppliedEvent(ship.Id, rounds));
+            // CHG（海怪 Boss 战）：BurnRoundsModifier 烧伤回合修正（火油 3 回合 ± 修正；海怪01 −1）。
+            var burnRounds = Math.Max(0, baseRounds + ship.Definition.BurnRoundsModifier);
+            if (ApplyBurn(ship, burnRounds)) events.Add(new BurnAppliedEvent(ship.Id, burnRounds));
         }
         return events.ToArray();
     }

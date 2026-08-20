@@ -10,12 +10,15 @@ public sealed record MoveOutcome(bool Success, string? Reason = null, int ReefDa
 
 public static class MovementRules
 {
-    // 转向成本 = 舰船占格长度减 1（设计 5.2）。规则与表现层（HUD）共用同一查询，避免双源。
-    public static int TurnCost(ShipState ship) => ship.Length - 1;
+    // 转向成本 = 舰船占格几何（Length-1 + Width-1；设计 5.2）。规则与表现层（HUD）共用同一查询，避免双源。
+    public static int TurnCost(ShipState ship) => ShipGeometry.TurnCost(ship.Definition);
 
     public static MoveOutcome TryTranslate(BattleState battle, ShipState ship, CardinalDirection dir)
     {
         if (ship.SelfSunk) return new(false, "action.self_sunk_immobile");
+        // 评审修复（Important-1）：城寨/炮台等 Immovable 单位统一拦截标准平移（玩家/AI 均不可驱使）。
+        // 海怪走独立 MonsterMoveCommand/FishChargeCommand、推离走 FootprintValid 路径，均不经此，不受影响。
+        if (ship.Definition.Immovable) return new(false, "movement.immovable");
         if (ship.HasAttacked) return new(false, "action.attack_ended_movement");
         // F-1：风向修正按本回合首次移动前起点（TurnStartBow）与当前位置净位移主轴（顺风 +1 / 逆风 -1 / 侧风 0）。
         // 起点未记录（无风或未拍快照）时退化为原点=当前位置，修正 0，行为与无风一致（既有冒烟不回归）。
@@ -47,19 +50,17 @@ public static class MovementRules
     public static MoveOutcome TryTurn(BattleState battle, ShipState ship, TurnDirection turn)
     {
         if (ship.SelfSunk) return new(false, "action.self_sunk_immobile");
+        // 评审修复（Important-1）：Immovable 单位统一拦截转向（城寨/炮台均 Immovable，CannotTurn 已并入此拦截）。
+        if (ship.Definition.Immovable) return new(false, "movement.immovable");
         if (ship.HasAttacked) return new(false, "action.attack_ended_movement");
         var cost = TurnCost(ship);
         if (ship.RemainingMovement < cost) return new(false, "movement.not_enough_points");
         var oldFacing = ship.Facing;
         var oldBow = ship.Bow;
         var newFacing = oldFacing.Turn(turn);
-        // 转轴索引：奇数长=中央格；偶数长=两个中央格中靠近船头的一格
-        var pivotIndex = ship.Length % 2 == 1 ? (ship.Length - 1) / 2 : ship.Length / 2 - 1;
-        var oldCells = ship.OccupiedCells();
-        var pivot = oldCells[pivotIndex];
-        // 转轴在世界坐标不动，新船头 = 转轴 + 新朝向 × 转轴索引
-        // （简报原文为 `-`，经推导应为 `+`：newCells[pivotIndex] = newBow - newFacing*pivotIndex ≡ pivot）
-        var newBow = pivot + newFacing.Vector() * pivotIndex;
+        // 枢轴（重心格）世界坐标不动；新船头由 ShipGeometry 按宽度维一并计算（Width=1 与旧一致）。
+        var pivot = ShipGeometry.TurnPivot(ship.Definition, oldBow, oldFacing);
+        var newBow = ShipGeometry.NewBowAfterTurn(ship.Definition, pivot, newFacing);
         ship.Bow = newBow;
         ship.Facing = newFacing;
         if (!FootprintValid(battle, ship.OccupiedCells(), ship))

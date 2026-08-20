@@ -21,7 +21,7 @@ public enum TurnDirection { Left, Right }
 
 public enum FactionId { Player, Enemy }
 
-public enum SpeedTier { V0, V1, V2, V3, V4 }
+public enum SpeedTier { V0, V1, V2, V3, V4, V5 }
 
 public static class SpeedTable
 {
@@ -32,12 +32,19 @@ public static class SpeedTable
         SpeedTier.V2 => 4,
         SpeedTier.V3 => 7,
         SpeedTier.V4 => 9,
+        SpeedTier.V5 => 12,
         _ => throw new ArgumentOutOfRangeException(nameof(tier))
     };
 }
 
 public static class CardinalDirectionExtensions
 {
+    // 沿轴差量 → 方向（非纯轴向返回 null）。
+    public static CardinalDirection? ToDir(this GridPos d) =>
+        d.Y == 0 && d.X > 0 ? CardinalDirection.East :
+        d.Y == 0 && d.X < 0 ? CardinalDirection.West :
+        d.X == 0 && d.Y > 0 ? CardinalDirection.South :
+        d.X == 0 && d.Y < 0 ? CardinalDirection.North : null;
     public static GridPos Vector(this CardinalDirection d) => d switch
     {
         CardinalDirection.North => new GridPos(0, -1),

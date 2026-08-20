@@ -181,6 +181,17 @@ public partial class NavalHud : CanvasLayer
     public override void _Ready()
     {
         var controller = GetNode<NavalBattleController>("../BattleController");
+        // 调试：一键胜利/一键逃跑（测试用，常驻右上角，不属指令台）。
+        var debugActions = new HBoxContainer
+        {
+            Name = "DebugActions",
+            AnchorLeft = 1f, AnchorRight = 1f, AnchorTop = 0f, AnchorBottom = 0f,
+            OffsetLeft = -200, OffsetTop = 68, OffsetRight = -16, OffsetBottom = 100,
+            GrowHorizontal = Control.GrowDirection.Begin,
+        };
+        debugActions.AddChild(MakeDebugButton("一键胜利", () => controller.OnAction("debug_win")));
+        debugActions.AddChild(MakeDebugButton("一键逃跑", () => controller.OnAction("debug_flee")));
+        AddChild(debugActions);
         AttackTab.Pressed += OnAttackTabPressed;
         TurnTab.Pressed += () => SetCommandCategory(false);
         TurnLeft.Pressed += () => controller.OnAction("turn_left");
@@ -238,6 +249,16 @@ public partial class NavalHud : CanvasLayer
         // U-1：非交互面板底板不挡地图点击——递归置 mouse_filter=Ignore（按钮/tooltip 热区保留）。
         InkWashTheme.MakeClickTransparent(ActionPanel);
         InkWashTheme.MakeClickTransparent(ShipStatusPanel);
+    }
+
+    // 调试按钮构造（Task D）：水墨按钮样式 + 禁用焦点（同 StylePanelButton），点击回调转发控制器 OnAction。
+    private Button MakeDebugButton(string text, Action onClick)
+    {
+        var b = new Button { Text = text, CustomMinimumSize = new Vector2(88, 32) };
+        InkWashTheme.StyleHudButton(b);
+        b.FocusMode = Control.FocusModeEnum.None;
+        b.Pressed += () => onClick();
+        return b;
     }
 
     // ---- 水墨纸卡片主题（UX-4）：面板/按钮/文字全部走 InkWashTheme 色板 + 系统楷体 ----

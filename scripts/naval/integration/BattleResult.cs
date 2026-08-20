@@ -24,9 +24,16 @@ public sealed class BattleResult
         // 即使支付/交付后仍留场舰（投降即战斗失败结束，设计 16.2/16.3）。
         var playerAlive = battle.Ships.Values.Any(s => s.Faction == FactionId.Player && s.HitPoints > 0);
         var enemyAlive = battle.Ships.Values.Any(s => s.Faction == FactionId.Enemy && s.HitPoints > 0);
-        var winner = battle.SurrenderLoser is { } loser
-            ? (loser == FactionId.Player ? (FactionId?)FactionId.Enemy : FactionId.Player)
-            : playerAlive ? (FactionId?)FactionId.Player : enemyAlive ? (FactionId?)FactionId.Enemy : null;
+        // 评审修复（Important-2）：击沉即胜优先——IsVictoryTarget 沉没且已触发胜利结算（VictoryClaimed）→
+        // 胜者=该舰敌方（玩家最后一舰与城寨同沉时仍判玩家胜，与 BattleEndRules 击沉即胜一致，不按在场存活重算）。
+        // 未击沉胜利目标则回退既有 投降→playerAlive→enemyAlive 逻辑。
+        var sunkTarget = battle.Ships.Values
+            .FirstOrDefault(s => s.Definition.IsVictoryTarget && s.HitPoints <= 0 && s.VictoryClaimed);
+        var winner = sunkTarget is not null
+            ? (sunkTarget.Faction == FactionId.Player ? (FactionId?)FactionId.Enemy : FactionId.Player)
+            : battle.SurrenderLoser is { } loser
+                ? (loser == FactionId.Player ? (FactionId?)FactionId.Enemy : FactionId.Player)
+                : playerAlive ? (FactionId?)FactionId.Player : enemyAlive ? (FactionId?)FactionId.Enemy : null;
         var outcome = winner switch
         {
             FactionId.Player => BattleOutcome.PlayerVictory,

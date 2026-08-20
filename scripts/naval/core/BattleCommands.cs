@@ -36,3 +36,13 @@ public sealed record AcceptSurrenderCommand(string[] DeliveredShipIds) : BattleC
 // 玩家拒绝劝降：清除待决并继续战斗。
 public sealed record RejectSurrenderCommand : BattleCommand;
 public sealed record EndFactionTurnCommand : BattleCommand;
+// CHG（海怪 Boss 战）：海怪01 触手与移动。TentacleKind 区分一阶段多目标线/二阶段单目标线。
+public enum TentacleKind { MultiThree, SingleFive }
+public sealed record TentacleStrikeCommand(string ShipId, GridPos Target, TentacleKind Kind) : BattleCommand;
+// 海怪移动预告（免费动作）：Path 计划路径（含终点），SurfaceMove=true 水面（仅二阶段）。设 PendingMonsterMovePreview。
+public sealed record MonsterDeclareMoveCommand(string ShipId, GridPos[] Path, bool SurfaceMove) : BattleCommand;
+// 海怪移动执行（占动作）：Destination 终点；校验 = 预告路径终点一致。执行位移 + 路径伤害/落点伤害+推开。
+public sealed record MonsterMoveCommand(string ShipId, GridPos Destination) : BattleCommand;
+// CHG（海怪 Boss 战）：海怪02 冲撞与飞越。
+public sealed record FishChargeCommand(string ShipId, CardinalDirection Direction) : BattleCommand;
+public sealed record FishLeapMoveCommand(string ShipId, CardinalDirection Direction) : BattleCommand;

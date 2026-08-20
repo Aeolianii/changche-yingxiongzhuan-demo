@@ -156,8 +156,8 @@ func _init() -> void:
 		push_error("FAIL: could not place flagship near escape cells: %s" % escape_setup_error)
 		quit(1)
 		return
-	# 把护卫舰 p4 放到 (21,13)：船头 (21,13) 到敌方 e2 舰格 (26,13) 平方距离 25 = 砲击射程上限（供 T13 砲击命中验证）。
-	var bombard_setup_error: String = deploy.PlaceShip("p4", 21, 13, "east")
+	# CHG-20260819（F-3）：布阵区缩为 12×10 后 p4 放 (12,17)：船头 (12,17) 到敌方 e2 舰格 (17,17) 平方距离 25 = 砲击射程上限（供 T13 砲击命中验证）。
+	var bombard_setup_error: String = deploy.PlaceShip("p4", 12, 17, "east")
 	if bombard_setup_error != "":
 		push_error("FAIL: could not place frigate for bombardment test: %s" % bombard_setup_error)
 		quit(1)
@@ -319,7 +319,7 @@ func _init() -> void:
 	# T13：事件订阅接线——砲击命中敌舰后 EventsPlayedCount 增长；规则将 attack 置为不可用，按钮随之禁用
 	var events_before: int = controller.EventsPlayedCount()
 	controller.OnAction("bombardment") # UX-7：点砲击展开砲击可攻击范围，再点目标格执行砲击命令
-	controller.OnGridClicked(controller.CellToWorld(26, 13)) # p4（置于 (21,13)）砲击 e2 舰格 (26,13)（平方距离 25 = 上限）
+	controller.OnGridClicked(controller.CellToWorld(17, 17)) # p4（置于 (12,17)）砲击 e2 舰格 (17,17)（平方距离 25 = 上限）
 	if controller.EventsPlayedCount() <= events_before:
 		push_error("FAIL: no events played for ranged attack (wiring broken)")
 		quit(1)

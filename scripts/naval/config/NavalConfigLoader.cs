@@ -61,7 +61,19 @@ public static class NavalConfigLoader
             d.SkillSlots,
             d.ArmorSlots,
             d.BoardingDamage,
-            d.ArrowRainDamage)).ToList();
+            d.ArrowRainDamage,
+            d.Width,
+            d.Mass,
+            d.MineDamagePercent,
+            d.MineImmune,
+            d.ImmuneChainShot,
+            d.BurnRoundsModifier,
+            d.Immovable,
+            d.CannotEscape,
+            d.CannotSurrender,
+            d.IsVictoryTarget,
+            d.CannotTurn,
+            d.CanLeap)).ToList();
     }
 
     private static void Validate(
@@ -74,8 +86,10 @@ public static class NavalConfigLoader
         {
             if (s.MaxHp <= 0)
                 throw new InvalidDataException($"ships.json: '{s.Id}' 非正最大生命 {s.MaxHp}");
-            if (s.Length < 1 || s.Length > 3)
-                throw new InvalidDataException($"ships.json: '{s.Id}' 非法占格长度 {s.Length}（允许 1-3）");
+            if (s.Length < 1 || s.Length > 4)
+                throw new InvalidDataException($"ships.json: '{s.Id}' 非法占格长度 {s.Length}（允许 1-4）");
+            if (s.Width < 1 || s.Width > 2)
+                throw new InvalidDataException($"ships.json: '{s.Id}' 非法占格宽度 {s.Width}（允许 1-2）");
             if (s.BaseArmor * DamageRules.ArmorReductionPerLevel > DamageRules.ArmorMaxReduction)
                 throw new InvalidDataException($"ships.json: '{s.Id}' 基础护甲 {s.BaseArmor} 减免超过全局上限 {DamageRules.ArmorMaxReduction}");
         }
@@ -119,6 +133,18 @@ public static class NavalConfigLoader
     private sealed record ShipDto(
         string Id, string DisplayName, ShipCostDto Cost, int MaxHp, int BaseArmor,
         string SpeedCap, int LoadCapacity, int Length, int Passability,
-        int WeaponSlots, int SkillSlots, int ArmorSlots, int BoardingDamage, int ArrowRainDamage);
+        int WeaponSlots, int SkillSlots, int ArmorSlots, int BoardingDamage, int ArrowRainDamage,
+        int Width = 1,
+        int Mass = 0,
+        double MineDamagePercent = 0.30,
+        bool MineImmune = false,
+        bool ImmuneChainShot = false,
+        int BurnRoundsModifier = 0,
+        bool Immovable = false,
+        bool CannotEscape = false,
+        bool CannotSurrender = false,
+        bool IsVictoryTarget = false,
+        bool CannotTurn = false,
+        bool CanLeap = false);
     private sealed record ShipCostDto(int Iron, int Wood, int Hemp, int Gold);
 }

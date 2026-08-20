@@ -36,11 +36,11 @@ func _run() -> void:
 	_expect(deploy.PlayerShipCount() == 5 and deploy.EnemyShipCount() == 4, "经济舰队默认 5 舰出战，敌方保持 4 舰")
 	_expect(deploy.PlayerFleetCount() == 5, "默认出战数量 = 拥有数量")
 	var expected := {
-		"p1": {"type": "frigate",  "hp": 200,  "armor": 1, "weapons": {"bombardment": 1}, "skills": {"chain_shot": 1}},
-		"p2": {"type": "flagship", "hp": 100,  "armor": 2, "weapons": {"cannon": 2},      "skills": {"fire_oil": 1}},
-		"p3": {"type": "merchant", "hp": 1000, "armor": 3, "weapons": {"ram": 1},         "skills": {"damage_control": 1}},
-		"p4": {"type": "frigate",  "hp": 200,  "armor": 1, "weapons": {"bombardment": 1}, "skills": {"chain_shot": 1}},
-		"p5": {"type": "flagship", "hp": 100,  "armor": 2, "weapons": {"cannon": 2},      "skills": {"fire_oil": 1}},
+		"p1": {"type": "frigate",  "hp": 400,  "armor": 1, "weapons": {"bombardment": 1}, "skills": {"chain_shot": 1}},
+		"p2": {"type": "flagship", "hp": 500,  "armor": 2, "weapons": {"cannon": 2},      "skills": {"fire_oil": 1}},
+		"p3": {"type": "merchant", "hp": 150,  "armor": 3, "weapons": {"ram": 1},         "skills": {"damage_control": 1}},
+		"p4": {"type": "frigate",  "hp": 400,  "armor": 1, "weapons": {"bombardment": 1}, "skills": {"chain_shot": 1}},
+		"p5": {"type": "flagship", "hp": 500,  "armor": 2, "weapons": {"cannon": 2},      "skills": {"fire_oil": 1}},
 	}
 	for ship_id: String in expected:
 		var exp: Dictionary = expected[ship_id]

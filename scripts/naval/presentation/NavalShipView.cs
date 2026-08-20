@@ -259,8 +259,16 @@ public partial class NavalShipView : Node2D
             "frigate" => "frigate",
             "merchant" => "transport",
             "transport" => "transport",
+            "sea_monster" => "sea_monster",
+            "sea_fish" => "sea_fish",
+            "wokou_citadel" => "citadel",
+            "fort_turret" => "turret",
             _ => "frigate",
         };
+        // 海怪与固定设施只提供单张贴图，不拼接朝向后缀。
+        var directionless = shipType is "sea_monster" or "sea_fish" or "citadel" or "turret";
+        if (directionless)
+            return $"res://assets/naval/battle/ships/{faction}_{shipType}.png";
         var direction = ship.Facing switch
         {
             CardinalDirection.East => "e",

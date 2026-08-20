@@ -18,6 +18,10 @@ public sealed class BattleRequest
     public int? RandomSeed { get; init; }
     // null → 默认我方先行（BattleState.CurrentFaction 初值 Player）。
     public FactionId? FirstFaction { get; init; }
+    // CHG（海怪 Boss 战）：Boss 战关闭投降（NoSurrender）。
+    public bool NoSurrender { get; set; }
+    // CHG（海怪 Boss 战）：全舰队射程半径 +RangeBonus 格（倭寇军旗 → 1）。
+    public int RangeBonus { get; set; }
 }
 
 // 单舰快照：剧情层给出 舰型ID/位置/朝向/生命(可选)/装备/技能(可选覆盖默认播种)/指挥舰标记。
@@ -30,6 +34,7 @@ public sealed class ShipRequestSnapshot
     // null → 取定义最大生命。
     public int? HitPoints { get; set; }
     public bool IsFlagship { get; set; }
+    public bool SelfSunk { get; set; }   // CHG：布阵自沉旗（浅滩自沉保留残骸）
     public Dictionary<string, int> WeaponCounts { get; } = new();
     public Dictionary<string, int> SkillUsesLeft { get; } = new();
 }

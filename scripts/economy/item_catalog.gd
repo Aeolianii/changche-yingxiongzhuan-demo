@@ -4,6 +4,8 @@ extends RefCounted
 const ITEMS := {
 	"wood": {"name": "木材", "category": "material", "buy_price": 12, "sell_price": 6, "source": "初始库存、海上漂流箱、战斗结算、商港购买"},
 	"ironstone": {"name": "铁石", "category": "material", "buy_price": 18, "sell_price": 9, "source": "初始库存、海上漂流箱、战斗结算、商港购买"},
+	# CHG-20260819（F-1 讨伐战利品）：麻布——倭寇大本营讨伐战利品（EnemyRewards.Hemp）。
+	"hemp": {"name": "麻布", "category": "material", "buy_price": 0, "sell_price": 4, "source": "倭寇大本营讨伐战利品"},
 	"yellow_croaker": {"name": "黄花鱼", "category": "specialty", "buy_price": 0, "sell_price": 18, "source": "伏波古岭钓鱼"},
 	"grouper": {"name": "大石斑", "category": "specialty", "buy_price": 0, "sell_price": 45, "source": "伏波古岭钓鱼"},
 	"green_crab": {"name": "青蟹", "category": "specialty", "buy_price": 0, "sell_price": 30, "source": "伏波古岭钓鱼"},

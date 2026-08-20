@@ -9,15 +9,16 @@ using System.Linq;
 namespace NanjiangNaval;
 
 // 布阵控制器：双方一次性全部布阵（不交替）。舰队从 data/naval/ships.json 经 NavalConfigLoader 加载。
-// 默认阵型：双方各 4 舰横向、平行（玩家朝东、敌方朝西），在 48×36 大图各区呈纵深布置（设计 14 + UX-1）。
+// 默认阵型：双方各 4 舰横向、平行（玩家朝东、敌方朝西），在 48×36 大图缩小后的可配置区（12×10）呈纵深布置（CHG-20260819 F-3）。
 // 交互：点己方舰选中 → 点区域空格放置（该格为船头）/ 旋转按钮改横纵朝向 → 点「设为指挥舰」指定 → 「开始战斗」校验后交 BattleController。
 // 非法占格（越界/重叠/区域外/不可通行地形）一律拒绝，返回原因 key。
 public partial class NavalDeploymentController : Node2D, IGridClickReceiver
 {
-    // 预设己方区域（含 x、不含上边界；48×36 UX-1）：玩家 x[1,23) y[2,34)；敌 x[26,47) y[2,34)；中央 x[23,26) 留空为战场纵深。
-    // 玩家区放宽到 x=22 列：p3/p4 默认在 (22,26)/(22,27)，东进 3/4 格即可与 e4(26,26) 形成双方向接舷邻接（各在 4 MP 内）。
-    public static readonly Rect2I PlayerZone = new(1, 2, 22, 32);
-    public static readonly Rect2I EnemyZone = new(26, 2, 21, 32);
+    // CHG-20260819（F-3）：预设己方区域缩小为「正常战斗可配置范围」12 宽 × 10 高，竖直居中到地图中部
+    // （y∈[12,22) 覆盖逃跑格 x=0 列 y16-18，冒烟逃跑仍可行）。与 ship_screen FORMATION_ZONE 同源，
+    // 小地图预设阵型坐标可直接落入战斗布阵区。玩家 x[1,13) y[12,22)；敌 x[14,26) y[12,22)；中央 x=13 留 1 列交战纵深。
+    public static readonly Rect2I PlayerZone = new(1, 12, 12, 10);
+    public static readonly Rect2I EnemyZone = new(14, 12, 12, 10);
 
     private NavalRulesConfig? _config;
     private BattleState _battle = null!;
@@ -73,8 +74,11 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         _level = def is not null && def.Id != "free" ? def : null;
         // U-2c：随机遭遇战（LevelSelect 生成后 Begin）→ 遭遇模式（独立于关卡/自由，按遭遇规格构建战斗）。
         // CHG-20260817：海盗战请求 meta（sea_overworld 选择难度后写入）→ 先生成并 Begin 随机遭遇，再进遭遇模式。
+        // CHG-20260819（S-2 海面接入）：讨伐战请求 meta（sea_overworld 海怪/营寨触发）→ 组装 hunt_stage 固定遭遇。
         if (TryConsumePirateBattleRequest(out var pirateId, out var pirateDifficulty))
             _encounter = BeginPirateEncounter(pirateId, pirateDifficulty);
+        else if (TryConsumeHuntBattleRequest(out var huntStageId))
+            _encounter = BeginHuntEncounter(huntStageId);
         else
             _encounter = RandomEncounterSession.Active ? RandomEncounterSession.Pending : null;
         _levelPlay = GetNodeOrNull<NavalLevelPlayController>("../LevelPlay");
@@ -309,13 +313,14 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
 
     private void BuildDefaultLineups()
     {
-        // UX-1 敌方默认阵型（48×36，横向朝西）：e1旗舰(26,6) e2护卫舰(26,13) e3护卫舰(30,22) e4运输船(26,26)。
+        // CHG-20260819（F-3）敌方默认阵型：随玩家区缩小右移贴齐敌区（14,12,12,10），贴近玩家区右缘便于交战：
+        // e1旗舰(16,12) e2护卫舰(17,17) e3护卫舰(16,21) e4运输船(19,19)，全部朝西。
         // 玩家侧 CHG-20260818：自由模式玩家舰队 = 经济舰队，默认摆位由 BuildPlayerFleetFromEconomy 沿玩家区自动扫描（不再固定坐标）。
         _enemyDefault.Clear();
-        _enemyDefault.Add((new GridPos(26, 6), CardinalDirection.West));
-        _enemyDefault.Add((new GridPos(26, 13), CardinalDirection.West));
-        _enemyDefault.Add((new GridPos(30, 22), CardinalDirection.West));
-        _enemyDefault.Add((new GridPos(26, 26), CardinalDirection.West));
+        _enemyDefault.Add((new GridPos(16, 12), CardinalDirection.West));
+        _enemyDefault.Add((new GridPos(17, 17), CardinalDirection.West));
+        _enemyDefault.Add((new GridPos(16, 21), CardinalDirection.West));
+        _enemyDefault.Add((new GridPos(19, 19), CardinalDirection.West));
     }
 
     private void BuildFleet()
@@ -609,6 +614,9 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         }
         // T11 结转（T13 B）：战斗初始化时按舰型技能槽位 × 每局次数播种 SkillUsesLeft（data/naval/skills.json）。
         SkillSeeding.Seed(_battle);
+        // CHG（海怪 Boss 战）：开战前敌我强度配平——按有效难度（固定/讨伐统一普通）降敌舰 HitPoints。
+        var difficulty = EncounterBalancer.EffectiveDifficulty(_encounter);
+        EncounterBalancer.BalanceEnemyFleet(_battle, difficulty);
         var battleController = GetNodeOrNull<NavalBattleController>("../Battle/BattleController");
         if (battleController is not null)
         {
@@ -659,6 +667,34 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         PirateBattleSession.Begin(pirateId, difficulty, _pirateReturnCarrier);
         var encounter = RandomEncounterGenerator.Generate(_config!,
             new RandomEncounterOptions(Difficulty: difficulty, Seed: PirateEncounterSeed()));
+        RandomEncounterSession.Begin(encounter);
+        return encounter;
+    }
+
+    // CHG-20260819（S-2 海面接入）：讨伐战请求 meta 消费——读取并移除场景根 meta，失败（缺阶段 id）返回 false。
+    // 仅由 _Ready 调用；与海盗战消费同构，避免污染后续随机遭遇/关卡流程。
+    private bool TryConsumeHuntBattleRequest(out string stageId)
+    {
+        stageId = "";
+        var root = GetTree().Root;
+        if (!root.HasMeta(HuntBattleSession.RequestMetaKey)) return false;
+        var raw = root.GetMeta(HuntBattleSession.RequestMetaKey);
+        root.RemoveMeta(HuntBattleSession.RequestMetaKey);
+        if (raw.VariantType != Variant.Type.Dictionary) return false;
+        var dict = raw.As<Godot.Collections.Dictionary>();
+        var id = dict.ContainsKey("stage_id") ? dict["stage_id"].AsString() : "";
+        if (string.IsNullOrEmpty(id)) return false;
+        stageId = id;
+        _huntReturnCarrier = dict;
+        return true;
+    }
+
+    // 讨伐战：登记讨伐会话（携带发起方上下文 → 结算返回时还原）→ 组装 hunt_stage 固定遭遇 → Begin。
+    private Godot.Collections.Dictionary? _huntReturnCarrier;
+    private RandomEncounter? BeginHuntEncounter(string stageId)
+    {
+        HuntBattleSession.Begin(stageId, _huntReturnCarrier);
+        var encounter = HuntEncounterGenerator.CreateStage(_config!, stageId);
         RandomEncounterSession.Begin(encounter);
         return encounter;
     }
@@ -1163,7 +1199,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             var def = _config!.Ships.FirstOrDefault(s => s.Id == navalType);
             if (def is null) { GD.PushWarning($"ships.json 缺少映射舰型 {navalType}（economy {economyShip.TypeId}）"); continue; }
             var facing = CardinalDirection.East;
-            var spot = FindSpot(placed, def, PlayerZone);
+            var spot = FindSpot(placed, def, PlayerPlacementZone());
             if (activePreset is not null
                 && TryApplyFormation(activePreset, index, def, placed, out var formationBow, out var formationFacing))
             {
@@ -1203,7 +1239,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         {
             if (ship.SelfSunk) continue;
             var facing = CardinalDirection.East;
-            var spot = FindSpot(placed, ship.Definition, PlayerZone);
+            var spot = FindSpot(placed, ship.Definition, PlayerPlacementZone());
             var slot = SlotOfShip(ship.Id);
             if (activePreset is not null
                 && TryApplyFormation(activePreset, slot, ship.Definition, placed, out var formationBow, out var formationFacing))
@@ -1217,6 +1253,12 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             ship.Facing = facing;
         }
     }
+
+    // 玩家布阵/自动摆位区域：遭遇（讨伐/海盗）模式 = 遭遇规格玩家区（通常狭小靠左）；自由模式 = 预设玩家区。
+    // BuildPlayerFleetFromEconomy/RestorePlayerEconomyLineup 沿该区自动摆位，须与 ConfirmDeployment 的
+    // ValidatePlacement 校验口径一致（否则经济舰队自动摆位会落在遭遇区外，开战校验报 deploy.outside_zone）。
+    private Rect2I PlayerPlacementZone()
+        => _encounter is not null ? ToRect(_encounter.PlayerZone) : PlayerZone;
 
     // 当前海战玩家舰队对应的活动预设（仅自由模式生效；关卡/遭遇模式返回 null）。用于布阵重置时重放阵型。
     private FleetPreset? ActivePresetForCurrentFleet()
@@ -1259,7 +1301,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         if (formation is null) return false;
         if (!TryParseFacing(formation.Facing, out facing)) return false;
         bow = new GridPos(formation.X, formation.Y);
-        return FormationBowValid(bow, facing, def, placed, PlayerZone);
+        return FormationBowValid(bow, facing, def, placed, PlayerPlacementZone());
     }
 
     // 阵型船头合法性（口径与 FindSpot/ValidatePlacement 一致：区内 + 地形可通行 + 非残骸 + 与已放舰不重叠）。
@@ -1386,6 +1428,9 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     // ---- CHG-20260818：玩家舰队只读状态（headless 冒烟断言经济舰队映射闭环） ----
 
     public string PlayerShipType(string shipId) => _battle.ShipOrNull(shipId)?.Definition.Id ?? "";
+
+    // CHG-20260819（F-3）：自由模式玩家布阵区（测试钩子）——供 GDScript 冒烟断言与 ship_screen FORMATION_ZONE 同源。
+    public Rect2I PlayerZoneForTest() => PlayerPlacementZone();
     public int PlayerFleetCount() => _battle?.Ships.Values.Count(s => s.Faction == FactionId.Player && s.HitPoints > 0) ?? 0;
     public int StorePresetCount() => FleetStore().Count;
     public bool StoreHasPreset(string name) => FleetStore().Has(name);

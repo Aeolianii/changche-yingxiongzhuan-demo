@@ -296,6 +296,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             for (var y = 0; y < spec.Height; y++)
                 map.SetTerrain(new GridPos(x, y), spec.TerrainAt(x, y));
         foreach (var exit in spec.ExitCells) map.ExitCells.Add(exit);
+        map.TerrainStamps.AddRange(spec.TerrainStamps);
         return map;
     }
 
@@ -716,6 +717,110 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             if (!spec.ExitCells.Any(cell => cell.X == 0)
                 || !spec.ExitCells.Any(cell => cell.X == spec.Width - 1)) return false;
         }
+        return true;
+    }
+
+    public bool RandomTerrainStampsAreCoherent(int sampleCount = 24)
+    {
+        var generator = new RandomMapGenerator();
+        for (var seed = 0; seed < Math.Max(1, sampleCount); seed++)
+        {
+            var result = generator.Generate(new RandomMapOptions(24, 18, seed % 3 + 1, seed));
+            var repeat = generator.Generate(new RandomMapOptions(24, 18, seed % 3 + 1, seed));
+            if (result.Spec.TerrainStamps.Count != 1) return false;
+            var stamp = result.Spec.TerrainStamps[0];
+            if (!result.Spec.TerrainRows.SequenceEqual(repeat.Spec.TerrainRows)
+                || repeat.Spec.TerrainStamps.Count != 1
+                || stamp != repeat.Spec.TerrainStamps[0])
+                return false;
+            if (stamp.Id != RandomMapGenerator.RiverMouthStampId
+                || stamp.TexturePath != RandomMapGenerator.RiverMouthStampTexturePath
+                || stamp.Width != 6 || stamp.Height != 8 || stamp.QuarterTurns != 0)
+                return false;
+
+            for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+            {
+                for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
+                {
+                    var cell = new GridPos(x, y);
+                    if (!result.Spec.InBounds(cell)
+                        || result.PlayerZone.Contains(cell)
+                        || result.EnemyZone.Contains(cell)
+                        || result.Spec.IsExit(cell))
+                        return false;
+                }
+            }
+
+            // 林地源头之下，每一行都必须有河格，且最末行必须形成入海口。
+            if (!Enumerable.Range(stamp.Origin.X, stamp.Width)
+                    .Any(x => result.Spec.TerrainAt(x, stamp.Origin.Y) == TerrainType.Forest))
+                return false;
+            for (var y = stamp.Origin.Y + 1; y < stamp.Origin.Y + stamp.Height; y++)
+                if (!Enumerable.Range(stamp.Origin.X, stamp.Width)
+                        .Any(x => result.Spec.TerrainAt(x, y) == TerrainType.River))
+                    return false;
+            if (!RiverReachesStampMouth(result.Spec, stamp)
+                || RandomMapGenerator.ToBattleMap(result.Spec).TerrainStamps.Count != 1
+                || !result.Connected)
+                return false;
+        }
+        return true;
+    }
+
+    private static bool RiverReachesStampMouth(LevelMapSpec spec, TerrainVisualStamp stamp)
+    {
+        var riverCells = new HashSet<GridPos>();
+        for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+            for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
+                if (spec.TerrainAt(x, y) == TerrainType.River)
+                    riverCells.Add(new GridPos(x, y));
+        var queue = new Queue<GridPos>(riverCells.Where(cell => cell.Y == stamp.Origin.Y + 1));
+        var visited = new HashSet<GridPos>(queue);
+        while (queue.Count > 0)
+        {
+            var cell = queue.Dequeue();
+            if (cell.Y == stamp.Origin.Y + stamp.Height - 1) return true;
+            foreach (var direction in new[]
+                     {
+                         CardinalDirection.North,
+                         CardinalDirection.East,
+                         CardinalDirection.South,
+                         CardinalDirection.West,
+                     })
+            {
+                var next = cell + direction.Vector();
+                if (riverCells.Contains(next) && visited.Add(next)) queue.Enqueue(next);
+            }
+        }
+        return false;
+    }
+
+    // 聚焦首版印章的可视化测试钩子：清空舰船与布阵叠层，只保留随机海图和整张地貌素材。
+    public bool ShowRandomTerrainStampPreviewForTest(int seed)
+    {
+        if (_config is null) return false;
+        var result = new RandomMapGenerator().Generate(new RandomMapOptions(24, 18, 2, seed));
+        if (result.Spec.TerrainStamps.Count == 0) return false;
+        foreach (var child in _shipsRoot.GetChildren())
+        {
+            _shipsRoot.RemoveChild(child);
+            child.QueueFree();
+        }
+        _shipViews.Clear();
+        _battle = new BattleState
+        {
+            Map = RandomMapGenerator.ToBattleMap(result.Spec),
+            Config = _config,
+            Random = new SeedRandomSource(seed),
+        };
+        _grid.Attach(_battle);
+        _grid.ShowDeploymentZones(Array.Empty<(Rect2I Rect, Color Color)>());
+        _grid.ShowDeploymentCells(Array.Empty<GridPos>(), Colors.Transparent);
+        _grid.ClearPersistentHighlights();
+        _grid.ClearOverlay();
+        _grid.FocusCameraOnFirstTerrainStamp();
+        if (_deployHud is not null) _deployHud.Visible = false;
+        _grid.QueueRedraw();
         return true;
     }
 

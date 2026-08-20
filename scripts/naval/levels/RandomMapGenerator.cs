@@ -25,6 +25,21 @@ public sealed class RandomMapGenerator
 
     // 连通性重试上限；概率极低（特征小、布阵区清空），最终兜底仍保证可玩。
     private const int MaxAttempts = 2000;
+    public const string RiverMouthStampId = "river_mouth_island_v1";
+    public const string RiverMouthStampTexturePath = "res://assets/naval/battle/terrain_stamps/river_mouth_island_v1.png";
+    private const int RiverMouthStampWidth = 6;
+    private const int RiverMouthStampHeight = 8;
+    private static readonly string[] RiverMouthStampMask =
+    {
+        "..FF..",
+        ".FRRF.",
+        "BFRRFB",
+        "BGGRGB",
+        "BGGRGB",
+        "BGRRGB",
+        "BGRRGB",
+        "BBRRBB",
+    };
 
     // 生成随机地图：返回地图规格 + 双方布阵区。非法尺寸/难度抛 ArgumentOutOfRangeException。
     public RandomMapResult Generate(RandomMapOptions options)
@@ -53,6 +68,7 @@ public sealed class RandomMapGenerator
             for (var y = 0; y < spec.Height; y++)
                 map.SetTerrain(new GridPos(x, y), spec.TerrainAt(x, y));
         foreach (var exit in spec.ExitCells) map.ExitCells.Add(exit);
+        map.TerrainStamps.AddRange(spec.TerrainStamps);
         ExitCellRules.EnsureSafeExits(map);
         return map;
     }
@@ -140,6 +156,18 @@ public sealed class RandomMapGenerator
                && !playerZone.Contains(x, y) && !enemyZone.Contains(x, y)
                && !IsReservedExit(x, y);
 
+        // 首版地形印章：只在双方布阵区之间放置完整河口岛屿。源头、河道、河口作为一个原子布局写入，
+        // 放不下就整块跳过，绝不退化成地图中央的孤立河流散点。
+        var terrainStamps = new List<TerrainVisualStamp>();
+        TryPlaceRiverMouthStamp(
+            o,
+            rng,
+            grid,
+            playerZone,
+            enemyZone,
+            IsReservedExit,
+            terrainStamps);
+
         // 山地/岛屿簇：diff1 1-2 簇、diff2 2-3 簇、diff3 3-4 簇；每簇中心 + 0-2 随机邻居（1-3 格）。
         var clusterCount = o.Difficulty switch
         {
@@ -178,7 +206,55 @@ public sealed class RandomMapGenerator
             for (var x = 0; x < o.Width; x++) line[x] = grid[x, y];
             rows[y] = new string(line);
         }
-        return LevelMapSpec.FromAscii(rows);
+        return LevelMapSpec.FromAscii(rows).WithTerrainStamps(terrainStamps);
+    }
+
+    private static void TryPlaceRiverMouthStamp(
+        RandomMapOptions options,
+        IRandomSource rng,
+        char[,] grid,
+        GridRect playerZone,
+        GridRect enemyZone,
+        Func<int, int, bool> isReservedExit,
+        List<TerrainVisualStamp> terrainStamps)
+    {
+        var minX = playerZone.Right;
+        var maxXExclusive = enemyZone.X - RiverMouthStampWidth + 1;
+        // 上下各留至少一行深水，让深水专用舰也能绕行；小地图中央带不足时不强塞。
+        var minY = 1;
+        var maxYExclusive = options.Height - RiverMouthStampHeight;
+        if (maxXExclusive <= minX || maxYExclusive <= minY) return;
+
+        var origin = new GridPos(
+            rng.NextInt(minX, maxXExclusive),
+            rng.NextInt(minY, maxYExclusive));
+
+        for (var y = 0; y < RiverMouthStampHeight; y++)
+        {
+            for (var x = 0; x < RiverMouthStampWidth; x++)
+            {
+                var mapX = origin.X + x;
+                var mapY = origin.Y + y;
+                if (grid[mapX, mapY] != '.'
+                    || playerZone.Contains(mapX, mapY)
+                    || enemyZone.Contains(mapX, mapY)
+                    || isReservedExit(mapX, mapY))
+                    return;
+            }
+        }
+
+        for (var y = 0; y < RiverMouthStampHeight; y++)
+            for (var x = 0; x < RiverMouthStampWidth; x++)
+                if (RiverMouthStampMask[y][x] != '.')
+                    grid[origin.X + x, origin.Y + y] = RiverMouthStampMask[y][x];
+
+        terrainStamps.Add(new TerrainVisualStamp(
+            RiverMouthStampId,
+            RiverMouthStampTexturePath,
+            origin,
+            RiverMouthStampWidth,
+            RiverMouthStampHeight,
+            QuarterTurns: 0));
     }
 
     // 在可放格内随机找一个空格（至多 128 次尝试；地图填满时返回 null）。

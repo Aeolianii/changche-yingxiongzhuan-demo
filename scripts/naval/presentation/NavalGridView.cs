@@ -45,6 +45,7 @@ public partial class NavalGridView : Node2D
     private readonly List<Texture2D> _portTextures = new();
     private readonly List<Texture2D> _townTextures = new();
     private readonly List<Texture2D> _riverTextures = new();
+    private readonly Dictionary<string, Texture2D> _terrainStampTextures = new(StringComparer.Ordinal);
 
     private BattleState? _battle;
     private IGridClickReceiver? _clickReceiver;
@@ -209,6 +210,7 @@ public partial class NavalGridView : Node2D
     {
         _battle = battle;
         _fogVisible = null; // F-6：新战斗重算迷雾（StartBattle 后由 RefreshVisibility 填入可见格）
+        LoadTerrainStampTextures(battle.Map);
         ConfigureFixedCamera(battle);
         ResizeAnimatedSeaSurface(battle.Map.Width, battle.Map.Height);
         QueueRedraw();
@@ -278,6 +280,19 @@ public partial class NavalGridView : Node2D
         _cameraTween = null;
         _camera.Position = ClampCameraPosition(
             ShipCenterToWorld(focusShip.Bow, focusShip.Length, focusShip.Facing));
+        return true;
+    }
+
+    public bool FocusCameraOnFirstTerrainStamp()
+    {
+        if (_camera is null || _battle is null || _battle.Map.TerrainStamps.Count == 0) return false;
+        var stamp = _battle.Map.TerrainStamps[0];
+        var center = Origin + new Vector2(
+            (stamp.Origin.X + stamp.Width * 0.5f) * CellSize,
+            (stamp.Origin.Y + stamp.Height * 0.5f) * CellSize);
+        _cameraTween?.Kill();
+        _cameraTween = null;
+        _camera.Position = ClampCameraPosition(center);
         return true;
     }
 
@@ -619,7 +634,9 @@ public partial class NavalGridView : Node2D
             }
         }
         DrawGridJunctions(w, h);
-        // 障碍物为透明抠图，绘制在海面与网格之上；迷雾、提示与舰船仍可在其上正常叠加。
+        // 多格印章先整张绘制；覆盖矩形内不再逐格堆叠地形精灵。
+        DrawTerrainStamps(map);
+        // 其余障碍物继续使用透明单格抠图兜底；迷雾、提示与舰船仍可在其上正常叠加。
         DrawTerrainObstacles(map, w, h);
         // F-6：战争迷雾——视野外区域覆盖连续白色像素水墨雾（玩家阵营观测）。画在网格线之后、出口/射界/水雷等提示之前：
         // 出口标记（地图边界提示）与已揭示水雷（规则层揭示机制）保留叠在迷雾之上；舰船视图在独立 Node2D 上，
@@ -930,6 +947,7 @@ public partial class NavalGridView : Node2D
             for (var y = 0; y < height; y++)
             {
                 var cell = new GridPos(x, y);
+                if (map.TerrainStamps.Any(stamp => stamp.Contains(cell))) continue;
                 var rect = CellFaceRect(cell);
                 switch (map.TerrainAt(cell))
                 {
@@ -984,6 +1002,54 @@ public partial class NavalGridView : Node2D
             }
         }
     }
+
+    private void LoadTerrainStampTextures(BattleMap map)
+    {
+        foreach (var stamp in map.TerrainStamps)
+        {
+            if (_terrainStampTextures.ContainsKey(stamp.TexturePath)) continue;
+            if (ResourceLoader.Exists(stamp.TexturePath)
+                && GD.Load<Texture2D>(stamp.TexturePath) is { } texture)
+                _terrainStampTextures[stamp.TexturePath] = texture;
+            else
+                GD.PushWarning($"地形印章纹理不存在：{stamp.TexturePath}");
+        }
+    }
+
+    private void DrawTerrainStamps(BattleMap map)
+    {
+        foreach (var stamp in map.TerrainStamps)
+        {
+            if (!_terrainStampTextures.TryGetValue(stamp.TexturePath, out var texture)) continue;
+            var footprintSize = new Vector2(stamp.Width * CellSize, stamp.Height * CellSize);
+            var target = new Rect2(
+                Origin + new Vector2(stamp.Origin.X * CellSize, stamp.Origin.Y * CellSize),
+                footprintSize);
+            var quarterTurns = ((stamp.QuarterTurns % 4) + 4) % 4;
+            var tint = new Color(0.96f, 0.98f, 0.94f, 1f);
+            if (quarterTurns == 0)
+            {
+                DrawTextureRect(texture, target, false, tint);
+                continue;
+            }
+
+            // 元数据中的 Width/Height 是旋转后的占格；奇数象限绘制时交换原图目标宽高。
+            var unrotatedSize = quarterTurns % 2 == 0
+                ? footprintSize
+                : new Vector2(footprintSize.Y, footprintSize.X);
+            DrawSetTransform(target.GetCenter(), quarterTurns * Mathf.Pi * 0.5f, Vector2.One);
+            DrawTextureRect(texture, new Rect2(-unrotatedSize * 0.5f, unrotatedSize), false, tint);
+            DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
+        }
+    }
+
+    // 首版印章的 headless 验证钩子：元数据、纹理加载与覆盖格数量都可由场景测试读取。
+    public int TerrainStampCount() => _battle?.Map.TerrainStamps.Count ?? 0;
+    public int TerrainStampCoveredCellCount()
+        => _battle?.Map.TerrainStamps.Sum(stamp => stamp.Width * stamp.Height) ?? 0;
+    public bool TerrainStampTexturesReady()
+        => _battle is not null
+           && _battle.Map.TerrainStamps.All(stamp => _terrainStampTextures.ContainsKey(stamp.TexturePath));
 
     private static void LoadTerrainTextures(string kind, List<Texture2D> target)
     {

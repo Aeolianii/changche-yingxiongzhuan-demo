@@ -17,16 +17,24 @@ public sealed class LevelMapSpec
     public int Height { get; }
     public IReadOnlyList<string> TerrainRows { get; }
     public IReadOnlyList<GridPos> ExitCells { get; }
+    public IReadOnlyList<TerrainVisualStamp> TerrainStamps { get; }
 
     private readonly TerrainType[,] _terrain;
 
-    private LevelMapSpec(int width, int height, IReadOnlyList<string> rows, TerrainType[,] terrain, IReadOnlyList<GridPos> exits)
+    private LevelMapSpec(
+        int width,
+        int height,
+        IReadOnlyList<string> rows,
+        TerrainType[,] terrain,
+        IReadOnlyList<GridPos> exits,
+        IReadOnlyList<TerrainVisualStamp> terrainStamps)
     {
         Width = width;
         Height = height;
         TerrainRows = rows;
         _terrain = terrain;
         ExitCells = exits;
+        TerrainStamps = terrainStamps;
     }
 
     // 从 ASCII 地形网格解析：校验非空、每行定宽、仅含合法符号；解析失败抛 ArgumentException（附行列定位）。
@@ -67,7 +75,27 @@ public sealed class LevelMapSpec
                 if (c == 'E') exits.Add(new GridPos(x, y));
             }
         }
-        return new LevelMapSpec(width, rows.Length, rows, terrain, exits);
+        return new LevelMapSpec(width, rows.Length, rows, terrain, exits, Array.Empty<TerrainVisualStamp>());
+    }
+
+    // 在既有逻辑地形上附加整块表现素材；印章必须完整落在地图内。
+    public LevelMapSpec WithTerrainStamps(IEnumerable<TerrainVisualStamp> terrainStamps)
+    {
+        if (terrainStamps is null) throw new ArgumentNullException(nameof(terrainStamps));
+        var stamps = terrainStamps.ToArray();
+        foreach (var stamp in stamps)
+        {
+            if (string.IsNullOrWhiteSpace(stamp.Id) || string.IsNullOrWhiteSpace(stamp.TexturePath))
+                throw new ArgumentException("地形印章必须提供 Id 与 TexturePath", nameof(terrainStamps));
+            if (stamp.Width <= 0 || stamp.Height <= 0)
+                throw new ArgumentException($"地形印章 {stamp.Id} 的尺寸必须为正数", nameof(terrainStamps));
+            if (stamp.QuarterTurns is < 0 or > 3)
+                throw new ArgumentException($"地形印章 {stamp.Id} 的旋转象限须为 0-3", nameof(terrainStamps));
+            if (!InBounds(stamp.Origin)
+                || !InBounds(stamp.Origin.X + stamp.Width - 1, stamp.Origin.Y + stamp.Height - 1))
+                throw new ArgumentException($"地形印章 {stamp.Id} 超出地图边界", nameof(terrainStamps));
+        }
+        return new LevelMapSpec(Width, Height, TerrainRows, _terrain, ExitCells, stamps);
     }
 
     public bool InBounds(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;

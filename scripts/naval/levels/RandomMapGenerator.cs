@@ -25,21 +25,87 @@ public sealed class RandomMapGenerator
 
     // 连通性重试上限；概率极低（特征小、布阵区清空），最终兜底仍保证可玩。
     private const int MaxAttempts = 2000;
-    public const string RiverMouthStampId = "river_mouth_island_v1";
+    public const string RiverMouthStampId = "river_mouth_island_v2";
     public const string RiverMouthStampTexturePath = "res://assets/naval/battle/terrain_stamps/river_mouth_island_v2.png";
-    private const int RiverMouthStampWidth = 6;
-    private const int RiverMouthStampHeight = 8;
-    private static readonly string[] RiverMouthStampMask =
+    public const string ForestIslandStampId = "forest_island_v1";
+    public const string GrassSandbarStampId = "grass_sandbar_v1";
+    public const string ReefShoalStampId = "reef_shoal_v1";
+    public const string RockyIslandStampId = "rocky_island_v1";
+    public const string HarborTownStampId = "harbor_town_v1";
+    private const string TerrainStampAssetRoot = "res://assets/naval/battle/terrain_stamps/";
+
+    private sealed record TerrainStampDefinition(
+        string Id,
+        string TexturePath,
+        string[] Mask,
+        int[] QuarterTurns)
     {
-        "..FF..",
-        ".FRRF.",
-        "BFRRFB",
-        "BGGRGB",
-        "BGGRGB",
-        "BGRRGB",
-        "BGRRGB",
-        "BBRRBB",
+        public int Width => Mask[0].Length;
+        public int Height => Mask.Length;
+    }
+
+    private static readonly TerrainStampDefinition RiverMouthStamp = new(
+        RiverMouthStampId,
+        RiverMouthStampTexturePath,
+        new[]
+        {
+            "..FF..",
+            ".FRRF.",
+            "BFRRFB",
+            "BGGRGB",
+            "BGGRGB",
+            "BGRRGB",
+            "BGRRGB",
+            "BBRRBB",
+        },
+        new[] { 0 });
+
+    private static readonly TerrainStampDefinition ForestIslandStamp = new(
+        ForestIslandStampId,
+        TerrainStampAssetRoot + "forest_island_v1.png",
+        new[] { "..BB..", ".BFFB.", "BFFFFB", "BFFFFB", ".BFFB.", "..BB.." },
+        new[] { 0 });
+
+    private static readonly TerrainStampDefinition GrassSandbarStamp = new(
+        GrassSandbarStampId,
+        TerrainStampAssetRoot + "grass_sandbar_v1.png",
+        new[] { ".BBBB.", "BGGGGB", "BGGGGB", ".BBBB." },
+        new[] { 0, 2 });
+
+    private static readonly TerrainStampDefinition ReefShoalStamp = new(
+        ReefShoalStampId,
+        TerrainStampAssetRoot + "reef_shoal_v1.png",
+        new[] { ".~~~.", "~###~", ".~~~." },
+        new[] { 0, 2 });
+
+    private static readonly TerrainStampDefinition RockyIslandStamp = new(
+        RockyIslandStampId,
+        TerrainStampAssetRoot + "rocky_island_v1.png",
+        new[] { "..B..", ".B^B.", "B^^^B", ".B^B.", "..B.." },
+        new[] { 0 });
+
+    private static readonly TerrainStampDefinition HarborTownStamp = new(
+        HarborTownStampId,
+        TerrainStampAssetRoot + "harbor_town_v1.png",
+        new[] { "..BBB..", ".BTTTB.", "BTTTTTB", "BPP.PPB", "BPP.PPB", ".BB.BB." },
+        new[] { 0 });
+
+    private static readonly TerrainStampDefinition[] MainTerrainStampPool =
+    {
+        RiverMouthStamp,
+        ForestIslandStamp,
+        RockyIslandStamp,
+        HarborTownStamp,
     };
+
+    private static readonly TerrainStampDefinition[] CompanionTerrainStampPool =
+    {
+        GrassSandbarStamp,
+        ReefShoalStamp,
+    };
+
+    public static IReadOnlyList<string> TerrainStampIds { get; } =
+        MainTerrainStampPool.Concat(CompanionTerrainStampPool).Select(stamp => stamp.Id).ToArray();
 
     // 生成随机地图：返回地图规格 + 双方布阵区。非法尺寸/难度抛 ArgumentOutOfRangeException。
     public RandomMapResult Generate(RandomMapOptions options)
@@ -149,24 +215,38 @@ public sealed class RandomMapGenerator
             => x == 0 && y >= leftExitY && y < leftExitY + leftExitCount
                || x == o.Width - 1 && y >= rightExitY && y < rightExitY + rightExitCount;
 
-        // 特征可放格：界内、深水、不在布阵区，也不占用两侧双格逃跑区。
+        var terrainStamps = new List<TerrainVisualStamp>();
+
+        // 特征可放格：界内、深水、不在布阵区、出口或地形印章的完整矩形内。
         bool AllowFeature(int x, int y)
             => x >= 0 && x < o.Width && y >= 0 && y < o.Height
                && grid[x, y] == '.'
                && !playerZone.Contains(x, y) && !enemyZone.Contains(x, y)
-               && !IsReservedExit(x, y);
+               && !IsReservedExit(x, y)
+               && !terrainStamps.Any(stamp => stamp.Contains(new GridPos(x, y)));
 
-        // 首版地形印章：只在双方布阵区之间放置完整河口岛屿。源头、河道、河口作为一个原子布局写入，
-        // 放不下就整块跳过，绝不退化成地图中央的孤立河流散点。
-        var terrainStamps = new List<TerrainVisualStamp>();
-        TryPlaceRiverMouthStamp(
+        // 印章库：一枚主题主地貌 + 一枚小型伴生地貌。每枚都以完整矩形原子放置并保留一格间距，
+        // 放不下就跳过，绝不拆成失去上下文的河流、港镇或树林散点。
+        var mainStamp = MainTerrainStampPool[rng.NextInt(0, MainTerrainStampPool.Length)];
+        TryPlaceTerrainStamp(
             o,
             rng,
             grid,
             playerZone,
             enemyZone,
             IsReservedExit,
-            terrainStamps);
+            terrainStamps,
+            mainStamp);
+        var companionStamp = CompanionTerrainStampPool[rng.NextInt(0, CompanionTerrainStampPool.Length)];
+        TryPlaceTerrainStamp(
+            o,
+            rng,
+            grid,
+            playerZone,
+            enemyZone,
+            IsReservedExit,
+            terrainStamps,
+            companionStamp);
 
         // 山地/岛屿簇：diff1 1-2 簇、diff2 2-3 簇、diff3 3-4 簇；每簇中心 + 0-2 随机邻居（1-3 格）。
         var clusterCount = o.Difficulty switch
@@ -209,53 +289,80 @@ public sealed class RandomMapGenerator
         return LevelMapSpec.FromAscii(rows).WithTerrainStamps(terrainStamps);
     }
 
-    private static void TryPlaceRiverMouthStamp(
+    private static bool TryPlaceTerrainStamp(
         RandomMapOptions options,
         IRandomSource rng,
         char[,] grid,
         GridRect playerZone,
         GridRect enemyZone,
         Func<int, int, bool> isReservedExit,
-        List<TerrainVisualStamp> terrainStamps)
+        List<TerrainVisualStamp> terrainStamps,
+        TerrainStampDefinition definition)
     {
         var minX = playerZone.Right;
-        var maxXExclusive = enemyZone.X - RiverMouthStampWidth + 1;
+        var maxX = enemyZone.X - definition.Width;
         // 上下各留至少一行深水，让深水专用舰也能绕行；小地图中央带不足时不强塞。
         var minY = 1;
-        var maxYExclusive = options.Height - RiverMouthStampHeight;
-        if (maxXExclusive <= minX || maxYExclusive <= minY) return;
+        var maxY = options.Height - definition.Height - 1;
+        if (maxX < minX || maxY < minY) return false;
 
-        var origin = new GridPos(
-            rng.NextInt(minX, maxXExclusive),
-            rng.NextInt(minY, maxYExclusive));
-
-        for (var y = 0; y < RiverMouthStampHeight; y++)
+        var candidates = new List<GridPos>();
+        for (var originY = minY; originY <= maxY; originY++)
         {
-            for (var x = 0; x < RiverMouthStampWidth; x++)
+            for (var originX = minX; originX <= maxX; originX++)
             {
-                var mapX = origin.X + x;
-                var mapY = origin.Y + y;
-                if (grid[mapX, mapY] != '.'
-                    || playerZone.Contains(mapX, mapY)
-                    || enemyZone.Contains(mapX, mapY)
-                    || isReservedExit(mapX, mapY))
-                    return;
+                var origin = new GridPos(originX, originY);
+                if (terrainStamps.Any(stamp => RectanglesTouch(origin, definition.Width, definition.Height, stamp)))
+                    continue;
+                var available = true;
+                for (var y = 0; y < definition.Height && available; y++)
+                {
+                    for (var x = 0; x < definition.Width; x++)
+                    {
+                        var mapX = origin.X + x;
+                        var mapY = origin.Y + y;
+                        if (grid[mapX, mapY] != '.'
+                            || playerZone.Contains(mapX, mapY)
+                            || enemyZone.Contains(mapX, mapY)
+                            || isReservedExit(mapX, mapY))
+                        {
+                            available = false;
+                            break;
+                        }
+                    }
+                }
+                if (available) candidates.Add(origin);
             }
         }
+        if (candidates.Count == 0) return false;
 
-        for (var y = 0; y < RiverMouthStampHeight; y++)
-            for (var x = 0; x < RiverMouthStampWidth; x++)
-                if (RiverMouthStampMask[y][x] != '.')
-                    grid[origin.X + x, origin.Y + y] = RiverMouthStampMask[y][x];
+        var selectedOrigin = candidates[rng.NextInt(0, candidates.Count)];
+        var quarterTurns = definition.QuarterTurns[rng.NextInt(0, definition.QuarterTurns.Length)];
+
+        for (var y = 0; y < definition.Height; y++)
+            for (var x = 0; x < definition.Width; x++)
+                if (definition.Mask[y][x] != '.')
+                    grid[selectedOrigin.X + x, selectedOrigin.Y + y] = definition.Mask[y][x];
 
         terrainStamps.Add(new TerrainVisualStamp(
-            RiverMouthStampId,
-            RiverMouthStampTexturePath,
-            origin,
-            RiverMouthStampWidth,
-            RiverMouthStampHeight,
-            QuarterTurns: 0));
+            definition.Id,
+            definition.TexturePath,
+            selectedOrigin,
+            definition.Width,
+            definition.Height,
+            quarterTurns));
+        return true;
     }
+
+    private static bool RectanglesTouch(
+        GridPos origin,
+        int width,
+        int height,
+        TerrainVisualStamp existing)
+        => origin.X - 1 < existing.Origin.X + existing.Width
+           && origin.X + width + 1 > existing.Origin.X
+           && origin.Y - 1 < existing.Origin.Y + existing.Height
+           && origin.Y + height + 1 > existing.Origin.Y;
 
     // 在可放格内随机找一个空格（至多 128 次尝试；地图填满时返回 null）。
     private static GridPos? FindFreeCell(RandomMapOptions o, IRandomSource rng, char[,] grid, Func<int, int, bool> allow)

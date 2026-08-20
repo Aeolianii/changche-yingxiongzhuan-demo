@@ -723,49 +723,70 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     public bool RandomTerrainStampsAreCoherent(int sampleCount = 24)
     {
         var generator = new RandomMapGenerator();
+        var expectedSizes = new Dictionary<string, (int Width, int Height)>(StringComparer.Ordinal)
+        {
+            [RandomMapGenerator.RiverMouthStampId] = (6, 8),
+            [RandomMapGenerator.ForestIslandStampId] = (6, 6),
+            [RandomMapGenerator.GrassSandbarStampId] = (6, 4),
+            [RandomMapGenerator.ReefShoalStampId] = (5, 3),
+            [RandomMapGenerator.RockyIslandStampId] = (5, 5),
+            [RandomMapGenerator.HarborTownStampId] = (7, 6),
+        };
+        var seenIds = new HashSet<string>(StringComparer.Ordinal);
         for (var seed = 0; seed < Math.Max(1, sampleCount); seed++)
         {
             var result = generator.Generate(new RandomMapOptions(24, 18, seed % 3 + 1, seed));
             var repeat = generator.Generate(new RandomMapOptions(24, 18, seed % 3 + 1, seed));
-            if (result.Spec.TerrainStamps.Count != 1) return false;
-            var stamp = result.Spec.TerrainStamps[0];
-            if (!result.Spec.TerrainRows.SequenceEqual(repeat.Spec.TerrainRows)
-                || repeat.Spec.TerrainStamps.Count != 1
-                || stamp != repeat.Spec.TerrainStamps[0])
+            if (result.Spec.TerrainStamps.Count != 2
+                || repeat.Spec.TerrainStamps.Count != result.Spec.TerrainStamps.Count)
                 return false;
-            if (stamp.Id != RandomMapGenerator.RiverMouthStampId
-                || stamp.TexturePath != RandomMapGenerator.RiverMouthStampTexturePath
-                || stamp.Width != 6 || stamp.Height != 8 || stamp.QuarterTurns != 0)
+            if (!result.Spec.TerrainRows.SequenceEqual(repeat.Spec.TerrainRows)
+                || !result.Spec.TerrainStamps.SequenceEqual(repeat.Spec.TerrainStamps))
                 return false;
 
-            for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+            for (var index = 0; index < result.Spec.TerrainStamps.Count; index++)
             {
-                for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
+                var stamp = result.Spec.TerrainStamps[index];
+                if (!expectedSizes.TryGetValue(stamp.Id, out var expectedSize)
+                    || stamp.Width != expectedSize.Width || stamp.Height != expectedSize.Height
+                    || stamp.QuarterTurns is < 0 or > 3
+                    || !ResourceLoader.Exists(stamp.TexturePath))
+                    return false;
+                seenIds.Add(stamp.Id);
+                for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
                 {
-                    var cell = new GridPos(x, y);
-                    if (!result.Spec.InBounds(cell)
-                        || result.PlayerZone.Contains(cell)
-                        || result.EnemyZone.Contains(cell)
-                        || result.Spec.IsExit(cell))
-                        return false;
+                    for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
+                    {
+                        var cell = new GridPos(x, y);
+                        if (!result.Spec.InBounds(cell)
+                            || result.PlayerZone.Contains(cell)
+                            || result.EnemyZone.Contains(cell)
+                            || result.Spec.IsExit(cell))
+                            return false;
+                    }
                 }
+                if (index > 0 && StampRectanglesTouch(result.Spec.TerrainStamps[0], stamp)) return false;
             }
 
-            // 林地源头之下，每一行都必须有河格，且最末行必须形成入海口。
-            if (!Enumerable.Range(stamp.Origin.X, stamp.Width)
-                    .Any(x => result.Spec.TerrainAt(x, stamp.Origin.Y) == TerrainType.Forest))
+            var riverStamp = result.Spec.TerrainStamps.FirstOrDefault(stamp => stamp.Id == RandomMapGenerator.RiverMouthStampId);
+            if (riverStamp is not null && !RiverReachesStampMouth(result.Spec, riverStamp)) return false;
+            var harborStamp = result.Spec.TerrainStamps.FirstOrDefault(stamp => stamp.Id == RandomMapGenerator.HarborTownStampId);
+            if (harborStamp is not null
+                && (result.Spec.TerrainAt(harborStamp.Origin.X + 3, harborStamp.Origin.Y + 4) != TerrainType.DeepWater
+                    || result.Spec.TerrainAt(harborStamp.Origin.X + 3, harborStamp.Origin.Y + 5) != TerrainType.DeepWater))
                 return false;
-            for (var y = stamp.Origin.Y + 1; y < stamp.Origin.Y + stamp.Height; y++)
-                if (!Enumerable.Range(stamp.Origin.X, stamp.Width)
-                        .Any(x => result.Spec.TerrainAt(x, y) == TerrainType.River))
-                    return false;
-            if (!RiverReachesStampMouth(result.Spec, stamp)
-                || RandomMapGenerator.ToBattleMap(result.Spec).TerrainStamps.Count != 1
+            if (RandomMapGenerator.ToBattleMap(result.Spec).TerrainStamps.Count != result.Spec.TerrainStamps.Count
                 || !result.Connected)
                 return false;
         }
-        return true;
+        return RandomMapGenerator.TerrainStampIds.All(seenIds.Contains);
     }
+
+    private static bool StampRectanglesTouch(TerrainVisualStamp first, TerrainVisualStamp second)
+        => first.Origin.X - 1 < second.Origin.X + second.Width
+           && first.Origin.X + first.Width + 1 > second.Origin.X
+           && first.Origin.Y - 1 < second.Origin.Y + second.Height
+           && first.Origin.Y + first.Height + 1 > second.Origin.Y;
 
     private static bool RiverReachesStampMouth(LevelMapSpec spec, TerrainVisualStamp stamp)
     {
@@ -797,10 +818,27 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
 
     // 聚焦首版印章的可视化测试钩子：清空舰船与布阵叠层，只保留随机海图和整张地貌素材。
     public bool ShowRandomTerrainStampPreviewForTest(int seed)
+        => ShowRandomTerrainStampPreviewForTest(
+            new RandomMapGenerator().Generate(new RandomMapOptions(24, 18, 2, seed)),
+            seed,
+            focusStampId: null);
+
+    public bool ShowRandomTerrainStampKindPreviewForTest(string stampId)
     {
-        if (_config is null) return false;
-        var result = new RandomMapGenerator().Generate(new RandomMapOptions(24, 18, 2, seed));
-        if (result.Spec.TerrainStamps.Count == 0) return false;
+        if (!RandomMapGenerator.TerrainStampIds.Contains(stampId)) return false;
+        var generator = new RandomMapGenerator();
+        for (var seed = 0; seed < 512; seed++)
+        {
+            var result = generator.Generate(new RandomMapOptions(24, 18, seed % 3 + 1, seed));
+            if (result.Spec.TerrainStamps.Any(stamp => stamp.Id == stampId))
+                return ShowRandomTerrainStampPreviewForTest(result, seed, stampId);
+        }
+        return false;
+    }
+
+    private bool ShowRandomTerrainStampPreviewForTest(RandomMapResult result, int seed, string? focusStampId)
+    {
+        if (_config is null || result.Spec.TerrainStamps.Count == 0) return false;
         foreach (var child in _shipsRoot.GetChildren())
         {
             _shipsRoot.RemoveChild(child);
@@ -818,7 +856,8 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         _grid.ShowDeploymentCells(Array.Empty<GridPos>(), Colors.Transparent);
         _grid.ClearPersistentHighlights();
         _grid.ClearOverlay();
-        _grid.FocusCameraOnFirstTerrainStamp();
+        if (focusStampId is null) _grid.FocusCameraOnFirstTerrainStamp();
+        else _grid.FocusCameraOnTerrainStamp(focusStampId);
         if (_deployHud is not null) _deployHud.Visible = false;
         _grid.QueueRedraw();
         return true;

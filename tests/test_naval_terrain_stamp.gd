@@ -1,6 +1,19 @@
 extends SceneTree
 
-const PREVIEW_PATH := "res://.godot/naval_terrain_stamp_preview.png"
+const STAMP_IDS: Array[String] = [
+	"river_mouth_island_v2",
+	"forest_island_v1",
+	"grass_sandbar_v1",
+	"reef_shoal_v1",
+	"rocky_island_v1",
+	"harbor_town_v1",
+]
+const MAIN_STAMP_IDS: Array[String] = [
+	"river_mouth_island_v2",
+	"forest_island_v1",
+	"rocky_island_v1",
+	"harbor_town_v1",
+]
 
 func _fail(message: String) -> void:
 	push_error("FAIL: " + message)
@@ -21,25 +34,28 @@ func _init() -> void:
 	if deploy == null or grid == null:
 		_fail("deployment terrain preview nodes missing")
 		return
-	if not deploy.RandomTerrainStampsAreCoherent(48):
-		_fail("sampled random maps must keep one complete source-to-mouth stamp outside deployment and exit cells")
-		return
-	if not deploy.ShowRandomTerrainStampPreviewForTest(17):
-		_fail("could not build deterministic terrain stamp preview")
-		return
-	await process_frame
-	await process_frame
-	if grid.TerrainStampCount() != 1 or grid.TerrainStampCoveredCellCount() != 48:
-		_fail("6x8 terrain stamp metadata was not attached to the battle grid")
-		return
-	if not grid.TerrainStampTexturesReady():
-		_fail("terrain stamp texture was not imported and loaded")
+	if not deploy.RandomTerrainStampsAreCoherent(96):
+		_fail("sampled random maps must cover the complete non-overlapping terrain-stamp library outside deployment and exit cells")
 		return
 
-	if DisplayServer.get_name() != "headless":
-		var screenshot_error := root.get_texture().get_image().save_png(PREVIEW_PATH)
-		if screenshot_error != OK:
-			_fail("could not save terrain stamp preview")
+	for stamp_id: String in STAMP_IDS:
+		if not deploy.ShowRandomTerrainStampKindPreviewForTest(stamp_id):
+			_fail("could not build deterministic preview containing %s" % stamp_id)
 			return
-	print("PASS: naval terrain stamp generation, metadata, texture, and whole-image rendering")
+		await process_frame
+		await process_frame
+		var covered_cells: int = grid.TerrainStampCoveredCellCount()
+		if grid.TerrainStampCount() != 2 or covered_cells < 40 or covered_cells > 72:
+			_fail("main plus companion stamp metadata invalid for %s (count=%d covered=%d)" % [stamp_id, grid.TerrainStampCount(), covered_cells])
+			return
+		if not grid.TerrainStampTexturesReady():
+			_fail("terrain stamp textures were not imported and loaded for %s" % stamp_id)
+			return
+		if DisplayServer.get_name() != "headless" and stamp_id in MAIN_STAMP_IDS:
+			var preview_path := "res://.godot/naval_terrain_stamp_%s_preview.png" % stamp_id
+			var screenshot_error := root.get_texture().get_image().save_png(preview_path)
+			if screenshot_error != OK:
+				_fail("could not save terrain stamp preview for %s" % stamp_id)
+				return
+	print("PASS: complete naval terrain stamp library generation, metadata, texture, and whole-image rendering")
 	quit(0)

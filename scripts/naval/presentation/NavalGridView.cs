@@ -286,7 +286,14 @@ public partial class NavalGridView : Node2D
     public bool FocusCameraOnFirstTerrainStamp()
     {
         if (_camera is null || _battle is null || _battle.Map.TerrainStamps.Count == 0) return false;
-        var stamp = _battle.Map.TerrainStamps[0];
+        return FocusCameraOnTerrainStamp(_battle.Map.TerrainStamps[0].Id);
+    }
+
+    public bool FocusCameraOnTerrainStamp(string stampId)
+    {
+        if (_camera is null || _battle is null) return false;
+        var stamp = _battle.Map.TerrainStamps.FirstOrDefault(candidate => candidate.Id == stampId);
+        if (stamp is null) return false;
         var center = Origin + new Vector2(
             (stamp.Origin.X + stamp.Width * 0.5f) * CellSize,
             (stamp.Origin.Y + stamp.Height * 0.5f) * CellSize);

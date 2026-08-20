@@ -8,13 +8,6 @@ const STAMP_IDS: Array[String] = [
 	"rocky_island_v1",
 	"harbor_town_v1",
 ]
-const MAIN_STAMP_IDS: Array[String] = [
-	"river_mouth_island_v2",
-	"forest_island_v1",
-	"rocky_island_v1",
-	"harbor_town_v1",
-]
-
 func _fail(message: String) -> void:
 	push_error("FAIL: " + message)
 	quit(1)
@@ -51,7 +44,7 @@ func _init() -> void:
 		if not grid.TerrainStampTexturesReady():
 			_fail("terrain stamp textures were not imported and loaded for %s" % stamp_id)
 			return
-		if DisplayServer.get_name() != "headless" and stamp_id in MAIN_STAMP_IDS:
+		if DisplayServer.get_name() != "headless":
 			var preview_path := "res://.godot/naval_terrain_stamp_%s_preview.png" % stamp_id
 			var screenshot_error := root.get_texture().get_image().save_png(preview_path)
 			if screenshot_error != OK:

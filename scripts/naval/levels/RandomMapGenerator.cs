@@ -70,13 +70,13 @@ public sealed class RandomMapGenerator
         GrassSandbarStampId,
         TerrainStampAssetRoot + "grass_sandbar_v1.png",
         new[] { ".BBBB.", "BGGGGB", "BGGGGB", ".BBBB." },
-        new[] { 0, 2 });
+        new[] { 0 });
 
     private static readonly TerrainStampDefinition ReefShoalStamp = new(
         ReefShoalStampId,
         TerrainStampAssetRoot + "reef_shoal_v1.png",
         new[] { ".~~~.", "~###~", ".~~~." },
-        new[] { 0, 2 });
+        new[] { 0 });
 
     private static readonly TerrainStampDefinition RockyIslandStamp = new(
         RockyIslandStampId,

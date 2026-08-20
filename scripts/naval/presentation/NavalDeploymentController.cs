@@ -749,7 +749,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                 var stamp = result.Spec.TerrainStamps[index];
                 if (!expectedSizes.TryGetValue(stamp.Id, out var expectedSize)
                     || stamp.Width != expectedSize.Width || stamp.Height != expectedSize.Height
-                    || stamp.QuarterTurns is < 0 or > 3
+                    || stamp.QuarterTurns != 0
                     || !ResourceLoader.Exists(stamp.TexturePath))
                     return false;
                 seenIds.Add(stamp.Id);

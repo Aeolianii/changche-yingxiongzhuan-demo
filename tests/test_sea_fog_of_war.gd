@@ -73,6 +73,19 @@ func _run() -> void:
 	_expect(fog_stamp_texture != null, "Sea exploration must precompose the naval white-ink stamps into a stable world-space texture.")
 	_expect(map_fog_stamp_texture != null and map_fog_stamp_texture.get_size() == Vector2(870, 510), "Full sea map must precompose naval fog at its native 870x510 canvas size.")
 	_expect(is_equal_approx(float(fog.call("get_visual_fog_cell_world_size")), 26.0), "Sea fog presentation must use the exact naval-battle 26-pixel cell size without changing the 8-pixel reveal grid.")
+	_expect(int(fog.call("get_fog_stamp_orientation_count_for_test")) == 4, "Sea fog must use four deterministic mirrored brush orientations to break up parallel diagonal repetition.")
+	_expect(int(fog.call("get_map_fog_stamp_variant_count_for_test")) == 24, "Sea-map fog must cache all six sizes in four mirrored orientations.")
+	var matching_candidate_rows := 0
+	var candidate_count := 0
+	for candidate_y in range(16):
+		for candidate_x in range(32):
+			var is_candidate := bool(fog.call("is_fog_stamp_candidate_for_test", candidate_x, candidate_y))
+			if is_candidate:
+				candidate_count += 1
+			if candidate_y >= 4 and is_candidate == bool(fog.call("is_fog_stamp_candidate_for_test", candidate_x, candidate_y - 4)):
+				matching_candidate_rows += 1
+	_expect(candidate_count == 128, "Sea fog must place exactly one stamp candidate in each 2x2 presentation-cell block.")
+	_expect(matching_candidate_rows < 320, "Fog candidate rows must not repeat every four cells as diagonal parallel lines.")
 	_expect(visual_fog_grid_size.x > 150 and visual_fog_grid_size.y > 90, "The naval fog grid must provide many battle-scale placements instead of a few oversized cloud blocks.")
 	_expect(int(fog_stamp_stats.get("transparent_count", 0)) > 0, "Precomposed fog must retain small transparent holes that reveal the sea beneath.")
 	_expect(int(fog_stamp_stats.get("light_count", 0)) > 0 and int(fog_stamp_stats.get("dense_count", 0)) > 0, "Precomposed fog must contain both light and dense overlap regions.")

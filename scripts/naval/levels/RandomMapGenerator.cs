@@ -24,11 +24,11 @@ public sealed class RandomMapGenerator
 
     public const int FixedMapWidth = 24;
     public const int FixedMapHeight = 18;
-    public const string FjordStampId = "fjord_v1";
-    public const string ArchipelagoStampId = "archipelago_v1";
+    public const string FjordStampId = "fjord_v2";
+    public const string ArchipelagoStampId = "archipelago_v2";
     public const string SolitaryIslandStampId = "solitary_island_v1";
-    public const string PeninsulaStampId = "peninsula_v1";
-    public const string LagoonStampId = "lagoon_v1";
+    public const string PeninsulaStampId = "peninsula_arc_v2";
+    public const string LagoonStampId = "lagoon_v2";
     private const string TerrainStampAssetRoot = "res://assets/naval/battle/terrain_stamps/";
 
     private sealed record TerrainStampDefinition(
@@ -51,39 +51,41 @@ public sealed class RandomMapGenerator
 
     private static readonly TerrainStampDefinition FjordStamp = new(
         FjordStampId,
-        TerrainStampAssetRoot + "fjord_v1.png",
+        TerrainStampAssetRoot + "fjord_v2.png",
         new[]
         {
             "^^....^^",
-            "^^^..^^^",
-            "^^...^^^",
-            "^^^...^^",
             "^^....^^",
-            "^^^...^^",
             "^^....^^",
-            "^^...^^^",
             "^^....^^",
-            "^^^...^^",
             "^^....^^",
-            "^^...^^^",
-            "^^^...^^",
+            "^^....^^",
+            "^^....^^",
+            "^^....^^",
+            "^^....^^",
+            "^^....^^",
+            "^^....^^",
+            "^^....^^",
+            "^^....^^",
             "^^....^^",
         });
 
     private static readonly TerrainStampDefinition ArchipelagoStamp = new(
         ArchipelagoStampId,
-        TerrainStampAssetRoot + "archipelago_v1.png",
+        TerrainStampAssetRoot + "archipelago_v2.png",
         new[]
         {
-            "FFF...^^",
-            "FFFF..^^",
             "FFF.....",
-            "...^^GGG",
-            "...^.GGG",
+            "FFF...^^",
             "........",
-            ".^^...GG",
-            ".^^..GGG",
             ".....GGG",
+            ".....GGG",
+            "........",
+            "^^......",
+            "^^......",
+            "........",
+            "....GGGG",
+            "....GGGG",
             "........",
         });
 
@@ -104,19 +106,19 @@ public sealed class RandomMapGenerator
 
     private static readonly TerrainStampDefinition PeninsulaStamp = new(
         PeninsulaStampId,
-        TerrainStampAssetRoot + "peninsula_v1.png",
+        TerrainStampAssetRoot + "peninsula_arc_v2.png",
         new[]
         {
+            "BBBBBBBB",
+            "BBBBBBBB",
             "....BBBB",
             "....BBBB",
-            ".....BBB",
-            ".....BBB",
-            "......BB",
-            "......BB",
-            ".....BBB",
-            ".....BBB",
+            "....BBBB",
+            "....BBBB",
+            "....BBBB",
             "....BBBB",
             "...BBBBB",
+            "..BBBBBB",
             ".BBBBBBB",
             "BBBBBBBB",
             "BBBBBBBB",
@@ -124,19 +126,21 @@ public sealed class RandomMapGenerator
 
     private static readonly TerrainStampDefinition LagoonStamp = new(
         LagoonStampId,
-        TerrainStampAssetRoot + "lagoon_v1.png",
+        TerrainStampAssetRoot + "lagoon_v2.png",
         new[]
         {
-            "..BBBB..",
-            ".BB..BB.",
-            "BB....BB",
+            ".BBBBBB.",
+            "BBB..BBB",
             "BB....BB",
             "........",
             "........",
+            "........",
+            "........",
+            "........",
+            "........",
             "BB....BB",
-            "BB....BB",
-            ".BB..BB.",
-            "..BBBB..",
+            "BBB..BBB",
+            ".BBBBBB.",
         });
 
     private static readonly FixedMapTemplate[] FixedMapTemplates =
@@ -151,7 +155,7 @@ public sealed class RandomMapGenerator
             "archipelago",
             "群岛",
             ArchipelagoStamp,
-            new GridPos(8, 4),
+            new GridPos(8, 3),
             Array.Empty<TerrainDecoration>()),
         new(
             "solitary_island",
@@ -169,7 +173,7 @@ public sealed class RandomMapGenerator
             "lagoon",
             "泻湖",
             LagoonStamp,
-            new GridPos(8, 4),
+            new GridPos(8, 3),
             Array.Empty<TerrainDecoration>()),
     };
 

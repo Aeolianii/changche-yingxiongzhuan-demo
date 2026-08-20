@@ -726,18 +726,18 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         var expectedSizes = new Dictionary<string, (int Width, int Height)>(StringComparer.Ordinal)
         {
             [RandomMapGenerator.FjordStampId] = (8, 14),
-            [RandomMapGenerator.ArchipelagoStampId] = (8, 10),
+            [RandomMapGenerator.ArchipelagoStampId] = (8, 12),
             [RandomMapGenerator.SolitaryIslandStampId] = (8, 8),
             [RandomMapGenerator.PeninsulaStampId] = (8, 13),
-            [RandomMapGenerator.LagoonStampId] = (8, 10),
+            [RandomMapGenerator.LagoonStampId] = (8, 12),
         };
         var expectedOrigins = new Dictionary<string, GridPos>(StringComparer.Ordinal)
         {
             [RandomMapGenerator.FjordStampId] = new GridPos(8, 2),
-            [RandomMapGenerator.ArchipelagoStampId] = new GridPos(8, 4),
+            [RandomMapGenerator.ArchipelagoStampId] = new GridPos(8, 3),
             [RandomMapGenerator.SolitaryIslandStampId] = new GridPos(8, 5),
             [RandomMapGenerator.PeninsulaStampId] = new GridPos(8, 0),
-            [RandomMapGenerator.LagoonStampId] = new GridPos(8, 4),
+            [RandomMapGenerator.LagoonStampId] = new GridPos(8, 3),
         };
         var seenMapIds = new HashSet<string>(StringComparer.Ordinal);
         for (var seed = 0; seed < Math.Max(1, sampleCount); seed++)
@@ -784,11 +784,13 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
 
             if (mainStamp.Id == RandomMapGenerator.FjordStampId
                 && (!HasDeepWaterPathInsideStamp(result.Spec, mainStamp, vertical: true)
+                    || !EveryStampRowHasDeepWaterRun(result.Spec, mainStamp, minimumRun: 4)
                     || !CentralRowIsDeepWater(result, 1)
                     || !CentralRowIsDeepWater(result, 16)))
                 return false;
             if (mainStamp.Id == RandomMapGenerator.ArchipelagoStampId
-                && (CountLandComponents(result.Spec, mainStamp) < 4
+                && (CountLandComponents(result.Spec, mainStamp) < 5
+                    || CountFullyDeepRows(result.Spec, mainStamp) < 4
                     || !HasDeepWaterPathInsideStamp(result.Spec, mainStamp, vertical: false)))
                 return false;
             if (mainStamp.Id == RandomMapGenerator.SolitaryIslandStampId
@@ -797,12 +799,14 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                     || !CentralRowIsDeepWater(result, 13)))
                 return false;
             if (mainStamp.Id == RandomMapGenerator.PeninsulaStampId
-                && (!TerrainRules.IsLand(result.Spec.TerrainAt(mainStamp.Origin.X + 7, mainStamp.Origin.Y))
+                && (!Enumerable.Range(mainStamp.Origin.X, mainStamp.Width)
+                        .All(x => TerrainRules.IsLand(result.Spec.TerrainAt(x, mainStamp.Origin.Y)))
                     || result.Spec.TerrainAt(mainStamp.Origin.X + 1, mainStamp.Origin.Y + 5) != TerrainType.DeepWater
                     || !CentralRowIsDeepWater(result, 13)))
                 return false;
             if (mainStamp.Id == RandomMapGenerator.LagoonStampId
                 && (result.Spec.TerrainAt(mainStamp.Origin.X + 3, mainStamp.Origin.Y + 4) != TerrainType.DeepWater
+                    || LongestFullyDeepRowRun(result.Spec, mainStamp) < 6
                     || !HasDeepWaterPathInsideStamp(result.Spec, mainStamp, vertical: false)))
                 return false;
             if (RandomMapGenerator.ToBattleMap(result.Spec).TerrainStamps.Count != result.Spec.TerrainStamps.Count
@@ -815,6 +819,47 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     private static bool CentralRowIsDeepWater(RandomMapResult result, int y)
         => Enumerable.Range(result.PlayerZone.Right, result.EnemyZone.X - result.PlayerZone.Right)
             .All(x => result.Spec.TerrainAt(x, y) == TerrainType.DeepWater);
+
+    private static bool EveryStampRowHasDeepWaterRun(LevelMapSpec spec, TerrainVisualStamp stamp, int minimumRun)
+    {
+        for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+        {
+            var run = 0;
+            var longest = 0;
+            for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
+            {
+                run = spec.TerrainAt(x, y) == TerrainType.DeepWater ? run + 1 : 0;
+                longest = Math.Max(longest, run);
+            }
+            if (longest < minimumRun) return false;
+        }
+        return true;
+    }
+
+    private static int CountFullyDeepRows(LevelMapSpec spec, TerrainVisualStamp stamp)
+        => Enumerable.Range(stamp.Origin.Y, stamp.Height)
+            .Count(y => Enumerable.Range(stamp.Origin.X, stamp.Width)
+                .All(x => spec.TerrainAt(x, y) == TerrainType.DeepWater));
+
+    private static int LongestFullyDeepRowRun(LevelMapSpec spec, TerrainVisualStamp stamp)
+    {
+        var run = 0;
+        var longest = 0;
+        for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+        {
+            if (Enumerable.Range(stamp.Origin.X, stamp.Width)
+                .All(x => spec.TerrainAt(x, y) == TerrainType.DeepWater))
+            {
+                run++;
+                longest = Math.Max(longest, run);
+            }
+            else
+            {
+                run = 0;
+            }
+        }
+        return longest;
+    }
 
     private static bool HasDeepWaterPathInsideStamp(LevelMapSpec spec, TerrainVisualStamp stamp, bool vertical)
     {

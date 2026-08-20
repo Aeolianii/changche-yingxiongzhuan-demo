@@ -1,11 +1,11 @@
 extends SceneTree
 
 const FIXED_MAP_MAIN_STAMP_IDS: Array[String] = [
-	"fjord_v1",
-	"archipelago_v1",
+	"fjord_v2",
+	"archipelago_v2",
 	"solitary_island_v1",
-	"peninsula_v1",
-	"lagoon_v1",
+	"peninsula_arc_v2",
+	"lagoon_v2",
 ]
 func _fail(message: String) -> void:
 	push_error("FAIL: " + message)

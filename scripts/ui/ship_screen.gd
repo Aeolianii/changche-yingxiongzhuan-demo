@@ -1224,7 +1224,7 @@ func _build_fleet_config_page() -> void:
 	_fleet_check_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	check_inset.add_child(_fleet_check_list)
 
-	var hint := _make_label("操作：点「摆位」后选棋盘空格；点舰船可再移动，右键查看舰名/编号。右侧可旋转、退选或重置阵型。", 11, TEXT_MUTED)
+	var hint := _make_label("操作：点「摆位」后选棋盘空格；点舰船可再移动，右键查看舰名/编号。右侧可旋转、退选或重置阵型。", 12, TEXT_MUTED)
 	hint.name = "FleetCheckHint"
 	hint.position = Vector2(18, 370)
 	hint.size = Vector2(698, 30)
@@ -1271,12 +1271,12 @@ func _build_fleet_config_page() -> void:
 	rotate_button.pressed.connect(_rotate_active_block)
 	_fleet_config_page.add_child(rotate_button)
 
-	var deselect_button := _make_action_button("退选", Vector2(586, 146), Vector2(130, 34))
+	var deselect_button := _make_action_button("退选", Vector2(586, 158), Vector2(130, 34))
 	deselect_button.name = "FormationDeselect"
 	deselect_button.pressed.connect(_deselect_active_block)
 	_fleet_config_page.add_child(deselect_button)
 
-	var row_button := _make_action_button("一字排开", Vector2(586, 192), Vector2(130, 34))
+	var row_button := _make_action_button("一字排开", Vector2(586, 216), Vector2(130, 34))
 	row_button.name = "FormationDefaultRow"
 	row_button.pressed.connect(apply_default_formation)
 	_fleet_config_page.add_child(row_button)

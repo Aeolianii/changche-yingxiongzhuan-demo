@@ -37,12 +37,16 @@ func _run() -> void:
 	var rotate := fleet_panel.get_node("FormationRotate") as Button
 	var deselect := fleet_panel.get_node("FormationDeselect") as Button
 	var default_row := fleet_panel.get_node("FormationDefaultRow") as Button
+	var operation_hint := fleet_panel.get_node("FleetCheckHint") as Label
 	var preset_scroll := fleet_panel.get_node("PresetListScroll") as ScrollContainer
 	_expect(fleet_panel.position.y >= fleet_tab.position.y + fleet_tab.size.y, "舰队配置面板不应压住页签按钮")
 	_expect(fleet_panel.position.y + fleet_panel.size.y <= 800.0, "舰队配置面板应完整收入 UI 背景边框")
 	_expect(minimap.size == Vector2(320, 268), "阵型棋盘应放大为 12×10 格（实得 %s）" % [minimap.size])
 	_expect(rotate.position.x > minimap.position.x + minimap.size.x and rotate.position.y < deselect.position.y and deselect.position.y < default_row.position.y,
 		"旋转/退选/一字排开应在棋盘右侧从上到下排列")
+	_expect(deselect.position.y - (rotate.position.y + rotate.size.y) >= 24.0 and default_row.position.y - (deselect.position.y + deselect.size.y) >= 24.0,
+		"三个阵型操作按钮之间应保留至少 24px 间距")
+	_expect(operation_hint.get_theme_font_size("font_size") == 12, "操作提示字号应为 12")
 	_expect(preset_scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED and preset_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO,
 		"预设列表应竖向滚动，避免文字挤在一行并向右溢出")
 	var preview_preset := "南海远征旗舰编队预设"

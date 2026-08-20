@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://scripts/naval/presentation/NavalBattleController.cs" id="1_battle"]
 [ext_resource type="Script" path="res://scripts/naval/presentation/NavalGridView.cs" id="2_grid"]
@@ -31,6 +31,22 @@ atlas = ExtResource("10_attribute_icons")
 region = Rect2(1448, 0, 724, 724)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bar"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_status_icon"]
+content_margin_left = 3.0
+content_margin_top = 3.0
+content_margin_right = 3.0
+content_margin_bottom = 3.0
+bg_color = Color(0.055, 0.075, 0.065, 0.82)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.68, 0.56, 0.32, 0.92)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_command_connector"]
 atlas = ExtResource("13_command_connector")
@@ -421,6 +437,67 @@ stretch_mode = 5
 theme_override_font_sizes/font_size = 17
 text = "4"
 vertical_alignment = 1
+
+[node name="StatusIcons" type="HBoxContainer" parent="Battle/Hud/ShipStatusPanel"]
+visible = false
+z_index = 4
+offset_left = 238.0
+offset_top = 168.0
+offset_right = 470.0
+offset_bottom = 208.0
+theme_override_constants/separation = 7
+
+[node name="Burn" type="PanelContainer" parent="Battle/Hud/ShipStatusPanel/StatusIcons"]
+custom_minimum_size = Vector2(40, 40)
+mouse_default_cursor_shape = 2
+tooltip_text = "烧伤"
+theme_override_styles/panel = SubResource("StyleBoxFlat_status_icon")
+
+[node name="Icon" type="TextureRect" parent="Battle/Hud/ShipStatusPanel/StatusIcons/Burn"]
+layout_mode = 2
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Slow" type="PanelContainer" parent="Battle/Hud/ShipStatusPanel/StatusIcons"]
+custom_minimum_size = Vector2(40, 40)
+mouse_default_cursor_shape = 2
+tooltip_text = "减速"
+theme_override_styles/panel = SubResource("StyleBoxFlat_status_icon")
+
+[node name="Icon" type="TextureRect" parent="Battle/Hud/ShipStatusPanel/StatusIcons/Slow"]
+layout_mode = 2
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Repair" type="PanelContainer" parent="Battle/Hud/ShipStatusPanel/StatusIcons"]
+custom_minimum_size = Vector2(40, 40)
+mouse_default_cursor_shape = 2
+tooltip_text = "持续修复"
+theme_override_styles/panel = SubResource("StyleBoxFlat_status_icon")
+
+[node name="Icon" type="TextureRect" parent="Battle/Hud/ShipStatusPanel/StatusIcons/Repair"]
+layout_mode = 2
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SelfSink" type="PanelContainer" parent="Battle/Hud/ShipStatusPanel/StatusIcons"]
+custom_minimum_size = Vector2(40, 40)
+mouse_default_cursor_shape = 2
+tooltip_text = "自沉状态"
+theme_override_styles/panel = SubResource("StyleBoxFlat_status_icon")
+
+[node name="Icon" type="TextureRect" parent="Battle/Hud/ShipStatusPanel/StatusIcons/SelfSink"]
+layout_mode = 2
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ActionPanel" type="Panel" parent="Battle/Hud"]
 visible = false

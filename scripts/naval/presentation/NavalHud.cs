@@ -28,6 +28,9 @@ public partial class NavalHud : CanvasLayer
     private Panel? _shipStatusPanel;
     private TextureRect? _shipPortrait;
     private Control? _shipAttributes;
+    private HBoxContainer? _shipStatusIcons;
+    private PanelContainer? _burnStatus, _slowStatus, _repairStatus, _selfSinkStatus;
+    private TextureRect? _burnStatusIcon, _slowStatusIcon, _repairStatusIcon, _selfSinkStatusIcon;
     private Label? _shipName, _shipHpText, _shipLoadText;
     private ProgressBar? _shipHpBar, _shipLoadBar;
     private TextureRect? _armorIcon, _speedIcon, _movementIcon;
@@ -116,6 +119,15 @@ public partial class NavalHud : CanvasLayer
     private Panel ShipStatusPanel => _shipStatusPanel ??= GetNode<Panel>("ShipStatusPanel");
     private TextureRect ShipPortrait => _shipPortrait ??= GetNode<TextureRect>("ShipStatusPanel/PortraitShip");
     private Control ShipAttributes => _shipAttributes ??= GetNode<Control>("ShipStatusPanel/Attributes");
+    private HBoxContainer ShipStatusIcons => _shipStatusIcons ??= GetNode<HBoxContainer>("ShipStatusPanel/StatusIcons");
+    private PanelContainer BurnStatus => _burnStatus ??= GetNode<PanelContainer>("ShipStatusPanel/StatusIcons/Burn");
+    private PanelContainer SlowStatus => _slowStatus ??= GetNode<PanelContainer>("ShipStatusPanel/StatusIcons/Slow");
+    private PanelContainer RepairStatus => _repairStatus ??= GetNode<PanelContainer>("ShipStatusPanel/StatusIcons/Repair");
+    private PanelContainer SelfSinkStatus => _selfSinkStatus ??= GetNode<PanelContainer>("ShipStatusPanel/StatusIcons/SelfSink");
+    private TextureRect BurnStatusIcon => _burnStatusIcon ??= GetNode<TextureRect>("ShipStatusPanel/StatusIcons/Burn/Icon");
+    private TextureRect SlowStatusIcon => _slowStatusIcon ??= GetNode<TextureRect>("ShipStatusPanel/StatusIcons/Slow/Icon");
+    private TextureRect RepairStatusIcon => _repairStatusIcon ??= GetNode<TextureRect>("ShipStatusPanel/StatusIcons/Repair/Icon");
+    private TextureRect SelfSinkStatusIcon => _selfSinkStatusIcon ??= GetNode<TextureRect>("ShipStatusPanel/StatusIcons/SelfSink/Icon");
     private Label ShipName => _shipName ??= GetNode<Label>("ShipStatusPanel/ShipName");
     private ProgressBar ShipHpBar => _shipHpBar ??= GetNode<ProgressBar>("ShipStatusPanel/HpBar");
     private ProgressBar ShipLoadBar => _shipLoadBar ??= GetNode<ProgressBar>("ShipStatusPanel/LoadBar");
@@ -700,7 +712,40 @@ public partial class NavalHud : CanvasLayer
         ArmorIcon.TooltipText = $"护甲：{ship.ArmorLevel}（减免受到的伤害）";
         SpeedIcon.TooltipText = $"速度：{SpeedName(definition.SpeedCap)}（基础移动 {SpeedTable.MovePoints(definition.SpeedCap)} 点）";
         MovementIcon.TooltipText = $"剩余移动：{ship.RemainingMovement} 点";
+        RefreshStatusIcons(ship);
         _shipStatusPanelText = ShipStatusText(battle, ship);
+    }
+
+    private void RefreshStatusIcons(ShipState ship)
+    {
+        BurnStatusIcon.Texture ??= NavalStatusAssets.BurnIcon();
+        SlowStatusIcon.Texture ??= NavalStatusAssets.SlowIcon();
+        RepairStatusIcon.Texture ??= NavalStatusAssets.RepairIcon();
+        SelfSinkStatusIcon.Texture ??= NavalStatusAssets.SelfSinkIcon();
+
+        BurnStatus.Visible = ship.Burns.Count > 0;
+        SlowStatus.Visible = ship.SpeedPenalties.Count > 0;
+        RepairStatus.Visible = ship.Repairs.Count > 0;
+        SelfSinkStatus.Visible = ship.SelfSunk;
+        ShipStatusIcons.Visible = BurnStatus.Visible || SlowStatus.Visible || RepairStatus.Visible || SelfSinkStatus.Visible;
+
+        if (BurnStatus.Visible)
+        {
+            var rounds = ship.Burns.Max(b => b.RoundsLeft);
+            BurnStatus.TooltipText = $"烧伤 · 剩余 {rounds} 回合\n每次本方回合开始受到 {StatusRules.BurnDamagePerTick} 点无视护甲伤害；雨天有概率熄灭，台风下结算一次后熄灭。";
+        }
+        if (SlowStatus.Visible)
+        {
+            var rounds = string.Join("、", ship.SpeedPenalties.Select(p => p.RoundsLeft));
+            SlowStatus.TooltipText = $"减速 · {ship.SpeedPenalties.Count} 层\n每层降低 1 级速度（最低 V1），各层剩余回合：{rounds}。";
+        }
+        if (RepairStatus.Visible)
+        {
+            var ticks = string.Join("、", ship.Repairs.Select(r => r.TicksLeft));
+            RepairStatus.TooltipText = $"持续修复 · {ship.Repairs.Count} 层\n每层在本方回合开始恢复最大生命 2%；各层剩余次数：{ticks}。受到敌方伤害会中断。";
+        }
+        if (SelfSinkStatus.Visible)
+            SelfSinkStatus.TooltipText = "自沉状态\n舰船成为固定火力点，无法移动或转向，但仍可攻击。";
     }
 
     public void ShowMineStatus(Mine mine)
@@ -717,12 +762,25 @@ public partial class NavalHud : CanvasLayer
         ShipLoadBar.Visible = false;
         ShipLoadText.Visible = false;
         ShipAttributes.Visible = false;
+        ShipStatusIcons.Visible = false;
         _shipStatusPanelText = $"水雷\n生命：{mine.HitPoints}/{NavalCombat.Core.Mine.MaxHitPoints}";
     }
 
+    public int VisibleShipStatusIconCount()
+        => new[] { BurnStatus, SlowStatus, RepairStatus, SelfSinkStatus }.Count(icon => icon.Visible);
+
+    public string ShipStatusTooltip(string statusId) => statusId switch
+    {
+        "burn" => BurnStatus.TooltipText,
+        "slow" => SlowStatus.TooltipText,
+        "repair" => RepairStatus.TooltipText,
+        "self_sink" => SelfSinkStatus.TooltipText,
+        _ => "",
+    };
+
     public bool MineStatusOnly()
         => ShipStatusPanel.Visible && ShipPortrait.Visible && ShipHpBar.Visible && ShipHpText.Visible
-           && !ShipLoadBar.Visible && !ShipLoadText.Visible && !ShipAttributes.Visible;
+           && !ShipLoadBar.Visible && !ShipLoadText.Visible && !ShipAttributes.Visible && !ShipStatusIcons.Visible;
 
     public void SetTurnEnabled(bool enabled)
     {

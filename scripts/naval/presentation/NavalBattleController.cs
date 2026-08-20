@@ -463,6 +463,28 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     public string SelectedMineCell() => _selectedMineCell is { } cell ? $"{cell.X},{cell.Y}" : "";
     public bool MineStatusOnly() => _hud.MineStatusOnly();
     public bool MineTextureLoaded() => _grid.MineTextureLoaded();
+    public bool StatusAssetsLoaded() => NavalStatusAssets.AllTexturesLoaded();
+    public int VisibleShipStatusIconCount() => _hud.VisibleShipStatusIconCount();
+    public string ShipStatusTooltip(string statusId) => _hud.ShipStatusTooltip(statusId);
+    public int ShipStatusParticleKinds(string shipId)
+        => _shipViews.TryGetValue(shipId, out var view) ? view.ActiveStatusParticleKinds() : -1;
+    public bool ShipStatusParticleTexturesLoaded(string shipId)
+        => _shipViews.TryGetValue(shipId, out var view) && view.StatusParticleTexturesLoaded();
+    public bool SetShipStatusesForDemo(string shipId, int burnRounds, int slowRounds, int repairTicks, bool selfSunk)
+    {
+        var ship = _battle?.ShipOrNull(shipId);
+        if (ship is null) return false;
+        ship.Burns.Clear();
+        ship.SpeedPenalties.Clear();
+        ship.Repairs.Clear();
+        if (burnRounds > 0) ship.Burns.Add(new BurnStatus(burnRounds));
+        if (slowRounds > 0) ship.SpeedPenalties.Add(new TimedSpeedPenalty(slowRounds));
+        if (repairTicks > 0) ship.Repairs.Add(new RepairOverTime(repairTicks));
+        ship.SelfSunk = selfSunk;
+        RedrawShip(shipId);
+        if (_selectedShip == shipId) RefreshShipPanel(ship);
+        return true;
+    }
     public bool ShipWaitingHighlighted(string shipId)
         => _shipViews.TryGetValue(shipId, out var view) && view.WaitingForOrders();
     public bool ShipActedDimmed(string shipId)

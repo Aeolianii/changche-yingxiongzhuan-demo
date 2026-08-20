@@ -10,6 +10,9 @@ func _init() -> void:
 	root.add_child(demo)
 	# 延迟一帧让 _ready 执行
 	await process_frame
+	# Vulkan 实机下布阵镜头使用 Tween 聚焦；等待其完成再检查初始镜头，headless 仍保持即时断言。
+	if DisplayServer.get_name() != "headless":
+		await create_timer(0.55).timeout
 	var deploy: Node = demo.get_node_or_null("Deployment")
 	if deploy == null:
 		push_error("FAIL: Deployment node missing")
@@ -214,6 +217,36 @@ func _init() -> void:
 		push_error("FAIL: battle must reset tutorial zoom and center on player flagship (zoom=%s actual=%s expected=%s)" % [camera.zoom.x, camera.position, expected_flagship_camera])
 		quit(1)
 		return
+	# 舰船状态：生图透明纹理驱动三类动态粒子，四种状态图标统一进入左下舰况卡并提供具体 tooltip。
+	if not controller.StatusAssetsLoaded() or not controller.SetShipStatusesForDemo("p4", 3, 2, 5, true):
+		push_error("FAIL: generated ship status assets missing or preview state setup failed")
+		quit(1)
+		return
+	controller.OnShipClicked("p4")
+	if not controller.ShipStatusParticleTexturesLoaded("p4") or controller.ShipStatusParticleKinds("p4") != 3:
+		push_error("FAIL: burn/slow/repair particle textures must all drive the selected ship")
+		quit(1)
+		return
+	if controller.VisibleShipStatusIconCount() != 4:
+		push_error("FAIL: burn/slow/repair/self-sink icons must all appear in ship status panel")
+		quit(1)
+		return
+	if not controller.ShipStatusTooltip("burn").contains("50 点无视护甲") \
+			or not controller.ShipStatusTooltip("slow").contains("降低 1 级速度") \
+			or not controller.ShipStatusTooltip("repair").contains("最大生命 2%") \
+			or not controller.ShipStatusTooltip("self_sink").contains("无法移动或转向"):
+		push_error("FAIL: ship status icon tooltips must explain concrete effects")
+		quit(1)
+		return
+	if DisplayServer.get_name() != "headless":
+		await create_timer(0.55).timeout
+		var status_capture_error := root.get_texture().get_image().save_png("res://.godot/naval_ship_status_fx_preview.png")
+		if status_capture_error != OK:
+			push_error("FAIL: could not capture ship status particle preview")
+			quit(1)
+			return
+	controller.SetShipStatusesForDemo("p4", 0, 0, 0, false)
+	controller.OnRightClick()
 	# 战斗顶部两行文字试调：只增大字号与描边，不依赖背景底板。
 	var battle_status := demo.get_node_or_null("Battle/Hud/StatusLabel") as Label
 	var battle_message := demo.get_node_or_null("Battle/Hud/MessageLabel") as Label

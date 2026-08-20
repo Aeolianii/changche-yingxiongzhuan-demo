@@ -25,6 +25,10 @@ public partial class NavalShipView : Node2D
     private float _bobOffset;
     private float _wakeClock;
     private float _wakeStrength;
+    private float _statusClock;
+    private IReadOnlyList<Texture2D> _burnParticles = new List<Texture2D>();
+    private IReadOnlyList<Texture2D> _slowParticles = new List<Texture2D>();
+    private Texture2D? _repairParticle;
     private Tween? _animTween; // UX-9：位置/朝向动画（移动/转向可视化）
 
     // F-2：舰船显示名（船已移出战场后无法经 battle.Ships 取名——逃跑消息用）。
@@ -33,6 +37,13 @@ public partial class NavalShipView : Node2D
     public string HullColorHex() => _hullColor.ToHtml();
     public bool WaitingForOrders() => _waitingForOrders;
     public bool ActedThisTurn() => _actedThisTurn;
+    public int ActiveStatusParticleKinds()
+        => _ship is null ? 0
+            : (_ship.Burns.Count > 0 ? 1 : 0)
+              + (_ship.SpeedPenalties.Count > 0 ? 1 : 0)
+              + (_ship.Repairs.Count > 0 ? 1 : 0);
+    public bool StatusParticleTexturesLoaded()
+        => _burnParticles.Count > 0 && _slowParticles.Count > 0 && _repairParticle is not null;
 
     public void Setup(ShipState ship, NavalGridView grid)
     {
@@ -47,6 +58,9 @@ public partial class NavalShipView : Node2D
         _profile = ProfileFor(ship.Definition.Id);
         _spriteTexture = LoadSpriteFor(ship);
         _renderedFacing = ship.Facing;
+        _burnParticles = NavalStatusAssets.BurnParticles();
+        _slowParticles = NavalStatusAssets.SlowParticles();
+        _repairParticle = NavalStatusAssets.RepairParticle();
         _bobPhase = WavePhaseFor(ship.Id);
         Position = grid.ShipCenterToWorld(ship.Bow, ship.Length, ship.Facing);
         Rotation = _spriteTexture is null ? FacingAngle(ship.Facing) : 0f;
@@ -135,15 +149,22 @@ public partial class NavalShipView : Node2D
 
     public override void _Process(double delta)
     {
-        if (_spriteTexture is null || _ship is null) return;
+        if (_ship is null) return;
         var step = (float)delta;
+        var statusActive = HasAnimatedStatus();
+        if (statusActive) _statusClock += step;
+        if (_spriteTexture is null)
+        {
+            if (statusActive) QueueRedraw();
+            return;
+        }
         _bobClock += step;
         _wakeClock += step * (0.72f + _wakeStrength * 1.65f);
         var previousWakeStrength = _wakeStrength;
         _wakeStrength = Mathf.MoveToward(_wakeStrength, 0f, step * 0.52f);
         var nextOffset = Mathf.Sin(_bobClock * 1.65f + _bobPhase) * 0.90f
             + Mathf.Sin(_bobClock * 0.73f + _bobPhase * 0.6f) * 0.25f;
-        if (Mathf.Abs(nextOffset - _bobOffset) < 0.04f
+        if (!statusActive && Mathf.Abs(nextOffset - _bobOffset) < 0.04f
             && Mathf.Abs(previousWakeStrength - _wakeStrength) < 0.008f) return;
         _bobOffset = nextOffset;
         QueueRedraw();
@@ -159,7 +180,10 @@ public partial class NavalShipView : Node2D
     };
 
     private Color ActivityTint(Color color)
-        => _actedThisTurn ? new Color(color.Darkened(0.42f), color.A * 0.78f) : color;
+    {
+        var result = _actedThisTurn ? new Color(color.Darkened(0.42f), color.A * 0.78f) : color;
+        return ApplyBurnPulse(result);
+    }
 
     public override void _Draw()
     {
@@ -180,6 +204,7 @@ public partial class NavalShipView : Node2D
             var modulate = sunk ? new Color(0.50f, 0.54f, 0.50f, 0.78f) : Colors.White;
             if (_actedThisTurn)
                 modulate = new Color(modulate.Darkened(0.42f), modulate.A * 0.78f);
+            modulate = ApplyBurnPulse(modulate);
             DrawTextureRect(_spriteTexture, spriteRect, false, modulate);
             DrawSetTransform(Vector2.Zero);
         }
@@ -199,11 +224,8 @@ public partial class NavalShipView : Node2D
                 : new Rect2(-halfLen, -beam, _ship.Length * c, beam * 2f);
             DrawRect(outline, new Color(0.95f, 0.85f, 0.35f, 0.55f), false, 4f);
         }
-        // F-4：自沉标记（设计 15）——浸水暗带 + 船尾「沉」字徽章（锚定浅滩的下沉感）。
-        if (sunk)
-            DrawSelfSunkMarker(halfLen, beam, c);
-        // 状态图标（T13）：烧伤（火）/连锁弹减速（慢）/损管持续恢复（+）徽章挂船头侧上方
-        DrawStatusBadges(c);
+        // 状态只在舰体上显示不遮挡主体的动态粒子；状态图标统一移至左下角舰况卡。
+        DrawStatusParticles(spriteRect, c);
     }
 
     private Rect2 SpriteRect(float cell, float halfLen)
@@ -400,21 +422,6 @@ public partial class NavalShipView : Node2D
         DrawMast(halfLen, beam, c);
     }
 
-    // F-4：自沉舰视觉标记——横贯船体中线的浸水暗带（船已半沉入水）+ 船尾上方深墨圆徽「沉」字。
-    private void DrawSelfSunkMarker(float halfLen, float beam, float cell)
-    {
-        if (_ship is null) return;
-        // 浸水暗带：船体中段暗色横带（下沉到吃水线之下）。
-        DrawRect(new Rect2(-halfLen, -beam * 0.18f, _ship.Length * cell, beam * 0.36f), new Color(0.04f, 0.06f, 0.05f, 0.28f));
-        // 沉锚徽章：船尾上方深墨圆徽 + 「沉」字（与状态徽章风格统一）。
-        var center = new Vector2(-halfLen + cell * 0.10f, -beam - cell * 0.30f);
-        DrawCircle(center, 8f, new Color(0.10f, 0.12f, 0.10f, 0.92f));
-        DrawArc(center, 8f, 0f, Mathf.Tau, 20, new Color(0.30f, 0.36f, 0.30f, 0.9f), 1.5f);
-        var font = ThemeDB.FallbackFont;
-        if (font is not null)
-            DrawString(font, center + new Vector2(-4f, 5f), "沉", HorizontalAlignment.Left, -1, 11, new Color(0.88f, 0.88f, 0.84f, 1f));
-    }
-
     // ---- 伪 3D 船体各部件 ----
 
     // 船壳轮廓：从船尾到船头收尖（+X 为船头），前伸 prow 形成船首；末点=首点以闭合墨线描边。
@@ -547,32 +554,82 @@ public partial class NavalShipView : Node2D
         DrawLine(new Vector2(mastX - c * 0.30f, yard), new Vector2(mastX + c * 0.30f, yard), new Color(ink, 0.7f), 1.5f);
     }
 
-    // 状态徽章：按 ship.Burns/SpeedPenalties/Repairs 实时读取绘制；事件播放后由控制器 QueueRedraw 本视图。
-    // 说明（报告注明）：徽章画在本舰局部坐标（随朝向旋转），Demo 阶段占位图标，非屏幕恒定朝上。
-    private void DrawStatusBadges(int cell)
+    private bool HasAnimatedStatus()
+        => _ship is not null
+           && (_ship.Burns.Count > 0 || _ship.SpeedPenalties.Count > 0 || _ship.Repairs.Count > 0);
+
+    // 烧伤状态让船体在偏红与偏暗之间缓慢脉动，幅度克制，避免吞掉船体细节。
+    private Color ApplyBurnPulse(Color source)
+    {
+        if (_ship is null || _ship.Burns.Count == 0) return source;
+        var pulse = 0.5f + 0.5f * Mathf.Sin(_statusClock * 5.2f + _bobPhase);
+        var amount = 0.16f + pulse * 0.20f;
+        var redDark = new Color(0.82f, 0.20f, 0.12f, source.A);
+        return source.Lerp(redDark, amount);
+    }
+
+    private void DrawStatusParticles(Rect2 spriteRect, float cell)
     {
         if (_ship is null) return;
-        var badges = new List<(string Text, Color Color)>();
-        if (_ship.Burns.Count > 0)
-            badges.Add(("火", new Color(0.95f, 0.35f, 0.10f, 0.95f)));
-        if (_ship.SpeedPenalties.Count > 0)
-            badges.Add(("慢", new Color(0.35f, 0.70f, 0.95f, 0.95f)));
-        if (_ship.Repairs.Count > 0)
-            badges.Add(("+", new Color(0.35f, 0.85f, 0.45f, 0.95f)));
-        if (badges.Count == 0) return;
-        const float radius = 10f;
-        var n = badges.Count;
-        for (var i = 0; i < n; i++)
+        if (_ship.Burns.Count > 0 && _burnParticles.Count > 0)
+            DrawBurnParticles(spriteRect, cell);
+        if (_ship.SpeedPenalties.Count > 0 && _slowParticles.Count > 0)
+            DrawSlowParticles(spriteRect, cell);
+        if (_ship.Repairs.Count > 0 && _repairParticle is not null)
+            DrawRepairParticles(spriteRect, cell);
+    }
+
+    private void DrawBurnParticles(Rect2 rect, float cell)
+    {
+        var count = Mathf.Clamp(_ship!.Length + 2, 3, 5);
+        for (var i = 0; i < count; i++)
         {
-            var cx = (i - (n - 1) / 2f) * radius * 2.1f;
-            var cy = -cell * 0.72f;
-            var center = new Vector2(cx, cy);
-            DrawCircle(center, radius, badges[i].Color);
-            DrawArc(center, radius, 0f, Mathf.Tau, 20, new Color(0.05f, 0.08f, 0.05f, 0.6f), 1.5f);
-            var font = ThemeDB.FallbackFont;
-            if (font is not null)
-                DrawString(font, center + new Vector2(-radius * 0.42f, radius * 0.42f), badges[i].Text,
-                    HorizontalAlignment.Left, -1, 12, Colors.White);
+            var phase = _statusClock * (4.2f + i * 0.18f) + i * 1.73f + _bobPhase;
+            var pulse = 0.5f + 0.5f * Mathf.Sin(phase);
+            var width = cell * (0.18f + pulse * 0.06f);
+            var height = width * (1.15f + (i % 2) * 0.16f);
+            var x = rect.Position.X + rect.Size.X * ((i + 0.7f) / (count + 0.4f));
+            x += Mathf.Sin(phase * 0.63f) * cell * 0.06f;
+            var y = rect.Position.Y + rect.Size.Y * (0.30f + (i % 3) * 0.16f) - height * 0.5f;
+            var color = new Color(1f, 1f, 1f, 0.38f + pulse * 0.30f);
+            DrawTextureRect(_burnParticles[i % _burnParticles.Count],
+                new Rect2(new Vector2(x - width * 0.5f, y), new Vector2(width, height)), false, color);
+        }
+    }
+
+    private void DrawSlowParticles(Rect2 rect, float cell)
+    {
+        var count = Mathf.Clamp(_ship!.Length + 1, 2, 4);
+        for (var i = 0; i < count; i++)
+        {
+            var phase = _statusClock * (1.15f + i * 0.07f) + i * 1.91f + _bobPhase;
+            var travel = Mathf.PosMod(_statusClock * 0.24f + i / (float)count, 1f);
+            var width = Mathf.Min(rect.Size.X * 0.52f, cell * (0.60f + (i % 2) * 0.12f));
+            var height = width * 0.22f;
+            var x = rect.Position.X + travel * Mathf.Max(cell * 0.25f, rect.Size.X - width);
+            var y = rect.Position.Y + rect.Size.Y * (0.25f + (i % 3) * 0.24f)
+                + Mathf.Sin(phase) * cell * 0.08f;
+            var alpha = 0.18f + (0.5f + 0.5f * Mathf.Sin(phase * 1.6f)) * 0.20f;
+            DrawTextureRect(_slowParticles[i % _slowParticles.Count],
+                new Rect2(new Vector2(x, y - height * 0.5f), new Vector2(width, height)), false,
+                new Color(0.78f, 0.92f, 1f, alpha));
+        }
+    }
+
+    private void DrawRepairParticles(Rect2 rect, float cell)
+    {
+        var count = Mathf.Clamp(_ship!.Length + 2, 3, 5);
+        for (var i = 0; i < count; i++)
+        {
+            var travel = Mathf.PosMod(_statusClock * 0.34f + i * 0.21f, 1f);
+            var fade = Mathf.Sin(travel * Mathf.Pi);
+            var size = cell * (0.16f + (i % 2) * 0.04f);
+            var xFraction = (i * 0.37f + 0.18f) % 0.82f;
+            var x = rect.Position.X + rect.Size.X * xFraction;
+            var y = rect.Position.Y + travel * rect.Size.Y;
+            DrawTextureRect(_repairParticle!,
+                new Rect2(new Vector2(x - size * 0.5f, y - size * 0.5f), Vector2.One * size), false,
+                new Color(0.78f, 1f, 0.82f, 0.30f + fade * 0.40f));
         }
     }
 

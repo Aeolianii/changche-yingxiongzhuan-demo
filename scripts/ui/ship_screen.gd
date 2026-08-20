@@ -1368,8 +1368,9 @@ func _build_fleet_preset_bar() -> void:
 
 	_preset_list = VBoxContainer.new()
 	_preset_list.name = "PresetList"
-	_preset_list.custom_minimum_size = Vector2(674, 0)
-	_preset_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# 右侧主动留白，避免每行的「载入/删除」紧贴或被纵向滚动条遮住。
+	_preset_list.custom_minimum_size = Vector2(646, 0)
+	_preset_list.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_preset_list.add_theme_constant_override("separation", 4)
 	_preset_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scroll.add_child(_preset_list)
@@ -1566,7 +1567,7 @@ func _refresh_fleet_preset_list() -> void:
 func _make_preset_row(preset_name: String, ship_count: int) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.name = "PresetRow_%s" % _safe_node_name(preset_name)
-	row.custom_minimum_size = Vector2(668, 30)
+	row.custom_minimum_size = Vector2(640, 30)
 	row.add_theme_constant_override("separation", 5)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var name_label := _make_label("%s（%d艘）" % [preset_name, ship_count], 13, TEXT_LIGHT)

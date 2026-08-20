@@ -63,6 +63,8 @@ func _run() -> void:
 	var preset_list := preset_scroll.get_node("PresetList") as VBoxContainer
 	var preview_row := preset_list.get_child(0) as Control
 	_expect(preview_row.size.x <= preset_scroll.size.x, "长名预设项不应向右越出可见范围")
+	var preview_row_right := preset_list.position.x + preview_row.position.x + preview_row.size.x
+	_expect(preview_row_right <= preset_scrollbar.position.x - 24.0, "载入/删除按钮与滚动条之间应保留至少 24px 安全间距")
 	var second_row := preset_list.get_child(1) as Control
 	_expect(second_row.position.y + second_row.size.y <= preset_scroll.size.y, "列表应完整显示前两条预设")
 	_expect(preset_scrollbar.visible and preset_scrollbar.max_value > preset_scrollbar.page,

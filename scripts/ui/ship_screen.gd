@@ -1081,6 +1081,20 @@ func _style_ship_scrollbar(scrollbar: VScrollBar) -> void:
 	scrollbar.add_theme_stylebox_override("grabber_pressed", _solid_scrollbar_style(Color(0.91, 0.68, 0.28, 1.0), 56.0, 6, 6, 34, 34))
 
 
+func _style_preset_scrollbar(scrollbar: VScrollBar) -> void:
+	# 短列表使用独立的紧凑样式：18px 宽命中区 + 高对比滑块，方便鼠标直接按住拖动。
+	scrollbar.name = "PresetListScrollbar"
+	scrollbar.custom_minimum_size.x = 18.0
+	scrollbar.mouse_filter = Control.MOUSE_FILTER_STOP
+	scrollbar.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var track := _flat_style(Color(0.018, 0.034, 0.030, 0.96), Color(GOLD.r, GOLD.g, GOLD.b, 0.34), 1)
+	scrollbar.add_theme_stylebox_override("scroll", track)
+	scrollbar.add_theme_stylebox_override("scroll_focus", track)
+	scrollbar.add_theme_stylebox_override("grabber", _solid_scrollbar_style(Color(0.56, 0.58, 0.54, 1.0), 18.0, 4, 4, 2, 2))
+	scrollbar.add_theme_stylebox_override("grabber_highlight", _solid_scrollbar_style(Color(0.78, 0.66, 0.34, 1.0), 18.0, 3, 3, 2, 2))
+	scrollbar.add_theme_stylebox_override("grabber_pressed", _solid_scrollbar_style(Color(0.94, 0.76, 0.30, 1.0), 18.0, 3, 3, 2, 2))
+
+
 func _solid_scrollbar_style(background: Color, minimum_visible_height := 0.0, left_inset := 0, right_inset := 0, top_inset := 0, bottom_inset := 0) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = background
@@ -1226,8 +1240,8 @@ func _build_fleet_config_page() -> void:
 
 	var hint := _make_label("操作：点「摆位」后选棋盘空格；点舰船可再移动，右键查看舰名/编号。右侧可旋转、退选或重置阵型。", 12, TEXT_MUTED)
 	hint.name = "FleetCheckHint"
-	hint.position = Vector2(18, 370)
-	hint.size = Vector2(698, 30)
+	hint.position = Vector2(18, 364)
+	hint.size = Vector2(698, 22)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_fleet_config_page.add_child(hint)
 
@@ -1283,7 +1297,7 @@ func _build_fleet_config_page() -> void:
 
 	var separator := ColorRect.new()
 	separator.name = "FleetConfigSeparator"
-	separator.position = Vector2(18, 404)
+	separator.position = Vector2(18, 389)
 	separator.size = Vector2(716, 1)
 	separator.color = Color(GOLD.r, GOLD.g, GOLD.b, 0.38)
 	separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1299,21 +1313,21 @@ func _build_fleet_preset_bar() -> void:
 
 	_preset_status = _make_label("", 12, JADE)
 	_preset_status.name = "FleetPresetStatus"
-	_preset_status.position = Vector2(18, 408)
+	_preset_status.position = Vector2(18, 393)
 	_preset_status.size = Vector2(698, 18)
 	_preset_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_preset_panel.add_child(_preset_status)
 
 	var caption := _make_label("预设", 14, GOLD_BRIGHT)
 	caption.name = "FleetPresetCaption"
-	caption.position = Vector2(18, 430)
+	caption.position = Vector2(18, 415)
 	caption.size = Vector2(40, 28)
 	caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_preset_panel.add_child(caption)
 
 	_preset_name = LineEdit.new()
 	_preset_name.name = "PresetNameEdit"
-	_preset_name.position = Vector2(58, 430)
+	_preset_name.position = Vector2(58, 415)
 	_preset_name.size = Vector2(160, 28)
 	_preset_name.placeholder_text = "预设名"
 	_preset_name.max_length = 24
@@ -1323,19 +1337,19 @@ func _build_fleet_preset_bar() -> void:
 	_preset_name.text_submitted.connect(func(_text: String) -> void: _save_fleet_preset())
 	_preset_panel.add_child(_preset_name)
 
-	var save_button := _make_action_button("保存", Vector2(224, 430), Vector2(56, 28))
+	var save_button := _make_action_button("保存", Vector2(224, 415), Vector2(56, 28))
 	save_button.name = "PresetSave"
 	save_button.pressed.connect(_save_fleet_preset)
 	_preset_panel.add_child(save_button)
 
-	var default_button := _make_action_button("设默认", Vector2(286, 430), Vector2(88, 28))
+	var default_button := _make_action_button("设默认", Vector2(286, 415), Vector2(88, 28))
 	default_button.name = "PresetSetDefault"
 	default_button.pressed.connect(_set_default_preset)
 	_preset_panel.add_child(default_button)
 
 	_active_label = _make_label("", 12, JADE)
 	_active_label.name = "ActivePresetLabel"
-	_active_label.position = Vector2(386, 430)
+	_active_label.position = Vector2(386, 415)
 	_active_label.size = Vector2(330, 28)
 	_active_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_active_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1343,17 +1357,18 @@ func _build_fleet_preset_bar() -> void:
 
 	var scroll := ScrollContainer.new()
 	scroll.name = "PresetListScroll"
-	scroll.position = Vector2(18, 464)
-	scroll.size = Vector2(698, 52)
+	scroll.position = Vector2(18, 449)
+	scroll.size = Vector2(698, 67)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	scroll.clip_contents = true
 	_preset_panel.add_child(scroll)
+	_style_preset_scrollbar(scroll.get_v_scroll_bar())
 
 	_preset_list = VBoxContainer.new()
 	_preset_list.name = "PresetList"
-	_preset_list.custom_minimum_size = Vector2(682, 0)
+	_preset_list.custom_minimum_size = Vector2(674, 0)
 	_preset_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_preset_list.add_theme_constant_override("separation", 4)
 	_preset_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1551,7 +1566,7 @@ func _refresh_fleet_preset_list() -> void:
 func _make_preset_row(preset_name: String, ship_count: int) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.name = "PresetRow_%s" % _safe_node_name(preset_name)
-	row.custom_minimum_size = Vector2(676, 30)
+	row.custom_minimum_size = Vector2(668, 30)
 	row.add_theme_constant_override("separation", 5)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var name_label := _make_label("%s（%d艘）" % [preset_name, ship_count], 13, TEXT_LIGHT)

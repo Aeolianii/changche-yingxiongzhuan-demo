@@ -33,6 +33,8 @@ func _run() -> void:
 	# CHG-20260820：面板不压页签/不越背景框；放大棋盘；三个操作按钮在右侧竖排；预设列表改为竖向滚动。
 	var fleet_panel := screen.get_node("FleetConfigPage") as Panel
 	var fleet_tab := screen.get_node("FleetConfigTab") as Button
+	fleet_tab.pressed.emit()
+	await process_frame
 	var minimap := fleet_panel.get_node("FormationMinimap") as Control
 	var rotate := fleet_panel.get_node("FormationRotate") as Button
 	var deselect := fleet_panel.get_node("FormationDeselect") as Button
@@ -49,18 +51,32 @@ func _run() -> void:
 	_expect(operation_hint.get_theme_font_size("font_size") == 12, "操作提示字号应为 12")
 	_expect(preset_scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED and preset_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO,
 		"预设列表应竖向滚动，避免文字挤在一行并向右溢出")
-	var preview_preset := "南海远征旗舰编队预设"
-	_expect(screen.call("save_fleet_preset_for_test", preview_preset), "布局预览用长名预设应保存成功")
+	var preset_scrollbar := preset_scroll.get_v_scroll_bar()
+	_expect(preset_scroll.size.y >= 64.0, "预设列表可见高度应至少完整容纳两条预设")
+	_expect(preset_scrollbar.custom_minimum_size.x >= 18.0 and preset_scrollbar.mouse_filter == Control.MOUSE_FILTER_STOP,
+		"预设滚动条应有足够宽的鼠标拖动命中区")
+	var preview_presets := ["南海远征旗舰编队预设", "近海护航编队", "远洋火力编队"]
+	for preview_preset in preview_presets:
+		_expect(screen.call("save_fleet_preset_for_test", preview_preset), "布局预览用预设应保存成功：%s" % preview_preset)
+	await process_frame
 	await process_frame
 	var preset_list := preset_scroll.get_node("PresetList") as VBoxContainer
 	var preview_row := preset_list.get_child(0) as Control
 	_expect(preview_row.size.x <= preset_scroll.size.x, "长名预设项不应向右越出可见范围")
+	var second_row := preset_list.get_child(1) as Control
+	_expect(second_row.position.y + second_row.size.y <= preset_scroll.size.y, "列表应完整显示前两条预设")
+	_expect(preset_scrollbar.visible and preset_scrollbar.max_value > preset_scrollbar.page,
+		"三条预设时应显示可拖动的纵向滚动条（visible=%s max=%s page=%s list_h=%s）" % [preset_scrollbar.visible, preset_scrollbar.max_value, preset_scrollbar.page, preset_list.size.y])
+	preset_scrollbar.value = preset_scrollbar.max_value
+	await process_frame
+	_expect(preset_scroll.scroll_vertical > 0, "拖动预设滚动条应联动列表纵向滚动")
+	preset_scrollbar.value = 0.0
+	await process_frame
 	if DisplayServer.get_name() != "headless":
-		fleet_tab.pressed.emit()
-		await process_frame
 		var screenshot_error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
 		_expect(screenshot_error == OK, "舰队配置界面预览截图保存失败")
-	_expect(screen.call("delete_fleet_preset_for_test", preview_preset), "布局预览用预设应清理成功")
+	for preview_preset in preview_presets:
+		_expect(screen.call("delete_fleet_preset_for_test", preview_preset), "布局预览用预设应清理成功：%s" % preview_preset)
 	var deploy: Node = await _make_deploy()
 	var deploy_zone: Rect2i = deploy.PlayerZoneForTest()
 	_expect(deploy_zone == formation_zone, "海战 PlayerZone 应与小地图布阵区同源（%s vs %s）" % [deploy_zone, formation_zone])

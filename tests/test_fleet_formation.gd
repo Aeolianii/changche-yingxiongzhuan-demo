@@ -3,6 +3,7 @@ extends SceneTree
 # 覆盖：勾选出战→布阵只有勾选舰；阵型保存/载入→布阵按阵型摆位；默认预设一字排开；布阵手动调整不被预设覆盖。
 
 const PRESET_REL := "user://fleet_formation_test.json"
+const SCREENSHOT_PATH := "res://.godot/fleet_config_preview.png"
 
 var failures: Array[String] = []
 
@@ -23,13 +24,40 @@ func _run() -> void:
 	screen.fleet_preset_path_override = PRESET_REL
 	screen.call("show_screen")
 	await process_frame
-	var deploy: Node = await _make_deploy()
 
 	# ================= 阶段零（CHG-20260819 F-3）：缩小布阵区 + 舰船贴图 + 右键悬停提示 =================
 	# 布阵区缩小到 12×10（正常战斗可配置范围），与海战自由模式 PlayerZone 同源：预设阵型可落入战斗布阵区。
 	var formation_zone: Rect2i = screen.call("formation_zone_for_test")
 	_expect(formation_zone == Rect2i(1, 12, 12, 10), "小地图布阵区应为 12×10（实得 %s）" % [formation_zone])
-	_expect(int(screen.call("formation_zone_cell_size_for_test")) == 20, "小地图单格像素应为 20")
+	_expect(int(screen.call("formation_zone_cell_size_for_test")) == 26, "小地图单格像素应为 26")
+	# CHG-20260820：面板不压页签/不越背景框；放大棋盘；三个操作按钮在右侧竖排；预设列表改为竖向滚动。
+	var fleet_panel := screen.get_node("FleetConfigPage") as Panel
+	var fleet_tab := screen.get_node("FleetConfigTab") as Button
+	var minimap := fleet_panel.get_node("FormationMinimap") as Control
+	var rotate := fleet_panel.get_node("FormationRotate") as Button
+	var deselect := fleet_panel.get_node("FormationDeselect") as Button
+	var default_row := fleet_panel.get_node("FormationDefaultRow") as Button
+	var preset_scroll := fleet_panel.get_node("PresetListScroll") as ScrollContainer
+	_expect(fleet_panel.position.y >= fleet_tab.position.y + fleet_tab.size.y, "舰队配置面板不应压住页签按钮")
+	_expect(fleet_panel.position.y + fleet_panel.size.y <= 800.0, "舰队配置面板应完整收入 UI 背景边框")
+	_expect(minimap.size == Vector2(320, 268), "阵型棋盘应放大为 12×10 格（实得 %s）" % [minimap.size])
+	_expect(rotate.position.x > minimap.position.x + minimap.size.x and rotate.position.y < deselect.position.y and deselect.position.y < default_row.position.y,
+		"旋转/退选/一字排开应在棋盘右侧从上到下排列")
+	_expect(preset_scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED and preset_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO,
+		"预设列表应竖向滚动，避免文字挤在一行并向右溢出")
+	var preview_preset := "南海远征旗舰编队预设"
+	_expect(screen.call("save_fleet_preset_for_test", preview_preset), "布局预览用长名预设应保存成功")
+	await process_frame
+	var preset_list := preset_scroll.get_node("PresetList") as VBoxContainer
+	var preview_row := preset_list.get_child(0) as Control
+	_expect(preview_row.size.x <= preset_scroll.size.x, "长名预设项不应向右越出可见范围")
+	if DisplayServer.get_name() != "headless":
+		fleet_tab.pressed.emit()
+		await process_frame
+		var screenshot_error := root.get_texture().get_image().save_png(SCREENSHOT_PATH)
+		_expect(screenshot_error == OK, "舰队配置界面预览截图保存失败")
+	_expect(screen.call("delete_fleet_preset_for_test", preview_preset), "布局预览用预设应清理成功")
+	var deploy: Node = await _make_deploy()
 	var deploy_zone: Rect2i = deploy.PlayerZoneForTest()
 	_expect(deploy_zone == formation_zone, "海战 PlayerZone 应与小地图布阵区同源（%s vs %s）" % [deploy_zone, formation_zone])
 	# 经济舰队 5 舰默认阵型全部落在区内（show_screen 后全勾选 + 自动摆位）。

@@ -21,8 +21,8 @@ const FORMATION_ZONE_X := 1
 const FORMATION_ZONE_Y := 12
 const FORMATION_ZONE_W := 12
 const FORMATION_ZONE_H := 10
-# CHG-20260819（F-3）：小地图单格像素（放大让舰船贴图可读；贴图按舰脚矩形成比例绘制）。
-const FORMATION_CELL_SIZE := 20
+# CHG-20260820：小地图单格由 20px 放大到 26px，让格子与舰船贴图更容易辨认。
+const FORMATION_CELL_SIZE := 26
 # 「设默认」使用的预留预设名（默认预设 = 全舰一字排开）。
 const DEFAULT_PRESET_NAME := "默认阵型"
 # CHG-20260819（F-1 讨伐饰品）：饰品定义（与 C# FleetTreasure 宝物一一对应；economy_state.accessories 同 id）。
@@ -79,7 +79,7 @@ var _preset_panel: Panel
 var _preset_name: LineEdit
 var _preset_status: Label
 var _active_label: Label
-var _preset_list: HBoxContainer
+var _preset_list: VBoxContainer
 # 测试重定向预设文件路径（如 user:// 临时文件）；空 = 用默认 user://fleet_presets.json。
 var fleet_preset_path_override := ""
 # CHG-20260818：舰队配置页签——出战舰船勾选 + 小地图阵型编辑器 + 预设管理。
@@ -1171,9 +1171,9 @@ func _build_fleet_config_page() -> void:
 	# 预设存「出战哪些舰（Ships）+ 各舰阵型位置/朝向（Formation）」，与 C# FleetPresetStore 共用 schema。
 	_fleet_config_page = Panel.new()
 	_fleet_config_page.name = "FleetConfigPage"
-	# CHG-20260818：上移并加高，保证底部预设区块（名称/保存/默认/预设列表）完整可见（此前溢到屏幕下方）。
-	_fleet_config_page.position = Vector2(520, 250)
-	_fleet_config_page.size = Vector2(752, 640)
+	# CHG-20260820：面板完整收入右侧 UI 边框，避免上方压住三个页签、下方越出背景框。
+	_fleet_config_page.position = Vector2(520, 272)
+	_fleet_config_page.size = Vector2(752, 526)
 	_fleet_config_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fleet_config_page.add_theme_stylebox_override("panel", _flat_style(Color(0.018, 0.038, 0.034, 0.80), Color(GOLD.r, GOLD.g, GOLD.b, 0.42), 1))
 	add_child(_fleet_config_page)
@@ -1200,7 +1200,7 @@ func _build_fleet_config_page() -> void:
 	var check_scroll := ScrollContainer.new()
 	check_scroll.name = "FleetCheckScroll"
 	check_scroll.position = Vector2(18, 94)
-	check_scroll.size = Vector2(230, 300)
+	check_scroll.size = Vector2(212, 268)
 	check_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	check_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	check_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1210,7 +1210,7 @@ func _build_fleet_config_page() -> void:
 
 	var check_inset := MarginContainer.new()
 	check_inset.name = "FleetCheckInset"
-	check_inset.custom_minimum_size = Vector2(214, 0)
+	check_inset.custom_minimum_size = Vector2(198, 0)
 	check_inset.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	check_inset.add_theme_constant_override("margin_left", 6)
 	check_inset.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1218,23 +1218,23 @@ func _build_fleet_config_page() -> void:
 
 	_fleet_check_list = VBoxContainer.new()
 	_fleet_check_list.name = "FleetCheckList"
-	_fleet_check_list.custom_minimum_size = Vector2(208, 0)
+	_fleet_check_list.custom_minimum_size = Vector2(192, 0)
 	_fleet_check_list.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_fleet_check_list.add_theme_constant_override("separation", 6)
 	_fleet_check_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	check_inset.add_child(_fleet_check_list)
 
-	var hint := _make_label("点「摆位」→ 点小地图格子放置；点小地图舰块选中，再点空格移动；右键舰块查看舰名/编号；「旋转朝向」调朝向；「一字排开」重置为默认阵型（全舰横排）。", 12, TEXT_MUTED)
+	var hint := _make_label("操作：点「摆位」后选棋盘空格；点舰船可再移动，右键查看舰名/编号。右侧可旋转、退选或重置阵型。", 11, TEXT_MUTED)
 	hint.name = "FleetCheckHint"
-	hint.position = Vector2(18, 400)
-	hint.size = Vector2(230, 96)
+	hint.position = Vector2(18, 370)
+	hint.size = Vector2(698, 30)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_fleet_config_page.add_child(hint)
 
 	var minimap_caption := _make_label("初始阵型 · 玩家布阵区小地图", 15, TEXT_LIGHT)
 	minimap_caption.name = "FormationMinimapCaption"
-	minimap_caption.position = Vector2(268, 66)
-	minimap_caption.size = Vector2(280, 24)
+	minimap_caption.position = Vector2(246, 66)
+	minimap_caption.size = Vector2(320, 24)
 	_fleet_config_page.add_child(minimap_caption)
 
 	_minimap = FormationGrid.new()
@@ -1245,7 +1245,7 @@ func _build_fleet_config_page() -> void:
 	_minimap.zone_h = FORMATION_ZONE_H
 	_minimap.cell_size = FORMATION_CELL_SIZE
 	_minimap.grid_origin = Vector2(4, 4)
-	_minimap.position = Vector2(268, 94)
+	_minimap.position = Vector2(246, 94)
 	_minimap.size = Vector2(FORMATION_ZONE_W * FORMATION_CELL_SIZE + 8, FORMATION_ZONE_H * FORMATION_CELL_SIZE + 8)
 	_minimap.mouse_filter = Control.MOUSE_FILTER_STOP
 	_minimap.gui_input.connect(_on_minimap_input)
@@ -1265,24 +1265,25 @@ func _build_fleet_config_page() -> void:
 	_minimap_tooltip.z_index = 50
 	_fleet_config_page.add_child(_minimap_tooltip)
 
-	var rotate_button := _make_action_button("旋转朝向", Vector2(268, 310), Vector2(88, 28))
+	# 棋盘放大后，三个阵型操作改为右侧竖排，不再挤占棋盘下方空间。
+	var rotate_button := _make_action_button("旋转朝向", Vector2(586, 100), Vector2(130, 34))
 	rotate_button.name = "FormationRotate"
 	rotate_button.pressed.connect(_rotate_active_block)
 	_fleet_config_page.add_child(rotate_button)
 
-	var deselect_button := _make_action_button("退选", Vector2(362, 310), Vector2(58, 28))
+	var deselect_button := _make_action_button("退选", Vector2(586, 146), Vector2(130, 34))
 	deselect_button.name = "FormationDeselect"
 	deselect_button.pressed.connect(_deselect_active_block)
 	_fleet_config_page.add_child(deselect_button)
 
-	var row_button := _make_action_button("一字排开", Vector2(426, 310), Vector2(88, 28))
+	var row_button := _make_action_button("一字排开", Vector2(586, 192), Vector2(130, 34))
 	row_button.name = "FormationDefaultRow"
 	row_button.pressed.connect(apply_default_formation)
 	_fleet_config_page.add_child(row_button)
 
 	var separator := ColorRect.new()
 	separator.name = "FleetConfigSeparator"
-	separator.position = Vector2(18, 344)
+	separator.position = Vector2(18, 404)
 	separator.size = Vector2(716, 1)
 	separator.color = Color(GOLD.r, GOLD.g, GOLD.b, 0.38)
 	separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1298,22 +1299,22 @@ func _build_fleet_preset_bar() -> void:
 
 	_preset_status = _make_label("", 12, JADE)
 	_preset_status.name = "FleetPresetStatus"
-	_preset_status.position = Vector2(18, 354)
-	_preset_status.size = Vector2(716, 20)
+	_preset_status.position = Vector2(18, 408)
+	_preset_status.size = Vector2(698, 18)
 	_preset_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_preset_panel.add_child(_preset_status)
 
 	var caption := _make_label("预设", 14, GOLD_BRIGHT)
 	caption.name = "FleetPresetCaption"
-	caption.position = Vector2(18, 378)
+	caption.position = Vector2(18, 430)
 	caption.size = Vector2(40, 28)
 	caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_preset_panel.add_child(caption)
 
 	_preset_name = LineEdit.new()
 	_preset_name.name = "PresetNameEdit"
-	_preset_name.position = Vector2(58, 378)
-	_preset_name.size = Vector2(140, 28)
+	_preset_name.position = Vector2(58, 430)
+	_preset_name.size = Vector2(160, 28)
 	_preset_name.placeholder_text = "预设名"
 	_preset_name.max_length = 24
 	_preset_name.add_theme_font_size_override("font_size", 15)
@@ -1322,37 +1323,39 @@ func _build_fleet_preset_bar() -> void:
 	_preset_name.text_submitted.connect(func(_text: String) -> void: _save_fleet_preset())
 	_preset_panel.add_child(_preset_name)
 
-	var save_button := _make_action_button("保存", Vector2(202, 378), Vector2(56, 28))
+	var save_button := _make_action_button("保存", Vector2(224, 430), Vector2(56, 28))
 	save_button.name = "PresetSave"
 	save_button.pressed.connect(_save_fleet_preset)
 	_preset_panel.add_child(save_button)
 
-	var default_button := _make_action_button("设默认", Vector2(262, 378), Vector2(88, 28))
+	var default_button := _make_action_button("设默认", Vector2(286, 430), Vector2(88, 28))
 	default_button.name = "PresetSetDefault"
 	default_button.pressed.connect(_set_default_preset)
 	_preset_panel.add_child(default_button)
 
 	_active_label = _make_label("", 12, JADE)
 	_active_label.name = "ActivePresetLabel"
-	_active_label.position = Vector2(356, 378)
-	_active_label.size = Vector2(160, 28)
+	_active_label.position = Vector2(386, 430)
+	_active_label.size = Vector2(330, 28)
 	_active_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_active_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_preset_panel.add_child(_active_label)
 
 	var scroll := ScrollContainer.new()
 	scroll.name = "PresetListScroll"
-	scroll.position = Vector2(18, 414)
-	scroll.size = Vector2(716, 34)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.position = Vector2(18, 464)
+	scroll.size = Vector2(698, 52)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	scroll.clip_contents = true
 	_preset_panel.add_child(scroll)
 
-	_preset_list = HBoxContainer.new()
+	_preset_list = VBoxContainer.new()
 	_preset_list.name = "PresetList"
-	_preset_list.add_theme_constant_override("separation", 8)
+	_preset_list.custom_minimum_size = Vector2(682, 0)
+	_preset_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_preset_list.add_theme_constant_override("separation", 4)
 	_preset_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scroll.add_child(_preset_list)
 
@@ -1548,10 +1551,12 @@ func _refresh_fleet_preset_list() -> void:
 func _make_preset_row(preset_name: String, ship_count: int) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.name = "PresetRow_%s" % _safe_node_name(preset_name)
+	row.custom_minimum_size = Vector2(676, 30)
 	row.add_theme_constant_override("separation", 5)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var name_label := _make_label("%s（%d艘）" % [preset_name, ship_count], 13, TEXT_LIGHT)
 	name_label.custom_minimum_size = Vector2(150, 30)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(name_label)
 	var load_button := _make_action_button("载入", Vector2.ZERO, Vector2(52, 28))
@@ -1636,7 +1641,7 @@ func _rebuild_fleet_check_list() -> void:
 	_fleet_place_buttons.clear()
 	if _ships.is_empty():
 		var empty := _make_label("当前没有可用舰船", 15, TEXT_MUTED)
-		empty.custom_minimum_size = Vector2(208, 60)
+		empty.custom_minimum_size = Vector2(192, 60)
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_fleet_check_list.add_child(empty)
 		return
@@ -1645,7 +1650,7 @@ func _rebuild_fleet_check_list() -> void:
 		var definition := CATALOG.ship(str(ship.get("type_id", "")))
 		var row := HBoxContainer.new()
 		row.name = "FleetCheck_%s" % _safe_node_name(ship_id)
-		row.custom_minimum_size = Vector2(206, 28)
+		row.custom_minimum_size = Vector2(192, 28)
 		row.add_theme_constant_override("separation", 4)
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_fleet_check_list.add_child(row)

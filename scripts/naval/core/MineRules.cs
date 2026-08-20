@@ -9,7 +9,7 @@ namespace NavalCombat.Core;
 // 同一格至多一颗雷（BattleMap.Mines 以 GridPos 为键），故以格为唯一身份。
 public sealed class Mine
 {
-    public const int MaxHitPoints = 300;
+    public const int MaxHitPoints = 100;
     public GridPos Cell { get; set; }
     public int HitPoints { get; set; } = MaxHitPoints;
     public int ArmorLevel { get; set; } = 1;

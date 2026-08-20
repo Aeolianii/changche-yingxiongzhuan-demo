@@ -185,7 +185,7 @@ func _init() -> void:
 		push_error("FAIL: generated naval mine texture not loaded")
 		quit(1)
 		return
-	if not controller.PlaceRevealedMineForDemo(18, 8, 300):
+	if not controller.PlaceRevealedMineForDemo(18, 8, 100):
 		push_error("FAIL: could not place revealed mine for UI smoke test")
 		quit(1)
 		return
@@ -195,7 +195,7 @@ func _init() -> void:
 		push_error("FAIL: clicking revealed mine must show HP-only status panel")
 		quit(1)
 		return
-	if controller.ShipStatusPanelText() != "水雷\n生命：300/300":
+	if controller.ShipStatusPanelText() != "水雷\n生命：100/100":
 		push_error("FAIL: mine status panel text wrong: %s" % controller.ShipStatusPanelText())
 		quit(1)
 		return

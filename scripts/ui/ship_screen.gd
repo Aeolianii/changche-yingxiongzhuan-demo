@@ -593,12 +593,13 @@ func _build_equipment_page() -> void:
 
 	_equipment_loadout_page = Control.new()
 	_equipment_loadout_page.name = "EquipmentLoadoutPage"
-	_equipment_loadout_page.position = Vector2(0, 118)
-	_equipment_loadout_page.size = Vector2(752, 370)
+	_equipment_loadout_page.position = Vector2(0, 132)
+	_equipment_loadout_page.size = Vector2(752, 356)
 	_equipment_loadout_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_equipment_page.add_child(_equipment_loadout_page)
 
 	var weapon_title := _make_label("武器配置", 18, GOLD_BRIGHT)
+	weapon_title.name = "WeaponSectionTitle"
 	weapon_title.position = Vector2(18, 0)
 	weapon_title.size = Vector2(200, 28)
 	_equipment_loadout_page.add_child(weapon_title)
@@ -612,12 +613,13 @@ func _build_equipment_page() -> void:
 		weapon_grid.add_child(_make_equipment_card("weapons", str(definition["Id"]), str(definition["DisplayName"]), "负载 %d" % int(definition.get("LoadCost", 0)), 232.0))
 
 	var skill_title := _make_label("战术技能", 18, GOLD_BRIGHT)
-	skill_title.position = Vector2(18, 150)
+	skill_title.name = "SkillSectionTitle"
+	skill_title.position = Vector2(18, 170)
 	skill_title.size = Vector2(200, 28)
 	_equipment_loadout_page.add_child(skill_title)
 	var skill_grid := HBoxContainer.new()
 	skill_grid.name = "SkillGrid"
-	skill_grid.position = Vector2(18, 182)
+	skill_grid.position = Vector2(18, 202)
 	skill_grid.size = Vector2(716, 104)
 	skill_grid.add_theme_constant_override("separation", 8)
 	_equipment_loadout_page.add_child(skill_grid)
@@ -626,12 +628,13 @@ func _build_equipment_page() -> void:
 
 	_equipment_defense_page = Control.new()
 	_equipment_defense_page.name = "EquipmentDefensePage"
-	_equipment_defense_page.position = Vector2(0, 118)
-	_equipment_defense_page.size = Vector2(752, 370)
+	_equipment_defense_page.position = Vector2(0, 132)
+	_equipment_defense_page.size = Vector2(752, 356)
 	_equipment_defense_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_equipment_page.add_child(_equipment_defense_page)
 
 	var armor_title := _make_label("护甲整备", 18, GOLD_BRIGHT)
+	armor_title.name = "ArmorSectionTitle"
 	armor_title.position = Vector2(18, 0)
 	armor_title.size = Vector2(200, 28)
 	_equipment_defense_page.add_child(armor_title)
@@ -648,12 +651,13 @@ func _build_equipment_page() -> void:
 
 	# CHG-20260819（F-1 讨伐饰品）：饰品整备区块——已获饰品三张卡（装备/卸下按钮 + 状态）。
 	var accessory_title := _make_label("饰品整备", 18, GOLD_BRIGHT)
-	accessory_title.position = Vector2(18, 154)
+	accessory_title.name = "AccessorySectionTitle"
+	accessory_title.position = Vector2(18, 176)
 	accessory_title.size = Vector2(200, 28)
 	_equipment_defense_page.add_child(accessory_title)
 	var accessory_row := HBoxContainer.new()
 	accessory_row.name = "AccessoryRow"
-	accessory_row.position = Vector2(18, 186)
+	accessory_row.position = Vector2(18, 208)
 	accessory_row.size = Vector2(716, 74)
 	accessory_row.add_theme_constant_override("separation", 10)
 	_equipment_defense_page.add_child(accessory_row)
@@ -663,7 +667,7 @@ func _build_equipment_page() -> void:
 
 	_accessory_status = _make_label("", 14, JADE)
 	_accessory_status.name = "AccessoryStatus"
-	_accessory_status.position = Vector2(18, 270)
+	_accessory_status.position = Vector2(18, 296)
 	_accessory_status.size = Vector2(710, 20)
 	_accessory_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_equipment_defense_page.add_child(_accessory_status)

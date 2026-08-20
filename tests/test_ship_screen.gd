@@ -108,6 +108,12 @@ func _run() -> void:
 	_expect(loadout_page.visible and not defense_page.visible, "Equipment page must open on the weapon and skill subpage.")
 	for section_tab in [equipment_page.get_node("EquipmentLoadoutTab"), equipment_page.get_node("EquipmentDefenseTab")]:
 		_expect((section_tab as Button).get_theme_stylebox("normal") is StyleBoxFlat, "Equipment subpage tabs must use flat gold borders without image assets.")
+	var loadout_tab := equipment_page.get_node("EquipmentLoadoutTab") as Button
+	var weapon_title := loadout_page.get_node("WeaponSectionTitle") as Label
+	var weapon_grid := loadout_page.get_node("WeaponGrid") as HBoxContainer
+	var skill_title := loadout_page.get_node("SkillSectionTitle") as Label
+	_expect(loadout_page.position.y + weapon_title.position.y - (loadout_tab.position.y + loadout_tab.size.y) >= 20.0, "Weapon and skill tab must have breathing room before the first section title.")
+	_expect(skill_title.position.y - (weapon_grid.position.y + weapon_grid.size.y) >= 34.0, "Weapon configuration and tactical skills sections must have a clear vertical gap.")
 	_expect(loadout_page.get_node("WeaponGrid").get_child_count() == 3 and loadout_page.get_node("SkillGrid").get_child_count() == 4, "Equipment page must reuse every weapon and skill from naval battle configuration.")
 	var ram_plus := loadout_page.get_node("WeaponGrid/Weapon_ram/Content/Plus") as Button
 	_expect(ram_plus.get_theme_stylebox("normal") is StyleBoxFlat, "Compact equipment controls must keep their fitted flat button style.")
@@ -122,6 +128,13 @@ func _run() -> void:
 	(equipment_page.get_node("EquipmentDefenseTab") as Button).pressed.emit()
 	await process_frame
 	_expect(not loadout_page.visible and defense_page.visible, "Armor and accessories must be isolated on the second equipment subpage.")
+	var defense_tab := equipment_page.get_node("EquipmentDefenseTab") as Button
+	var armor_title := defense_page.get_node("ArmorSectionTitle") as Label
+	var armor_row := defense_page.get_node("ArmorRow") as HBoxContainer
+	var accessory_title := defense_page.get_node("AccessorySectionTitle") as Label
+	_expect(defense_page.position.y + armor_title.position.y - (defense_tab.position.y + defense_tab.size.y) >= 20.0, "Armor and accessories tab must have breathing room before the first section title.")
+	var armor_accessory_gap := accessory_title.position.y - (armor_row.position.y + armor_row.size.y)
+	_expect(armor_accessory_gap >= 42.0, "Armor and accessories sections must have a clear vertical gap (got %s)." % armor_accessory_gap)
 	var armor_content := defense_page.get_node("ArmorRow/Armor_armor/Content") as Control
 	var armor_subtitle := armor_content.get_child(1) as Label
 	var armor_minus := armor_content.get_node("Minus") as Button

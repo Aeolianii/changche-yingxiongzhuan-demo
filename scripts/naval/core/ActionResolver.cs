@@ -41,11 +41,70 @@ public static class ActionResolver
             AcceptSurrenderCommand accept => SurrenderRules.ResolveAccept(battle, accept),
             RejectSurrenderCommand => SurrenderRules.ResolveReject(battle),
             EndFactionTurnCommand => EndTurn(battle),
+            // CHG（海怪 Boss 战）：海怪01 触手与移动命令。
+            TentacleStrikeCommand tentacle => Tentacle(battle, tentacle),
+            MonsterDeclareMoveCommand monsterDeclare => MonsterDeclare(battle, monsterDeclare),
+            MonsterMoveCommand monsterMove => MonsterMove(battle, monsterMove),
+            FishChargeCommand fishCharge => FishCharge(battle, fishCharge),
+            FishLeapMoveCommand fishLeap => FishLeap(battle, fishLeap),
             _ => ActionResult.Rejected("action.unsupported")
         };
         // Task 14：每条成功命令结算后统一处理 逃跑/残骸/终局（设计 15/16.1）。
         // 挂在 ActionResolver 单一出口：覆盖任意沉没/移除路径（范围攻击/撞击/接舷/烧伤/水雷爆炸/逃脱/俘获）。
         return BattleEndRules.SettleAfterCommand(battle, result);
+    }
+
+    // —— 海怪01 命令（Task 4，设计 sea-monster-boss）——
+    private static ActionResult Tentacle(BattleState battle, TentacleStrikeCommand cmd)
+    {
+        var ship = OwnedShip(battle, cmd.ShipId);
+        if (ship is null) return ActionResult.Rejected("action.unknown_ship");
+        var reason = SeaMonsterRules.ValidateTentacleStrike(battle, cmd);
+        if (reason is not null) return ActionResult.Rejected(reason);
+        var events = SeaMonsterRules.ResolveTentacleStrike(battle, cmd);
+        ship.HasAttacked = true;
+        return ActionResult.Ok(events);
+    }
+    // 移动预告：免费动作，不置 HasAttacked（海怪回合内可先触手、再预告）。
+    private static ActionResult MonsterDeclare(BattleState battle, MonsterDeclareMoveCommand cmd)
+    {
+        var ship = OwnedShip(battle, cmd.ShipId);
+        if (ship is null) return ActionResult.Rejected("action.unknown_ship");
+        var reason = SeaMonsterRules.ValidateDeclareMove(battle, cmd);
+        if (reason is not null) return ActionResult.Rejected(reason);
+        return ActionResult.Ok(SeaMonsterRules.ResolveDeclareMove(battle, cmd));
+    }
+    private static ActionResult MonsterMove(BattleState battle, MonsterMoveCommand cmd)
+    {
+        var ship = OwnedShip(battle, cmd.ShipId);
+        if (ship is null) return ActionResult.Rejected("action.unknown_ship");
+        var reason = SeaMonsterRules.ValidateMonsterMove(battle, cmd);
+        if (reason is not null) return ActionResult.Rejected(reason);
+        var events = SeaMonsterRules.ResolveMonsterMove(battle, cmd);
+        ship.HasAttacked = true;
+        return ActionResult.Ok(events);
+    }
+
+    // —— 海怪02 命令（Task 6，设计 sea-monster-boss）——
+    private static ActionResult FishCharge(BattleState battle, FishChargeCommand cmd)
+    {
+        var ship = OwnedShip(battle, cmd.ShipId);
+        if (ship is null) return ActionResult.Rejected("action.unknown_ship");
+        var reason = FishSchoolRules.ValidateCharge(battle, cmd);
+        if (reason is not null) return ActionResult.Rejected(reason);
+        var events = FishSchoolRules.ResolveCharge(battle, cmd);
+        ship.HasAttacked = true;
+        return ActionResult.Ok(events);
+    }
+    private static ActionResult FishLeap(BattleState battle, FishLeapMoveCommand cmd)
+    {
+        var ship = OwnedShip(battle, cmd.ShipId);
+        if (ship is null) return ActionResult.Rejected("action.unknown_ship");
+        var reason = FishSchoolRules.ValidateLeap(battle, cmd);
+        if (reason is not null) return ActionResult.Rejected(reason);
+        var events = FishSchoolRules.ResolveLeap(battle, cmd);
+        ship.HasAttacked = true;
+        return ActionResult.Ok(events);
     }
 
     private static ActionResult Move(BattleState battle, MoveCommand command)
@@ -221,6 +280,11 @@ public static class ActionResolver
         if (battle.CurrentFaction == FactionId.Player)
         {
             battle.Round += 1;
+            // CHG（海怪 Boss 战）：海怪冷却减 1 + 鱼群回合计数。
+            SeaMonsterRules.ProcessTurnStart(battle);
+            // 海怪02：敌方回合结束（CurrentFaction 翻转为 Player）触发猎杀循环推进 + 冲撞/飞越标记清零，
+            // 与 SeaMonsterRules.ProcessTurnStart 同一边界挂接（评审 Important-3：此前注释声明挂接但未实际接线）。
+            FishSchoolRules.ProcessTurnStart(battle);
             // F-1：完整回合边界（双方各行动一轮）→ 台风回合末伤害（设计 6）。晴天/阴/雨为空操作。
             WeatherRules.TyphoonRoundEnd(battle);
             foreach (var s in battle.Ships.Values)
@@ -276,9 +340,7 @@ public static class ActionResolver
             {
                 var next = pos + d.Vector();
                 if (!seen.Add(next)) continue;
-                var footprint = Enumerable.Range(0, ship.Length)
-                    .Select(i => next - ship.Facing.Vector() * i)
-                    .ToList();
+                var footprint = ShipGeometry.Footprint(ship.Definition, next, ship.Facing);
                 if (!MovementRules.FootprintValid(battle, footprint, ship)) continue;
                 result.Add(next);
                 queue.Enqueue((next, left - 1));

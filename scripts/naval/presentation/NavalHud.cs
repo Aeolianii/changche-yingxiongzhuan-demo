@@ -50,6 +50,7 @@ public partial class NavalHud : CanvasLayer
     private Label? _resultLabel;
     private Button? _btnNewGame;
     private Button? _btnReroll; // U-2c：随机遭遇「重掷换一场」按钮（仅结算面板出现）
+    private Button? _btnReturnToSea; // CHG-20260817：海盗战「返回海上大地图」按钮（仅结算面板出现）
     // F-3：投降交涉面板（顶栏下方独立面板）——接受/拒绝敌方劝降 + 我方发起劝降。
     private Panel? _surrenderPanel;
     private Texture2D? _surrenderBrushTexture;
@@ -128,6 +129,7 @@ public partial class NavalHud : CanvasLayer
     private Label ResultLabel => _resultLabel ??= GetNode<Label>("ResultPanel/ResultLabel");
     private Button NewGameButton => _btnNewGame ??= GetNode<Button>("ResultPanel/NewGameButton");
     private Button RerollButton => _btnReroll ??= GetNode<Button>("ResultPanel/RerollButton"); // U-2c：重掷换一场
+    private Button ReturnToSeaButton => _btnReturnToSea ??= GetNode<Button>("ResultPanel/ReturnToSeaButton"); // CHG-20260817：海盗战返回海上大地图
     private Label StatusLabel => _statusLabel ??= GetNode<Label>("StatusLabel");
     private Label MessageLabel => _messageLabel ??= GetNode<Label>("MessageLabel");
     private Panel TurnBanner => _turnBanner ??= GetNode<Panel>("TurnBanner");
@@ -179,6 +181,17 @@ public partial class NavalHud : CanvasLayer
     public override void _Ready()
     {
         var controller = GetNode<NavalBattleController>("../BattleController");
+        // 调试：一键胜利/一键逃跑（测试用，常驻右上角，不属指令台）。
+        var debugActions = new HBoxContainer
+        {
+            Name = "DebugActions",
+            AnchorLeft = 1f, AnchorRight = 1f, AnchorTop = 0f, AnchorBottom = 0f,
+            OffsetLeft = -200, OffsetTop = 68, OffsetRight = -16, OffsetBottom = 100,
+            GrowHorizontal = Control.GrowDirection.Begin,
+        };
+        debugActions.AddChild(MakeDebugButton("一键胜利", () => controller.OnAction("debug_win")));
+        debugActions.AddChild(MakeDebugButton("一键逃跑", () => controller.OnAction("debug_flee")));
+        AddChild(debugActions);
         AttackTab.Pressed += OnAttackTabPressed;
         TurnTab.Pressed += () => SetCommandCategory(false);
         TurnLeft.Pressed += () => controller.OnAction("turn_left");
@@ -198,6 +211,7 @@ public partial class NavalHud : CanvasLayer
         EndTurnButton.Pressed += () => controller.OnAction("end_turn"); // V-5：整体结束回合 = 主要结束方式
         NewGameButton.Pressed += () => controller.OnAction("new_game");
         RerollButton.Pressed += () => controller.OnAction("reroll_encounter"); // U-2c：随机遭遇重掷
+        ReturnToSeaButton.Pressed += () => controller.OnAction("return_to_sea"); // CHG-20260817：海盗战返回海上大地图
         SelfSinkButton.Pressed += () => controller.OnAction("self_sink"); // F-7b：战斗内浅滩自沉
         // F-3：投降交涉面板三按钮 → 控制器分发（接受/拒绝敌方劝降、我方发起劝降）。
         AcceptSurrenderButton.Pressed += () => controller.OnAction("accept_surrender");
@@ -235,6 +249,16 @@ public partial class NavalHud : CanvasLayer
         // U-1：非交互面板底板不挡地图点击——递归置 mouse_filter=Ignore（按钮/tooltip 热区保留）。
         InkWashTheme.MakeClickTransparent(ActionPanel);
         InkWashTheme.MakeClickTransparent(ShipStatusPanel);
+    }
+
+    // 调试按钮构造（Task D）：水墨按钮样式 + 禁用焦点（同 StylePanelButton），点击回调转发控制器 OnAction。
+    private Button MakeDebugButton(string text, Action onClick)
+    {
+        var b = new Button { Text = text, CustomMinimumSize = new Vector2(88, 32) };
+        InkWashTheme.StyleHudButton(b);
+        b.FocusMode = Control.FocusModeEnum.None;
+        b.Pressed += () => onClick();
+        return b;
     }
 
     // ---- 水墨纸卡片主题（UX-4）：面板/按钮/文字全部走 InkWashTheme 色板 + 系统楷体 ----
@@ -305,6 +329,7 @@ public partial class NavalHud : CanvasLayer
         foreach (var node in DeliveryPanel.FindChildren("*", "Button", true, false))
             if (node is Button b) StylePanelButton(b);
         StylePanelButton(NewGameButton);
+        StylePanelButton(ReturnToSeaButton);
     }
 
     // UX-10：按钮统一样式 + 禁用焦点——按钮点击后不夺键盘焦点，方向键才能落到控制器 _UnhandledKeyInput
@@ -762,9 +787,13 @@ public partial class NavalHud : CanvasLayer
     // U-2c：结算面板「重掷换一场」按钮显隐（非随机遭遇模式隐藏）。
     public void SetRerollVisible(bool visible) => RerollButton.Visible = visible;
 
-    // 只读访问（headless 冒烟断言）：结算面板全文 / 重掷按钮可见。
+    // CHG-20260817：海盗战结算面板「返回海上大地图」按钮显隐（非海盗战模式隐藏）。
+    public void SetPirateReturnVisible(bool visible) => ReturnToSeaButton.Visible = visible;
+
+    // 只读访问（headless 冒烟断言）：结算面板全文 / 重掷按钮 / 海盗战返回按钮可见。
     public string ResultText() => ResultLabel.Text;
     public bool RerollButtonVisible() => RerollButton.Visible;
+    public bool PirateReturnButtonVisible() => ReturnToSeaButton.Visible;
 
     private static int Count(BattleResult result, ShipLossKind kind)
         => result.Ships.Count(r => r.Kind == kind);

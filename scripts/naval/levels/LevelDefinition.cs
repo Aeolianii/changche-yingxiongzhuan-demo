@@ -13,6 +13,7 @@ public enum LevelChapter
     Chapter3,
     Free,
     Test,
+    Hunt,   // CHG（海怪 Boss 战）：讨伐章（海怪 + 大本营），不进解锁序列。
 }
 
 // L-1 单关定义（不可变 record，纯数据层）：

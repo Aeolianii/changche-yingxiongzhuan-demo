@@ -46,6 +46,8 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     private NavalLevelPlayController? _levelPlay;
     // U-2c：随机遭遇战（LevelSelect 生成后经 RandomEncounterSession.Begin 传入）。非 null = 遭遇模式。
     private RandomEncounter? _encounter;
+    // CHG-20260817：海盗战返回海上大地图的目标场景（sea_overworld 常量同值）。
+    private const string SeaOverworldScenePath = "res://scenes/sea_overworld/sea_overworld.tscn";
     // Task 18 B1：敌方回合 AI 驱动。默认开（ChooseNext→TryExecute→PlayEvents→至 EndFactionTurnCommand）；
     // 既有冒烟（水雷链/接舷/回合推进需敌方不动的场景）通过 SetEnemyAiEnabled(false) 关闭。
     private bool _enemyAiEnabled = true;
@@ -136,6 +138,9 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     public void StartBattle(BattleState battle)
     {
         _battle = battle;
+        // CHG-20260819（F-1 讨伐饰品）：饰品装备状态（economy accessories.equipped 单一事实来源）→ BattleState 加成。
+        // 军旗→全舰队射程 +1；海怪之角→旗舰撞角 Lv4；贯日神枪→旗舰砲击 Lv4。
+        ApplyAccessoryBonuses();
         _grid.Attach(_battle);
         _grid.ClearOverlay();
         var level = LevelRegistry.GetById(LevelSession.PendingLevelId);
@@ -283,9 +288,12 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     public void OnAction(string actionId)
     {
         // FIX-1：敌方回合期间锁死玩家操作（键盘移动经 OnKeyEvent → OnAction 同样被拦）。
-        // V-1：战斗结束后同样锁死舰船操控（投降/歼灭终局后不能再操控）；「再来一局」（new_game）
-        // 与随机遭遇「重掷换一场」（reroll_encounter）是战斗结束后合法的操作（结算面板出口），放行，其余一律拦截。
-        if (PlayerInputLocked() && actionId != "new_game" && actionId != "reroll_encounter")
+        // V-1：战斗结束后同样锁死舰船操控（投降/歼灭终局后不能再操控）；「再来一局」（new_game）、
+        // 随机遭遇「重掷换一场」（reroll_encounter）与海盗战「返回海上大地图」（return_to_sea）
+        // 是战斗结束后合法的操作（结算面板出口），放行，其余一律拦截。
+        // 调试按钮「一键胜利/一键逃跑」（debug_win/debug_flee）战斗中途含敌方回合均可点（测试用），同样放行。
+        if (PlayerInputLocked() && actionId != "new_game" && actionId != "reroll_encounter"
+            && actionId != "return_to_sea" && actionId != "debug_win" && actionId != "debug_flee")
         {
             _hud.SetMessage(InputLockMessage());
             return;
@@ -317,6 +325,10 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             case "deselect": DeselectForPlayer(); break;
             case "new_game": NewGame(); break;
             case "reroll_encounter": RerollEncounter(); break; // U-2c：随机遭遇重掷（换一场，保留难度）
+            case "return_to_sea": ReturnToSea(); break; // CHG-20260817：海盗战结算返回海上大地图
+            // Task D：一键胜利/一键逃跑调试按钮（HUD 右上角常驻，战斗中途含敌方回合可点）。
+            case "debug_win": ForceBattleEndForDemo(); break;
+            case "debug_flee": ForceFleeForDemo(); break;
             // F-3：投降交涉（设计 16.2/16.3）——接受/拒绝敌方劝降、我方发起劝降。不走舰船动作，直接调规则层命令。
             case "accept_surrender": DoAcceptSurrender(); break;
             case "reject_surrender": DoRejectSurrender(); break;
@@ -467,6 +479,27 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     // F-3：投降状态只读（headless 冒烟断言闭环）。待决阵营索引（无待决 -1；Player=0 / Enemy=1）。
     public int PendingSurrenderFromIndex() => _battle?.PendingSurrenderFrom is { } f ? (int)f : -1;
     public int PlayerGold() => _battle?.PlayerGold ?? -1;
+    // CHG-20260819（F-1 讨伐饰品）：饰品加成只读（headless 断言装备饰品后 BattleState 生效）。未开战 -1。
+    public int RangeBonus() => _battle is null ? -1 : _battle.RangeBonus;
+    public int FlagshipRamLevel() => _battle is null ? -1 : _battle.FlagshipRamLevel;
+    public int FlagshipBombardmentLevel() => _battle is null ? -1 : _battle.FlagshipBombardmentLevel;
+    // 规则层加成数值直达（headless 断言伤害/系数按饰品生效）：旗舰撞角系数（weapons.json Lv4=1.8）；未开战/无旗舰 -1。
+    public double FlagshipRamCoefficient()
+    {
+        if (_battle is null) return -1;
+        var flagship = FlagshipRules.ResolveFlagshipId(_battle, FactionId.Player);
+        var ship = flagship is null ? null : _battle.ShipOrNull(flagship);
+        return ship is null ? -1 : RamRules.RamCoefficient(_battle, ship);
+    }
+
+    // 旗舰砲击单发伤害（weapons.json DamageByLevel Lv4=420）；未开战/无旗舰 -1。
+    public int FlagshipBombardmentDamage()
+    {
+        if (_battle is null) return -1;
+        var flagship = FlagshipRules.ResolveFlagshipId(_battle, FactionId.Player);
+        var ship = flagship is null ? null : _battle.ShipOrNull(flagship);
+        return ship is null ? -1 : AttackRules.WeaponPerUnitDamage(_battle, ship, "bombardment", 1);
+    }
     public int ShipFactionIndex(string shipId) => (int)(_battle.ShipOrNull(shipId)?.Faction ?? FactionId.Player);
     // 投降交涉面板按钮状态（headless 断言：待决弹出接受/拒绝、优势可用劝降、每回合一次门禁禁用）。
     public bool SurrenderPanelVisible() => _hud.SurrenderPanelVisible();
@@ -1107,7 +1140,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         var guard = 0;
         while (!_battle.BattleEnded && _battle.CurrentFaction == FactionId.Enemy && guard++ < MaxEnemyCommandSteps)
         {
-            var cmd = NavalAi.ChooseNext(_battle, FactionId.Enemy);
+            var cmd = AiRouter.ChooseNext(_battle, FactionId.Enemy);
             var result = ActionResolver.TryExecute(_battle, cmd);
             if (!result.Success)
             {
@@ -1132,7 +1165,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             var guard = 0;
             while (!_battle.BattleEnded && _battle.CurrentFaction == FactionId.Enemy && guard++ < MaxEnemyCommandSteps)
             {
-                var cmd = NavalAi.ChooseNext(_battle, FactionId.Enemy);
+                var cmd = AiRouter.ChooseNext(_battle, FactionId.Enemy);
                 var result = ActionResolver.TryExecute(_battle, cmd);
                 if (!result.Success)
                 {
@@ -1571,16 +1604,25 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             lp.OnBattleEnded(_battle, result);
             return;
         }
-        if (_encounter is not null)
+        // CHG-20260817：本控制器 _Ready 早于 Deployment._Ready，海盗战（Deployment 消费 meta 后 Begin）
+        // 在此刻会话才激活——以会话实时状态统一判定遭遇模式，兼容既有随机遭遇与海盗战。
+        var encounter = _encounter ?? (RandomEncounterSession.Active ? RandomEncounterSession.Pending : null);
+        if (encounter is not null)
         {
             // U-2c：随机遭遇结算——HUD 结果 + 奖励行 + 重掷入口（目标=歼灭敌人，默认）。
             // V-4：固定测试关卡不提供重掷（每项 = 指定地图×敌人组合，重掷会破坏测试意义）。
-            _hud.ShowResult(result, EncounterResultText());
-            _hud.SetRerollVisible(!_encounter.IsFixed);
+            // CHG-20260817：海盗战不重掷，改为显示「返回海上大地图」。
+            // CHG-20260819（F-1 讨伐战利品进背包）：玩家胜利 → 讨伐奖励写入经济（金→军饷、铁/木/麻→物品、饰品→背包）。
+            // 饰品 Collect 对所有遭遇通用（既有行为）；经济奖励仅讨伐战授予（海盗/随机遭遇保持既有行为）。
+            GrantHuntRewards(encounter);
+            _hud.ShowResult(result, EncounterResultText(encounter));
+            _hud.SetRerollVisible(!encounter.IsFixed && !PirateBattleSession.Active && !HuntBattleSession.Active);
+            _hud.SetPirateReturnVisible(PirateBattleSession.Active || HuntBattleSession.Active);
             return;
         }
         _hud.ShowResult(result);
         _hud.SetRerollVisible(false);
+        _hud.SetPirateReturnVisible(false);
     }
 
     // 演示/冒烟收尾钩子（设计裁定 7）：把敌方留场舰 HP 置 0 后走真实终局判定（SettleAfterCommand）并触发
@@ -1594,6 +1636,26 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         // Task 18 B7：胜负由 SettleAfterCommand 统一判定（同归于尽=平局 winner=null），只播放其事件一次。
         // 此前"手动重算 Player:Enemy + 另发 BattleEndedEvent"会在互毁时误判敌方胜，且与规则事件双发。
         var result = BattleEndRules.SettleAfterCommand(_battle, ActionResult.Ok(Array.Empty<BattleEvent>()));
+        if (_battle.BattleEnded) PlayEvents(result.Events);
+    }
+
+    // 调试钩子：一键逃跑——所有玩家存活可逃舰按「触出口逃离」移出，走真实终局判定（玩家全逃 → 战斗结束）。
+    public void ForceFleeForDemo()
+    {
+        if (_battle is null || _battle.BattleEnded) return;
+        BattleEndRules.EnsureDeployedCounts(_battle); // 先登记玩家已部署（玩家舰仍在 Ships，否则终局判定失效）
+        var escapers = _battle.Ships.Values
+            .Where(s => s.Faction == FactionId.Player && s.HitPoints > 0 && !s.Definition.CannotEscape)
+            .ToList();
+        var events = new List<BattleEvent>();
+        foreach (var s in escapers)
+        {
+            _battle.RemovedShips[s.Id] = new RemovedShipRecord(
+                s.Definition.Id, s.Faction, s.HitPoints, s.MaxHp, s.SelfSunk, ShipRemovalReason.Escaped);
+            _battle.Ships.Remove(s.Id);
+            events.Add(new ShipEscapedEvent(s.Id));
+        }
+        var result = BattleEndRules.SettleAfterCommand(_battle, ActionResult.Ok(events.ToArray()));
         if (_battle.BattleEnded) PlayEvents(result.Events);
     }
 
@@ -1684,10 +1746,143 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     }
 
     // U-2c：随机遭遇结算奖励行文本（金/铁/木/麻），由 HandleBattleEnded 追加到 HUD 结果。
-    private string EncounterResultText()
+    // 入参为结算时实时遭遇（海盗战来自 RandomEncounterSession，无法依赖 _Ready 时的缓存）。
+    private string EncounterResultText(RandomEncounter encounter)
     {
-        var r = _encounter?.Rewards;
+        var r = encounter.Rewards;
         return r is null ? "" : $"战利品 金{r.Gold} · 铁{r.Iron} · 木{r.Wood} · 麻{r.Hemp}";
+    }
+
+    // CHG-20260819（F-1 讨伐饰品）：饰品装备状态 → BattleState 加成。economy accessories.equipped 为装备单一事实来源。
+    // 启动同步：FleetTreasureInventory 已持有但经济背包未登记的旧宝物补写 owned（幂等），保证旧存档可见可装备。
+    private void ApplyAccessoryBonuses()
+    {
+        if (_battle is null) return;
+        var gameState = GetTree().Root.GetNodeOrNull("GameState");
+        if (gameState is null) return;
+        foreach (var treasure in FleetTreasureRegistry.All)
+        {
+            if (FleetTreasureAccessoryIds.For(treasure.Id) is not { } accessoryId) continue;
+            if (FleetTreasureInventory.Instance.Has(treasure.Id)
+                && !gameState.Call("has_economy_accessory", accessoryId).AsBool())
+                gameState.Call("add_economy_accessory", accessoryId);
+        }
+        var equippedVariant = gameState.Call("equipped_economy_accessories");
+        if (equippedVariant.VariantType != Variant.Type.Dictionary) return;
+        var equipped = equippedVariant.AsGodotDictionary();
+        if (equipped.ContainsKey(FleetTreasureAccessoryIds.WokouBanner)) _battle.RangeBonus = 1;
+        if (equipped.ContainsKey(FleetTreasureAccessoryIds.SeaMonsterHorn)) _battle.FlagshipRamLevel = 4;
+        if (equipped.ContainsKey(FleetTreasureAccessoryIds.SunPiercingSpear)) _battle.FlagshipBombardmentLevel = 4;
+    }
+
+    // CHG-20260819（F-1 讨伐战利品进背包）：玩家胜利结算。
+    // ① 饰品 Collect 对所有遭遇通用（既有行为，写 FleetTreasureInventory + Save）；
+    // ② 经济奖励（金→add_military_pay；铁→ironstone；木→wood；麻→hemp；饰品→add_economy_accessory）
+    //    仅讨伐战（HuntBattleSession.Active）授予——海盗/随机遭遇经济行为保持既有。
+    private void GrantHuntRewards(RandomEncounter encounter)
+    {
+        if (_result is null || _result.Winner != FactionId.Player) return;
+        var r = encounter.Rewards;
+        if (r is null) return;
+        // ① 饰品 Collect（所有遭遇通用，原逻辑搬移）。
+        if (r.Treasures is { Count: > 0 })
+        {
+            foreach (var t in r.Treasures)
+                FleetTreasureInventory.Instance.Collect(FleetTreasureRegistry.GetById(t));
+            FleetTreasureInventory.Instance.Save();
+        }
+        // ② 讨伐战经济奖励。
+        if (!HuntBattleSession.Active) return;
+        var gameState = GetTree().Root.GetNodeOrNull("GameState");
+        if (gameState is null) return;
+        if (r.Gold > 0) gameState.Call("add_military_pay", r.Gold);
+        if (r.Iron > 0) gameState.Call("add_economy_item", "ironstone", r.Iron);
+        if (r.Wood > 0) gameState.Call("add_economy_item", "wood", r.Wood);
+        if (r.Hemp > 0) gameState.Call("add_economy_item", "hemp", r.Hemp);
+        if (r.Treasures is { Count: > 0 })
+            foreach (var t in r.Treasures)
+                if (FleetTreasureAccessoryIds.For(t) is { } accessoryId)
+                    gameState.Call("add_economy_accessory", accessoryId);
+    }
+
+    // ---- CHG-20260817：海盗战结算返回海上大地图 ----
+
+    // 构造返回上下文：以发起方请求 meta（经 PirateBattleSession.ReturnContextCarrier 暂存）为基础，
+    // 保留 玩家位置/农历日，补写结算结果。独立公开供 headless 断言（不触发场景切换）。
+    // outcome：0 胜 / 1 败 / 2 平（BattleOutcome 顺序）。
+    public Godot.Collections.Dictionary BuildPirateReturnContext()
+    {
+        var root = GetTree().Root;
+        Godot.Collections.Dictionary context;
+        if (PirateBattleSession.ReturnContextCarrier is { } carrier)
+        {
+            context = new Godot.Collections.Dictionary();
+            foreach (var key in carrier.Keys)
+                context[key] = carrier[key];
+        }
+        else if (root.HasMeta(PirateBattleSession.ReturnMetaKey))
+            context = (Godot.Collections.Dictionary)root.GetMeta(PirateBattleSession.ReturnMetaKey);
+        else
+            context = new Godot.Collections.Dictionary();
+        context["outcome"] = (int)(_result?.Outcome ?? BattleOutcome.Draw);
+        context["player_gold_remaining"] = _result?.PlayerGoldRemaining ?? 0;
+        // 海盗 id 只保存在本进程 C# 会话（PirateBattleSession），发起时 GDScript 写入的请求 meta 已被
+        // Deployment._Ready 消费；这里补写回返回 meta，供海上大地图按名移除/保留海盗。
+        if (PirateBattleSession.PirateId is { } pirateId)
+            context["pirate_id"] = pirateId;
+        return context;
+    }
+
+    // 结算面板「返回海上大地图」：写返回 meta → 清会话 → 切回海上大地图。仅战斗结束后可用。
+    public void ReturnToSea()
+    {
+        if (_enemyTurnInProgress) return; // UX-9：与 NewGame 同源防竞态
+        if (_result is null) return;
+        // CHG-20260819（S-2 海面接入）：讨伐战（海怪/营寨）与海盗战共用返回路径，按会话判定。
+        if (HuntBattleSession.Active)
+            GetTree().Root.SetMeta(HuntBattleSession.ReturnMetaKey, BuildHuntReturnContext());
+        else
+            GetTree().Root.SetMeta(PirateBattleSession.ReturnMetaKey, BuildPirateReturnContext());
+        RandomEncounterSession.Clear();
+        PirateBattleSession.Clear();
+        HuntBattleSession.Clear();
+        _hud.HideResult();
+        GetTree().ChangeSceneToFile(SeaOverworldScenePath);
+    }
+
+    // 只读状态（headless 断言：海盗战模式激活）。
+    public bool PirateBattleActive() => PirateBattleSession.Active;
+
+    // CHG-20260819（S-2 海面接入）：只读状态（headless 断言：讨伐战模式激活与阶段 id）。
+    public bool HuntBattleActive() => HuntBattleSession.Active;
+    public string HuntBattleStageId() => HuntBattleSession.StageId ?? "";
+
+    // ---- CHG-20260819（S-2 海面接入）：讨伐战结算返回海上大地图 ----
+
+    // 构造返回上下文：以发起方请求 meta（经 HuntBattleSession.ReturnContextCarrier 暂存）为基础，
+    // 保留 玩家位置/农历日，补写结算结果。独立公开供 headless 断言（不触发场景切换）。
+    // outcome：0 胜 / 1 败 / 2 平（BattleOutcome 顺序）。
+    public Godot.Collections.Dictionary BuildHuntReturnContext()
+    {
+        var root = GetTree().Root;
+        Godot.Collections.Dictionary context;
+        if (HuntBattleSession.ReturnContextCarrier is { } carrier)
+        {
+            context = new Godot.Collections.Dictionary();
+            foreach (var key in carrier.Keys)
+                context[key] = carrier[key];
+        }
+        else if (root.HasMeta(HuntBattleSession.ReturnMetaKey))
+            context = (Godot.Collections.Dictionary)root.GetMeta(HuntBattleSession.ReturnMetaKey);
+        else
+            context = new Godot.Collections.Dictionary();
+        context["outcome"] = (int)(_result?.Outcome ?? BattleOutcome.Draw);
+        context["player_gold_remaining"] = _result?.PlayerGoldRemaining ?? 0;
+        // 讨伐阶段 id 只保存在本进程 C# 会话（HuntBattleSession），发起时 GDScript 写入的请求 meta 已被
+        // Deployment._Ready 消费；这里补写回返回 meta，供海上大地图按名判定海怪/营寨战斗结果。
+        if (HuntBattleSession.StageId is { } stageId)
+            context["stage_id"] = stageId;
+        return context;
     }
 
     // 撞击表现：目标伤害 + 撞击方反伤 + 推动/入礁文字 + 撞击方向箭头（撞击舰船头→目标）。

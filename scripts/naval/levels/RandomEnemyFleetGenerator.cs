@@ -13,7 +13,8 @@ namespace NavalCombat.Levels;
 //   diff1 以运输/商船为主（运输 40 / 商船 30 / 护卫 20 / 旗舰 10），装备稀疏（武器概率 35%、无护甲加成、技能≈无）。
 //   diff2 混合、护卫增多（运输 25 / 商船 20 / 护卫 40 / 旗舰 15），装备中等（武器概率 60%、护甲 20% +1、技能 30% 1 位）。
 //   diff3 以护卫/旗舰为主（运输 10 / 商船 5 / 护卫 50 / 旗舰 35），装备精良（武器概率 90%、护甲 40% +1..2、技能 60% 1-2 位）。
-//   可选玩家舰队强度匹配：PlayerFleet 给定 → 装备慷慨度按 玩家强度×难度系数 / 己方基础强度 缩放（钳制 0.5-2.0）。
+//   可选玩家舰队强度匹配：PlayerFleet 给定 → 装备慷慨度按 玩家强度×友好系数 / 己方基础强度 缩放（钳制 0.5-2.0）。
+//   友好系数复用 EncounterBalancer.FriendlyCoefficient（简单 0.5 / 普通 0.65 / 困难 0.8，恒 <1 玩家占优）。
 //
 // 合法保证（与 ValidatePlacement 同口径）：
 //   占格不重叠、在地图内、在敌方布阵区内、地形按舰型通过性可通行（DeepWaterOnly 不可进浅滩/礁石）；
@@ -134,8 +135,8 @@ public static class RandomEnemyFleetGenerator
     {
         if (options.PlayerFleet is not { Count: > 0 } playerFleet) return 1.0;
         var playerStrength = FleetStrength(playerFleet, config);
-        // 期望敌方强度 = 玩家强度 × 难度系数（diff1 弱 0.6 / diff2 相当 0.9 / diff3 略强 1.3）。
-        var target = playerStrength * options.Difficulty switch { 1 => 0.6, 2 => 0.9, _ => 1.3 };
+        // 期望敌方强度 = 玩家强度 × 友好系数（EncounterBalancer.FriendlyCoefficient：简单 0.5 / 普通 0.65 / 困难 0.8，恒 <1）。
+        var target = playerStrength * EncounterBalancer.FriendlyCoefficient(options.Difficulty);
         // 基础强度 = 池加权平均单舰强度 × 数量（与真实抽舰口径一致，避免整池总和虚高使慷慨度恒触下限）。
         var baseStrength = WeightedAvgStrength(config, pool) * options.Count;
         if (baseStrength <= 0) return 1.0;

@@ -1,6 +1,9 @@
 extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
+# CHG-20260819（S-2 海面接入）：海怪事件迎战 → 讨伐战请求/返回 meta（与 C# HuntBattleSession 同值）。
+const REQUEST_META := "sea_hunt_battle_request"
+const RETURN_META := "sea_hunt_battle_return_context"
 const SHADOW_SOURCE_PATHS := [
 	"res://assets/sprites/sea_overworld/random_events/海怪水下影1_v2.png",
 	"res://assets/sprites/sea_overworld/random_events/海怪水下影2_v2.png",
@@ -33,9 +36,10 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	# CHG-20260819（S-2 海面接入）：迎战选项 → 写讨伐战请求 meta（变体 0 → hunt_stage1，变体 1/2 → hunt_stage2）。
 	for variant in range(3):
 		var scene := await _spawn_scene(variant)
-		await _verify_default_victory(scene, variant)
+		await _verify_fight_battle_entry(scene, variant)
 		scene.queue_free()
 		await process_frame
 	var avoid_scene := await _spawn_scene(0)
@@ -63,13 +67,12 @@ func _spawn_scene(variant: int) -> Node:
 	return scene
 
 
-func _verify_default_victory(scene: Node, variant: int) -> void:
+func _verify_fight_battle_entry(scene: Node, variant: int) -> void:
 	var event := _verify_map_visual(scene, variant)
 	if event == null:
 		return
 	var player := scene.get_node("World/Player") as CharacterBody2D
 	var dialogue := scene.get_node("UI/FieldEventDialogue") as Control
-	var economy_before: Dictionary = root.get_node("GameState").call("get_economy_state")
 	await _capture_map_preview(scene, event, player, variant)
 	player.global_position = event.global_position
 	for _frame in range(3):
@@ -98,29 +101,28 @@ func _verify_default_victory(scene: Node, variant: int) -> void:
 	if variant == 1:
 		await _capture_dialogue_preview()
 	option_box = _option_box(dialogue)
-	_expect(option_box.get_child_count() == 1, "Revealed sea monster must provide one placeholder battle choice.")
+	_expect(option_box.get_child_count() == 1, "Revealed sea monster must provide one battle choice.")
 	if option_box.get_child_count() != 1:
 		return
-	_expect("默认获胜" in (option_box.get_child(0) as Button).text, "Placeholder battle choice must explicitly state the default victory.")
-	(option_box.get_child(0) as Button).pressed.emit()
+	var fight_option := option_box.get_child(0) as Button
+	_expect("迎战海怪" in fight_option.text, "Battle choice must invite the player to fight the sea monster.")
+	# 选择迎战：不切场景，先验证请求 meta 写入 + 事件就地解决 + 控制恢复（headless 不执行真正切场景）。
+	root.remove_meta(REQUEST_META)
+	root.remove_meta(RETURN_META)
+	fight_option.pressed.emit()
 	await process_frame
 	await process_frame
-	_expect(scene.get_node_or_null("World/WorldMarkers/SeaMonsterMistEvent") == null, "Winning must remove the current mist event instance.")
-	var result_line := dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
-	var detail := dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DetailLabel") as RichTextLabel
-	_expect("战胜海怪" in result_line.text, "Default victory result must explicitly say the sea monster was defeated.")
-	_expect("木材 +500" in detail.get_parsed_text() and "铁石 +500" in detail.get_parsed_text(), "Victory result must show both large material rewards.")
-	var economy_after: Dictionary = root.get_node("GameState").call("get_economy_state")
-	_expect(
-		int(economy_after["items"].get("wood", 0)) == int(economy_before["items"].get("wood", 0)) + 500
-		and int(economy_after["items"].get("ironstone", 0)) == int(economy_before["items"].get("ironstone", 0)) + 500,
-		"Default victory must add 500 wood and 500 ironstone to the real inventory."
-	)
-	option_box = _option_box(dialogue)
-	if option_box.get_child_count() == 1:
-		(option_box.get_child(0) as Button).pressed.emit()
-		await process_frame
-	_expect(not dialogue.visible and player.controls_enabled, "Finishing the sea-monster result must resume sailing.")
+	var request_value: Variant = root.get_meta(REQUEST_META, null)
+	_expect(request_value is Dictionary, "Choosing to fight must write the hunt battle request meta.")
+	if request_value is Dictionary:
+		var expected_stage := "hunt_stage1" if variant == 0 else "hunt_stage2"
+		_expect(str(request_value["stage_id"]) == expected_stage, "Fight must request the expected hunt stage (variant %d → %s, got %s)." % [variant, expected_stage, str(request_value.get("stage_id", ""))])
+		_expect(request_value.get("player_position") is Array, "Request must carry the pre-battle player position.")
+	# 移除请求 meta 模拟「返回海面」后的状态：海怪事件已解决。
+	root.remove_meta(REQUEST_META)
+	scene.call("_resolve_sea_monster_event")
+	await process_frame
+	_expect(scene.get_node_or_null("World/WorldMarkers/SeaMonsterMistEvent") == null, "Resolving must remove the current mist event instance.")
 	_expect((scene.get("_resolved_random_event_ids") as Dictionary).has(&"sea_monster_mist"), "Winning must permanently resolve the sea-monster type for the current sea-map session.")
 	_expect(scene.call("_find_random_event", &"sea_monster_mist") == null, "A defeated sea monster must not refresh after its result dialogue closes.")
 

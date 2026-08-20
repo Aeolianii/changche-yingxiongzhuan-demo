@@ -40,6 +40,9 @@ public sealed class NavalBattleGateway
             Random = request.RandomSeed is int seed ? new SeedRandomSource(seed) : new UnseededRandomSource(),
         };
         battle.PlayerGold = request.InitialGold ?? SurrenderRules.SurrenderGoldCost;
+        // CHG（海怪 Boss 战）：网关同步 Boss 战开关与射程加格（BattleState 已具备属性，勿新增）。
+        battle.NoSurrender = request.NoSurrender;
+        battle.RangeBonus = request.RangeBonus;
 
         var snapshots = new List<(ShipRequestSnapshot Req, FactionId Faction)>();
         foreach (var s in request.PlayerShips) snapshots.Add((s, FactionId.Player));
@@ -59,11 +62,14 @@ public sealed class NavalBattleGateway
                 Facing = req.Facing,
                 HitPoints = req.HitPoints ?? def.MaxHp,
             };
+            ship.SelfSunk = req.SelfSunk; // CHG（海怪 Boss 战）：布阵自沉旗（浅滩自沉保留残骸）
             foreach (var (k, v) in req.WeaponCounts) ship.WeaponCounts[k] = v;
             battle.Ships[req.Id] = ship;
             battle.FactionsEverDeployed.Add(faction);
             if (req.IsFlagship) battle.Flagships[faction] = req.Id;
         }
+
+        // 整合版集成（保留）：出口格平衡——确保开战地图存在安全出口（ExitCellRules）。
         ExitCellRules.EnsureSafeExits(battle.Map, battle.Ships.Values.SelectMany(s => s.OccupiedCells()));
 
         // 技能：先按舰型布局默认播种（与布阵 ConfirmDeployment 一致），请求显式携带的技能覆盖默认。

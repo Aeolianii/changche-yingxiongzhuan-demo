@@ -15,6 +15,8 @@ public sealed class ShipState
     public bool SelfSunk { get; set; }
     // Task 14：自沉舰被击毁后原占格残骸已放置标记（BattleEndRules.SettleAfterCommand 防重复放置）。
     public bool WreckSettled { get; set; }
+    // CHG：击沉 IsVictoryTarget 后已触发胜利结算（防重复）。
+    public bool VictoryClaimed { get; set; }
     public bool HasAttacked { get; set; }
     public int RemainingMovement { get; set; }
     public int SpentMovement { get; set; }
@@ -23,6 +25,14 @@ public sealed class ShipState
     public GridPos? TurnStartBow { get; set; }
     // Task 9：本回合最后一次成功平移的方向（撞击资格判定，设计 10）。默认 null；转向/回合刷新会清空。
     public CardinalDirection? LastMoveDirection { get; set; }
+    // CHG（海怪 Boss 战）：海怪冷却（>0 回合不可执行移动）；已预告的移动（下个海怪回合执行）。
+    public int MonsterNoMoveRoundsLeft { get; set; }
+    public MonsterMovePreview? PendingMonsterMovePreview { get; set; }
+    // 本回合是否已预告移动：预告是"下回合执行"，AI 依此区分"刚声明的预告"（不执行）与"上回合遗留的预告"（执行）。
+    public bool MonsterDeclaredPreview { get; set; }
+    // CHG（海怪 Boss 战）：鱼群本回合冲撞次数（模式上限）与是否已飞越（困兽一次）。
+    public int FishChargesUsed { get; set; }
+    public bool FishLeapedThisTurn { get; set; }
 
     // 装备与持续状态（数据结构先定义，行为由 Task 10/11 补充）
     public Dictionary<string, int> WeaponCounts { get; } = new();   // 武器类型ID → 数量
@@ -42,16 +52,11 @@ public sealed class ShipState
     public Dictionary<string, int> RetainedCaptureProgress { get; } = new();
 
     public int Length => Definition.Length;
+    public int Width => Definition.Width;
     public int MaxHp => Definition.MaxHp;
 
-    // 占格：船头在最前，向后延伸到船尾（index 0 = 船头）
-    public List<GridPos> OccupiedCells()
-    {
-        var cells = new List<GridPos>(Length);
-        for (var i = 0; i < Length; i++)
-            cells.Add(Bow - Facing.Vector() * i);
-        return cells;
-    }
+    // 占格：索引 0 = 船头。委托 ShipGeometry（Width>1 矩形占格；Width=1 与旧线性一致）。
+    public List<GridPos> OccupiedCells() => ShipGeometry.Footprint(Definition, Bow, Facing);
 }
 
 // 持续状态数据结构（行为规则见 Task 10/11 的 StatusRules/BoardingRules）

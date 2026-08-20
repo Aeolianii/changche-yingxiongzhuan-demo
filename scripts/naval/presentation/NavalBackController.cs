@@ -1,5 +1,6 @@
 #nullable enable
 using Godot;
+using NavalCombat.Levels; // CHG-20260817：海盗战会话/随机遭遇会话清理
 
 namespace NanjiangNaval;
 
@@ -13,10 +14,33 @@ public partial class NavalBackController : CanvasLayer
     {
         if (GetNodeOrNull<Button>("BackButton") is { } btn)
         {
+            // CHG-20260818：竹简关卡选择菜单只属于「水师操演」入口；大地图（海盗战/讨伐战）触发的战斗
+            // 直接进布阵→战斗，不暴露竹简菜单——故海盗战/讨伐战激活时隐藏「返回关卡选择」按钮，
+            // 退出统一走结算面板的「返回海上大地图」。
+            // CHG-20260819（S-2 海面接入）：讨伐战（海怪/营寨）同海盗战处理。
+            if (PirateBattleSession.Active || HuntBattleSession.Active)
+            {
+                btn.Visible = false;
+                return;
+            }
             var brush = GD.Load<Texture2D>(ReturnBrushPath);
             StyleBrushButton(btn, brush);
             btn.FocusMode = Control.FocusModeEnum.None;
-            btn.Pressed += () => GetTree().ChangeSceneToFile("res://scenes/naval/LevelSelect.tscn");
+            // CHG-20260817：返回关卡选择时中止海盗战——清掉未消费的请求 meta 与进行中的随机遭遇，
+            // 避免返回后下一次进入 NavalDemo 时残留海盗战会话/遭遇状态。
+            // CHG-20260819（S-2 海面接入）：讨伐战请求 meta/会话一并清理。
+            btn.Pressed += () =>
+            {
+                var root = GetTree().Root;
+                if (root.HasMeta(PirateBattleSession.RequestMetaKey))
+                    root.RemoveMeta(PirateBattleSession.RequestMetaKey);
+                if (root.HasMeta(HuntBattleSession.RequestMetaKey))
+                    root.RemoveMeta(HuntBattleSession.RequestMetaKey);
+                PirateBattleSession.Clear();
+                HuntBattleSession.Clear();
+                RandomEncounterSession.Clear();
+                GetTree().ChangeSceneToFile("res://scenes/naval/LevelSelect.tscn");
+            };
         }
     }
 

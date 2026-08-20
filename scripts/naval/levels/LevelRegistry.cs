@@ -12,18 +12,22 @@ public static class LevelRegistry
     // 线性解锁序：1-1,1-2,1-3,2-1,2-2,2-3,3-1,3-2（每关前一关完成后解锁；跨章连续）。
     public static IReadOnlyList<LevelDefinition> AllLevels { get; } = BuildAllLevels();
     public static LevelDefinition FreeMode { get; } = BuildFreeMode();
+    public static LevelDefinition HuntMode { get; } = BuildHuntMode();
     public static IReadOnlyList<string> AllLevelIds { get; } = AllLevels.Select(l => l.Id).ToList();
 
-    // 按 id 查找 8 关或自由模式；未命中返回 null。
+    // 按 id 查找 8 关、自由模式或讨伐章；未命中返回 null。
     public static LevelDefinition? GetById(string id)
         => AllLevels.FirstOrDefault(l => l.Id == id)
-           ?? (FreeMode.Id == id ? FreeMode : null);
+           ?? (FreeMode.Id == id ? FreeMode : null)
+           ?? (HuntMode.Id == id ? HuntMode : null);
 
-    // 按章节取关卡；Free 章返回自由模式（单元素）。
+    // 按章节取关卡；Free/Hunt 章返回对应独立模式（单元素，均不进解锁序列）。
     public static IReadOnlyList<LevelDefinition> ByChapter(LevelChapter chapter)
         => chapter == LevelChapter.Free
             ? new[] { FreeMode }
-            : AllLevels.Where(l => l.Chapter == chapter).ToList();
+            : chapter == LevelChapter.Hunt
+                ? new[] { HuntMode }
+                : AllLevels.Where(l => l.Chapter == chapter).ToList();
 
     // —— 8 关定义（1-1/1-2 样例，其余占位）——
 
@@ -409,4 +413,37 @@ public static class LevelRegistry
 
     private static readonly LevelMapSpec FreeMap = LevelMapSpec.FromAscii(
         Enumerable.Repeat("................", 10).ToArray());
+
+    // —— 讨伐章（海怪 + 大本营）：不进解锁序列 / 不进 AllLevels（GetById("hunt") 与 ByChapter(Hunt) 可查）——
+    // 地图/舰队为讨伐章选择画面占位；实际战斗由 HuntEncounterGenerator.CreateStage 进入三阶段遭遇。
+    // 9 行 × 24 列纯深水：旗舰(长3)朝东占格 (2,6),(1,6),(0,6)，海怪(2×2)朝西占格 (20,6),(21,6),(20,5),(21,5) 全在图内。
+
+    private static LevelDefinition BuildHuntMode()
+        => new(
+            Id: "hunt",
+            Chapter: LevelChapter.Hunt,
+            Title: "讨伐章 · 海怪与倭寇大本营",
+            Description: "三连讨伐：海怪01 → 海怪02 → 倭寇大本营。",
+            ObjectiveText: "依次击破海怪与倭寇大本营城寨，夺取专属宝物。",
+            Map: HuntMap,
+            Weather: Weather.Clear,
+            Wind: null,
+            PlayerFleet: new[]
+            {
+                new LevelShipSpec("flagship", new GridPos(2, 6), CardinalDirection.East),
+            },
+            EnemyFleet: new[]
+            {
+                new LevelShipSpec("sea_monster", new GridPos(20, 6), CardinalDirection.West),
+            },
+            EnemyAiEnabled: true,
+            Objective: new LevelObjective(LevelObjectiveType.SinkAllEnemies),
+            Hints: new[]
+            {
+                "海怪会预告移动，一回合后执行，注意避让。",
+                "城寨击沉即胜；炮台在城寨沉后自沉。",
+            });
+
+    private static readonly LevelMapSpec HuntMap = LevelMapSpec.FromAscii(
+        Enumerable.Repeat("........................", 9).ToArray());
 }

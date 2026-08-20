@@ -14,8 +14,8 @@ namespace NavalCombat.Levels;
 // U-2b 新增：7 套配置（3 套新） + EncounterDefinition「地图方案 × 敌人配置」配对（见本文件尾部）。
 public enum EnemyStrategy { Aggressive, Defensive, Retreating }
 
-// 奖励占位：金/铁/木/麻（数值待定，不参与结算）。
-public sealed record EnemyRewards(int Gold, int Iron, int Wood, int Hemp);
+// 奖励占位：金/铁/木/麻 + 讨伐专属宝物（可选）。
+public sealed record EnemyRewards(int Gold, int Iron, int Wood, int Hemp, IReadOnlyList<TreasureId>? Treasures = null);
 
 // 舰队模板：舰型 + 数量 + 装备（按该舰型槽位装载；null=无装备）。
 public sealed record EnemyShipTemplate(string ShipTypeId, int Count, LevelEquipmentSpec? Equipment = null);
@@ -120,12 +120,9 @@ public sealed record EnemyFleetConfig(
         return true;
     }
 
-    // 舰船占格：船头朝向后延伸 def.Length 格（索引0=船头）。
+    // 舰船占格：委托 ShipGeometry（Width>1 矩形占格；Width=1 与旧线性一致，索引0=船头）。
     private static IEnumerable<GridPos> Footprint(ShipDefinition def, GridPos bow, CardinalDirection facing)
-    {
-        for (var i = 0; i < def.Length; i++)
-            yield return bow - facing.Vector() * i;
-    }
+        => ShipGeometry.Footprint(def, bow, facing);
 }
 
 // U-2a/U-2b 敌人配置注册表：7 套差异化配置（策略/构成/装备/奖励各不相同），纯数据交付（不接入流程）。
@@ -239,6 +236,41 @@ public static class EnemyFleetConfigRegistry
                 new EnemyShipTemplate("merchant", 1, new LevelEquipmentSpec(Weapons: new Dictionary<string, int> { ["bombardment"] = 1 })),
             },
             Rewards: new EnemyRewards(Gold: 900, Iron: 120, Wood: 90, Hemp: 60)),
+
+        // CHG（海怪 Boss 战）：讨伐三阶段敌人。海怪/城寨/炮台经 ships.json 数据驱动。
+        new EnemyFleetConfig(
+            Id: "sea_monster_hunt",
+            DisplayName: "海怪01 · 触手",
+            Description: "深海触手怪（一阶段多目标触手，二阶段水面/水下移动）。",
+            Strategy: EnemyStrategy.Aggressive,
+            Fleet: new[] { new EnemyShipTemplate("sea_monster", 1) },
+            Rewards: new EnemyRewards(Gold: 2000, Iron: 0, Wood: 0, Hemp: 0,
+                Treasures: new[] { TreasureId.SeaMonsterHorn })),
+        new EnemyFleetConfig(
+            Id: "sea_fish_hunt",
+            DisplayName: "海怪02 · 飞鱼",
+            Description: "巨型飞鱼群（猎杀/追击/困兽三模式冲撞飞越）。",
+            Strategy: EnemyStrategy.Aggressive,
+            Fleet: new[] { new EnemyShipTemplate("sea_fish", 3) },
+            Rewards: new EnemyRewards(Gold: 1600, Iron: 0, Wood: 0, Hemp: 0,
+                Treasures: new[] { TreasureId.SunPiercingSpear })),
+        // 大本营：城寨坐镇、炮台环伺、护卫护航（难度 3 进攻型）。
+        new EnemyFleetConfig(
+            Id: "wokou_stronghold",
+            DisplayName: "倭寇大本营",
+            Description: "城寨 2000 血，火炮×2 + 砲击×2 火力全开；四炮台掩护，护卫护航。",
+            Strategy: EnemyStrategy.Aggressive,
+            Fleet: new[]
+            {
+                new EnemyShipTemplate("wokou_citadel", 1, new LevelEquipmentSpec(Weapons: new Dictionary<string, int>
+                    { ["cannon"] = 2, ["bombardment"] = 2 })),
+                new EnemyShipTemplate("fort_turret", 4, new LevelEquipmentSpec(Weapons: new Dictionary<string, int>
+                    { ["cannon"] = 1 })),
+                new EnemyShipTemplate("frigate", 2, new LevelEquipmentSpec(Weapons: new Dictionary<string, int>
+                    { ["cannon"] = 1 })),
+            },
+            Rewards: new EnemyRewards(Gold: 4000, Iron: 8, Wood: 12, Hemp: 8,
+                Treasures: new[] { TreasureId.WokouBanner })),
     };
 }
 
@@ -294,5 +326,17 @@ public static class EncounterDefinitionRegistry
         new EncounterDefinition(
             Id: "lagoon_raid", DisplayName: "泻湖破袭", Description: "泻湖·岛链海域遭遇水师精锐（进攻型）。",
             MapSchemeId: "lagoon_island_chain", EnemyConfigId: "elite_fleet"),
+
+        // CHG（海怪 Boss 战）：讨伐章三阶段固定遭遇（各自专属地图，CHG-20260819-hunt-maps 重画）。
+        // hunt_stage1 海怪01→稀疏群岛；hunt_stage2 海怪02→泻湖；hunt_stage3 大本营→营寨（城寨竖放最右+炮台岸防）。
+        new EncounterDefinition(
+            Id: "hunt_stage1", DisplayName: "讨伐·海怪01", Description: "讨伐章第一战：深海触手怪。稀疏群岛外围。",
+            MapSchemeId: "hunt_archipelago", EnemyConfigId: "sea_monster_hunt"),
+        new EncounterDefinition(
+            Id: "hunt_stage2", DisplayName: "讨伐·海怪02", Description: "讨伐章第二战：巨型飞鱼群。泻湖内湖。",
+            MapSchemeId: "hunt_lagoon", EnemyConfigId: "sea_fish_hunt"),
+        new EncounterDefinition(
+            Id: "hunt_stage3", DisplayName: "讨伐·大本营", Description: "讨伐章终战：倭寇大本营城寨。营寨右缘。",
+            MapSchemeId: "hunt_stronghold", EnemyConfigId: "wokou_stronghold"),
     };
 }

@@ -92,7 +92,7 @@ public static class BattleEndRules
 
     // —— 统一结算（ActionResolver 每条成功命令后调用）——
 
-    // 顺序：记部署阵营 → 逃跑（任一占格触出口即移出）→ 残骸（自沉被击毁补残骸）→ 终局（一方全没）。
+    // 顺序：记部署阵营 → 击沉胜利目标即胜（IsVictoryTarget）→ 逃跑（任一占格触出口即移出）→ 残骸（自沉被击毁补残骸）→ 终局（一方全没）。
     public static ActionResult SettleAfterCommand(BattleState battle, ActionResult result)
     {
         if (!result.Success) return result; // 命令被拒绝，无状态变化
@@ -103,10 +103,30 @@ public static class BattleEndRules
         // 不再从 ShipCapturedEvent.CaptorId 反推对侧阵营（未来新增俘获路径需同步，脆弱）。
         EnsureDeployedCounts(battle);
 
+        // CHG（海怪 Boss 战）：击沉 IsVictoryTarget（城寨）→ 立即胜利，并自沉其余不可推结构（炮台）。
+        var sunkTarget = battle.Ships.Values
+            .FirstOrDefault(s => s.Definition.IsVictoryTarget && s.HitPoints <= 0 && !s.VictoryClaimed);
+        if (sunkTarget is not null)
+        {
+            sunkTarget.VictoryClaimed = true;
+            battle.BattleEnded = true;
+            var winner = sunkTarget.Faction == FactionId.Player ? FactionId.Enemy : FactionId.Player;
+            foreach (var s in battle.Ships.Values
+                         .Where(s => s.Faction != winner && s.HitPoints > 0 && s.Definition.Immovable && !s.Definition.IsVictoryTarget))
+            {
+                s.SelfSunk = true;
+                s.HitPoints = 0;
+                foreach (var c in s.OccupiedCells()) battle.Map.Wrecks.Add(c);
+                s.WreckSettled = true;
+                extra.Add(new ShipSunkEvent(s.Id));
+            }
+            extra.Add(new BattleEndedEvent(winner));
+        }
+
         // 1. 逃跑（设计 16.1，裁定 2 纯自动）：任一存活舰的任一占格触碰出口边界 → 整舰立即移出战场。
         // 挂在每条成功命令后（覆盖移动/转向/撞击推动/接舷组合平移任意占格变化路径），无显式 EscapeCommand。
         var escapers = battle.Ships.Values
-            .Where(s => s.HitPoints > 0 && s.OccupiedCells().Any(c => battle.Map.ExitCells.Contains(c)))
+            .Where(s => s.HitPoints > 0 && !s.Definition.CannotEscape && s.OccupiedCells().Any(c => battle.Map.ExitCells.Contains(c)))
             .ToList();
         foreach (var s in escapers)
         {

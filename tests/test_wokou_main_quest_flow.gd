@@ -1,6 +1,9 @@
 extends SceneTree
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
+# CHG-20260819（S-2 海面接入）：营寨迎战 → 讨伐战请求/返回 meta（与 C# HuntBattleSession 同值）。
+const REQUEST_META := "sea_hunt_battle_request"
+const RETURN_META := "sea_hunt_battle_return_context"
 const HAIBATIAN_PORTRAIT_PATH := "res://assets/sea_overworld/portraits/倭寇头目海霸天.png"
 const VICTORY_CG_PATH := "res://assets/sea_overworld/cutscenes/wokou_victory_cg_v1.png"
 const PROTAGONIST_SCREENSHOT_PATH := "res://.godot/wokou_quest_protagonist_dialogue.png"
@@ -90,39 +93,71 @@ func _run() -> void:
 	_expect(option_box.get_child_count() == 1, "Hai Batian's reply must expose one battle option.")
 	if option_box.get_child_count() == 1:
 		var battle_option := option_box.get_child(0) as Button
-		_expect("一决胜负" in battle_option.text and "战斗系统还未完善，此战默认获胜" in battle_option.text, "The battle option must state the placeholder auto-victory rule.")
-		var cutscene := scene.get("_wokou_victory_cutscene") as WokouVictoryCutscene
-		cutscene.duration_scale = 0.08
+		_expect("进军" in battle_option.text and "一决胜负" in battle_option.text, "The battle option must order the fleet to advance and fight.")
+		# CHG-20260819（S-2 海面接入）：选择进军 → 写讨伐大本营战请求 meta（hunt_stage3）并进入正式海战。
+		root.remove_meta(REQUEST_META)
+		root.remove_meta(RETURN_META)
 		battle_option.pressed.emit()
 		await process_frame
-		_expect(cutscene.visible and cutscene.is_playing_for_test(), "Choosing battle must immediately show the Wokou victory ending CG.")
-		var cg_image := cutscene.get_node("CGImage") as TextureRect
-		_expect(cg_image.texture != null and cg_image.texture.resource_path == VICTORY_CG_PATH, "The ending must use the generated camp-destruction CG.")
-		var ending_captions := cutscene.story_captions_for_test()
-		var ending_text := "".join(ending_captions)
-		_expect(ending_captions.size() == 5 and ending_text.length() >= 100, "The ending must present at least one hundred Chinese characters across five readable captions.")
-		_expect("伏波将军上任以来" in ending_text and "倭寇之乱终告平定" in ending_text and "海晏民安" in ending_text, "The ending text must praise the general, record the campaign victory and close on peace for the people.")
-		_expect(cutscene.estimated_duration_seconds_for_test() > 10.0, "The full-speed CG duration must be derived from the longer ending text.")
-		_expect(bool(scene.get("_wokou_battle_completed")) and not player.controls_enabled, "The placeholder battle must default to victory while controls remain locked for the CG.")
-		var story_label := cutscene.get_node("StoryText") as Label
-		for _caption_frame in range(120):
-			if not story_label.text.is_empty() and story_label.modulate.a > 0.98:
-				break
-			await process_frame
-		_expect(story_label.modulate.a > 0.98, "The ending caption must become fully opaque over the CG.")
-		await _capture_cutscene(VICTORY_SCREENSHOT_PATH)
-		if cutscene.is_playing_for_test():
-			await cutscene.cutscene_finished
 		await process_frame
+		var request_value: Variant = root.get_meta(REQUEST_META, null)
+		_expect(request_value is Dictionary, "Choosing battle must write the hunt battle request meta.")
+		if request_value is Dictionary:
+			_expect(str(request_value["stage_id"]) == "hunt_stage3", "The stronghold fight must request the wokou camp stage (hunt_stage3, got %s)." % str(request_value.get("stage_id", "")))
+			_expect(request_value.get("player_position") is Array, "The request must carry the pre-battle player position.")
+		# 移除请求 meta 模拟「返回海面」——就地结算（headless 不执行真正切场景）。
+		root.remove_meta(REQUEST_META)
 
-	_expect(not bool(scene.get("_transitioning")) and player.controls_enabled, "Finishing the victory CG must restore sailing controls.")
+	# 胜利返回（outcome 0）：营寨战完成主线 + 补播胜利过场 CG。
+	# 玩家位置取触发战斗时的实际船位（靠近营寨的可航行点，非营寨中心陆块）。
+	root.set_meta(RETURN_META, {
+		"stage_id": "hunt_stage3",
+		"outcome": 0,
+		"player_position": [3750.0, 2600.0],
+		"lunar_day": 3.0,
+	})
+	current_scene = null
+	scene.queue_free()
+	await process_frame
+	var victory_scene := SEA_SCENE.instantiate()
+	root.add_child(victory_scene)
+	current_scene = victory_scene
+	var cutscene := victory_scene.get("_wokou_victory_cutscene") as WokouVictoryCutscene
+	# 胜利过场在 _ready 里延后播放（deferred）；趁 deferred 调用尚未执行，先把时长压缩以加速测试。
+	cutscene.duration_scale = 0.08
+	for _frame in range(8):
+		await physics_frame
+	await process_frame
+	_expect(bool(victory_scene.get("_wokou_battle_completed")) and bool(victory_scene.get("_wokou_warning_acknowledged")), "Victory return must mark the wokou camp completed and warning acknowledged.")
+	_expect(cutscene.visible and cutscene.is_playing_for_test(), "The victory return must play the Wokou ending CG.")
+	var cg_image := cutscene.get_node("CGImage") as TextureRect
+	_expect(cg_image.texture != null and cg_image.texture.resource_path == VICTORY_CG_PATH, "The ending must use the generated camp-destruction CG.")
+	var ending_captions := cutscene.story_captions_for_test()
+	var ending_text := "".join(ending_captions)
+	_expect(ending_captions.size() == 5 and ending_text.length() >= 100, "The ending must present at least one hundred Chinese characters across five readable captions.")
+	_expect("伏波将军上任以来" in ending_text and "倭寇之乱终告平定" in ending_text and "海晏民安" in ending_text, "The ending text must praise the general, record the campaign victory and close on peace for the people.")
+	_expect(cutscene.estimated_duration_seconds_for_test() > 10.0, "The full-speed CG duration must be derived from the longer ending text.")
+	var story_label := cutscene.get_node("StoryText") as Label
+	for _caption_frame in range(120):
+		if not story_label.text.is_empty() and story_label.modulate.a > 0.98:
+			break
+		await process_frame
+	_expect(story_label.modulate.a > 0.98, "The ending caption must become fully opaque over the CG.")
+	await _capture_cutscene(VICTORY_SCREENSHOT_PATH)
+	if cutscene.is_playing_for_test():
+		await cutscene.cutscene_finished
+	await process_frame
+
+	_expect(not bool(victory_scene.get("_transitioning")) and (victory_scene.get_node("World/Player") as CharacterBody2D).controls_enabled, "Finishing the victory CG must restore sailing controls.")
+	var victory_player := victory_scene.get_node("World/Player") as Node2D
+	_expect(victory_player.global_position.is_equal_approx(Vector2(3750, 2600)), "Victory return must restore the pre-battle ship position (got %s)." % victory_player.global_position)
 	_expect(main_task_name.text == "讨伐倭寇" and "倭寇营地已平定" in main_task_objective.text, "Victory must keep the campaign title and mark the camp pacified.")
-	var event_state := scene.call("_current_event_state") as Dictionary
+	var event_state := victory_scene.call("_current_event_state") as Dictionary
 	_expect(bool(event_state.get("wokou_warning_acknowledged", false)) and bool(event_state.get("wokou_battle_completed", false)), "The warning and victory flags must be included in persistent sea event state.")
 	var completed_world_state := game_state.call("get_sea_main_quest_state") as Dictionary
 	_expect(bool(completed_world_state.get("wokou_battle_completed", false)), "Wokou victory must remain completed in global main-quest state across scene changes.")
 
-	await _finish(scene, game_state)
+	await _finish(victory_scene, game_state)
 
 
 func _find_location(location_name: String) -> Area2D:

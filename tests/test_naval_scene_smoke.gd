@@ -55,8 +55,8 @@ func _init() -> void:
 		push_error("FAIL: escape cells must render sea/waves, translucent green overlay, and an independent opaque sailboat icon")
 		quit(1)
 		return
-	# 布阵控制器自 ships.json 装配双方各 4 舰
-	if deploy.PlayerShipCount() != 4 or deploy.EnemyShipCount() != 4:
+	# CHG-20260818：自由模式玩家舰队 = 经济舰队（默认 5 舰），敌方保持默认 4 舰。
+	if deploy.PlayerShipCount() != 5 or deploy.EnemyShipCount() != 4:
 		push_error("FAIL: deployment fleet not built (player=%d enemy=%d)" % [deploy.PlayerShipCount(), deploy.EnemyShipCount()])
 		quit(1)
 		return
@@ -73,7 +73,7 @@ func _init() -> void:
 		return
 	var viewport_center := demo.get_viewport().get_visible_rect().get_center()
 	var expected_flagship_camera := Vector2(deploy.ShipStateCenterX("p1"), deploy.ShipStateCenterY("p1"))
-	var player_ship_ids: Array[String] = ["p1", "p2", "p3", "p4"]
+	var player_ship_ids: Array[String] = ["p1", "p2", "p3", "p4", "p5"]
 	var initial_ship_camera_positions: Array[Vector2] = []
 	for ship_id: String in player_ship_ids:
 		initial_ship_camera_positions.append(Vector2(deploy.ShipStateCenterX(ship_id), deploy.ShipStateCenterY(ship_id)))
@@ -149,12 +149,25 @@ func _init() -> void:
 		push_error("FAIL: legacy maps with exits only on one side must be rebalanced across both edges")
 		quit(1)
 		return
+	# CHG-20260818：经济舰队下 p1 为护卫舰（不再默认旗舰）。逃跑/砲击验证先放到指定格位；
+	# 指挥舰改为运行时查询（自动指挥舰 = 占格最多的旗舰型，此处为 p2），避免硬编码舰 id。
 	var escape_setup_error: String = deploy.PlaceShip("p1", 3, 17, "east")
 	if escape_setup_error != "":
 		push_error("FAIL: could not place flagship near escape cells: %s" % escape_setup_error)
 		quit(1)
 		return
-	expected_flagship_camera = Vector2(deploy.ShipStateCenterX("p1"), deploy.ShipStateCenterY("p1"))
+	# CHG-20260819（F-3）：布阵区缩为 12×10 后 p4 放 (12,17)：船头 (12,17) 到敌方 e2 舰格 (17,17) 平方距离 25 = 砲击射程上限（供 T13 砲击命中验证）。
+	var bombard_setup_error: String = deploy.PlaceShip("p4", 12, 17, "east")
+	if bombard_setup_error != "":
+		push_error("FAIL: could not place frigate for bombardment test: %s" % bombard_setup_error)
+		quit(1)
+		return
+	var player_flagship: String = deploy.PlayerFlagship()
+	if player_flagship == "":
+		push_error("FAIL: no auto flagship assigned for economy fleet")
+		quit(1)
+		return
+	expected_flagship_camera = Vector2(deploy.ShipStateCenterX(player_flagship), deploy.ShipStateCenterY(player_flagship))
 	# 控制器能经布阵确认构建种子战斗
 	var err: String = deploy.ConfirmDeployment()
 	if err != "":
@@ -274,8 +287,8 @@ func _init() -> void:
 		push_error("FAIL: action panel base buttons missing")
 		quit(1)
 		return
-	# T13：行动可用性全部来自规则层查询——选中 p2（护卫舰）后按钮 disabled 与 ActionAvailable 一致
-	controller.OnShipClicked("p2")
+	# T13：行动可用性全部来自规则层查询——选中 p4（经济舰型 patrol_boat → 海战护卫舰）后按钮 disabled 与 ActionAvailable 一致
+	controller.OnShipClicked("p4")
 	if not controller.ActionAvailable("arrow_rain"):
 		push_error("FAIL: arrow rain should be available at start")
 		quit(1)
@@ -284,7 +297,7 @@ func _init() -> void:
 		push_error("FAIL: arrow rain button disabled but ActionAvailable true")
 		quit(1)
 		return
-	# UX-7 武器感知：p2 装载砲击 → 砲击可用；未装载火炮 → 火炮按钮隐藏
+	# UX-7 武器感知：p4 经济默认装载砲击（bombardment:1）→ 砲击可用；未装载火炮 → 火炮按钮隐藏
 	if not controller.ActionAvailable("bombardment"):
 		push_error("FAIL: bombardment should be available for frigate")
 		quit(1)
@@ -294,7 +307,7 @@ func _init() -> void:
 		push_error("FAIL: cannon button visible but frigate has no cannon")
 		quit(1)
 		return
-	# 护卫舰播种布局为 {chain_shot, damage_control}，无火油 → 规则查询不可用 → 按钮禁用（UI 不重复实现规则）
+	# 护卫舰经济默认技能 {chain_shot}，无火油 → 规则查询不可用 → 按钮禁用（UI 不重复实现规则）
 	if controller.ActionAvailable("fire_oil"):
 		push_error("FAIL: fire_oil available but frigate has no fire_oil slot")
 		quit(1)
@@ -306,7 +319,7 @@ func _init() -> void:
 	# T13：事件订阅接线——砲击命中敌舰后 EventsPlayedCount 增长；规则将 attack 置为不可用，按钮随之禁用
 	var events_before: int = controller.EventsPlayedCount()
 	controller.OnAction("bombardment") # UX-7：点砲击展开砲击可攻击范围，再点目标格执行砲击命令
-	controller.OnGridClicked(controller.CellToWorld(26, 13)) # p2 砲击 e2 舰格 (26,13)（最近格距 5 = 上限）
+	controller.OnGridClicked(controller.CellToWorld(17, 17)) # p4（置于 (12,17)）砲击 e2 舰格 (17,17)（平方距离 25 = 上限）
 	if controller.EventsPlayedCount() <= events_before:
 		push_error("FAIL: no events played for ranged attack (wiring broken)")
 		quit(1)

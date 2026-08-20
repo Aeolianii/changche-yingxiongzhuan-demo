@@ -45,6 +45,18 @@ public sealed class BattleState
     // 值 = 距上次被看到的完整回合数；≤3 表示仍在滞留可见期内（RevealedCells 计入），>3 移除归为迷雾。
     // 仅维护玩家观测（迷雾只对玩家绘制）；敌舰可见性仍为几何判定，不因滞留揭示隐藏舰。
     public Dictionary<GridPos, int> PlayerVisionFreshness { get; } = new();
+    // CHG（海怪 Boss 战）：NoSurrender 关闭本场投降（Boss 战）；
+    // RangeBonus 全舰队射程 +1 格（倭寇军旗 → 1；RangeBonus>0 时半径 +1）；
+    // FishHuntRound/FishHuntLockedTarget 海怪02 猎杀循环与锁定目标。
+    public bool NoSurrender { get; set; }
+    public int RangeBonus { get; set; }
+    public int FishHuntRound { get; set; }
+    public string? FishHuntLockedTarget { get; set; }
+    // CHG-20260819（F-1 讨伐饰品）：玩家旗舰武器升级等级（0=无升级）。
+    // 海怪之角 → FlagshipRamLevel=4（撞角系数 1.8）；贯日神枪 → FlagshipBombardmentLevel=4（砲击 420 伤害）。
+    // 规则层仅在「玩家旗舰 + 对应饰品已装备」时以本等级取数（weapons.json 已含 Lv4 数据），见 RamRules/AttackRules。
+    public int FlagshipRamLevel { get; set; }
+    public int FlagshipBombardmentLevel { get; set; }
 
     public ShipState? ShipOrNull(string id) => Ships.TryGetValue(id, out var s) ? s : null;
 }

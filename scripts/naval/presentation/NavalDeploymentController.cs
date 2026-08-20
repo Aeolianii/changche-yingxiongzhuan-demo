@@ -9,15 +9,16 @@ using System.Linq;
 namespace NanjiangNaval;
 
 // 布阵控制器：双方一次性全部布阵（不交替）。舰队从 data/naval/ships.json 经 NavalConfigLoader 加载。
-// 默认阵型：双方各 4 舰横向、平行（玩家朝东、敌方朝西），在 48×36 大图各区呈纵深布置（设计 14 + UX-1）。
+// 默认阵型：双方各 4 舰横向、平行（玩家朝东、敌方朝西），在 48×36 大图缩小后的可配置区（12×10）呈纵深布置（CHG-20260819 F-3）。
 // 交互：点己方舰选中 → 点区域空格放置（该格为船头）/ 旋转按钮改横纵朝向 → 点「设为指挥舰」指定 → 「开始战斗」校验后交 BattleController。
 // 非法占格（越界/重叠/区域外/不可通行地形）一律拒绝，返回原因 key。
 public partial class NavalDeploymentController : Node2D, IGridClickReceiver
 {
-    // 预设己方区域（含 x、不含上边界；48×36 UX-1）：玩家 x[1,23) y[2,34)；敌 x[26,47) y[2,34)；中央 x[23,26) 留空为战场纵深。
-    // 玩家区放宽到 x=22 列：p3/p4 默认在 (22,26)/(22,27)，东进 3/4 格即可与 e4(26,26) 形成双方向接舷邻接（各在 4 MP 内）。
-    public static readonly Rect2I PlayerZone = new(1, 2, 22, 32);
-    public static readonly Rect2I EnemyZone = new(26, 2, 21, 32);
+    // CHG-20260819（F-3）：预设己方区域缩小为「正常战斗可配置范围」12 宽 × 10 高，竖直居中到地图中部
+    // （y∈[12,22) 覆盖逃跑格 x=0 列 y16-18，冒烟逃跑仍可行）。与 ship_screen FORMATION_ZONE 同源，
+    // 小地图预设阵型坐标可直接落入战斗布阵区。玩家 x[1,13) y[12,22)；敌 x[14,26) y[12,22)；中央 x=13 留 1 列交战纵深。
+    public static readonly Rect2I PlayerZone = new(1, 12, 12, 10);
+    public static readonly Rect2I EnemyZone = new(14, 12, 12, 10);
 
     private NavalRulesConfig? _config;
     private BattleState _battle = null!;
@@ -42,35 +43,11 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     private Rect2I _levelEnemyZone;
     // F-4：布阵浅滩自沉按钮（设计 15）——选中满足自沉条件的舰时显示。
     private Button? _selfSinkButton;
-    // F-5：布阵前装备配置 UI（设计 14）——底部栏「装备配置」按钮切换 EquipmentPanel；面板内逐舰增删武器/技能/护甲。
-    private Button? _equipToggleButton;
-    private Control? _equipPanel;
-    private string? _equipShipId;   // 面板当前编辑的玩家舰（默认第一艘旗舰）
-    private Label? _equipSlotsLabel;
-    private Label? _equipHintLabel;
-    private Button? _equipCloseButton;
-    private readonly Dictionary<string, Button> _equipShipButtons = new();            // 舰位 id → 选择按钮
-    private readonly Dictionary<string, (Button Minus, Label Count, Button Plus)> _weaponControls = new();
-    private readonly Dictionary<string, (Button Minus, Label Count, Button Plus)> _skillControls = new();
-    private (Button Minus, Label Count, Button Plus) _armorControls;
-    // V-7：舰队配置修改器（增减舰船 / 装备 / 预设保存加载 / 应用到本场布阵）——自由模式布阵前可用。
-    private const int MaxFleetSize = 12; // 舰队舰船上限（防无限添加；布阵区可容纳更多）
-    private Button? _fleetToggleButton;
-    private Control? _fleetPanel;
-    private string? _fleetShipId;   // 面板当前编辑的玩家舰
-    private Label? _fleetPreviewLabel;
-    private Label? _fleetSlotsLabel;
-    private LineEdit? _fleetNameEdit;
-    private Button? _fleetSaveButton;
-    private readonly Dictionary<string, (Button Minus, Label Count, Button Plus)> _fleetWeaponControls = new();
-    private readonly Dictionary<string, (Button Minus, Label Count, Button Plus)> _fleetSkillControls = new();
-    private (Button Minus, Label Count, Button Plus) _fleetArmorControls;
-    private VBoxContainer? _fleetShipList;
-    private VBoxContainer? _fleetPresetList;
+    // CHG-20260818：玩家舰队预设库（user://fleet_presets.json；复用 FleetPresetStore，含活动预设持久化）。
+    // 旧海战 F-5 装备 / V-7 舰队配置 UI 已弃用，装备配置统一走整合版 ship_screen。
     private FleetPresetStore? _fleetStore;
     private readonly Dictionary<string, NavalShipView> _shipViews = new();
-    // 默认阵型按 roster 下标对齐（敌方有重复舰型，不能用舰型 id 作键）
-    private readonly List<(GridPos Bow, CardinalDirection Facing)> _playerDefault = new();
+    // 默认阵型按 roster 下标对齐（敌方有重复舰型，不能用舰型 id 作键）。玩家侧 CHG-20260818 由经济舰队自动摆位。
     private readonly List<(GridPos Bow, CardinalDirection Facing)> _enemyDefault = new();
     // F-1：战斗种子。默认首局 seed 7（既有冒烟走晴天/无风路径不回归）；「再来一局」轮换种子让每场天气/风向不同；
     // 测试钩子 RebuildBattleForTest 可指定种子复现特定天气（同种子 → 同天气/同风向，可复现）。
@@ -96,7 +73,14 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         var def = LevelRegistry.GetById(LevelSession.PendingLevelId);
         _level = def is not null && def.Id != "free" ? def : null;
         // U-2c：随机遭遇战（LevelSelect 生成后 Begin）→ 遭遇模式（独立于关卡/自由，按遭遇规格构建战斗）。
-        _encounter = RandomEncounterSession.Active ? RandomEncounterSession.Pending : null;
+        // CHG-20260817：海盗战请求 meta（sea_overworld 选择难度后写入）→ 先生成并 Begin 随机遭遇，再进遭遇模式。
+        // CHG-20260819（S-2 海面接入）：讨伐战请求 meta（sea_overworld 海怪/营寨触发）→ 组装 hunt_stage 固定遭遇。
+        if (TryConsumePirateBattleRequest(out var pirateId, out var pirateDifficulty))
+            _encounter = BeginPirateEncounter(pirateId, pirateDifficulty);
+        else if (TryConsumeHuntBattleRequest(out var huntStageId))
+            _encounter = BeginHuntEncounter(huntStageId);
+        else
+            _encounter = RandomEncounterSession.Active ? RandomEncounterSession.Pending : null;
         _levelPlay = GetNodeOrNull<NavalLevelPlayController>("../LevelPlay");
         _battle = _encounter is not null ? BuildBattleForEncounter(_encounter)
             : _level is not null ? BuildBattleForLevel(_level)
@@ -133,12 +117,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             _selfSinkButton.Pressed += SelfSinkFromButton;
             _selfSinkButton.Visible = false;
         }
-        // F-5：装备配置按钮（底部栏）——切换装备面板。
-        _equipToggleButton = GetNodeOrNull<Button>("DeployHud/Panel/Box/Columns/FleetCommands/Equip");
-        if (_equipToggleButton is not null) _equipToggleButton.Pressed += EquipToggleFromButton;
-        // V-7：舰队配置按钮（底部栏）——切换舰队配置面板（自由模式增删舰/装备/预设保存加载）。
-        _fleetToggleButton = GetNodeOrNull<Button>("DeployHud/Panel/Box/Columns/FleetCommands/FleetConfig");
-        if (_fleetToggleButton is not null) _fleetToggleButton.Pressed += FleetToggleFromButton;
+        // CHG-20260818：旧海战 F-5 装备配置 / V-7 舰队配置按钮已弃用（场景节点移除），装备配置统一走 ship_screen。
         if (_level is null) BuildDefaultLineups();
         BuildFleet(); // L-3：关卡模式经 BuildFleet 内分支按 LevelDefinition 装配（下方）；自由模式沿用默认阵型
         ExitCellRules.EnsureSafeExits(_battle.Map, _battle.Ships.Values.SelectMany(s => s.OccupiedCells()));
@@ -154,8 +133,6 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         }
         _grid.ShowDeploymentZones(ZoneOverlays());
         RefreshDeploymentHighlights();
-        BuildEquipmentPanel(); // F-5：构建装备面板内容（舰选择 + 逐武器/技能 [-]N[+] 行）；默认隐藏
-        BuildFleetDesignerPanel(); // V-7：舰队配置面板（增减舰船/装备/预设保存加载）；默认隐藏
         ApplyDeployStatusText();
         // L-3：关卡无布阵提示（"布阵/装备/确认布阵/开始战斗"关键词）→ 自动开始战斗（1-1 样例直入战斗）。
         if (_level is not null && !HasDeploymentHint(_level))
@@ -336,41 +313,31 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
 
     private void BuildDefaultLineups()
     {
-        // UX-1 默认阵型（48×36，双方横向平行、玩家朝东/敌方朝西）：
-        // 玩家 p1旗舰(21,6) p2护卫舰(21,13) p3运输船(21,26) p4商船(21,27)；
-        // 敌方 e1旗舰(26,6) e2护卫舰(26,13) e3护卫舰(30,22) e4运输船(26,27)。
-        // 要点：p2↔e2 最近格距 5（d²=25，砲击上限，选中即可直击）；p3/p4 与 e4 保持接舷/布雷冒烟路径可达。
-        _playerDefault.Clear();
+        // CHG-20260819（F-3）敌方默认阵型：随玩家区缩小右移贴齐敌区（14,12,12,10），贴近玩家区右缘便于交战：
+        // e1旗舰(16,12) e2护卫舰(17,17) e3护卫舰(16,21) e4运输船(19,19)，全部朝西。
+        // 玩家侧 CHG-20260818：自由模式玩家舰队 = 经济舰队，默认摆位由 BuildPlayerFleetFromEconomy 沿玩家区自动扫描（不再固定坐标）。
         _enemyDefault.Clear();
-        // UX-1：p3/p4 靠前（22 列），e4 移至 (26,26)——保证 p3 东进 3 格、p4 东进 4 格即可对 e4 形成接舷邻接（各在 4 MP 内）。
-        _playerDefault.Add((new GridPos(21, 6), CardinalDirection.East));
-        _playerDefault.Add((new GridPos(21, 13), CardinalDirection.East));
-        _playerDefault.Add((new GridPos(22, 26), CardinalDirection.East));
-        _playerDefault.Add((new GridPos(22, 27), CardinalDirection.East));
-        _enemyDefault.Add((new GridPos(26, 6), CardinalDirection.West));
-        _enemyDefault.Add((new GridPos(26, 13), CardinalDirection.West));
-        _enemyDefault.Add((new GridPos(30, 22), CardinalDirection.West));
-        _enemyDefault.Add((new GridPos(26, 26), CardinalDirection.West));
+        _enemyDefault.Add((new GridPos(16, 12), CardinalDirection.West));
+        _enemyDefault.Add((new GridPos(17, 17), CardinalDirection.West));
+        _enemyDefault.Add((new GridPos(16, 21), CardinalDirection.West));
+        _enemyDefault.Add((new GridPos(19, 19), CardinalDirection.West));
     }
 
     private void BuildFleet()
     {
-        // U-2c：随机遭遇按遭遇规格装配双方舰队；L-3 关卡模式按 LevelDefinition 装配；自由模式沿用默认阵型。
-        if (_encounter is not null) AddFleetFromEncounter(_encounter);
-        else if (_level is not null) AddFleetFromLevel(_level);
+        // CHG-20260818：玩家舰队一律来自经济舰队（economy_state 映射 + 活动预设增减，上限=拥有数量）——
+        // 自由模式与随机遭遇（海盗战/遭遇战）都用玩家自己配置的舰队；仅关卡模式（教学）按 LevelDefinition 固定玩家/敌方舰队。
+        if (_level is not null)
+        {
+            AddFleetFromLevel(_level);
+        }
         else
         {
-            // V-7：自由模式玩家舰队——活动预设命中且合法 → 用预设替换默认阵型舰队（敌方保持默认 4 舰）。
-            if (FleetPresetSession.Active && FleetStore().Get(FleetPresetSession.ActiveName!) is { } activePreset
-                && FleetPresetValidator.Validate(_config!, activePreset).Count == 0)
-            {
-                AddPresetFleet(activePreset, FactionId.Player);
-            }
+            BuildPlayerFleetFromEconomy();
+            if (_encounter is not null)
+                AddLevelFleet(_encounter.EnemyFleet, FactionId.Enemy); // U-2c：遭遇敌方舰队按遭遇规格
             else
-            {
-                AddFleetShips(PlayerRoster, _playerDefault, FactionId.Player);
-            }
-            AddFleetShips(EnemyRoster, _enemyDefault, FactionId.Enemy);
+                AddFleetShips(EnemyRoster, _enemyDefault, FactionId.Enemy); // 自由模式默认敌方 4 舰
         }
         foreach (var ship in _battle.Ships.Values)
         {
@@ -544,8 +511,6 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         RefreshDeploymentHighlights();
         SetMessage("已取消选择");
         if (_deployPanel is not null) _deployPanel.Visible = false;
-        if (_equipPanel is not null) _equipPanel.Visible = false;
-        if (_fleetPanel is not null) _fleetPanel.Visible = false;
         RefreshSelfSinkButton();
         return "";
     }
@@ -587,9 +552,11 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     {
         _flagshipId = null;
         if (_encounter is not null) ApplyEncounterLineup();
+        else if (_level is not null) { ApplySpecLineup(_level!.PlayerFleet, FactionId.Player); ApplySpecLineup(_level.EnemyFleet, FactionId.Enemy); }
         else
         {
-            ApplyDefaultLineup(PlayerRoster, _playerDefault, FactionId.Player);
+            // CHG-20260818：玩家侧恢复为经济舰队的自动摆位（沿玩家区重新扫描），敌方恢复默认阵型。
+            RestorePlayerEconomyLineup();
             ApplyDefaultLineup(EnemyRoster, _enemyDefault, FactionId.Enemy);
         }
         foreach (var id in _shipViews.Keys) SyncShipView(id);
@@ -599,11 +566,12 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     // 遭遇模式：把双方舰队恢复到遭遇生成的初始位置（id 顺序与遭遇规格列表一致 p1.. / e1..）。
     private void ApplyEncounterLineup()
     {
-        ApplyEncounterSide(_encounter!.PlayerFleet, FactionId.Player);
-        ApplyEncounterSide(_encounter.EnemyFleet, FactionId.Enemy);
+        ApplySpecLineup(_encounter!.PlayerFleet, FactionId.Player);
+        ApplySpecLineup(_encounter.EnemyFleet, FactionId.Enemy);
     }
 
-    private void ApplyEncounterSide(IReadOnlyList<LevelShipSpec> specs, FactionId faction)
+    // 按规格列表恢复一方舰队的初始位置（遭遇与关卡共用；id 顺序与规格列表一致 p1.. / e1..）。
+    private void ApplySpecLineup(IReadOnlyList<LevelShipSpec> specs, FactionId faction)
     {
         for (var i = 0; i < specs.Count; i++)
         {
@@ -646,6 +614,9 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         }
         // T11 结转（T13 B）：战斗初始化时按舰型技能槽位 × 每局次数播种 SkillUsesLeft（data/naval/skills.json）。
         SkillSeeding.Seed(_battle);
+        // CHG（海怪 Boss 战）：开战前敌我强度配平——按有效难度（固定/讨伐统一普通）降敌舰 HitPoints。
+        var difficulty = EncounterBalancer.EffectiveDifficulty(_encounter);
+        EncounterBalancer.BalanceEnemyFleet(_battle, difficulty);
         var battleController = GetNodeOrNull<NavalBattleController>("../Battle/BattleController");
         if (battleController is not null)
         {
@@ -667,6 +638,69 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     public string RandomEncounterMapLabel() => _encounter?.MapSourceLabel ?? "";
     public string RandomEncounterEnemyLabel() => _encounter?.EnemyLabel ?? "";
     public int RandomEncounterPlayerFleetCount() => _encounter?.PlayerFleet.Count ?? 0;
+    // CHG-20260817：海盗战请求 meta 消费——读取并移除场景根 meta，失败（缺海盗 id）返回 false。
+    // 仅由 _Ready 调用；避免污染后续随机遭遇/关卡流程。
+    private bool TryConsumePirateBattleRequest(out string pirateId, out int difficulty)
+    {
+        pirateId = "";
+        difficulty = 2;
+        var root = GetTree().Root;
+        if (!root.HasMeta(PirateBattleSession.RequestMetaKey)) return false;
+        var raw = root.GetMeta(PirateBattleSession.RequestMetaKey);
+        root.RemoveMeta(PirateBattleSession.RequestMetaKey);
+        if (raw.VariantType != Variant.Type.Dictionary) return false;
+        var dict = raw.As<Godot.Collections.Dictionary>();
+        var pid = dict.ContainsKey("pirate_id") ? dict["pirate_id"].AsString() : "";
+        if (string.IsNullOrEmpty(pid)) return false;
+        pirateId = pid;
+        if (dict.ContainsKey("difficulty"))
+            difficulty = Math.Clamp(dict["difficulty"].AsInt32(),
+                RandomEncounterGenerator.MinDifficulty, RandomEncounterGenerator.MaxDifficulty);
+        _pirateReturnCarrier = dict;
+        return true;
+    }
+
+    // 海盗战：登记海盗会话（携带发起方上下文 → 结算返回时还原）→ 生成对应难度随机遭遇 → Begin。
+    private Godot.Collections.Dictionary? _pirateReturnCarrier;
+    private RandomEncounter? BeginPirateEncounter(string pirateId, int difficulty)
+    {
+        PirateBattleSession.Begin(pirateId, difficulty, _pirateReturnCarrier);
+        var encounter = RandomEncounterGenerator.Generate(_config!,
+            new RandomEncounterOptions(Difficulty: difficulty, Seed: PirateEncounterSeed()));
+        RandomEncounterSession.Begin(encounter);
+        return encounter;
+    }
+
+    // CHG-20260819（S-2 海面接入）：讨伐战请求 meta 消费——读取并移除场景根 meta，失败（缺阶段 id）返回 false。
+    // 仅由 _Ready 调用；与海盗战消费同构，避免污染后续随机遭遇/关卡流程。
+    private bool TryConsumeHuntBattleRequest(out string stageId)
+    {
+        stageId = "";
+        var root = GetTree().Root;
+        if (!root.HasMeta(HuntBattleSession.RequestMetaKey)) return false;
+        var raw = root.GetMeta(HuntBattleSession.RequestMetaKey);
+        root.RemoveMeta(HuntBattleSession.RequestMetaKey);
+        if (raw.VariantType != Variant.Type.Dictionary) return false;
+        var dict = raw.As<Godot.Collections.Dictionary>();
+        var id = dict.ContainsKey("stage_id") ? dict["stage_id"].AsString() : "";
+        if (string.IsNullOrEmpty(id)) return false;
+        stageId = id;
+        _huntReturnCarrier = dict;
+        return true;
+    }
+
+    // 讨伐战：登记讨伐会话（携带发起方上下文 → 结算返回时还原）→ 组装 hunt_stage 固定遭遇 → Begin。
+    private Godot.Collections.Dictionary? _huntReturnCarrier;
+    private RandomEncounter? BeginHuntEncounter(string stageId)
+    {
+        HuntBattleSession.Begin(stageId, _huntReturnCarrier);
+        var encounter = HuntEncounterGenerator.CreateStage(_config!, stageId);
+        RandomEncounterSession.Begin(encounter);
+        return encounter;
+    }
+
+    // 新种子：TickCount（毫秒），与 LevelSelectController.NewSeed 同源，避免连续进入同场。
+    private int PirateEncounterSeed() => System.Environment.TickCount;
     // F-2：出口格只读（headless 冒烟断言"地图有出口边界"）。
     public int ExitCellCount() => _battle?.Map.ExitCells.Count ?? 0;
     public bool IsExitCell(int x, int y) => _battle?.Map.ExitCells.Contains(new GridPos(x, y)) ?? false;
@@ -713,9 +747,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     public bool IsSelfSunk(string shipId) => _battle.ShipOrNull(shipId)?.SelfSunk ?? false;
     public int ShipHitPoints(string shipId) => _battle.ShipOrNull(shipId)?.HitPoints ?? -1;
 
-    // F-5：装备只读状态（headless 冒烟断言装备配置闭环）——面板显隐/当前编辑舰/武器数/技能槽位数/护甲/负载/减伤/槽位。
-    public bool EquipPanelVisible() => _equipPanel?.Visible ?? false;
-    public string EquipShip() => _equipShipId ?? "";
+    // CHG-20260818：玩家舰装备只读状态（headless 冒烟断言经济舰队装备映射闭环）——武器数/技能槽位数/护甲/槽位/负载/减伤。
     public int ShipWeaponCount(string shipId, string weaponId) => _battle.ShipOrNull(shipId)?.WeaponCounts.GetValueOrDefault(weaponId, 0) ?? -1;
     public int ShipSkillSlotCount(string shipId, string skillId) => _battle.ShipOrNull(shipId)?.SkillLoadout.GetValueOrDefault(skillId, 0) ?? -1;
     public int ShipArmorLevel(string shipId) => _battle.ShipOrNull(shipId)?.ArmorLevel ?? -1;
@@ -731,6 +763,9 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         => _battle.ShipOrNull(shipId) is { } s
             ? (int)Math.Round(Math.Min(s.ArmorLevel * DamageRules.ArmorReductionPerLevel, DamageRules.ArmorMaxReduction) * 100.0)
             : -1;
+    // 已用武器/技能槽位（装备映射测试断言闭环用）。
+    private static int UsedWeaponSlots(ShipState ship) => ship.WeaponCounts.Values.Sum();
+    private static int UsedSkillSlots(ShipState ship) => ship.SkillLoadout.Values.Sum();
 
     // UX-11：布阵船视图/阴影断言访问器（与战斗控制器同款语义）——船视图位置=状态期望中心；
     // 阴影由 NavalGridView 在世界空间按 ship 当前占格绘制，暴露其左上世界坐标，供 headless 断言"移动后阴影跟随船"。
@@ -1031,15 +1066,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         "self_sink.boarding" => "接舷中不能自沉",
         "self_sink.passability" => "该舰型不能自沉（需通过性 1/2）",
         "self_sink.wrong_terrain" => "需在浅滩自沉",
-        // F-5：装备配置（设计 14）——装载增量/槽位/上限原因。
-        "equip.bad_delta" => "增量参数无效",
-        "equip.unknown_weapon" => "未知武器",
-        "equip.unknown_skill" => "未知技能",
-        "equip.weapon_max" => "撞角限装 1 件",
-        "equip.slots_full" => "槽位已满",
-        "equip.armor_max" => "已达护甲上限",
-        "equip.none_equipped" => "未装载该项",
-        // V-7：舰队配置修改器（预设保存/加载/增减舰）原因。
+        // CHG-20260818：舰队预设 / 经济舰队（ship_screen 预设校验 + 布阵装配）原因。
         "fleet.level_locked" => "关卡/遭遇模式使用固定舰队，不可修改",
         "fleet.unknown_ship" => "舰型不存在",
         "fleet.unknown_weapon" => "未知武器",
@@ -1050,303 +1077,12 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         "fleet.armor_over_cap" => "护甲超出该舰上限",
         "fleet.empty_name" => "预设名不能为空",
         "fleet.empty_fleet" => "舰队为空，无法保存",
-        "fleet.too_many" => $"舰队已达上限 {MaxFleetSize} 艘",
-        "fleet.no_room" => "布阵区已无空位",
-        "fleet.last_ship" => "至少保留一艘舰船",
+        "fleet.over_owned" => "出战数量超过该舰型拥有数",
         "fleet.unknown_preset" => "预设不存在",
         "" => "",
         _ => key,
     };
 
-    // ---- F-5 装备配置（布阵前，设计 14） ----
-
-    // 构建装备面板（在 .tscn EquipmentPanel/Box 容器内）：舰选择按钮接线 + 逐武器/技能生成 [-]N[+] 行。
-    // 结构一次构建（配置不变），之后装备/选舰变化只走 RefreshEquipmentPanel 刷新计数与禁用态。
-    private void BuildEquipmentPanel()
-    {
-        _equipPanel = GetNodeOrNull<Control>("DeployHud/EquipmentPanel");
-        if (_equipPanel is null) return;
-        if (_equipPanel is Panel panel) panel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
-        var box = _equipPanel.GetNodeOrNull<Container>("Box");
-        if (box is null) return;
-        if (box.GetNodeOrNull<Label>("Caption") is { } cap) StyleEquipText(cap, 18, InkWashTheme.InkDeep);
-        _equipSlotsLabel = box.GetNodeOrNull<Label>("SlotsLabel");
-        if (_equipSlotsLabel is not null) StyleEquipText(_equipSlotsLabel, 14, InkWashTheme.TextInk);
-        _equipHintLabel = box.GetNodeOrNull<Label>("HintLabel");
-        if (_equipHintLabel is not null) StyleEquipText(_equipHintLabel, 13, InkWashTheme.BrownText);
-        // 行标题（武器/技能/护甲）统一赭石强调。
-        foreach (var row in new[] { "WeaponRow", "SkillRow", "ArmorRow" })
-            if (box.GetNodeOrNull<Label>($"{row}/Caption") is { } rc) StyleEquipText(rc, 15, InkWashTheme.Ochre);
-        // V-7：舰选择行按当前玩家舰队动态重建（替代固定 Ship1..Ship4；预设增减舰后自动同步）。
-        // 既有冒烟依赖 WeaponRow/cannon/Plus 路径（不改），舰选择改走节点内动态按钮（Ship_<id>）。
-        RebuildEquipShipRow();
-        // 武器行：按 weapons.json 顺序逐个生成 [-]N[+]
-        if (box.GetNodeOrNull<HBoxContainer>("WeaponRow") is { } weaponRow)
-        {
-            foreach (var w in _config!.Weapons)
-            {
-                BuildEquipGroup(weaponRow, w.DisplayName, w.Id, out var minus, out var count, out var plus);
-                _weaponControls[w.Id] = (minus, count, plus);
-                var wid = w.Id;
-                minus.Pressed += () => EquipWeaponFromButton(wid, -1);
-                plus.Pressed += () => EquipWeaponFromButton(wid, +1);
-            }
-        }
-        // 技能行：按 skills.json 顺序逐个生成 [-]N[+]
-        if (box.GetNodeOrNull<HBoxContainer>("SkillRow") is { } skillRow)
-        {
-            foreach (var s in _config!.Skills)
-            {
-                BuildEquipGroup(skillRow, s.DisplayName, s.Id, out var minus, out var count, out var plus);
-                _skillControls[s.Id] = (minus, count, plus);
-                var sid = s.Id;
-                minus.Pressed += () => EquipSkillFromButton(sid, -1);
-                plus.Pressed += () => EquipSkillFromButton(sid, +1);
-            }
-        }
-        // 护甲行
-        if (box.GetNodeOrNull<HBoxContainer>("ArmorRow") is { } armorRow)
-        {
-            BuildEquipGroup(armorRow, "护甲", "armor", out var aMinus, out var aCount, out var aPlus);
-            _armorControls = (aMinus, aCount, aPlus);
-            aMinus.Pressed += () => EquipArmorFromButton(-1);
-            aPlus.Pressed += () => EquipArmorFromButton(+1);
-        }
-        _equipCloseButton = box.GetNodeOrNull<Button>("CloseRow/Close");
-        if (_equipCloseButton is not null)
-        {
-            InkWashTheme.StyleButton(_equipCloseButton);
-            _equipCloseButton.FocusMode = Control.FocusModeEnum.None;
-            _equipCloseButton.Pressed += () => _equipPanel!.Visible = false;
-        }
-        RefreshEquipmentPanel();
-    }
-
-    // 生成一组「名称 − 数量 +」控件（node 名=id，供 headless 定位按钮路径）。
-    private static HBoxContainer BuildEquipGroup(HBoxContainer row, string displayName, string id, out Button minus, out Label count, out Button plus)
-    {
-        var group = new HBoxContainer { Name = id, CustomMinimumSize = new Vector2(0, 34) };
-        group.AddThemeConstantOverride("separation", 6);
-        var name = new Label { Name = "Name", Text = displayName, VerticalAlignment = VerticalAlignment.Center, CustomMinimumSize = new Vector2(56, 0) };
-        name.AddThemeFontOverride("font", InkWashTheme.Font());
-        name.AddThemeFontSizeOverride("font_size", 15);
-        name.AddThemeColorOverride("font_color", InkWashTheme.TextInk);
-        minus = MakeEquipButton("−", 32, "Minus");
-        count = new Label { Name = "Count", Text = "×0", VerticalAlignment = VerticalAlignment.Center, CustomMinimumSize = new Vector2(36, 0) };
-        count.AddThemeFontOverride("font", InkWashTheme.Font());
-        count.AddThemeFontSizeOverride("font_size", 15);
-        count.AddThemeColorOverride("font_color", InkWashTheme.InkDeep);
-        plus = MakeEquipButton("+", 32, "Plus");
-        group.AddChild(name);
-        group.AddChild(minus);
-        group.AddChild(count);
-        group.AddChild(plus);
-        row.AddChild(group);
-        return group;
-    }
-
-    private static Button MakeEquipButton(string text, int width, string name)
-    {
-        var b = new Button { Name = name, Text = text, CustomMinimumSize = new Vector2(width, 30) };
-        InkWashTheme.StyleButton(b);
-        b.FocusMode = Control.FocusModeEnum.None;
-        return b;
-    }
-
-    private static void StyleEquipText(Label l, int size, Color color)
-    {
-        l.AddThemeFontOverride("font", InkWashTheme.Font());
-        l.AddThemeFontSizeOverride("font_size", size);
-        l.AddThemeColorOverride("font_color", color);
-    }
-
-    // 切换装备面板：默认编辑第一艘（旗舰）；关闭时提示。
-    private void EquipToggleFromButton()
-    {
-        if (_equipPanel is null) return;
-        _equipPanel.Visible = !_equipPanel.Visible;
-        if (_equipPanel.Visible)
-        {
-            _equipShipId ??= ShipIdFor(FactionId.Player, 0);
-            SelectEquipShip(_equipShipId!);
-            _levelPlay?.OnEquipOpened(); // L-3：打开装备面板提示推进
-        }
-        else
-        {
-            SetMessage("已关闭装备配置");
-        }
-    }
-
-    // 面板选中要编辑的舰：只读查询 + 刷新全面板计数/禁用态。
-    private void SelectEquipShip(string shipId)
-    {
-        var ship = _battle.ShipOrNull(shipId);
-        if (ship is null || ship.Faction != FactionId.Player) return;
-        _equipShipId = shipId;
-        RefreshEquipmentPanel();
-        SetMessage($"装备配置：{ship.Definition.DisplayName}（{ship.Id}）——武器/技能/护甲在布阵前完成");
-    }
-
-    // 刷新装备面板全部计数/上限/按钮可用态（选中舰变化或装备变化后调用）。
-    private void RefreshEquipmentPanel()
-    {
-        if (_equipPanel is null || !_equipPanel.Visible) return;
-        if (_equipShipId is not { } id) return;
-        var ship = _battle.ShipOrNull(id);
-        if (ship is null || ship.Faction != FactionId.Player) return;
-        var usedW = UsedWeaponSlots(ship);
-        var maxW = ship.Definition.WeaponSlots;
-        var usedS = UsedSkillSlots(ship);
-        var maxS = ship.Definition.SkillSlots;
-        var armorCap = ship.Definition.BaseArmor + ship.Definition.ArmorSlots;
-        foreach (var (sid, btn) in _equipShipButtons)
-        {
-            if (sid == ship.Id) ActivateEquipShip(btn); else DeactivateEquipShip(btn);
-        }
-        if (_equipSlotsLabel is not null)
-            _equipSlotsLabel.Text = $"{ship.Definition.DisplayName}（{ship.Id}）  武器位 {usedW}/{maxW} · 技能位 {usedS}/{maxS} · 护甲位 {ship.ArmorLevel}/{armorCap} · 负载 {WeatherRules.CurrentLoad(ship)}/{ship.Definition.LoadCapacity}";
-        foreach (var (wid, ctl) in _weaponControls)
-        {
-            var count = ship.WeaponCounts.GetValueOrDefault(wid, 0);
-            var atMax = _config!.Weapons.FirstOrDefault(w => w.Id == wid) is { MaxCount: { } mc } && count >= mc; // 撞角限 1 件
-            ctl.Count.Text = $"×{count}";
-            ctl.Minus.Disabled = count <= 0;
-            ctl.Plus.Disabled = usedW >= maxW || atMax;
-        }
-        foreach (var (sid, ctl) in _skillControls)
-        {
-            var count = ship.SkillLoadout.GetValueOrDefault(sid, 0);
-            ctl.Count.Text = $"×{count}";
-            ctl.Minus.Disabled = count <= 0;
-            ctl.Plus.Disabled = usedS >= maxS;
-        }
-        var armor = ship.ArmorLevel;
-        _armorControls.Count.Text = $"×{armor}";
-        _armorControls.Minus.Disabled = armor <= 0;
-        _armorControls.Plus.Disabled = armor >= armorCap;
-        if (_equipHintLabel is not null)
-            _equipHintLabel.Text = "护甲每级 +3 负载 · −10% 减伤（上限80%）｜撞角限1件｜技能按槽位×每场次数";
-    }
-
-    // 装载/卸载武器：delta=+1 装 / -1 卸。总武器数受 WeaponSlots 限制；撞角（weapons.json MaxCount=1）限 1 件。
-    // 返回原因 key；空字符串 = 成功。写 ShipState.WeaponCounts（ConfirmDeployment 时随战斗生效）。
-    public string EquipWeapon(string shipId, string weaponId, int delta)
-    {
-        var ship = PlayerShipForEquip(shipId);
-        if (ship is null) return "deploy.unknown_ship";
-        if (delta is not 1 and not -1) return "equip.bad_delta";
-        if (_config!.Weapons.FirstOrDefault(w => w.Id == weaponId) is not { } def) return "equip.unknown_weapon";
-        var current = ship.WeaponCounts.GetValueOrDefault(weaponId, 0);
-        if (delta > 0)
-        {
-            if (def.MaxCount is { } max && current >= max) return "equip.weapon_max";
-            if (UsedWeaponSlots(ship) >= ship.Definition.WeaponSlots) return "equip.slots_full";
-            ship.WeaponCounts[weaponId] = current + 1;
-        }
-        else
-        {
-            if (current <= 0) return "equip.none_equipped";
-            if (current == 1) ship.WeaponCounts.Remove(weaponId); else ship.WeaponCounts[weaponId] = current - 1;
-        }
-        OnEquipmentChanged(ship, $"{ship.Definition.DisplayName} 武器 {def.DisplayName}×{ship.WeaponCounts.GetValueOrDefault(weaponId, 0)}");
-        return "";
-    }
-
-    // 装载/卸载技能：delta=+1 装 / -1 卸。总技能位受 SkillSlots 限制；写 ShipState.SkillLoadout（槽位数），
-    // 战斗开始时 SkillSeeding.Seed 按槽位 × skills.json 每场次数播种 SkillUsesLeft。
-    public string EquipSkill(string shipId, string skillId, int delta)
-    {
-        var ship = PlayerShipForEquip(shipId);
-        if (ship is null) return "deploy.unknown_ship";
-        if (delta is not 1 and not -1) return "equip.bad_delta";
-        if (_config!.Skills.FirstOrDefault(s => s.Id == skillId) is not { } def) return "equip.unknown_skill";
-        var current = ship.SkillLoadout.GetValueOrDefault(skillId, 0);
-        if (delta > 0)
-        {
-            if (UsedSkillSlots(ship) >= ship.Definition.SkillSlots) return "equip.slots_full";
-            ship.SkillLoadout[skillId] = current + 1;
-        }
-        else
-        {
-            if (current <= 0) return "equip.none_equipped";
-            if (current == 1) ship.SkillLoadout.Remove(skillId); else ship.SkillLoadout[skillId] = current - 1;
-        }
-        OnEquipmentChanged(ship, $"{ship.Definition.DisplayName} 技能 {def.DisplayName}×{ship.SkillLoadout.GetValueOrDefault(skillId, 0)}");
-        return "";
-    }
-
-    // 护甲：delta=+1 加一级 / -1 卸一级。范围 [0, BaseArmor+ArmorSlots]（初始 = BaseArmor）；每级 +3 负载、-10% 减伤（上限 80%）。
-    public string EquipArmor(string shipId, int delta)
-    {
-        var ship = PlayerShipForEquip(shipId);
-        if (ship is null) return "deploy.unknown_ship";
-        if (delta is not 1 and not -1) return "equip.bad_delta";
-        var cap = ship.Definition.BaseArmor + ship.Definition.ArmorSlots;
-        if (delta > 0)
-        {
-            if (ship.ArmorLevel >= cap) return "equip.armor_max";
-            ship.ArmorLevel += 1;
-        }
-        else
-        {
-            if (ship.ArmorLevel <= 0) return "equip.none_equipped";
-            ship.ArmorLevel -= 1;
-        }
-        OnEquipmentChanged(ship, $"{ship.Definition.DisplayName} 护甲 {ship.ArmorLevel} 级 · 减伤 {ArmorReductionPercent(ship.Id)}% · 负载 {WeatherRules.CurrentLoad(ship)}");
-        return "";
-    }
-
-    // 面板按钮包装：把错误原因转中文提示。
-    private void EquipWeaponFromButton(string weaponId, int delta)
-    {
-        var err = EquipWeapon(_equipShipId ?? "", weaponId, delta);
-        if (err.Length > 0) SetMessage("无法装载武器：" + DescribePlacementError(err));
-    }
-
-    private void EquipSkillFromButton(string skillId, int delta)
-    {
-        var err = EquipSkill(_equipShipId ?? "", skillId, delta);
-        if (err.Length > 0) SetMessage("无法装载技能：" + DescribePlacementError(err));
-    }
-
-    private void EquipArmorFromButton(int delta)
-    {
-        var err = EquipArmor(_equipShipId ?? "", delta);
-        if (err.Length > 0) SetMessage("无法调整护甲：" + DescribePlacementError(err));
-    }
-
-    // 装备变化：刷新面板（计数/禁用态）+ 底部消息。
-    private void OnEquipmentChanged(ShipState ship, string message)
-    {
-        RefreshEquipmentPanel();
-        SetMessage(message);
-    }
-
-    private ShipState? PlayerShipForEquip(string shipId)
-    {
-        var ship = _battle.ShipOrNull(shipId);
-        if (ship is null || ship.Faction != FactionId.Player) return null;
-        return ship;
-    }
-
-    private static int UsedWeaponSlots(ShipState ship) => ship.WeaponCounts.Values.Sum();
-    private static int UsedSkillSlots(ShipState ship) => ship.SkillLoadout.Values.Sum();
-
-    private static void ActivateEquipShip(Button b)
-    {
-        b.AddThemeStyleboxOverride("normal", InkWashTheme.ButtonActive());
-        b.AddThemeStyleboxOverride("hover", InkWashTheme.ButtonActiveHover());
-        b.AddThemeStyleboxOverride("pressed", InkWashTheme.ButtonActivePressed());
-        b.AddThemeColorOverride("font_color", InkWashTheme.Paper);
-    }
-
-    private static void DeactivateEquipShip(Button b)
-    {
-        b.AddThemeStyleboxOverride("normal", InkWashTheme.ButtonNormal());
-        b.AddThemeStyleboxOverride("hover", InkWashTheme.ButtonHover());
-        b.AddThemeStyleboxOverride("pressed", InkWashTheme.ButtonPressed());
-        b.AddThemeColorOverride("font_color", InkWashTheme.TextInk);
-    }
 
     private void StartBattleTransition()
     {
@@ -1370,7 +1106,6 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         if (_level is not null) { GetTree().ReloadCurrentScene(); return; }
         _flagshipId = null;
         _selectedShip = null;
-        CloseEquipmentPanel(); // F-5：新一局装备随 BuildFleet 重置为默认，关闭装备面板
         RebuildFleetForDeploy();
         Visible = true;
         ProcessMode = ProcessModeEnum.Inherit;
@@ -1411,10 +1146,6 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         }
         _grid.ShowDeploymentZones(ZoneOverlays());
         RefreshDeploymentHighlights();
-        RebuildEquipShipRow();  // V-7：舰队构成变化 → 重建装备面板舰选择行
-        _fleetShipId = null;    // V-7：重建后不残留舰队配置面板编辑舰
-        if (_fleetPanel is not null) _fleetPanel.Visible = false;
-        RefreshFleetPanel();    // V-7：刷新舰队配置面板（舰列表/预览/预设列表）
     }
 
     // F-1：headless 冒烟测试钩子——指定种子重建战斗（天气/风向在 ConfirmDeployment 掷定走种子化 RNG）。
@@ -1425,45 +1156,12 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         _flagshipId = null;
         _selectedShip = null;
         if (_deployPanel is not null) _deployPanel.Visible = false;
-        CloseEquipmentPanel(); // F-5：重建战斗时装备随 BuildFleet 重置为默认，关闭装备面板
         RebuildFleetForDeploy();
         RefreshSelfSinkButton();
     }
 
-    // F-5：关闭装备面板并清当前编辑舰（新一局/重建/进入战斗后不残留编辑态）。
-    private void CloseEquipmentPanel()
-    {
-        _equipShipId = null;
-        if (_equipPanel is not null) _equipPanel.Visible = false;
-    }
 
-    // V-7：重建装备面板舰选择行（清空后按当前玩家舰列表逐个生成按钮）。舰队构成变化后调用。
-    private void RebuildEquipShipRow()
-    {
-        if (_equipPanel is not { } panel) return;
-        var row = panel.GetNodeOrNull<HBoxContainer>("Box/ShipRow");
-        if (row is null) return;
-        foreach (var child in row.GetChildren()) { row.RemoveChild(child); child.QueueFree(); }
-        _equipShipButtons.Clear();
-        foreach (var ship in _battle.Ships.Values)
-        {
-            if (ship.Faction != FactionId.Player || ship.HitPoints <= 0) continue;
-            var btn = new Button
-            {
-                Name = $"Ship_{ship.Id}",
-                Text = ship.Definition.DisplayName,
-                CustomMinimumSize = new Vector2(110, 38),
-            };
-            InkWashTheme.StyleButton(btn);
-            btn.FocusMode = Control.FocusModeEnum.None;
-            var captured = ship.Id;
-            btn.Pressed += () => SelectEquipShip(captured);
-            _equipShipButtons[ship.Id] = btn;
-            row.AddChild(btn);
-        }
-    }
-
-    // ---- V-7 舰队配置修改器（布阵前，自由模式） ----
+    // ---- CHG-20260818：经济舰队装配（自由模式玩家舰队来源）+ 舰队预设库 ----
 
     // 预设保存路径：user://fleet_presets.json（参照 LevelProgress；测试钩子可换临时路径防污染）。
     private static string FleetPresetPath() => ProjectSettings.GlobalizePath("user://fleet_presets.json");
@@ -1478,206 +1176,226 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         return _fleetStore;
     }
 
-    // 构建舰队配置面板（在 .tscn FleetPanel/Box 容器内）：添加舰按钮 + 逐武器/技能护甲行 + 保存/关闭接线。
-    private void BuildFleetDesignerPanel()
+    // 自由模式玩家舰队 = 经济舰队：economy_state 每艘拥有舰 → 海战 ShipState（海战 ShipDefinition 数值 + economy 装备）。
+    // 出战序列：活动预设（store.ActiveName 命中且通过拥有数量校验）→ 按预设列出场并套用预设装备（缺省回落该经济舰装备）；
+    // 默认 = 全部拥有舰按 economy 顺序。每舰型出战数量 ≤ 拥有数量（预设超限回落默认）。
+    // CHG-20260818：初始阵型——活动预设带阵型（Formation）时，玩家舰按阵型位置/朝向摆位（非法格回落 FindSpot 自动摆位朝东）；
+    // 无阵型/回落时沿玩家区自动摆位（朝东）。
+    private void BuildPlayerFleetFromEconomy()
     {
-        _fleetPanel = GetNodeOrNull<Control>("DeployHud/FleetPanel");
-        if (_fleetPanel is null) return;
-        if (_fleetPanel is Panel panel) panel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
-        var box = _fleetPanel.GetNodeOrNull<Container>("Box");
-        if (box is null) return;
-        if (box.GetNodeOrNull<Label>("Caption") is { } cap) StyleEquipText(cap, 18, InkWashTheme.InkDeep);
-        _fleetPreviewLabel = box.GetNodeOrNull<Label>("PreviewLabel");
-        if (_fleetPreviewLabel is not null) StyleEquipText(_fleetPreviewLabel, 14, InkWashTheme.Ochre);
-        _fleetSlotsLabel = box.GetNodeOrNull<Label>("SlotsLabel");
-        if (_fleetSlotsLabel is not null) StyleEquipText(_fleetSlotsLabel, 13, InkWashTheme.TextInk);
-        // 行标题（添加舰/武器/技能/护甲）统一赭石强调。
-        foreach (var row in new[] { "ComposeRow", "FleetWeaponRow", "FleetSkillRow", "FleetArmorRow" })
-            if (box.GetNodeOrNull<Label>($"{row}/Caption") is { } rc) StyleEquipText(rc, 14, InkWashTheme.Ochre);
-        _fleetShipList = box.GetNodeOrNull<VBoxContainer>("ShipScroll/ShipList");
-        _fleetPresetList = box.GetNodeOrNull<VBoxContainer>("PresetScroll/PresetList");
-        // 添加舰船按钮（4 舰型）
-        foreach (var (typeId, node) in new[]
-                 {
-                     ("flagship", "AddFlagship"), ("frigate", "AddFrigate"),
-                     ("merchant", "AddMerchant"), ("transport", "AddTransport"),
-                 })
+        var fleet = ReadEconomyFleet();
+        if (fleet.Count == 0)
         {
-            if (box.GetNodeOrNull<Button>($"ComposeRow/{node}") is not { } b) continue;
-            InkWashTheme.StyleButton(b);
-            b.FocusMode = Control.FocusModeEnum.None;
-            var captured = typeId;
-            b.Pressed += () => AddFleetShipFromButton(captured);
+            GD.PushWarning("economy_state 无可用玩家舰队，海战自由模式玩家舰队为空");
+            return;
         }
-        // 武器/技能/护甲行（逐项 [-]N[+]），复用 BuildEquipGroup 生成。
-        if (box.GetNodeOrNull<HBoxContainer>("FleetWeaponRow") is { } weaponRow)
+        var ownedByType = fleet.GroupBy(s => s.TypeId).ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
+        var activePreset = ActivePresetForLineup(fleet);
+        var placed = new List<(GridPos Bow, int Length, CardinalDirection Facing)>();
+        var index = 0;
+        foreach (var (economyShip, preset) in SelectBattleLineup(fleet, ownedByType))
         {
-            foreach (var w in _config!.Weapons)
+            var navalType = EconomyFleetMapper.NavalTypeFor(economyShip.TypeId);
+            var def = _config!.Ships.FirstOrDefault(s => s.Id == navalType);
+            if (def is null) { GD.PushWarning($"ships.json 缺少映射舰型 {navalType}（economy {economyShip.TypeId}）"); continue; }
+            var facing = CardinalDirection.East;
+            var spot = FindSpot(placed, def, PlayerPlacementZone());
+            if (activePreset is not null
+                && TryApplyFormation(activePreset, index, def, placed, out var formationBow, out var formationFacing))
             {
-                BuildEquipGroup(weaponRow, w.DisplayName, w.Id, out var minus, out var count, out var plus);
-                _fleetWeaponControls[w.Id] = (minus, count, plus);
-                var wid = w.Id;
-                minus.Pressed += () => EquipFleetWeaponFromButton(wid, -1);
-                plus.Pressed += () => EquipFleetWeaponFromButton(wid, +1);
+                spot = formationBow;
+                facing = formationFacing;
             }
-        }
-        if (box.GetNodeOrNull<HBoxContainer>("FleetSkillRow") is { } skillRow)
-        {
-            foreach (var s in _config!.Skills)
+            if (spot is null) { GD.PushWarning($"玩家布阵区已满，跳过 {def.DisplayName}"); continue; }
+            placed.Add((spot.Value, def.Length, facing));
+            var ns = new ShipState
             {
-                BuildEquipGroup(skillRow, s.DisplayName, s.Id, out var minus, out var count, out var plus);
-                _fleetSkillControls[s.Id] = (minus, count, plus);
-                var sid = s.Id;
-                minus.Pressed += () => EquipFleetSkillFromButton(sid, -1);
-                plus.Pressed += () => EquipFleetSkillFromButton(sid, +1);
-            }
+                Id = ShipIdFor(FactionId.Player, index++),
+                Definition = def,
+                Faction = FactionId.Player,
+                Bow = spot.Value,
+                Facing = facing,
+                HitPoints = def.MaxHp,
+                ArmorLevel = preset?.Equipment?.ArmorLevel ?? economyShip.ArmorLevel,
+            };
+            // 装备搬运：预设舰带装备 → 用预设装备；否则用该经济舰自身装备（ID 两套一致，数量原样）。
+            foreach (var (wid, count) in preset?.Equipment?.Weapons ?? economyShip.Weapons)
+                ns.WeaponCounts[wid] = ns.WeaponCounts.GetValueOrDefault(wid) + count;
+            foreach (var (sid, count) in preset?.Equipment?.Skills ?? economyShip.Skills)
+                ns.SkillLoadout[sid] = ns.SkillLoadout.GetValueOrDefault(sid) + count;
+            _battle.Ships[ns.Id] = ns;
         }
-        if (box.GetNodeOrNull<HBoxContainer>("FleetArmorRow") is { } armorRow)
-        {
-            BuildEquipGroup(armorRow, "护甲", "armor", out var aMinus, out var aCount, out var aPlus);
-            _fleetArmorControls = (aMinus, aCount, aPlus);
-            aMinus.Pressed += () => EquipFleetArmorFromButton(-1);
-            aPlus.Pressed += () => EquipFleetArmorFromButton(+1);
-        }
-        // 保存预设（命名）
-        _fleetNameEdit = box.GetNodeOrNull<LineEdit>("SaveRow/NameEdit");
-        if (_fleetNameEdit is not null)
-        {
-            _fleetNameEdit.AddThemeFontOverride("font", InkWashTheme.Font());
-            _fleetNameEdit.AddThemeFontSizeOverride("font_size", 15);
-        }
-        _fleetSaveButton = box.GetNodeOrNull<Button>("SaveRow/SaveButton");
-        if (_fleetSaveButton is not null)
-        {
-            InkWashTheme.StyleButton(_fleetSaveButton);
-            _fleetSaveButton.FocusMode = Control.FocusModeEnum.None;
-            _fleetSaveButton.Pressed += SaveFleetPresetFromButton;
-        }
-        if (box.GetNodeOrNull<Button>("CloseRow/Close") is { } close)
-        {
-            InkWashTheme.StyleButton(close);
-            close.FocusMode = Control.FocusModeEnum.None;
-            close.Pressed += () => _fleetPanel!.Visible = false;
-        }
-        RefreshFleetPanel();
     }
 
-    // 切换舰队配置面板：默认编辑第一艘玩家舰；关闭时提示。
-    private void FleetToggleFromButton()
+    // 恢复玩家侧默认阵型：活动预设带阵型 → 按阵型重放（槽位 = 布阵序号 p1→0）；无阵型 → 自动摆位（沿玩家区确定性扫描，朝东）；
+    // 自沉舰固守浅滩不移动。预设阵型仅在此显式重置时重放，玩家布阵界面手动移动不受影响。
+    private void RestorePlayerEconomyLineup()
     {
-        if (_fleetPanel is null) return;
-        _fleetPanel.Visible = !_fleetPanel.Visible;
-        if (_fleetPanel.Visible)
-        {
-            SelectFleetShip(_fleetShipId ?? "");
-            RefreshFleetPanel();
-        }
-        else
-        {
-            SetMessage("已关闭舰队配置");
-        }
-    }
-
-    // 面板选中要编辑的舰：无则回落第一艘玩家舰；刷新全面板计数/禁用态。
-    private void SelectFleetShip(string shipId)
-    {
-        var ship = _battle.ShipOrNull(shipId);
-        if (ship is null || ship.Faction != FactionId.Player)
-        {
-            ship = _battle.Ships.Values.FirstOrDefault(s => s.Faction == FactionId.Player && s.HitPoints > 0);
-            if (ship is null) { _fleetShipId = null; RefreshFleetPanel(); return; }
-            shipId = ship.Id;
-        }
-        _fleetShipId = shipId;
-        RefreshFleetPanel();
-        SetMessage($"配置 {ship.Definition.DisplayName}（{ship.Id}）的装备——增删舰/保存预设可在舰队配置完成");
-    }
-
-    // 添加舰船（public，headless 冒烟/面板按钮共用）：校验关卡锁定/舰型存在/上限/布阵区空位，
-    // 自动摆位（玩家区扫描），装配 F-5 默认武器/技能布局（与默认阵型同款），重建视图/面板。
-    public string AddFleetShip(string typeId)
-    {
-        if (_level is not null || _encounter is not null) return "fleet.level_locked";
-        var def = _config!.Ships.FirstOrDefault(s => s.Id == typeId);
-        if (def is null) return "fleet.unknown_ship";
-        if (_battle.Ships.Values.Count(s => s.Faction == FactionId.Player && s.HitPoints > 0) >= MaxFleetSize)
-            return "fleet.too_many";
-        var spot = FindSpot(PlacedPlayerShips(), def, PlayerZone);
-        if (spot is null) return "fleet.no_room";
-        var id = NextPlayerShipId();
-        var ship = new ShipState
-        {
-            Id = id,
-            Definition = def,
-            Faction = FactionId.Player,
-            Bow = spot.Value, // FindSpot 返回合法船头；自动摆位固定朝东
-            Facing = CardinalDirection.East,
-            HitPoints = def.MaxHp,
-            ArmorLevel = def.BaseArmor,
-        };
-        // F-5：默认武器/技能布局（旗舰火炮、护卫砲击 + DemoSkillLayout 槽位）——与默认舰队装配一致。
-        if (DefaultWeaponEquip.TryGetValue(def.Id, out var weapons))
-            foreach (var w in weapons) ship.WeaponCounts[w] = ship.WeaponCounts.GetValueOrDefault(w) + 1;
-        if (SkillSeeding.DemoSkillLayout.TryGetValue(def.Id, out var skills))
-            foreach (var s in skills) ship.SkillLoadout[s] = ship.SkillLoadout.GetValueOrDefault(s) + 1;
-        _battle.Ships[id] = ship;
-        var view = new NavalShipView { Name = id };
-        view.Setup(ship, _grid);
-        _shipsRoot.AddChild(view);
-        _shipViews[id] = view;
-        RebuildEquipShipRow();
-        RefreshEquipmentPanel();
-        SelectFleetShip(id);
-        SetMessage($"已添加 {def.DisplayName}（{id}）");
-        return "";
-    }
-
-    private void AddFleetShipFromButton(string typeId)
-    {
-        var err = AddFleetShip(typeId);
-        if (err.Length > 0) SetMessage("无法添加：" + DescribePlacementError(err));
-    }
-
-    // 移除舰船（public）：关卡/遭遇锁定、至少保留 1 艘；清理视图/选中态/面板编辑态，重建装备行与面板。
-    public string RemoveFleetShip(string shipId)
-    {
-        if (_level is not null || _encounter is not null) return "fleet.level_locked";
-        var ship = _battle.ShipOrNull(shipId);
-        if (ship is null || ship.Faction != FactionId.Player) return "deploy.unknown_ship";
-        if (_battle.Ships.Values.Count(s => s.Faction == FactionId.Player && s.HitPoints > 0) <= 1)
-            return "fleet.last_ship";
-        _battle.Ships.Remove(shipId);
-        if (_shipViews.Remove(shipId, out var view)) { _shipsRoot.RemoveChild(view); view.QueueFree(); }
-        if (_selectedShip == shipId)
-        {
-            _selectedShip = null;
-            if (_deployPanel is not null) _deployPanel.Visible = false;
-        }
-        if (_flagshipId == shipId) _flagshipId = null;
-        if (_equipShipId == shipId) _equipShipId = null;
-        if (_fleetShipId == shipId) _fleetShipId = null;
-        RebuildEquipShipRow();
-        RefreshEquipmentPanel();
-        SelectFleetShip(_fleetShipId ?? "");
-        SetMessage($"已移除 {ship.Definition.DisplayName}（{shipId}）");
-        return "";
-    }
-
-    private void RemoveFleetShipFromButton(string shipId)
-    {
-        var err = RemoveFleetShip(shipId);
-        if (err.Length > 0) SetMessage("无法删除：" + DescribePlacementError(err));
-    }
-
-    // 当前玩家已放舰（占格用于自动摆位避让）：(船头, 长度)。
-    private IEnumerable<(GridPos Bow, int Length)> PlacedPlayerShips()
-        => _battle.Ships.Values
+        var activePreset = ActivePresetForCurrentFleet();
+        var placed = new List<(GridPos Bow, int Length, CardinalDirection Facing)>();
+        foreach (var ship in _battle.Ships.Values
             .Where(s => s.Faction == FactionId.Player && s.HitPoints > 0)
-            .Select(s => (s.Bow, s.Length));
+            .OrderBy(s => s.Id, StringComparer.Ordinal))
+        {
+            if (ship.SelfSunk) continue;
+            var facing = CardinalDirection.East;
+            var spot = FindSpot(placed, ship.Definition, PlayerPlacementZone());
+            var slot = SlotOfShip(ship.Id);
+            if (activePreset is not null
+                && TryApplyFormation(activePreset, slot, ship.Definition, placed, out var formationBow, out var formationFacing))
+            {
+                spot = formationBow;
+                facing = formationFacing;
+            }
+            if (spot is null) continue;
+            placed.Add((spot.Value, ship.Length, facing));
+            ship.Bow = spot.Value;
+            ship.Facing = facing;
+        }
+    }
+
+    // 玩家布阵/自动摆位区域：遭遇（讨伐/海盗）模式 = 遭遇规格玩家区（通常狭小靠左）；自由模式 = 预设玩家区。
+    // BuildPlayerFleetFromEconomy/RestorePlayerEconomyLineup 沿该区自动摆位，须与 ConfirmDeployment 的
+    // ValidatePlacement 校验口径一致（否则经济舰队自动摆位会落在遭遇区外，开战校验报 deploy.outside_zone）。
+    private Rect2I PlayerPlacementZone()
+        => _encounter is not null ? ToRect(_encounter.PlayerZone) : PlayerZone;
+
+    // 当前海战玩家舰队对应的活动预设（仅自由模式生效；关卡/遭遇模式返回 null）。用于布阵重置时重放阵型。
+    private FleetPreset? ActivePresetForCurrentFleet()
+    {
+        if (_level is not null || _encounter is not null) return null;
+        var active = FleetStore().ActiveName;
+        if (string.IsNullOrWhiteSpace(active)) return null;
+        var preset = FleetStore().Get(active);
+        if (preset is null) return null;
+        // 阵型槽位映射到当前玩家舰队 p1.. 顺序；若当前舰队规模超过预设出战数，超出的舰无阵型回落自动摆位。
+        return preset;
+    }
+
+    // 活动预设（校验通过才有意义）：与 SelectBattleLineup 同口径（舰型可映射 + 每舰型数量 ≤ 拥有数）。
+    private FleetPreset? ActivePresetForLineup(IReadOnlyList<EconomyShip> fleet)
+    {
+        var active = FleetStore().ActiveName;
+        if (string.IsNullOrWhiteSpace(active)) return null;
+        var preset = FleetStore().Get(active);
+        if (preset is null) return null;
+        var ownedByType = fleet.GroupBy(s => s.TypeId).ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
+        if (EconomyFleetValidator.Validate(preset, ownedByType).Count > 0) return null;
+        return preset;
+    }
+
+    // 布阵序号 → 阵型槽位（p1 → 0）。非 p 前缀返回 int.MaxValue（无阵型命中 → 回落自动摆位）。
+    private static int SlotOfShip(string shipId)
+        => shipId.Length >= 2 && shipId[0] == 'p' && int.TryParse(shipId.AsSpan(1), out var n) && n >= 1 ? n - 1 : int.MaxValue;
+
+    // 尝试应用预设阵型到指定槽位：阵型存在 + 朝向合法 + 阵型格在玩家布阵区内/地形可通行/不重叠 → true。
+    // false = 无阵型或非法，调用方回落 FindSpot 自动摆位。
+    private bool TryApplyFormation(
+        FleetPreset preset, int slot, ShipDefinition def,
+        IReadOnlyList<(GridPos Bow, int Length, CardinalDirection Facing)> placed,
+        out GridPos bow, out CardinalDirection facing)
+    {
+        bow = default;
+        facing = CardinalDirection.East;
+        var formation = preset.FormationFor(slot);
+        if (formation is null) return false;
+        if (!TryParseFacing(formation.Facing, out facing)) return false;
+        bow = new GridPos(formation.X, formation.Y);
+        return FormationBowValid(bow, facing, def, placed, PlayerPlacementZone());
+    }
+
+    // 阵型船头合法性（口径与 FindSpot/ValidatePlacement 一致：区内 + 地形可通行 + 非残骸 + 与已放舰不重叠）。
+    private bool FormationBowValid(
+        GridPos bow, CardinalDirection facing, ShipDefinition def,
+        IReadOnlyList<(GridPos Bow, int Length, CardinalDirection Facing)> placed, Rect2I zone)
+    {
+        var cells = FootprintCells(bow, facing, def.Length);
+        foreach (var c in cells)
+        {
+            if (!ZoneContains(zone, c)) return false;
+            if (TerrainRules.BlocksShip(_battle.Map.TerrainAt(c), def.Passability)) return false;
+            if (_battle.Map.IsWreck(c)) return false;
+        }
+        foreach (var (pBow, pLen, pFacing) in placed)
+            if (cells.Any(FootprintCells(pBow, pFacing, pLen).Contains)) return false;
+        return true;
+    }
+
+    // 出战序列（默认 = 全部拥有舰按 economy 顺序）：活动预设存在且通过拥有数量校验 → 按预设列出场
+    // （每舰型从前 N 艘拥有舰按 economy 顺序取，超出拥有数部分跳过）；否则回落全部拥有舰。
+    private IReadOnlyList<(EconomyShip Ship, FleetPresetShip? Preset)> SelectBattleLineup(
+        IReadOnlyList<EconomyShip> fleet, IReadOnlyDictionary<string, int> ownedByType)
+    {
+        IReadOnlyList<(EconomyShip, FleetPresetShip?)> All()
+            => fleet.Select(s => (s, (FleetPresetShip?)null)).ToList();
+        var active = FleetStore().ActiveName;
+        if (string.IsNullOrWhiteSpace(active)) return All();
+        var preset = FleetStore().Get(active);
+        if (preset is null || EconomyFleetValidator.Validate(preset, ownedByType).Count > 0) return All();
+        var lineup = new List<(EconomyShip Ship, FleetPresetShip? Preset)>();
+        var cursor = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var ps in preset.Ships)
+        {
+            var type = ps.ShipTypeId ?? "";
+            var i = cursor.GetValueOrDefault(type);
+            cursor[type] = i + 1;
+            var source = fleet.Where(s => s.TypeId == type).Skip(i).FirstOrDefault();
+            if (source is not null) lineup.Add((source, ps));
+        }
+        return lineup;
+    }
+
+    // 读取整合版经济舰队（economy_state 归一化后的 ships）：取不到 GameState / 非字典 → 空列表。
+    private List<EconomyShip> ReadEconomyFleet()
+    {
+        var result = new List<EconomyShip>();
+        var root = GetTree().Root;
+        if (root.GetNodeOrNull<Node>("GameState") is not { } gameState) return result;
+        var state = gameState.Call("get_economy_state");
+        if (state.VariantType != Variant.Type.Dictionary) return result;
+        var economy = state.AsGodotDictionary();
+        if (!economy.ContainsKey("ships")) return result;
+        var shipsVar = economy["ships"];
+        if (shipsVar.VariantType != Variant.Type.Array) return result;
+        foreach (var shipVar in shipsVar.AsGodotArray())
+        {
+            if (shipVar.VariantType != Variant.Type.Dictionary) continue;
+            var ship = shipVar.AsGodotDictionary();
+            var typeId = ship.ContainsKey("type_id") ? ship["type_id"].AsString() : "";
+            if (!EconomyFleetMapper.KnowsEconomyType(typeId)) continue;
+            if (!ship.ContainsKey("id")) continue;
+            var equipment = ship.ContainsKey("equipment") && ship["equipment"].VariantType == Variant.Type.Dictionary
+                ? ship["equipment"].AsGodotDictionary()
+                : new Godot.Collections.Dictionary();
+            result.Add(new EconomyShip(
+                typeId,
+                ReadCountDict(equipment.ContainsKey("weapons") && equipment["weapons"].VariantType == Variant.Type.Dictionary ? equipment["weapons"].AsGodotDictionary() : null),
+                ReadCountDict(equipment.ContainsKey("skills") && equipment["skills"].VariantType == Variant.Type.Dictionary ? equipment["skills"].AsGodotDictionary() : null),
+                equipment.ContainsKey("armor_level") ? (int)equipment["armor_level"].AsInt64() : 0));
+        }
+        return result;
+    }
+
+    // 装备计数字典（weapons/skills）→ id→数量（忽略无效条目）。
+    private static Dictionary<string, int> ReadCountDict(Godot.Collections.Dictionary? dict)
+    {
+        var result = new Dictionary<string, int>(StringComparer.Ordinal);
+        if (dict is null) return result;
+        foreach (var key in dict.Keys)
+        {
+            if (key.VariantType != Variant.Type.String) continue;
+            var count = dict[key].AsInt64();
+            if (count > 0) result[key.AsString()] = (int)count;
+        }
+        return result;
+    }
+
+    // 经济舰队轻量记录（解析 economy_state ships 后的只读快照）。
+    private sealed record EconomyShip(string TypeId, Dictionary<string, int> Weapons, Dictionary<string, int> Skills, int ArmorLevel);
 
     // 玩家区自动摆位：从区右上往左下扫描合法船头（区内/地形可通行/非残骸/与已放舰不重叠）。朝向固定 East。
     // 校验口径与 ValidatePlacement 一致（不检查敌舰相邻，add 阶段敌舰尚未放置完成）。
-    private GridPos? FindSpot(IEnumerable<(GridPos Bow, int Length)> placed, ShipDefinition def, Rect2I zone)
+    private GridPos? FindSpot(IEnumerable<(GridPos Bow, int Length, CardinalDirection Facing)> placed, ShipDefinition def, Rect2I zone)
     {
         const CardinalDirection facing = CardinalDirection.East;
         for (var y = zone.Position.Y; y < zone.End.Y; y++)
@@ -1694,9 +1412,9 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                     if (_battle.Map.IsWreck(c)) { ok = false; break; }
                 }
                 if (!ok) continue;
-                foreach (var (pBow, pLen) in placed)
+                foreach (var (pBow, pLen, pFacing) in placed)
                 {
-                    var pCells = FootprintCells(pBow, facing, pLen);
+                    var pCells = FootprintCells(pBow, pFacing, pLen);
                     if (cells.Any(pCells.Contains)) { ok = false; break; }
                 }
                 if (!ok) continue;
@@ -1706,312 +1424,29 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         return null;
     }
 
-    // 下一个空闲玩家舰 id（p1.. 首空；增减后不重排，防与既有 id 冲突）。
-    private string NextPlayerShipId()
-    {
-        for (var i = 0; ; i++)
-        {
-            var id = ShipIdFor(FactionId.Player, i);
-            if (_battle.ShipOrNull(id) is null) return id;
-        }
-    }
 
-    // 移除玩家全部舰船（加载预设前重置；不触碰敌方）。
-    private void RemovePlayerFleet()
-    {
-        var playerIds = _battle.Ships.Values.Where(s => s.Faction == FactionId.Player).Select(s => s.Id).ToList();
-        foreach (var id in playerIds)
-        {
-            _battle.Ships.Remove(id);
-            if (_shipViews.Remove(id, out var view)) { _shipsRoot.RemoveChild(view); view.QueueFree(); }
-        }
-        _selectedShip = null;
-        if (_deployPanel is not null) _deployPanel.Visible = false;
-        _flagshipId = null;
-        _equipShipId = null;
-        _fleetShipId = null;
-        if (_equipPanel is not null) _equipPanel.Visible = false;
-        if (_fleetPanel is not null) _fleetPanel.Visible = false;
-    }
+    // ---- CHG-20260818：玩家舰队只读状态（headless 冒烟断言经济舰队映射闭环） ----
 
-    // 按预设装配一方舰队（自动摆位沿区扫描；舰型缺失跳过）。装备按预设（LevelShipSpec.Equipment），
-    // 不套用 F-5 默认装载——预设完整捕获用户配置。
-    private void AddPresetFleet(FleetPreset preset, FactionId faction)
-    {
-        var zone = faction == FactionId.Player ? PlayerZone : EnemyZone;
-        var placed = new List<(GridPos Bow, int Length)>();
-        var specs = new List<LevelShipSpec>();
-        foreach (var ship in preset.Ships)
-        {
-            var def = _config!.Ships.FirstOrDefault(s => s.Id == ship.ShipTypeId);
-            if (def is null) { GD.PushWarning($"ships.json 缺少舰型 {ship.ShipTypeId}"); continue; }
-            var spot = FindSpot(placed, def, zone);
-            if (spot is null) { GD.PushWarning($"布阵区已满，跳过 {def.DisplayName}"); continue; }
-            placed.Add((spot.Value, def.Length)); // spot 即合法船头
-            specs.Add(new LevelShipSpec(ship.ShipTypeId, spot.Value, CardinalDirection.East, ship.Equipment));
-        }
-        // 一次性装配 → AddLevelFleet 内部按序赋 p1..（分次调用会每次都从 index 0 覆盖）。
-        AddLevelFleet(specs, faction);
-    }
-
-    // 应用预设（public）：校验合法 → 清玩家舰 → 按预设装配 → 重建视图/面板 → 置会话。
-    // 会话置位后「再来一局」与 RebuildFleetForDeploy 沿用本预设替换默认舰队。
-    public string ApplyFleetPreset(string name)
-    {
-        if (_level is not null || _encounter is not null) return "fleet.level_locked";
-        var preset = FleetStore().Get(name);
-        if (preset is null) return "fleet.unknown_preset";
-        var errors = FleetPresetValidator.Validate(_config!, preset);
-        if (errors.Count > 0) return errors[0];
-        RemovePlayerFleet();
-        AddPresetFleet(preset, FactionId.Player);
-        foreach (var ship in _battle.Ships.Values)
-        {
-            if (ship.Faction != FactionId.Player || _shipViews.ContainsKey(ship.Id)) continue;
-            var view = new NavalShipView { Name = ship.Id };
-            view.Setup(ship, _grid);
-            _shipsRoot.AddChild(view);
-            _shipViews[ship.Id] = view;
-        }
-        FleetPresetSession.Begin(preset.Name);
-        RebuildEquipShipRow();
-        RefreshEquipmentPanel();
-        RefreshFleetPanel();
-        RefreshSelfSinkButton();
-        SetMessage($"已应用舰队预设「{preset.Name}」：{preset.Ships.Count} 艘");
-        return "";
-    }
-
-    private void LoadFleetPresetFromButton(string name)
-    {
-        var err = ApplyFleetPreset(name);
-        if (err.Length > 0) SetMessage("无法加载预设：" + DescribePlacementError(err));
-    }
-
-    // 保存当前玩家舰队为预设（public）：名称非空、舰队非空、校验合法（装备不超槽位）→ 落盘。
-    public string SaveCurrentFleetAs(string name)
-    {
-        if (_level is not null || _encounter is not null) return "fleet.level_locked";
-        name = (name ?? "").Trim();
-        if (name.Length == 0) return "fleet.empty_name";
-        var ships = _battle.Ships.Values
-            .Where(s => s.Faction == FactionId.Player && s.HitPoints > 0)
-            .OrderBy(s => s.Id, StringComparer.Ordinal)
-            .Select(FleetPresetShipFrom)
-            .ToList();
-        if (ships.Count == 0) return "fleet.empty_fleet";
-        var preset = new FleetPreset(name, ships);
-        var errors = FleetPresetValidator.Validate(_config!, preset);
-        if (errors.Count > 0) return errors[0];
-        FleetStore().Save(preset);
-        RefreshFleetPanel();
-        SetMessage($"舰队预设「{name}」已保存");
-        return "";
-    }
-
-    // 单舰 → 预设舰（装备 = 当前武器/技能/护甲；护甲始终写入，0 时也可读）。
-    private static FleetPresetShip FleetPresetShipFrom(ShipState s)
-    {
-        var equipment = new LevelEquipmentSpec(
-            s.WeaponCounts.Count > 0 ? new Dictionary<string, int>(s.WeaponCounts) : null,
-            s.SkillLoadout.Count > 0 ? new Dictionary<string, int>(s.SkillLoadout) : null,
-            s.ArmorLevel);
-        return new FleetPresetShip(s.Definition.Id, equipment);
-    }
-
-    private void SaveFleetPresetFromButton()
-    {
-        var err = SaveCurrentFleetAs(_fleetNameEdit?.Text ?? "");
-        if (err.Length > 0) SetMessage("无法保存预设：" + DescribePlacementError(err));
-    }
-
-    // 删除预设（public）：存在才删除；刷新面板。
-    public bool DeleteFleetPreset(string name)
-    {
-        var deleted = FleetStore().Delete(name);
-        RefreshFleetPanel();
-        if (deleted) SetMessage($"预设「{name}」已删除");
-        return deleted;
-    }
-
-    private void DeleteFleetPresetFromButton(string name)
-        => DeleteFleetPreset(name);
-
-    // 刷新舰队配置面板：预览（数量/总强度/各舰型计数）+ 舰列表（选择/删除）+ 选中舰装备计数 + 预设列表（加载/删除）。
-    private void RefreshFleetPanel()
-    {
-        if (_fleetPanel is null) return;
-        if (_fleetPreviewLabel is not null)
-        {
-            var playerShips = _battle.Ships.Values.Where(s => s.Faction == FactionId.Player && s.HitPoints > 0).ToList();
-            var strength = playerShips.Sum(s => RandomEnemyFleetGenerator.ShipStrength(s.Definition));
-            var kinds = string.Join(" ", playerShips
-                .GroupBy(s => s.Definition.Id)
-                .OrderBy(g => g.Key, StringComparer.Ordinal)
-                .Select(g => $"{g.First().Definition.DisplayName}×{g.Count()}"));
-            _fleetPreviewLabel.Text = $"舰队 {playerShips.Count} 艘 · 总强度 {strength} · {kinds}";
-        }
-        if (_fleetShipList is not null)
-        {
-            foreach (var child in _fleetShipList.GetChildren()) { _fleetShipList.RemoveChild(child); child.QueueFree(); }
-            foreach (var ship in _battle.Ships.Values)
-            {
-                if (ship.Faction != FactionId.Player || ship.HitPoints <= 0) continue;
-                var row = new HBoxContainer { Name = $"Ship_{ship.Id}", CustomMinimumSize = new Vector2(0, 30) };
-                row.AddThemeConstantOverride("separation", 6);
-                var select = new Button
-                {
-                    Name = "Select",
-                    Text = $"{ship.Definition.DisplayName} {ship.Id}",
-                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    CustomMinimumSize = new Vector2(0, 30),
-                };
-                InkWashTheme.StyleButton(select);
-                select.FocusMode = Control.FocusModeEnum.None;
-                var captured = ship.Id;
-                select.Pressed += () => SelectFleetShip(captured);
-                var remove = MakeEquipButton("删除", 64, "Remove");
-                remove.Pressed += () => RemoveFleetShipFromButton(captured);
-                row.AddChild(select);
-                row.AddChild(remove);
-                _fleetShipList.AddChild(row);
-            }
-        }
-        RefreshFleetEquipControls();
-        if (_fleetPresetList is not null)
-        {
-            foreach (var child in _fleetPresetList.GetChildren()) { _fleetPresetList.RemoveChild(child); child.QueueFree(); }
-            foreach (var preset in FleetStore().All.OrderBy(p => p.Name, StringComparer.Ordinal))
-            {
-                var row = new HBoxContainer { Name = $"Preset_{SafeNodeName(preset.Name)}", CustomMinimumSize = new Vector2(0, 30) };
-                row.AddThemeConstantOverride("separation", 6);
-                var label = new Label
-                {
-                    Name = "Name",
-                    Text = $"{preset.Name}（{preset.Ships.Count}艘）",
-                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-                label.AddThemeFontOverride("font", InkWashTheme.Font());
-                label.AddThemeFontSizeOverride("font_size", 14);
-                label.AddThemeColorOverride("font_color", InkWashTheme.TextInk);
-                var name_ = preset.Name;
-                var load = MakeEquipButton("加载", 56, "Load");
-                load.Pressed += () => LoadFleetPresetFromButton(name_);
-                var del = MakeEquipButton("删除", 56, "Delete");
-                del.Pressed += () => DeleteFleetPresetFromButton(name_);
-                row.AddChild(label);
-                row.AddChild(load);
-                row.AddChild(del);
-                _fleetPresetList.AddChild(row);
-            }
-        }
-    }
-
-    // 节点名安全化（预设名含 / : . 等 Godot 非法字符 → 下划线；空 → preset）。
-    private static string SafeNodeName(string name)
-    {
-        var chars = name.Select(c => c is '/' or ':' or '@' or '.' or '"' or '\\' or '[' or ']' ? '_' : c).ToArray();
-        var s = new string(chars).Trim();
-        return s.Length == 0 ? "preset" : s;
-    }
-
-    // 刷新面板选中舰的装备计数/上限/按钮可用态（口径与 RefreshEquipmentPanel 一致）。
-    private void RefreshFleetEquipControls()
-    {
-        if (_fleetSlotsLabel is not null)
-        {
-            var ship = _fleetShipId is { } id ? _battle.ShipOrNull(id) : null;
-            if (ship is not null && ship.Faction == FactionId.Player)
-            {
-                var usedW = UsedWeaponSlots(ship);
-                var maxW = ship.Definition.WeaponSlots;
-                var usedS = UsedSkillSlots(ship);
-                var maxS = ship.Definition.SkillSlots;
-                var armorCap = ship.Definition.BaseArmor + ship.Definition.ArmorSlots;
-                _fleetSlotsLabel.Text = $"{ship.Definition.DisplayName}（{ship.Id}） 武器位 {usedW}/{maxW} · 技能位 {usedS}/{maxS} · 护甲位 {ship.ArmorLevel}/{armorCap} · 负载 {WeatherRules.CurrentLoad(ship)}/{ship.Definition.LoadCapacity}";
-            }
-            else
-            {
-                _fleetSlotsLabel.Text = "请选择一艘舰配置装备";
-            }
-        }
-        var selected = _fleetShipId is { } sel ? _battle.ShipOrNull(sel) : null;
-        if (selected is { Faction: FactionId.Player } selShip)
-        {
-            var usedW = UsedWeaponSlots(selShip);
-            var maxW = selShip.Definition.WeaponSlots;
-            var usedS = UsedSkillSlots(selShip);
-            var maxS = selShip.Definition.SkillSlots;
-            var armorCap = selShip.Definition.BaseArmor + selShip.Definition.ArmorSlots;
-            foreach (var (wid, ctl) in _fleetWeaponControls)
-            {
-                var count = selShip.WeaponCounts.GetValueOrDefault(wid, 0);
-                var atMax = _config!.Weapons.FirstOrDefault(w => w.Id == wid) is { MaxCount: { } mc } && count >= mc;
-                ctl.Count.Text = $"×{count}";
-                ctl.Minus.Disabled = count <= 0;
-                ctl.Plus.Disabled = usedW >= maxW || atMax;
-            }
-            foreach (var (sid, ctl) in _fleetSkillControls)
-            {
-                var count = selShip.SkillLoadout.GetValueOrDefault(sid, 0);
-                ctl.Count.Text = $"×{count}";
-                ctl.Minus.Disabled = count <= 0;
-                ctl.Plus.Disabled = usedS >= maxS;
-            }
-            var armor = selShip.ArmorLevel;
-            _fleetArmorControls.Count.Text = $"×{armor}";
-            _fleetArmorControls.Minus.Disabled = armor <= 0;
-            _fleetArmorControls.Plus.Disabled = armor >= armorCap;
-        }
-        else
-        {
-            foreach (var (_, ctl) in _fleetWeaponControls) { ctl.Count.Text = "×0"; ctl.Minus.Disabled = true; ctl.Plus.Disabled = true; }
-            foreach (var (_, ctl) in _fleetSkillControls) { ctl.Count.Text = "×0"; ctl.Minus.Disabled = true; ctl.Plus.Disabled = true; }
-            _fleetArmorControls.Count.Text = "×0";
-            _fleetArmorControls.Minus.Disabled = true;
-            _fleetArmorControls.Plus.Disabled = true;
-        }
-    }
-
-    // 面板装备按钮 → 复用 F-5 EquipWeapon/EquipSkill/EquipArmor（校验/写状态同一套），再刷新面板。
-    private void EquipFleetWeaponFromButton(string weaponId, int delta)
-    {
-        var err = EquipWeapon(_fleetShipId ?? "", weaponId, delta);
-        if (err.Length > 0) SetMessage("无法装载武器：" + DescribePlacementError(err));
-        RefreshFleetPanel();
-    }
-
-    private void EquipFleetSkillFromButton(string skillId, int delta)
-    {
-        var err = EquipSkill(_fleetShipId ?? "", skillId, delta);
-        if (err.Length > 0) SetMessage("无法装载技能：" + DescribePlacementError(err));
-        RefreshFleetPanel();
-    }
-
-    private void EquipFleetArmorFromButton(int delta)
-    {
-        var err = EquipArmor(_fleetShipId ?? "", delta);
-        if (err.Length > 0) SetMessage("无法调整护甲：" + DescribePlacementError(err));
-        RefreshFleetPanel();
-    }
-
-    // ---- V-7 只读访问器（headless 冒烟断言舰队配置闭环） ----
-
-    public bool FleetPanelVisible() => _fleetPanel?.Visible ?? false;
-    public string FleetDesignerShip() => _fleetShipId ?? "";
     public string PlayerShipType(string shipId) => _battle.ShipOrNull(shipId)?.Definition.Id ?? "";
-    public string FleetPreviewText() => _fleetPreviewLabel?.Text ?? "";
+
+    // CHG-20260819（F-3）：自由模式玩家布阵区（测试钩子）——供 GDScript 冒烟断言与 ship_screen FORMATION_ZONE 同源。
+    public Rect2I PlayerZoneForTest() => PlayerPlacementZone();
     public int PlayerFleetCount() => _battle?.Ships.Values.Count(s => s.Faction == FactionId.Player && s.HitPoints > 0) ?? 0;
     public int StorePresetCount() => FleetStore().Count;
     public bool StoreHasPreset(string name) => FleetStore().Has(name);
     public string StorePresetNames() => string.Join(",", FleetStore().All.OrderBy(p => p.Name, StringComparer.Ordinal).Select(p => p.Name));
 
-    // V-7 测试钩子：改用固定临时路径的预设库（冒烟跨场景共用同一文件，不污染 user:// 真实预设）。
+    // CHG-20260818 测试钩子：改用固定临时路径的预设库（冒烟跨场景共用同一文件，不污染 user:// 真实预设）。
     // UseFleetPresetsForTest = 指向临时库并载入（保留既有预设，跨场景持久）；ResetFleetPresetsForTest = 再清空全部（冒烟开头用）。
     public void UseFleetPresetsForTest()
     {
-        _fleetStore = new FleetPresetStore(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "naval_fleet_presets_smoke.json"));
+        UseFleetPresetsPathForTest(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "naval_fleet_presets_smoke.json"));
+    }
+
+    // CHG-20260818：把预设库指向任意路径并载入（映射/往返测试先写 JSON 再让布阵读取，验证共享 schema 跨语言闭环）。
+    public void UseFleetPresetsPathForTest(string path)
+    {
+        _fleetStore = new FleetPresetStore(path);
         _fleetStore.Load();
     }
 

@@ -1,5 +1,5 @@
 [
-  { "Id": "ram", "DisplayName": "撞角", "LoadCost": 3, "MaxCount": 1, "DamageByLevel": [], "MultiplierByLevel": [0.5, 1.0, 1.2, 1.5] },
-  { "Id": "bombardment", "DisplayName": "砲击", "LoadCost": 3, "DamageByLevel": [200, 280, 350], "MultiplierByLevel": [] },
+  { "Id": "ram", "DisplayName": "撞角", "LoadCost": 3, "MaxCount": 1, "DamageByLevel": [], "MultiplierByLevel": [0.5, 1.0, 1.2, 1.5, 1.8] },
+  { "Id": "bombardment", "DisplayName": "砲击", "LoadCost": 3, "DamageByLevel": [200, 280, 350, 420], "MultiplierByLevel": [] },
   { "Id": "cannon", "DisplayName": "火炮", "LoadCost": 4, "DamageByLevel": [300, 400, 480], "MultiplierByLevel": [] }
 ]

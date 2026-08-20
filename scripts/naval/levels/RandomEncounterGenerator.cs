@@ -87,9 +87,8 @@ public sealed record RandomEncounter(
         {
             var def = rules.Ships.FirstOrDefault(s => s.Id == spec.ShipTypeId);
             if (def is null) return $"ships.json 缺少舰型 {spec.ShipTypeId}";
-            for (var i = 0; i < def.Length; i++)
+            foreach (var c in ShipGeometry.Footprint(def, spec.Bow, spec.Facing))
             {
-                var c = spec.Bow - spec.Facing.Vector() * i;
                 if (!Map.InBounds(c)) return $"玩家舰 {spec.ShipTypeId}@{spec.Bow} 占格 {c} 越界";
                 if (!zone.Contains(c)) return $"玩家舰 {spec.ShipTypeId}@{spec.Bow} 占格 {c} 在玩家布阵区外";
                 if (TerrainRules.BlocksShip(Map.TerrainAt(c), def.Passability))

@@ -219,6 +219,14 @@ public static class AttackRules
         return 2;
     }
 
+    // CHG：倭寇军旗 → 射程半径 +1 格（RangeBonus>0），最大射程平方距离。
+    public static int ScaledMaxD2(BattleState battle, int d2max)
+    {
+        var radius = (int)Math.Sqrt(d2max);
+        var scaled = radius + (battle.RangeBonus > 0 ? 1 : 0);
+        return scaled * scaled;
+    }
+
     // —— 校验（ActionResolver 用；null = 合法，否则为拒绝原因 key）——
 
     // 箭雨（设计 9.1）：最近格距 ≤ 2，抛射可越山。
@@ -228,7 +236,7 @@ public static class AttackRules
         var attacker = battle.ShipOrNull(cmd.ShipId);
         if (attacker is null || attacker.HitPoints <= 0) return "action.unknown_ship";
         if (attacker.HasAttacked) return "action.attack_ended_movement";
-        if (NearestSquaredDistance(attacker.OccupiedCells(), cmd.Target) > 4) return "action.out_of_range";
+        if (NearestSquaredDistance(attacker.OccupiedCells(), cmd.Target) > ScaledMaxD2(battle, 4)) return "action.out_of_range";
         if (cmd.Enhanced && attacker.SkillUsesLeft.GetValueOrDefault("fire_oil", 0) < 1) return "skill.no_uses";
         return null;
     }
@@ -241,7 +249,8 @@ public static class AttackRules
         if (attacker.HasAttacked) return "action.attack_ended_movement";
         if (attacker.WeaponCounts.GetValueOrDefault("bombardment", 0) < 1) return "action.no_weapon";
         var d2 = NearestSquaredDistance(attacker.OccupiedCells(), cmd.Target);
-        if (d2 < 9 || d2 > 25) return "action.out_of_range";
+        // 砲击：下限 9 不变，上限按军旗 +1 格。
+        if (d2 < 9 || d2 > ScaledMaxD2(battle, 25)) return "action.out_of_range";
         return null;
     }
 
@@ -253,7 +262,8 @@ public static class AttackRules
         if (attacker.HasAttacked) return "action.attack_ended_movement";
         if (attacker.WeaponCounts.GetValueOrDefault("cannon", 0) < 1) return "action.no_weapon";
         var d2 = NearestSquaredDistance(attacker.OccupiedCells(), cmd.Target);
-        if (d2 < 16 || d2 > 36) return "action.out_of_range";
+        // 火炮：下限 16 不变，上限按军旗 +1 格。
+        if (d2 < 16 || d2 > ScaledMaxD2(battle, 36)) return "action.out_of_range";
         if (!IsBroadside(attacker, cmd.Target)) return "action.not_broadside";
         if (MountainBlocksFlatPath(battle, attacker, cmd.Target)) return "action.blocked_by_terrain";
         return null;
@@ -280,7 +290,7 @@ public static class AttackRules
     {
         if (ValidateBombardment(battle, cmd) is not null) return Array.Empty<BattleEvent>();
         var attacker = battle.ShipOrNull(cmd.ShipId)!;
-        var baseDmg = WeaponPerUnitDamage(battle, "bombardment", cmd.Level)
+        var baseDmg = WeaponPerUnitDamage(battle, attacker, "bombardment", cmd.Level)
             * attacker.WeaponCounts.GetValueOrDefault("bombardment", 0);
         if (baseDmg <= 0) return Array.Empty<BattleEvent>();
         return ResolveArea(battle, attacker, CircleCells(cmd.Target, 1), (_cell, _ship) => baseDmg);
@@ -290,7 +300,7 @@ public static class AttackRules
     {
         if (ValidateCannon(battle, cmd) is not null) return Array.Empty<BattleEvent>();
         var attacker = battle.ShipOrNull(cmd.ShipId)!;
-        var baseDmg = WeaponPerUnitDamage(battle, "cannon", cmd.Level)
+        var baseDmg = WeaponPerUnitDamage(battle, attacker, "cannon", cmd.Level)
             * attacker.WeaponCounts.GetValueOrDefault("cannon", 0);
         if (baseDmg <= 0) return Array.Empty<BattleEvent>();
         var dist = Distance(attacker.OccupiedCells(), cmd.Target);
@@ -457,8 +467,14 @@ public static class AttackRules
         }
     }
 
-    private static int WeaponPerUnitDamage(BattleState battle, string weaponId, int level)
+    // CHG-20260819（F-1 讨伐饰品）：玩家旗舰装备贯日神枪 → FlagshipBombardmentLevel=4 →
+    // 旗舰砲击单发伤害取 Lv4（weapons.json DamageByLevel[3]=420，复用取数路径）。
+    public static int WeaponPerUnitDamage(BattleState battle, ShipState attacker, string weaponId, int level)
     {
+        if (weaponId == "bombardment" && battle.FlagshipBombardmentLevel > 0
+            && attacker.Faction == FactionId.Player
+            && FlagshipRules.ResolveFlagshipId(battle, FactionId.Player) == attacker.Id)
+            level = battle.FlagshipBombardmentLevel;
         var weapon = battle.Config.Weapons.FirstOrDefault(w => w.Id == weaponId);
         if (weapon is null || weapon.DamageByLevel.Length == 0) return 0;
         var idx = Math.Clamp(level - 1, 0, weapon.DamageByLevel.Length - 1);

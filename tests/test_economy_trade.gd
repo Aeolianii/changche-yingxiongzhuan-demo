@@ -24,7 +24,8 @@ func _run() -> void:
 
 
 func _test_catalog_has_only_sourced_goods() -> void:
-	var expected := ["green_crab", "grouper", "ironstone", "longjing_tea", "old_boot", "private_salt", "wood", "yellow_croaker"]
+	# CHG-20260819（F-1 讨伐战利品）：hemp（麻布）为倭寇大本营讨伐战利品，属来源货物。
+	var expected := ["green_crab", "grouper", "hemp", "ironstone", "longjing_tea", "old_boot", "private_salt", "wood", "yellow_croaker"]
 	var ids: Array = CATALOG.item_ids()
 	ids.sort()
 	_expect(ids == expected, "Catalog must contain exactly the sourced first-release goods.")

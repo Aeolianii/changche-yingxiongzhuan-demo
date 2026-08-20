@@ -42,6 +42,15 @@ const MAP_SIZE := D_MAP_ORIGIN + MAP_CHUNK_SIZE
 const PLAYER_LAYER := 1
 const SCENE_PATH := "res://scenes/sea_overworld/sea_overworld.tscn"
 const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
+# CHG-20260817：海盗战接入随机海战——与 NavalCombat.Levels.PirateBattleSession 的 meta 键常量保持同值。
+const NAVAL_BATTLE_SCENE_PATH := "res://scenes/naval/NavalDemo.tscn"
+const PIRATE_BATTLE_REQUEST_META := "sea_pirate_battle_request"
+const PIRATE_BATTLE_RETURN_META := "sea_pirate_battle_return_context"
+# CHG-20260819（S-2 海面接入）：讨伐战（海怪/营寨）接入随机海战——与 NavalCombat.Levels.HuntBattleSession 的 meta 键常量保持同值。
+const HUNT_BATTLE_REQUEST_META := "sea_hunt_battle_request"
+const HUNT_BATTLE_RETURN_META := "sea_hunt_battle_return_context"
+# 战败/逃跑后玩家船在月环商港附近复活（需求坐标 (3650, 360)）。
+const MOON_HARBOR_REVIVE_POSITION := Vector2(3650, 360)
 const SCENE_TWO_ENTRY_META := "sea_overworld_from_scene_two"
 const RETURN_TO_SCENE_TWO_META := "scene_two_return_from_sea_overworld"
 const SCENE_TWO_PATH := "res://scenes/Scene2.tscn"
@@ -125,6 +134,15 @@ var _wokou_victory_cutscene: WokouVictoryCutscene
 var _fog_of_war: Node2D
 var _pirates: Array[SeaOverworldPirate] = []
 var _active_battle_pirate: SeaOverworldPirate
+var _returning_from_pirate_battle := false
+var _pirate_battle_return_context: Dictionary = {}
+# CHG-20260819（S-2 海面接入）：讨伐战（海怪/营寨）结算返回状态，与海盗战同构。
+var _returning_from_hunt_battle := false
+var _hunt_battle_return_context: Dictionary = {}
+# 倭寇营寨战胜利后先播胜利过场；结算返回时若未播过，需补播（战斗返回与过场播放不串行）。
+var _wokou_victory_cutscene_pending := false
+# 胜利返回后待移除的海盗 id（按节点名 "PirateShip%d"），等 _spawn_pirates_deferred 生成完再移除。
+var _pirate_defeated_ids: Array[String] = []
 var _pirate_spawn_rng := RandomNumberGenerator.new()
 var _random_event_rng := RandomNumberGenerator.new()
 var _random_event_seed_override := -1
@@ -144,6 +162,8 @@ func _ready() -> void:
 	exploration_hud = _exploration_ui.call("acquire", self, &"sea_overworld") as Control
 	_saved_scene_state = _consume_saved_scene_state()
 	_fubo_return_context = _consume_fubo_return()
+	_pirate_battle_return_context = _consume_pirate_battle_return()
+	_hunt_battle_return_context = _consume_hunt_battle_return()
 	var restoring_saved_state := not _saved_scene_state.is_empty()
 	if _saved_scene_state.is_empty() and not _returning_from_fubo:
 		_entered_from_scene_two = _consume_scene_two_entry_flag()
@@ -166,6 +186,14 @@ func _ready() -> void:
 	elif _returning_from_fubo:
 		_restore_fubo_return(_fubo_return_context)
 		_fubo_return_context.clear()
+	elif _returning_from_pirate_battle:
+		# CHG-20260817：海盗战结算返回——胜利移除对应海盗，失败保留海盗并在月环商港附近复活。
+		_restore_pirate_battle_return(_pirate_battle_return_context)
+		_pirate_battle_return_context.clear()
+	elif _returning_from_hunt_battle:
+		# CHG-20260819（S-2 海面接入）：讨伐战结算返回——胜利领奖/败退回港，营寨胜战补播胜利过场。
+		_restore_hunt_battle_return(_hunt_battle_return_context)
+		_hunt_battle_return_context.clear()
 	else:
 		_lunar_day = float(get_tree().root.get_meta(LUNAR_DAY_META, 0.0))
 		_restore_sea_main_quest_state()
@@ -178,7 +206,7 @@ func _ready() -> void:
 	_wokou_victory_cutscene = WOKOU_VICTORY_CUTSCENE_SCENE.instantiate() as WokouVictoryCutscene
 	$UI.add_child(_wokou_victory_cutscene)
 	_wokou_victory_cutscene.connect("cutscene_finished", _on_wokou_victory_cutscene_finished)
-	if not restoring_saved_state and not _returning_from_fubo:
+	if not restoring_saved_state and not _returning_from_fubo and not _returning_from_pirate_battle and not _returning_from_hunt_battle:
 		player.global_position = SOUTH_SEA_HARBOR_SPAWN
 		_activate_south_sea_harbor_spawn()
 	camera.reset_smoothing()
@@ -703,6 +731,11 @@ func _spawn_pirates_deferred() -> void:
 			and not (_event_dialogue != null and _event_dialogue.visible)
 			and not bool(exploration_hud.call("is_menu_open"))
 		)
+	# CHG-20260817：海盗战胜利返回时海盗还没生成（本函数 deferred 于 _ready 后一帧），
+	# 待本轮随机分布生成完再按胜利返回的海盗 id 移除对应同名海盗（海盗数减一）。
+	for pirate_id in _pirate_defeated_ids:
+		_remove_pirate_by_id(pirate_id)
+	_pirate_defeated_ids.clear()
 
 
 func _find_random_pirate_spawn() -> Vector2:
@@ -753,13 +786,134 @@ func _on_pirate_battle_requested(pirate: SeaOverworldPirate) -> void:
 	player.controls_enabled = false
 	interaction_prompt.hide()
 	_set_pirates_navigation_enabled(false)
+	# CHG-20260817：海盗接触 → 锁定海图并弹 4 个难度选项；公式难度按玩家舰队强度计算。
 	_event_dialogue.present(
 		"水师士兵",
 		"前方海盗船已逼近我军，双方即将接战！",
 		SOLDIER_PORTRAIT,
-		[{"id": &"finish_pirate_placeholder", "text": "海战界面即将开放"}],
-		"当前版本暂不进入正式海战"
+		[
+			{"id": &"battle_difficulty_1", "text": "迎战（难度一）"},
+			{"id": &"battle_difficulty_2", "text": "迎战（难度二）"},
+			{"id": &"battle_difficulty_3", "text": "迎战（难度三）"},
+			{"id": &"battle_formula", "text": "迎战（按我舰强度）"},
+		],
+		"选择战斗难度"
 	)
+
+
+func _start_pirate_battle(difficulty: int) -> void:
+	if not is_instance_valid(_active_battle_pirate):
+		_cancel_pirate_battle()
+		return
+	var context := {
+		"pirate_id": str(_active_battle_pirate.name),
+		"difficulty": difficulty,
+		"player_position": _vector_to_save(player.global_position),
+		"lunar_day": _lunar_day,
+	}
+	get_tree().root.set_meta(PIRATE_BATTLE_REQUEST_META, context)
+	_event_dialogue.hide_dialogue()
+	player.controls_enabled = false
+	_set_pirates_navigation_enabled(false)
+	interaction_prompt.hide()
+	exploration_hud.call("set_exploration_visible", false)
+	_transitioning = true
+	await _loading_transition.play_loading("正在进入海战……")
+	var change_error := get_tree().change_scene_to_file(NAVAL_BATTLE_SCENE_PATH)
+	if change_error == OK:
+		return
+	# 切换失败：清理请求 meta 并恢复海上大地图交互。
+	get_tree().root.remove_meta(PIRATE_BATTLE_REQUEST_META)
+	_loading_transition.reset_loading()
+	_transitioning = false
+	player.controls_enabled = true
+	_set_pirates_navigation_enabled(true)
+	exploration_hud.call("set_exploration_visible", true)
+	interaction_prompt.visible = not _active_location_name.is_empty()
+
+
+# CHG-20260819（S-2 海面接入）：海怪事件 → 讨伐海怪战。变体 0 → hunt_stage1（触手），变体 1/2 → hunt_stage2（飞鱼群）。
+func _start_sea_monster_battle() -> void:
+	var stage_id := "hunt_stage1"
+	if _active_sea_monster_variant != 0:
+		stage_id = "hunt_stage2"
+	_start_hunt_battle(stage_id)
+
+
+# CHG-20260819（S-2 海面接入）：倭寇营寨 → 讨伐大本营战（城寨/炮台/护卫）。
+func _start_wokou_camp_battle() -> void:
+	_start_hunt_battle("hunt_stage3")
+
+
+# CHG-20260819（S-2 海面接入）：写讨伐战请求 meta（阶段 id + 玩家位置 + 农历日）并切换 NavalDemo，
+# 与海盗战同构。返回后由 _consume_hunt_battle_return/_restore_hunt_battle_return 结算。
+func _start_hunt_battle(stage_id: String) -> void:
+	var context := {
+		"stage_id": stage_id,
+		"player_position": _vector_to_save(player.global_position),
+		"lunar_day": _lunar_day,
+	}
+	get_tree().root.set_meta(HUNT_BATTLE_REQUEST_META, context)
+	_event_dialogue.hide_dialogue()
+	player.controls_enabled = false
+	_set_pirates_navigation_enabled(false)
+	interaction_prompt.hide()
+	exploration_hud.call("set_exploration_visible", false)
+	_transitioning = true
+	await _loading_transition.play_loading("正在进入海战……")
+	var change_error := get_tree().change_scene_to_file(NAVAL_BATTLE_SCENE_PATH)
+	if change_error == OK:
+		return
+	# 切换失败：清理请求 meta 并恢复海上大地图交互。
+	get_tree().root.remove_meta(HUNT_BATTLE_REQUEST_META)
+	_loading_transition.reset_loading()
+	_transitioning = false
+	player.controls_enabled = true
+	_set_pirates_navigation_enabled(true)
+	exploration_hud.call("set_exploration_visible", true)
+	interaction_prompt.visible = not _active_location_name.is_empty()
+
+
+func _cancel_pirate_battle() -> void:
+	_event_dialogue.hide_dialogue()
+	_active_battle_pirate = null
+	player.controls_enabled = not _transitioning and not bool(exploration_hud.call("is_menu_open"))
+	_set_pirates_navigation_enabled(player.controls_enabled)
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
+
+
+func _formula_pirate_difficulty() -> int:
+	# CHG-20260817 需求 B：按玩家舰队强度计算难度。
+	# 强度分 = Σ每艘(1 + 平均 upgrades 等级)，≤6→1、≤12→2、否则 3。
+	# upgrades 四项（hull/weapon_slots/skill_slots/speed）各 clamp 0-3 取均值；读取不到舰队时默认难度 2。
+	var game_state := _game_state()
+	if game_state == null or not game_state.has_method("get_economy_state"):
+		return 2
+	var economy: Variant = game_state.call("get_economy_state")
+	var ships: Array = economy.get("ships", []) if economy is Dictionary else []
+	if ships.is_empty():
+		return 2
+	var strength := 0
+	for ship_value in ships:
+		if not ship_value is Dictionary:
+			continue
+		var ship := ship_value as Dictionary
+		var upgrades: Variant = ship.get("upgrades", {})
+		var upgrade_sum := 0
+		var upgrade_count := 0
+		if upgrades is Dictionary:
+			for key in ["hull", "weapon_slots", "skill_slots", "speed"]:
+				upgrade_sum += clampi(int(upgrades.get(key, 0)), 0, 3)
+				upgrade_count += 1
+		var average := 0.0
+		if upgrade_count > 0:
+			average = upgrade_sum / float(upgrade_count)
+		strength += 1 + int(round(average))
+	if strength <= 6:
+		return 1
+	if strength <= 12:
+		return 2
+	return 3
 
 
 func _finish_pirate_placeholder() -> void:
@@ -772,6 +926,158 @@ func _finish_pirate_placeholder() -> void:
 	_set_pirates_navigation_enabled(player.controls_enabled)
 	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
 	_advance_exploration_stage(4)
+
+
+func _consume_pirate_battle_return() -> Dictionary:
+	var scene_root := get_tree().root
+	_returning_from_pirate_battle = scene_root.has_meta(PIRATE_BATTLE_RETURN_META)
+	if not _returning_from_pirate_battle:
+		return {}
+	var raw_context: Variant = scene_root.get_meta(PIRATE_BATTLE_RETURN_META, {})
+	scene_root.remove_meta(PIRATE_BATTLE_RETURN_META)
+	return raw_context as Dictionary if raw_context is Dictionary else {}
+
+
+func _restore_pirate_battle_return(context: Dictionary) -> void:
+	var pirate_id := str(context.get("pirate_id", ""))
+	var outcome := int(context.get("outcome", 0))
+	var saved_position := _vector_from_save(context.get("player_position"), SOUTH_SEA_HARBOR_SPAWN)
+	if outcome == 0:
+		# 胜利：回到战斗前位置，返回后按同名移除本次接触的海盗（海盗数减一）。
+		player.global_position = saved_position.clamp(player.movement_bounds.position, player.movement_bounds.end)
+		if not pirate_id.is_empty():
+			_pirate_defeated_ids.append(pirate_id)
+		_show_toast.call_deferred("海盗已被肃清，海疆安宁。")
+	else:
+		# 失败/逃跑/平局：保留海盗，玩家船在月环商港附近复活并提示休整。
+		_respawn_player_near_moon_harbor()
+		_show_toast.call_deferred("战败休整：舰队已退回月环商港，海盗仍在附近出没。")
+	_lunar_day = maxf(0.0, float(get_tree().root.get_meta(LUNAR_DAY_META, _lunar_day)))
+	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
+	_advance_exploration_stage(4)
+
+
+# CHG-20260819（S-2 海面接入）：讨伐战返回上下文消费——读取并移除场景根返回 meta（与海盗战同构）。
+func _consume_hunt_battle_return() -> Dictionary:
+	var scene_root := get_tree().root
+	_returning_from_hunt_battle = scene_root.has_meta(HUNT_BATTLE_RETURN_META)
+	if not _returning_from_hunt_battle:
+		return {}
+	var raw_context: Variant = scene_root.get_meta(HUNT_BATTLE_RETURN_META, {})
+	scene_root.remove_meta(HUNT_BATTLE_RETURN_META)
+	return raw_context as Dictionary if raw_context is Dictionary else {}
+
+
+# CHG-20260819（S-2 海面接入）：讨伐战结算返回——胜利领奖/回位，败退回月环商港休整；
+# 倭寇营寨战（hunt_stage3）胜利后播胜利过场并完成主线（与原地胜利流程一致）。
+func _restore_hunt_battle_return(context: Dictionary) -> void:
+	var stage_id := str(context.get("stage_id", ""))
+	var outcome := int(context.get("outcome", 0))
+	var saved_position := _vector_from_save(context.get("player_position"), SOUTH_SEA_HARBOR_SPAWN)
+	if outcome == 0:
+		# 胜利：回到战斗前位置；海怪战标记事件已解决，营寨战标记主线完成。
+		player.global_position = saved_position.clamp(player.movement_bounds.position, player.movement_bounds.end)
+		if stage_id == "hunt_stage1" or stage_id == "hunt_stage2":
+			_resolve_sea_monster_event()
+			_show_toast.call_deferred("海怪已被击退，宝物流入我军囊中！")
+		else:
+			_wokou_battle_completed = true
+			_wokou_warning_acknowledged = true
+			_remove_wokou_warning_trigger()
+			_show_toast.call_deferred("倭寇营地已荡平，海疆安宁！")
+			# 胜利过场延后播放——过场节点在 _ready 后续才实例化，此处待其就绪再播。
+			_wokou_victory_cutscene_pending = true
+	else:
+		# 失败/逃跑/平局：玩家船在月环商港附近复活并提示休整（海怪仍可再战，营寨仍需再讨）。
+		_respawn_player_near_moon_harbor()
+		if stage_id == "hunt_stage3":
+			_show_toast.call_deferred("讨伐受阻：舰队退回月环商港休整，倭寇仍据寨顽抗。")
+		else:
+			_show_toast.call_deferred("讨伐受阻：舰队退回月环商港休整，海怪仍在附近出没。")
+	_lunar_day = maxf(0.0, float(get_tree().root.get_meta(LUNAR_DAY_META, _lunar_day)))
+	get_tree().root.set_meta(LUNAR_DAY_META, _lunar_day)
+	_advance_exploration_stage(4)
+	# 营寨战胜利过场延后播放（过场节点就绪后由 _play_wokou_victory_cutscene 播出）。
+	if _wokou_victory_cutscene_pending:
+		_play_wokou_victory_cutscene.call_deferred()
+
+
+func _remove_pirate_by_id(pirate_id: String) -> void:
+	if pirate_id.is_empty():
+		return
+	for index in range(_pirates.size() - 1, -1, -1):
+		var pirate := _pirates[index] as SeaOverworldPirate
+		if pirate != null and pirate.name == pirate_id:
+			_pirates.remove_at(index)
+			if is_instance_valid(pirate):
+				pirate.queue_free()
+			return
+
+
+func _respawn_player_near_moon_harbor() -> void:
+	# CHG-20260818：不在碰撞体积内复活——在月环商港附近搜索可正常航行的位置（避开岛屿/障碍多边形）。
+	var revive_position := _find_navigable_position(MOON_HARBOR_REVIVE_POSITION)
+	player.global_position = revive_position
+
+
+# 收集世界碰撞体（StaticBody2D）下所有 CollisionPolygon2D 的世界空间多边形。
+func _world_collision_polygons() -> Array:
+	var polygons: Array = []
+	if world_collision == null:
+		return polygons
+	for child in world_collision.get_children():
+		if child is CollisionPolygon2D:
+			var coll := child as CollisionPolygon2D
+			var world_polygon := PackedVector2Array()
+			for local_point in coll.polygon:
+				world_polygon.append($World.to_local(coll.to_global(local_point)))
+			polygons.append(world_polygon)
+	return polygons
+
+
+func _is_navigable(point: Vector2, polygons: Array) -> bool:
+	if not player.movement_bounds.has_point(point):
+		return false
+	for polygon in polygons:
+		if Geometry2D.is_point_in_polygon(point, polygon):
+			return false
+	return true
+
+
+# 从 base 向外搜索最近的可行航位置：先试 base 本身；否则密集螺旋逐圈放大（step 20），
+# 第一个有解圈内取距 base 最近的可航行点（避开岛屿/障碍碰撞多边形）。
+func _find_navigable_position(base: Vector2) -> Vector2:
+	var polygons := _world_collision_polygons()
+	var clamped_base := base.clamp(player.movement_bounds.position, player.movement_bounds.end)
+	if _is_navigable(clamped_base, polygons):
+		return clamped_base
+	var step := 20.0
+	var ring := 1
+	var max_rings := 26 # 20*26 = 520px
+	while ring <= max_rings:
+		var r := ring * step
+		var best: Vector2 = clamped_base
+		var best_dist := INF
+		for i in range(-ring, ring + 1):
+			var offsets: Array[Vector2] = [
+				Vector2(r, i * step),
+				Vector2(-r, i * step),
+				Vector2(i * step, r),
+				Vector2(i * step, -r),
+			]
+			for off in offsets:
+				var candidate: Vector2 = clamped_base + off
+				if not player.movement_bounds.has_point(candidate):
+					continue
+				if _is_navigable(candidate, polygons):
+					var d := clamped_base.distance_to(candidate)
+					if d < best_dist:
+						best_dist = d
+						best = candidate
+		if best_dist != INF:
+			return best
+		ring += 1
+	return clamped_base
 
 
 func _configure_sea_map_hud() -> void:
@@ -1203,6 +1509,15 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 	match option_id:
 		&"finish_pirate_placeholder":
 			_finish_pirate_placeholder()
+		# CHG-20260817：海盗战 4 个难度入口——选择后生成对应难度随机遭遇并进入正式海战。
+		&"battle_difficulty_1":
+			_start_pirate_battle(1)
+		&"battle_difficulty_2":
+			_start_pirate_battle(2)
+		&"battle_difficulty_3":
+			_start_pirate_battle(3)
+		&"battle_formula":
+			_start_pirate_battle(_formula_pirate_difficulty())
 		&"accept_fubo_quest":
 			_accept_fubo_side_quest()
 		&"acknowledge_wokou_warning":
@@ -1210,7 +1525,8 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 		&"confront_haibatian":
 			_show_haibatian_reply()
 		&"fight_haibatian":
-			_resolve_wokou_battle()
+			# CHG-20260819（S-2 海面接入）：倭寇营寨 → 讨伐大本营战（hunt_stage3）→ 返回海面结算。
+			_start_wokou_camp_battle()
 		&"inspect_sea_monster":
 			_event_dialogue.present(
 				"海中异兽",
@@ -1218,7 +1534,7 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 				SEA_MONSTER_PORTRAITS[_active_sea_monster_variant],
 				[{
 					"id": &"fight_sea_monster_placeholder",
-					"text": "迎战海怪（战斗系统尚未接入，此战默认获胜）",
+					"text": "迎战海怪！",
 				}],
 				"",
 				false,
@@ -1229,18 +1545,8 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 			_recycle_sea_monster_event()
 			_close_sea_monster_dialogue()
 		&"fight_sea_monster_placeholder":
-			var game_state := _game_state()
-			if game_state != null:
-				game_state.call("add_economy_item", "wood", SEA_MONSTER_REWARD_WOOD)
-				game_state.call("add_economy_item", "ironstone", SEA_MONSTER_REWARD_IRONSTONE)
-			_resolve_sea_monster_event()
-			_event_dialogue.present(
-				"水师士兵",
-				"将军神勇！我军已战胜海怪，并从它盘踞的海域打捞出大量材料。",
-				SOLDIER_PORTRAIT,
-				[{"id": &"finish_sea_monster_event", "text": "收下材料，继续航行"}],
-				"木材 +%d　　铁石 +%d" % [SEA_MONSTER_REWARD_WOOD, SEA_MONSTER_REWARD_IRONSTONE]
-			)
+			# CHG-20260819（S-2 海面接入）：海怪事件 → 讨伐海怪战（hunt_stage1/2）→ 返回海面结算。
+			_start_sea_monster_battle()
 		&"finish_sea_monster_event":
 			_close_sea_monster_dialogue()
 		&"salvage":
@@ -1403,7 +1709,7 @@ func _show_haibatian_reply() -> void:
 		HAIBATIAN_PORTRAIT,
 		[{
 			"id": &"fight_haibatian",
-			"text": "进军，一决胜负（战斗系统还未完善，此战默认获胜）",
+			"text": "进军，一决胜负！",
 		}],
 		"",
 		false,
@@ -1412,11 +1718,8 @@ func _show_haibatian_reply() -> void:
 	)
 
 
-func _resolve_wokou_battle() -> void:
-	_wokou_battle_completed = true
-	_wokou_warning_acknowledged = true
-	_advance_exploration_stage(4)
-	_remove_wokou_warning_trigger()
+func _play_wokou_victory_cutscene() -> void:
+	_wokou_victory_cutscene_pending = false
 	_event_dialogue.hide_dialogue()
 	_transitioning = true
 	player.controls_enabled = false

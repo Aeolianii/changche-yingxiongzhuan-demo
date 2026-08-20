@@ -74,7 +74,8 @@ public static class RamRules
 
         // 推动判定：仅船头对船头/船头对船尾；撞击方实际负载 > 目标实际负载；自沉目标永不被推动
         var pushableGeometry = kind is RamCollisionKind.BowToBow or RamCollisionKind.BowToStern;
-        var pushable = pushableGeometry && rammerLoad > targetLoad && !target.SelfSunk;
+        // CHG（海怪 Boss 战）：Immovable（海怪01/城寨/炮台）不可被撞击推动。
+        var pushable = pushableGeometry && rammerLoad > targetLoad && !target.SelfSunk && !target.Definition.Immovable;
         // 受阻：本可推动但受地形/舰船/空间阻挡（复用通过性判定）；自沉目标不进入受阻判定
         var blocked = pushable && !PushFootprintValid(battle, target, rammer.Facing);
 
@@ -132,9 +133,15 @@ public static class RamRules
     }
 
     // 撞角系数：按 WeaponCounts["ram"] 等级（0=未装，1/2/3=等级）读 ram.MultiplierByLevel；配置缺失回退默认。
+    // CHG-20260819（F-1 讨伐饰品）：玩家旗舰装备海怪之角 → FlagshipRamLevel=4 → 取 Lv4 系数 1.8
+    //（weapons.json MultiplierByLevel[4]=1.8 已存在，复用取数路径，无硬编码伤害）。
     public static double RamCoefficient(BattleState battle, ShipState ship)
     {
         var level = ship.WeaponCounts.GetValueOrDefault("ram", 0);
+        if (battle.FlagshipRamLevel > 0
+            && ship.Faction == FactionId.Player
+            && FlagshipRules.ResolveFlagshipId(battle, FactionId.Player) == ship.Id)
+            level = battle.FlagshipRamLevel;
         var weapon = battle.Config.Weapons.FirstOrDefault(w => w.Id == "ram");
         if (weapon is null || weapon.MultiplierByLevel.Length == 0)
             return DefaultRamCoefficients[Math.Clamp(level, 0, DefaultRamCoefficients.Length - 1)];

@@ -245,6 +245,50 @@ func adjust_economy_ship_equipment(ship_id: String, category: String, equipment_
 	return ECONOMY.adjust_ship_equipment(_world_state["economy"], ship_id, category, equipment_id, delta)
 
 
+# —— CHG-20260819（F-1 讨伐饰品）：饰品背包/装备桥接 ——
+
+# 获得讨伐饰品（写 economy_state.accessories.owned，去重）。
+func add_economy_accessory(accessory_id: String) -> bool:
+	_ensure_economy()
+	return ECONOMY.add_accessory(_world_state["economy"], accessory_id)
+
+
+# 是否已获得某饰品。
+func has_economy_accessory(accessory_id: String) -> bool:
+	_ensure_economy()
+	return ECONOMY.has_accessory(_world_state["economy"], accessory_id)
+
+
+# 饰品装备到指定舰船（须已持有、舰船存在；重复装备自动迁移）。
+func equip_economy_accessory(accessory_id: String, ship_id: String) -> Dictionary:
+	_ensure_economy()
+	return ECONOMY.equip_accessory(_world_state["economy"], accessory_id, ship_id)
+
+
+# 卸下饰品（清除装备状态）。
+func unequip_economy_accessory(accessory_id: String) -> bool:
+	_ensure_economy()
+	return ECONOMY.unequip_accessory(_world_state["economy"], accessory_id)
+
+
+# 饰品当前装备到的舰船 id（未装备返回空串）。
+func equipped_economy_accessory_ship(accessory_id: String) -> String:
+	_ensure_economy()
+	return ECONOMY.equipped_accessory_ship(_world_state["economy"], accessory_id)
+
+
+# 已获得饰品 id 列表。
+func owned_economy_accessories() -> Array:
+	_ensure_economy()
+	return ECONOMY.owned_accessories(_world_state["economy"])
+
+
+# 已装备饰品 id → 舰船 id 映射。
+func equipped_economy_accessories() -> Dictionary:
+	_ensure_economy()
+	return ECONOMY.equipped_accessories(_world_state["economy"])
+
+
 func _ensure_economy() -> void:
 	_world_state["economy"] = ECONOMY.normalize(_world_state.get("economy", {}))
 

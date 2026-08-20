@@ -104,7 +104,9 @@ public static class NavalAi
         if (battle.Map.ExitCells.Count == 0) return null;
         foreach (var ship in OwnShips(battle, faction))
         {
-            if (ship.HasAttacked || ship.RemainingMovement < 1) continue;
+            // Task 11 收口（Task 8 评审 forward Minor）：城寨/炮台等 Immovable 舰不可移动，跳过逃跑（防 MoveCommand 被
+            // MovementRules.TryTranslate 的 movement.immovable 拒绝 → 冒烟死循环）。
+            if (ship.HasAttacked || ship.RemainingMovement < 1 || ship.Definition.Immovable) continue;
             var nearestExit = battle.Map.ExitCells
                 .OrderBy(c => c.SquaredDistance(ship.Bow))
                 .ThenBy(c => c.X)
@@ -126,7 +128,8 @@ public static class NavalAi
         var visible = AttackRules.VisibleEnemies(battle, faction).ToList();
         foreach (var ship in OwnShips(battle, faction))
         {
-            if (ship.HasAttacked || ship.RemainingMovement < 1) continue;
+            // Task 11 收口：城寨/炮台等 Immovable 舰不可移动，跳过逼近（防 movement.immovable 拒绝 → 死循环）。
+            if (ship.HasAttacked || ship.RemainingMovement < 1 || ship.Definition.Immovable) continue;
             // 目标：最近可见敌舰；无可见 → 最近任意敌舰（基线导航近似：攻击仍只打可见，裁定 5）
             var candidates = visible.Count > 0
                 ? visible
@@ -184,7 +187,8 @@ public static class NavalAi
     // ActionResolver.Move（接舷禁独立平移）+ FootprintValid（其他舰船/地形/残骸/界内），保证 MoveCommand 必被接受。
     private static bool CanStep(BattleState battle, ShipState ship, CardinalDirection dir)
     {
-        if (ship.SelfSunk || ship.HasAttacked || ship.RemainingMovement < 1 || ship.Boarding is not null)
+        // Task 11 收口：Immovable 舰不可移动（MovementRules.TryTranslate 会拒），单步合法性与方法级一致跳过。
+        if (ship.SelfSunk || ship.HasAttacked || ship.RemainingMovement < 1 || ship.Boarding is not null || ship.Definition.Immovable)
             return false;
         var destination = ship.OccupiedCells().Select(c => c + dir.Vector()).ToList();
         return MovementRules.FootprintValid(battle, destination, ship);

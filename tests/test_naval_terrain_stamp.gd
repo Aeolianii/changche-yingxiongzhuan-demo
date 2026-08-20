@@ -55,5 +55,16 @@ func _init() -> void:
 			if screenshot_error != OK:
 				_fail("could not save terrain stamp preview for %s" % stamp_id)
 				return
+	if not deploy.ShowArchipelagoPassabilityPreviewForTest():
+		_fail("could not build archipelago passability preview")
+		return
+	await process_frame
+	await process_frame
+	if DisplayServer.get_name() != "headless":
+		var passability_preview := "res://.godot/naval_archipelago_passability_preview.png"
+		var passability_error := root.get_texture().get_image().save_png(passability_preview)
+		if passability_error != OK:
+			_fail("could not save archipelago passability preview")
+			return
 	print("PASS: five fixed naval landform maps, deterministic layouts, textures, and whole-image rendering")
 	quit(0)

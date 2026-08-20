@@ -726,7 +726,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         var expectedSizes = new Dictionary<string, (int Width, int Height)>(StringComparer.Ordinal)
         {
             [RandomMapGenerator.FjordStampId] = (8, 14),
-            [RandomMapGenerator.ArchipelagoStampId] = (8, 12),
+            [RandomMapGenerator.ArchipelagoStampId] = (8, 14),
             [RandomMapGenerator.SolitaryIslandStampId] = (8, 8),
             [RandomMapGenerator.PeninsulaStampId] = (8, 13),
             [RandomMapGenerator.LagoonStampId] = (8, 12),
@@ -734,7 +734,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         var expectedOrigins = new Dictionary<string, GridPos>(StringComparer.Ordinal)
         {
             [RandomMapGenerator.FjordStampId] = new GridPos(8, 2),
-            [RandomMapGenerator.ArchipelagoStampId] = new GridPos(8, 3),
+            [RandomMapGenerator.ArchipelagoStampId] = new GridPos(8, 2),
             [RandomMapGenerator.SolitaryIslandStampId] = new GridPos(8, 5),
             [RandomMapGenerator.PeninsulaStampId] = new GridPos(8, 0),
             [RandomMapGenerator.LagoonStampId] = new GridPos(8, 3),
@@ -790,7 +790,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                 return false;
             if (mainStamp.Id == RandomMapGenerator.ArchipelagoStampId
                 && (CountLandComponents(result.Spec, mainStamp) < 5
-                    || CountFullyDeepRows(result.Spec, mainStamp) < 4
+                    || !ArchipelagoVisualObstacleCellsAreLand(result.Spec, mainStamp)
                     || !HasDeepWaterPathInsideStamp(result.Spec, mainStamp, vertical: false)))
                 return false;
             if (mainStamp.Id == RandomMapGenerator.SolitaryIslandStampId
@@ -836,10 +836,19 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         return true;
     }
 
-    private static int CountFullyDeepRows(LevelMapSpec spec, TerrainVisualStamp stamp)
-        => Enumerable.Range(stamp.Origin.Y, stamp.Height)
-            .Count(y => Enumerable.Range(stamp.Origin.X, stamp.Width)
-                .All(x => spec.TerrainAt(x, y) == TerrainType.DeepWater));
+    private static bool ArchipelagoVisualObstacleCellsAreLand(LevelMapSpec spec, TerrainVisualStamp stamp)
+    {
+        // 对齐 archipelago_v2 的五块可见岛体，防止移动范围染到山体或沙洲中央。
+        var keyObstacleOffsets = new[]
+        {
+            new GridPos(2, 2), new GridPos(2, 3), new GridPos(2, 4), new GridPos(2, 5),
+            new GridPos(6, 2), new GridPos(6, 3),
+            new GridPos(4, 6), new GridPos(4, 7), new GridPos(4, 8),
+            new GridPos(1, 9), new GridPos(1, 10), new GridPos(1, 11),
+            new GridPos(6, 10), new GridPos(6, 11),
+        };
+        return keyObstacleOffsets.All(offset => TerrainRules.IsLand(spec.TerrainAt(stamp.Origin + offset)));
+    }
 
     private static int LongestFullyDeepRowRun(LevelMapSpec spec, TerrainVisualStamp stamp)
     {
@@ -967,6 +976,26 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             var result = generator.Generate(new RandomMapOptions(24, 18, 2, seed));
             if (result.Spec.TerrainStamps.FirstOrDefault()?.Id == mainStampId)
                 return ShowRandomTerrainStampPreviewForTest(result, seed, mainStampId, overview: true);
+        }
+        return false;
+    }
+
+    public bool ShowArchipelagoPassabilityPreviewForTest()
+    {
+        var generator = new RandomMapGenerator();
+        for (var seed = 0; seed < RandomMapGenerator.FixedMapIds.Count; seed++)
+        {
+            var result = generator.Generate(new RandomMapOptions(24, 18, 2, seed));
+            var stamp = result.Spec.TerrainStamps.FirstOrDefault();
+            if (stamp?.Id != RandomMapGenerator.ArchipelagoStampId) continue;
+            if (!ShowRandomTerrainStampPreviewForTest(result, seed, stamp.Id, overview: true)) return false;
+            var passableCells = new List<GridPos>();
+            for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+                for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
+                    if (result.Spec.TerrainAt(x, y) == TerrainType.DeepWater)
+                        passableCells.Add(new GridPos(x, y));
+            _grid.ShowDeploymentCells(passableCells, new Color(0.18f, 0.78f, 0.82f, 0.40f));
+            return true;
         }
         return false;
     }

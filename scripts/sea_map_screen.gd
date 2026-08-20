@@ -216,9 +216,7 @@ func _map_position(world_position: Vector2) -> Vector2:
 
 
 func _refresh_map_content_rect() -> void:
-	var content_scale := minf(MAP_VIEW_SIZE.x / _world_size.x, MAP_VIEW_SIZE.y / _world_size.y)
-	var content_size := _world_size * content_scale
-	_map_content_rect = Rect2((MAP_VIEW_SIZE - content_size) * 0.5, content_size)
+	_map_content_rect = Rect2(Vector2.ZERO, MAP_VIEW_SIZE)
 
 
 func _configure_fog_layer() -> void:
@@ -241,7 +239,7 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 	for child in _map_texture_layer.get_children():
 		child.free()
 	var chunks := map_chunks
-	var content_scale := _map_content_rect.size.x / _world_size.x
+	var content_scale := _map_content_rect.size / _world_size
 	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)
 	for index in range(chunks.size()):
 		var chunk_data: Dictionary = chunks[index]

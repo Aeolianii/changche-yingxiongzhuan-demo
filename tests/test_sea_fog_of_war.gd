@@ -97,8 +97,15 @@ func _run() -> void:
 	map_button.pressed.emit()
 	await process_frame
 	var map_screen := hud.get_node("SeaMapScreen") as Control
+	var map_viewport := map_screen.get_node("MapPanel/MapViewport") as Control
+	var map_texture_layer := map_viewport.get_node("MapTextureLayer") as Control
+	var first_map_chunk := map_texture_layer.get_node("MapTexture") as TextureRect
+	var last_map_chunk := map_texture_layer.get_node("MapTexture4") as TextureRect
 	var map_fog := map_screen.get_node_or_null("MapPanel/MapViewport/FogLayer") as TextureRect
 	_expect(map_fog != null and map_fog.texture != null, "Full sea map must display the shared fog texture.")
+	_expect(first_map_chunk.position.is_equal_approx(Vector2.ZERO), "Full sea-map content must begin at the inner frame's top-left corner without letterboxing.")
+	_expect((last_map_chunk.position + last_map_chunk.size).is_equal_approx(map_viewport.size), "Full sea-map content must stretch vertically to the inner frame's bottom-right corner.")
+	_expect(map_fog.position.is_equal_approx(Vector2.ZERO) and map_fog.size.is_equal_approx(map_viewport.size), "Full sea-map fog must use the same stretched 870x510 projection as the map chunks.")
 	var map_fog_material := map_fog.material as ShaderMaterial
 	_expect(map_fog_material != null and map_fog_material.shader.resource_path.ends_with("sea_map_fog_soft_edge.gdshader"), "Full sea map alone must soften and round the shared fog edge.")
 	_expect(float(map_fog_material.get_shader_parameter("edge_warp_texels")) >= 4.0, "Full sea map fog must visibly warp straight exploration edges.")

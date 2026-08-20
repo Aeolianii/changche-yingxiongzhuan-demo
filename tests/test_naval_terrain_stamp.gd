@@ -39,11 +39,14 @@ func _init() -> void:
 		await process_frame
 		await process_frame
 		var covered_cells: int = grid.TerrainStampCoveredCellCount()
-		if grid.TerrainStampCount() != 2 or covered_cells < 40 or covered_cells > 72:
+		if grid.TerrainStampCount() != 2 or covered_cells < 57 or covered_cells > 87:
 			_fail("main plus companion stamp metadata invalid for %s (count=%d covered=%d)" % [stamp_id, grid.TerrainStampCount(), covered_cells])
 			return
 		if not grid.TerrainStampTexturesReady():
 			_fail("terrain stamp textures were not imported and loaded for %s" % stamp_id)
+			return
+		if grid.TerrainStampCoastTransitionLayerCount() != 3:
+			_fail("terrain stamps must render deep-shadow, shallow-water, and foam transition layers")
 			return
 		if DisplayServer.get_name() != "headless":
 			var preview_path := "res://.godot/naval_fixed_map_%s_preview.png" % stamp_id

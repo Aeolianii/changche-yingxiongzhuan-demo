@@ -27,6 +27,7 @@ public partial class NavalGridView : Node2D
     private const float MaximumCameraZoom = 4f;
     private const float CameraZoomStep = 0.25f;
     private const float OverviewZoomScale = 0.90f;
+    private const int TerrainStampCoastTransitionLayers = 3;
 
     // 全模式以 3x 起步；滚轮在动态全图概览下限与 4x 上限间缩放，选船/移动当前舰时平滑居中。
     private Camera2D? _camera;
@@ -1047,6 +1048,8 @@ public partial class NavalGridView : Node2D
             var tint = new Color(0.96f, 0.98f, 0.94f, 1f);
             if (quarterTurns == 0)
             {
+                if (!stamp.Id.StartsWith("reef_shoal", StringComparison.Ordinal))
+                    DrawTerrainStampCoastTransition(texture, target);
                 DrawTextureRect(texture, target, false, tint);
                 continue;
             }
@@ -1061,6 +1064,15 @@ public partial class NavalGridView : Node2D
         }
     }
 
+    private void DrawTerrainStampCoastTransition(Texture2D texture, Rect2 target)
+    {
+        // 同一透明轮廓向外轻微扩张：外层深水阴影 → 中层浅水色 → 内层白色浪花。
+        // 正式纹理最后覆盖内部区域，因此只在 Alpha 边缘外露出极淡的三层海岸层级。
+        DrawTextureRect(texture, target.Grow(8f), false, new Color(0.20f, 0.31f, 0.34f, 0.18f));
+        DrawTextureRect(texture, target.Grow(5f), false, new Color(0.62f, 0.76f, 0.73f, 0.24f));
+        DrawTextureRect(texture, target.Grow(2f), false, new Color(1f, 0.98f, 0.88f, 0.34f));
+    }
+
     // 首版印章的 headless 验证钩子：元数据、纹理加载与覆盖格数量都可由场景测试读取。
     public int TerrainStampCount() => _battle?.Map.TerrainStamps.Count ?? 0;
     public int TerrainStampCoveredCellCount()
@@ -1068,6 +1080,7 @@ public partial class NavalGridView : Node2D
     public bool TerrainStampTexturesReady()
         => _battle is not null
            && _battle.Map.TerrainStamps.All(stamp => _terrainStampTextures.ContainsKey(stamp.TexturePath));
+    public int TerrainStampCoastTransitionLayerCount() => TerrainStampCoastTransitionLayers;
 
     private static void LoadTerrainTextures(string kind, List<Texture2D> target)
     {

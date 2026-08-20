@@ -725,19 +725,20 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         var generator = new RandomMapGenerator();
         var expectedSizes = new Dictionary<string, (int Width, int Height)>(StringComparer.Ordinal)
         {
-            [RandomMapGenerator.RiverMouthStampId] = (6, 8),
+            [RandomMapGenerator.RiverMouthStampId] = (6, 12),
             [RandomMapGenerator.ForestIslandStampId] = (6, 6),
             [RandomMapGenerator.GrassSandbarStampId] = (6, 4),
             [RandomMapGenerator.ReefShoalStampId] = (5, 3),
+            [RandomMapGenerator.ReefShoalWideStampId] = (7, 5),
             [RandomMapGenerator.RockyIslandStampId] = (5, 5),
             [RandomMapGenerator.HarborTownStampId] = (7, 6),
         };
         var expectedLayouts = new Dictionary<string, (string CompanionId, GridPos MainOrigin, GridPos CompanionOrigin)>(StringComparer.Ordinal)
         {
-            [RandomMapGenerator.ForestIslandStampId] = (RandomMapGenerator.GrassSandbarStampId, new GridPos(9, 1), new GridPos(9, 11)),
-            [RandomMapGenerator.RockyIslandStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(10, 10), new GridPos(9, 2)),
-            [RandomMapGenerator.HarborTownStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 8), new GridPos(10, 1)),
-            [RandomMapGenerator.RiverMouthStampId] = (RandomMapGenerator.GrassSandbarStampId, new GridPos(9, 8), new GridPos(9, 1)),
+            [RandomMapGenerator.ForestIslandStampId] = (RandomMapGenerator.GrassSandbarStampId, new GridPos(8, 1), new GridPos(10, 10)),
+            [RandomMapGenerator.RockyIslandStampId] = (RandomMapGenerator.ReefShoalWideStampId, new GridPos(11, 6), new GridPos(8, 1)),
+            [RandomMapGenerator.HarborTownStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 6), new GridPos(11, 1)),
+            [RandomMapGenerator.RiverMouthStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 3), new GridPos(10, 0)),
         };
         var seenMapIds = new HashSet<string>(StringComparer.Ordinal);
         for (var seed = 0; seed < Math.Max(1, sampleCount); seed++)
@@ -787,15 +788,35 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                             return false;
                     }
                 }
-                if (index > 0 && StampRectanglesTouch(result.Spec.TerrainStamps[0], stamp)) return false;
+                if (index > 0 && StampRectanglesOverlap(result.Spec.TerrainStamps[0], stamp)) return false;
             }
 
             var riverStamp = result.Spec.TerrainStamps.FirstOrDefault(stamp => stamp.Id == RandomMapGenerator.RiverMouthStampId);
-            if (riverStamp is not null && !RiverReachesStampMouth(result.Spec, riverStamp)) return false;
+            if (riverStamp is not null
+                && (!RiverReachesStampMouth(result.Spec, riverStamp)
+                    || riverStamp.Height != 12
+                    || riverStamp.Origin.X - result.PlayerZone.Right
+                    == result.EnemyZone.X - (riverStamp.Origin.X + riverStamp.Width)))
+                return false;
             var harborStamp = result.Spec.TerrainStamps.FirstOrDefault(stamp => stamp.Id == RandomMapGenerator.HarborTownStampId);
-            if (harborStamp is not null
-                && (result.Spec.TerrainAt(harborStamp.Origin.X + 3, harborStamp.Origin.Y + 4) != TerrainType.DeepWater
-                    || result.Spec.TerrainAt(harborStamp.Origin.X + 3, harborStamp.Origin.Y + 5) != TerrainType.DeepWater))
+            if (harborStamp is not null)
+            {
+                for (var localY = 2; localY <= 6; localY++)
+                    if (result.Spec.TerrainAt(harborStamp.Origin.X + 3, harborStamp.Origin.Y + localY) != TerrainType.DeepWater)
+                        return false;
+            }
+            if (mainStamp.Id == RandomMapGenerator.ForestIslandStampId
+                && (mainStamp.Origin.X >= companionStamp.Origin.X
+                    || mainStamp.Origin.Y >= companionStamp.Origin.Y
+                    || !CentralRowIsDeepWater(result, 8)))
+                return false;
+            if (mainStamp.Id == RandomMapGenerator.RockyIslandStampId
+                && (mainStamp.Origin.X <= companionStamp.Origin.X
+                    || companionStamp.Width < mainStamp.Width + 2
+                    || !CentralRowIsDeepWater(result, 12)))
+                return false;
+            if (mainStamp.Id == RandomMapGenerator.RiverMouthStampId
+                && !CentralRowIsDeepWater(result, 16))
                 return false;
             if (RandomMapGenerator.ToBattleMap(result.Spec).TerrainStamps.Count != result.Spec.TerrainStamps.Count
                 || !result.Connected)
@@ -803,6 +824,10 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         }
         return RandomMapGenerator.FixedMapIds.All(seenMapIds.Contains);
     }
+
+    private static bool CentralRowIsDeepWater(RandomMapResult result, int y)
+        => Enumerable.Range(result.PlayerZone.Right, result.EnemyZone.X - result.PlayerZone.Right)
+            .All(x => result.Spec.TerrainAt(x, y) == TerrainType.DeepWater);
 
     public bool RandomTerrainStampsAreCoherent(int sampleCount = 24)
         => FixedTerrainMapsAreCoherent(sampleCount);
@@ -826,11 +851,11 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         return RandomMapGenerator.FixedMapIds.All(seenMapIds.Contains);
     }
 
-    private static bool StampRectanglesTouch(TerrainVisualStamp first, TerrainVisualStamp second)
-        => first.Origin.X - 1 < second.Origin.X + second.Width
-           && first.Origin.X + first.Width + 1 > second.Origin.X
-           && first.Origin.Y - 1 < second.Origin.Y + second.Height
-           && first.Origin.Y + first.Height + 1 > second.Origin.Y;
+    private static bool StampRectanglesOverlap(TerrainVisualStamp first, TerrainVisualStamp second)
+        => first.Origin.X < second.Origin.X + second.Width
+           && first.Origin.X + first.Width > second.Origin.X
+           && first.Origin.Y < second.Origin.Y + second.Height
+           && first.Origin.Y + first.Height > second.Origin.Y;
 
     private static bool RiverReachesStampMouth(LevelMapSpec spec, TerrainVisualStamp stamp)
     {

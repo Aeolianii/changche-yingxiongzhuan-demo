@@ -29,6 +29,7 @@ public sealed class RandomMapGenerator
     public const string ForestIslandStampId = "forest_island_v1";
     public const string GrassSandbarStampId = "grass_sandbar_v1";
     public const string ReefShoalStampId = "reef_shoal_v1";
+    public const string ReefShoalWideStampId = "reef_shoal_wide_v1";
     public const string RockyIslandStampId = "rocky_island_v1";
     public const string HarborTownStampId = "harbor_town_v1";
     private const string TerrainStampAssetRoot = "res://assets/naval/battle/terrain_stamps/";
@@ -65,6 +66,10 @@ public sealed class RandomMapGenerator
             "BGGRGB",
             "BGRRGB",
             "BGRRGB",
+            "BGRRGB",
+            "BGRRGB",
+            "BGRRGB",
+            "BGRRGB",
             "BBRRBB",
         });
 
@@ -83,6 +88,11 @@ public sealed class RandomMapGenerator
         TerrainStampAssetRoot + "reef_shoal_v1.png",
         new[] { ".~~~.", "~###~", ".~~~." });
 
+    private static readonly TerrainStampDefinition ReefShoalWideStamp = new(
+        ReefShoalWideStampId,
+        TerrainStampAssetRoot + "reef_shoal_v1.png",
+        new[] { ".~~~~~.", "~#####~", "~#####~", "~#####~", "~~~~~~~" });
+
     private static readonly TerrainStampDefinition RockyIslandStamp = new(
         RockyIslandStampId,
         TerrainStampAssetRoot + "rocky_island_v1.png",
@@ -91,7 +101,7 @@ public sealed class RandomMapGenerator
     private static readonly TerrainStampDefinition HarborTownStamp = new(
         HarborTownStampId,
         TerrainStampAssetRoot + "harbor_town_v1.png",
-        new[] { "..BBB..", ".BTTTB.", "BTTTTTB", "BPP.PPB", "BPP.PPB", ".BB.BB." });
+        new[] { "..BBB..", ".BTTTB.", "BTT.TTB", "BPP.PPB", "BPP.PPB", ".BB.BB." });
 
     private static readonly FixedMapTemplate[] FixedMapTemplates =
     {
@@ -99,53 +109,47 @@ public sealed class RandomMapGenerator
             "forest_island",
             "森林岛",
             ForestIslandStamp,
-            new GridPos(9, 1),
+            new GridPos(8, 1),
             GrassSandbarStamp,
-            new GridPos(9, 11),
+            new GridPos(10, 10),
             new[]
             {
-                new TerrainDecoration(new GridPos(8, 8), '^'),
-                new TerrainDecoration(new GridPos(15, 9), '~'),
-                new TerrainDecoration(new GridPos(8, 16), '#'),
+                new TerrainDecoration(new GridPos(15, 7), '~'),
+                new TerrainDecoration(new GridPos(8, 15), '#'),
             }),
         new(
             "rocky_island",
             "岩山岛",
             RockyIslandStamp,
-            new GridPos(10, 10),
-            ReefShoalStamp,
-            new GridPos(9, 2),
+            new GridPos(11, 6),
+            ReefShoalWideStamp,
+            new GridPos(8, 1),
             new[]
             {
-                new TerrainDecoration(new GridPos(15, 5), '#'),
-                new TerrainDecoration(new GridPos(8, 8), '~'),
-                new TerrainDecoration(new GridPos(8, 16), '^'),
+                new TerrainDecoration(new GridPos(8, 13), '~'),
+                new TerrainDecoration(new GridPos(10, 16), '#'),
             }),
         new(
             "harbor_town",
             "港口小镇",
             HarborTownStamp,
-            new GridPos(8, 8),
+            new GridPos(8, 6),
             ReefShoalStamp,
-            new GridPos(10, 1),
+            new GridPos(11, 1),
             new[]
             {
-                new TerrainDecoration(new GridPos(8, 5), '~'),
-                new TerrainDecoration(new GridPos(15, 6), '#'),
                 new TerrainDecoration(new GridPos(15, 16), '^'),
             }),
         new(
             "river_mouth",
             "河口岛",
             RiverMouthStamp,
-            new GridPos(9, 8),
-            GrassSandbarStamp,
-            new GridPos(9, 1),
+            new GridPos(8, 3),
+            ReefShoalStamp,
+            new GridPos(10, 0),
             new[]
             {
-                new TerrainDecoration(new GridPos(8, 5), '#'),
-                new TerrainDecoration(new GridPos(15, 6), '~'),
-                new TerrainDecoration(new GridPos(8, 16), '^'),
+                new TerrainDecoration(new GridPos(15, 12), '~'),
             }),
     };
 
@@ -156,6 +160,7 @@ public sealed class RandomMapGenerator
             ForestIslandStampId,
             GrassSandbarStampId,
             ReefShoalStampId,
+            ReefShoalWideStampId,
             RockyIslandStampId,
             HarborTownStampId,
         };
@@ -352,7 +357,7 @@ public sealed class RandomMapGenerator
         if (origin.X < 0 || origin.Y < 0
             || origin.X + definition.Width > options.Width
             || origin.Y + definition.Height > options.Height
-            || terrainStamps.Any(stamp => RectanglesTouch(origin, definition.Width, definition.Height, stamp)))
+            || terrainStamps.Any(stamp => RectanglesOverlap(origin, definition.Width, definition.Height, stamp)))
             return false;
 
         for (var y = 0; y < definition.Height; y++)
@@ -384,15 +389,15 @@ public sealed class RandomMapGenerator
         return true;
     }
 
-    private static bool RectanglesTouch(
+    private static bool RectanglesOverlap(
         GridPos origin,
         int width,
         int height,
         TerrainVisualStamp existing)
-        => origin.X - 1 < existing.Origin.X + existing.Width
-           && origin.X + width + 1 > existing.Origin.X
-           && origin.Y - 1 < existing.Origin.Y + existing.Height
-           && origin.Y + height + 1 > existing.Origin.Y;
+        => origin.X < existing.Origin.X + existing.Width
+           && origin.X + width > existing.Origin.X
+           && origin.Y < existing.Origin.Y + existing.Height
+           && origin.Y + height > existing.Origin.Y;
 
     private static string[] AllDeepRows(RandomMapOptions o)
     {

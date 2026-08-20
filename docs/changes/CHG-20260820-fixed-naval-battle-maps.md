@@ -11,10 +11,10 @@
 
 | 地图 | 主印章 | 伴生印章 | 构图重点 |
 |---|---|---|---|
-| 森林岛 | `forest_island_v1` | `grass_sandbar_v1` | 上森林、下草洲，中央形成宽阔横向交战航道 |
-| 岩山岛 | `rocky_island_v1` | `reef_shoal_v1` | 上礁滩、下岩山，主要绕行空间位于中央 |
-| 港口小镇 | `harbor_town_v1` | `reef_shoal_v1` | 上礁滩、中下港镇，港池朝南并保持进港深水 |
-| 河口岛 | `river_mouth_island_v2` | `grass_sandbar_v1` | 上草洲、中下河口，河道由林地源头连续汇入南侧外海 |
+| 森林岛 | `forest_island_v1` | `grass_sandbar_v1` | 左上森林、右下草洲，斜向夹出中路并保留上下绕行 |
+| 岩山岛 | `rocky_island_v1` | `reef_shoal_wide_v1` | 上方扩大险礁、右侧偏置岩山，短危险路与长安全路并存 |
+| 港口小镇 | `harbor_town_v1` | `reef_shoal_v1` | 上礁滩、中部港镇，南向港池深水可供小型舰驶入停泊 |
+| 河口岛 | `river_mouth_island_v2` | `reef_shoal_v1` | `6×12` 长河口岛偏置，顶部险礁窄口与底部安全宽口分流 |
 
 ## 生成与选择规则
 

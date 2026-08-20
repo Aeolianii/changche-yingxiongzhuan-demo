@@ -26,7 +26,7 @@ public sealed class RandomMapGenerator
     // 连通性重试上限；概率极低（特征小、布阵区清空），最终兜底仍保证可玩。
     private const int MaxAttempts = 2000;
     public const string RiverMouthStampId = "river_mouth_island_v1";
-    public const string RiverMouthStampTexturePath = "res://assets/naval/battle/terrain_stamps/river_mouth_island_v1.png";
+    public const string RiverMouthStampTexturePath = "res://assets/naval/battle/terrain_stamps/river_mouth_island_v2.png";
     private const int RiverMouthStampWidth = 6;
     private const int RiverMouthStampHeight = 8;
     private static readonly string[] RiverMouthStampMask =

@@ -53,3 +53,10 @@
 - Godot headless `tests/test_naval_terrain_stamp.gd`：通过；抽查 48 个种子，印章均为一枚完整 `6×8` 地貌，避开布阵区和出口，河道逐行通至底部河口，地图连通。
 - Godot Vulkan `tests/test_naval_terrain_stamp.gd`：通过；纹理导入、元数据、48 格覆盖与整图绘制均通过，预览保存到 `.godot/naval_terrain_stamp_preview.png`。
 - Godot headless `tests/test_naval_scene_smoke.gd`：通过；既有海战布阵、出口与战斗场景未回归。
+
+## 风格修订
+
+- 根据首版实机预览，将素材升级为 `river_mouth_island_v2.png`：保留同一 `6×8` 逻辑掩码和源头—河口构图，只降低饱和度与写实微细节，并对齐 `sea_ink_pixel.png` 的灰青宣纸像素水墨语言。
+- 第二版树冠使用成组墨团与阶梯像素轮廓，河水改为低饱和蓝灰，河口删除亮青色海水块并以稀疏横向墨纹透明渐隐。
+- 首版 `v1` 保留作为对照与可回退素材；运行时切换到 `v2`，地图逻辑和测试契约不变。
+- `v2` 通过 PNG 四角 Alpha 0 抽查、Godot 纹理导入、headless 专项测试和 Vulkan `1344×896` 实战预览；运行时未再出现棋盘格、矩形底色或亮青河口贴片。

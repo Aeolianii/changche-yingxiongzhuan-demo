@@ -39,7 +39,7 @@ func _init() -> void:
 		await process_frame
 		await process_frame
 		var covered_cells: int = grid.TerrainStampCoveredCellCount()
-		if grid.TerrainStampCount() != 2 or covered_cells < 57 or covered_cells > 87:
+		if grid.TerrainStampCount() != 2 or covered_cells < 57 or covered_cells > 95:
 			_fail("main plus companion stamp metadata invalid for %s (count=%d covered=%d)" % [stamp_id, grid.TerrainStampCount(), covered_cells])
 			return
 		if not grid.TerrainStampTexturesReady():

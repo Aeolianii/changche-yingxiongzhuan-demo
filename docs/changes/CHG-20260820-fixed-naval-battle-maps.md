@@ -14,7 +14,7 @@
 | 森林岛 | `forest_island_v1` | `grass_sandbar_v1` | 左上森林、右下草洲，斜向夹出中路并保留上下绕行 |
 | 岩山岛 | `rocky_island_v1` | `reef_shoal_wide_v1` | 上方扩大险礁、右侧偏置岩山，短危险路与长安全路并存 |
 | 港口小镇 | `harbor_town_v1` | `reef_shoal_v1` | 上礁滩、中部港镇，南向港池深水可供小型舰驶入停泊 |
-| 河口岛 | `river_mouth_island_v2` | `reef_shoal_v1` | `6×12` 长河口岛偏置，顶部险礁窄口与底部安全宽口分流 |
+| 河口岛 | `river_mouth_island_v2` | `reef_shoal_v1` | `8×10` 河口岛下移，险礁仍在岛屿上方，两者之间固定留出两行深水通道 |
 
 ## 生成与选择规则
 

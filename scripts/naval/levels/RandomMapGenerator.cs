@@ -59,18 +59,16 @@ public sealed class RandomMapGenerator
         RiverMouthStampTexturePath,
         new[]
         {
-            "..FF..",
-            ".FRRF.",
-            "BFRRFB",
-            "BGGRGB",
-            "BGGRGB",
-            "BGRRGB",
-            "BGRRGB",
-            "BGRRGB",
-            "BGRRGB",
-            "BGRRGB",
-            "BGRRGB",
-            "BBRRBB",
+            "...FF...",
+            "..FRRF..",
+            ".BFRRFB.",
+            "BBGGRGBB",
+            "BBGGRGBB",
+            "BBGRRGBB",
+            "BBGRRGBB",
+            "BBGRRGBB",
+            "BBGRRGBB",
+            "BBBRRBBB",
         });
 
     private static readonly TerrainStampDefinition ForestIslandStamp = new(
@@ -144,13 +142,10 @@ public sealed class RandomMapGenerator
             "river_mouth",
             "河口岛",
             RiverMouthStamp,
-            new GridPos(8, 3),
+            new GridPos(8, 5),
             ReefShoalStamp,
             new GridPos(10, 0),
-            new[]
-            {
-                new TerrainDecoration(new GridPos(15, 12), '~'),
-            }),
+            Array.Empty<TerrainDecoration>()),
     };
 
     public static IReadOnlyList<string> TerrainStampIds { get; } =

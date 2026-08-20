@@ -725,7 +725,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         var generator = new RandomMapGenerator();
         var expectedSizes = new Dictionary<string, (int Width, int Height)>(StringComparer.Ordinal)
         {
-            [RandomMapGenerator.RiverMouthStampId] = (6, 12),
+            [RandomMapGenerator.RiverMouthStampId] = (8, 10),
             [RandomMapGenerator.ForestIslandStampId] = (6, 6),
             [RandomMapGenerator.GrassSandbarStampId] = (6, 4),
             [RandomMapGenerator.ReefShoalStampId] = (5, 3),
@@ -738,7 +738,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             [RandomMapGenerator.ForestIslandStampId] = (RandomMapGenerator.GrassSandbarStampId, new GridPos(8, 1), new GridPos(10, 10)),
             [RandomMapGenerator.RockyIslandStampId] = (RandomMapGenerator.ReefShoalWideStampId, new GridPos(11, 6), new GridPos(8, 1)),
             [RandomMapGenerator.HarborTownStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 6), new GridPos(11, 1)),
-            [RandomMapGenerator.RiverMouthStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 3), new GridPos(10, 0)),
+            [RandomMapGenerator.RiverMouthStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 5), new GridPos(10, 0)),
         };
         var seenMapIds = new HashSet<string>(StringComparer.Ordinal);
         for (var seed = 0; seed < Math.Max(1, sampleCount); seed++)
@@ -794,9 +794,10 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             var riverStamp = result.Spec.TerrainStamps.FirstOrDefault(stamp => stamp.Id == RandomMapGenerator.RiverMouthStampId);
             if (riverStamp is not null
                 && (!RiverReachesStampMouth(result.Spec, riverStamp)
-                    || riverStamp.Height != 12
-                    || riverStamp.Origin.X - result.PlayerZone.Right
-                    == result.EnemyZone.X - (riverStamp.Origin.X + riverStamp.Width)))
+                    || riverStamp.Width != 8 || riverStamp.Height != 10
+                    || riverStamp.Origin.Y != 5
+                    || !CentralRowIsDeepWater(result, 3)
+                    || !CentralRowIsDeepWater(result, 4)))
                 return false;
             var harborStamp = result.Spec.TerrainStamps.FirstOrDefault(stamp => stamp.Id == RandomMapGenerator.HarborTownStampId);
             if (harborStamp is not null)
@@ -814,9 +815,6 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                 && (mainStamp.Origin.X <= companionStamp.Origin.X
                     || companionStamp.Width < mainStamp.Width + 2
                     || !CentralRowIsDeepWater(result, 12)))
-                return false;
-            if (mainStamp.Id == RandomMapGenerator.RiverMouthStampId
-                && !CentralRowIsDeepWater(result, 16))
                 return false;
             if (RandomMapGenerator.ToBattleMap(result.Spec).TerrainStamps.Count != result.Spec.TerrainStamps.Count
                 || !result.Connected)

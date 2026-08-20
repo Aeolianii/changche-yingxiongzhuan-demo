@@ -581,12 +581,12 @@ func _build_equipment_page() -> void:
 	_equipment_summary.size = Vector2(710, 24)
 	_equipment_page.add_child(_equipment_summary)
 
-	_equipment_loadout_tab = _make_action_button("武器技能", Vector2(18, 76), Vector2(160, 36), true)
+	_equipment_loadout_tab = _make_action_button("武器技能", Vector2(18, 76), Vector2(160, 36))
 	_equipment_loadout_tab.name = "EquipmentLoadoutTab"
 	_equipment_loadout_tab.pressed.connect(_switch_equipment_section.bind("loadout"))
 	_equipment_page.add_child(_equipment_loadout_tab)
 
-	_equipment_defense_tab = _make_action_button("护甲饰品", Vector2(188, 76), Vector2(160, 36), true)
+	_equipment_defense_tab = _make_action_button("护甲饰品", Vector2(188, 76), Vector2(160, 36))
 	_equipment_defense_tab.name = "EquipmentDefenseTab"
 	_equipment_defense_tab.pressed.connect(_switch_equipment_section.bind("defense"))
 	_equipment_page.add_child(_equipment_defense_tab)
@@ -684,8 +684,10 @@ func _switch_equipment_section(section: String) -> void:
 	var loadout_selected := _equipment_section == "loadout"
 	_equipment_loadout_page.visible = loadout_selected
 	_equipment_defense_page.visible = not loadout_selected
-	_equipment_loadout_tab.add_theme_stylebox_override("normal", _detail_button_style(Color(1.0, 0.88, 0.55, 1.0) if loadout_selected else Color(0.78, 0.80, 0.74, 1.0)))
-	_equipment_defense_tab.add_theme_stylebox_override("normal", _detail_button_style(Color(1.0, 0.88, 0.55, 1.0) if not loadout_selected else Color(0.78, 0.80, 0.74, 1.0)))
+	var active_style := _flat_style(Color(0.16, 0.13, 0.07, 0.96), GOLD_BRIGHT, 1)
+	var inactive_style := _flat_style(Color(0.025, 0.055, 0.048, 0.92), Color(GOLD.r, GOLD.g, GOLD.b, 0.54), 1)
+	_equipment_loadout_tab.add_theme_stylebox_override("normal", active_style if loadout_selected else inactive_style)
+	_equipment_defense_tab.add_theme_stylebox_override("normal", active_style if not loadout_selected else inactive_style)
 	_equipment_loadout_tab.add_theme_color_override("font_color", GOLD_BRIGHT if loadout_selected else TEXT_MUTED)
 	_equipment_defense_tab.add_theme_color_override("font_color", GOLD_BRIGHT if not loadout_selected else TEXT_MUTED)
 

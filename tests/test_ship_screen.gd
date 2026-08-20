@@ -106,6 +106,8 @@ func _run() -> void:
 	_expect(equipment_page.position.y >= equipment_tab.position.y + equipment_tab.size.y and equipment_page.position.y + equipment_page.size.y <= 800.0, "Equipment panel must sit below the main tabs and stay inside the background frame.")
 	_expect((equipment_page.get_node("EquipmentSlotsSummary") as Label).text.contains("武器位 1 / 2"), "Equipment page must show battle-style weapon, skill, and armor slot usage.")
 	_expect(loadout_page.visible and not defense_page.visible, "Equipment page must open on the weapon and skill subpage.")
+	for section_tab in [equipment_page.get_node("EquipmentLoadoutTab"), equipment_page.get_node("EquipmentDefenseTab")]:
+		_expect((section_tab as Button).get_theme_stylebox("normal") is StyleBoxFlat, "Equipment subpage tabs must use flat gold borders without image assets.")
 	_expect(loadout_page.get_node("WeaponGrid").get_child_count() == 3 and loadout_page.get_node("SkillGrid").get_child_count() == 4, "Equipment page must reuse every weapon and skill from naval battle configuration.")
 	var ram_plus := loadout_page.get_node("WeaponGrid/Weapon_ram/Content/Plus") as Button
 	_expect(ram_plus.get_theme_stylebox("normal") is StyleBoxFlat, "Compact equipment controls must keep their fitted flat button style.")

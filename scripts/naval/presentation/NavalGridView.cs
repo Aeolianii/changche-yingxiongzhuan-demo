@@ -669,12 +669,6 @@ public partial class NavalGridView : Node2D
         // 水雷爆炸圈（瞬态）。
         foreach (var (cell, age) in _explosions)
             DrawExplosionRing(cell, age);
-        // 本回合已行动舰船标记（船头上方小点）
-        foreach (var ship in _battle.Ships.Values)
-        {
-            if (ship.Faction == _battle.CurrentFaction && ship.HitPoints > 0 && ship.HasAttacked)
-                DrawCircle(GridToWorldCenter(ship.Bow) + new Vector2(0, -CellSize * 0.4f), 6f, new Color(0.15f, 0.2f, 0.15f, 0.8f));
-        }
         // 待定战术目标舰高亮环（撞击/接舷）
         foreach (var id in _highlightShipIds)
         {

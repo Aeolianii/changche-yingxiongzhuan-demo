@@ -13,7 +13,7 @@ public interface IGridClickReceiver
     void OnGridClicked(Vector2 worldPos);
 }
 
-// 网格视图：绘制网格/地形/移动范围水墨高亮/射界弧（分武器弧+盲射空格）/布阵区域/已行动标记/
+// 网格视图：绘制网格/地形/移动范围水墨高亮/射界弧（分武器弧+盲射空格）/布阵区域/
 // 已发现水雷/接舷连线+俘获进度/撞击方向箭头与爆炸瞬态特效/技能与布雷目标格/待定战术目标舰高亮；捕获鼠标点击转发到控制器。
 public partial class NavalGridView : Node2D
 {
@@ -66,6 +66,9 @@ public partial class NavalGridView : Node2D
     private HashSet<GridPos>? _fogVisible;
     private Texture2D? _fogMistTexture;
     private Texture2D? _escapeIconTexture;
+    private Texture2D? _mineTexture;
+    public const string MineTexturePath = "res://assets/naval/battle/mine_v1.png";
+    private static readonly Rect2 MineTextureRegion = new(295f, 15f, 960f, 960f);
     private static readonly Color EscapeCellGreen = new(0.54f, 0.71f, 0.67f, 0.40f);
     private const float EscapeIconOpacity = 0.96f;
     private static readonly Color FogMistFallback = new(0.84f, 0.91f, 0.90f, 0.16f);
@@ -86,6 +89,7 @@ public partial class NavalGridView : Node2D
         _seaTexture = GD.Load<Texture2D>("res://assets/naval/battle/sea_ink_pixel.png");
         _fogMistTexture = GD.Load<Texture2D>("res://assets/naval/ui/fog/white_ink_mist_v1.png");
         _escapeIconTexture = GD.Load<Texture2D>("res://assets/naval/ui/escape/escape_sailboat_icon_v1.png");
+        _mineTexture = CreateMineTexture();
         CreateAnimatedSeaSurface();
         LoadTerrainTextures("reef", _reefTextures);
         LoadTerrainTextures("coral", _coralTextures);
@@ -562,6 +566,7 @@ public partial class NavalGridView : Node2D
     public bool FogCellVisible(int x, int y) => _fogVisible is null || _fogVisible.Contains(new GridPos(x, y));
     public bool FogMistTextureLoaded() => _fogMistTexture is not null;
     public bool EscapeCellTextureLoaded() => _escapeIconTexture is not null;
+    public bool MineTextureLoaded() => _mineTexture is not null;
     public float EscapeCellOpacityValue() => EscapeCellGreen.A;
     public float EscapeIconOpacityValue() => EscapeIconOpacity;
     public bool EscapeCellUsesThreeLayers()
@@ -772,6 +777,14 @@ public partial class NavalGridView : Node2D
         {
             if (!mine.Revealed) continue;
             var center = GridToWorldCenter(mine.Cell);
+            if (_mineTexture is not null)
+            {
+                var size = Vector2.One * CellSize * 1.12f;
+                DrawTextureRect(_mineTexture, new Rect2(center - size * 0.5f, size), false);
+                continue;
+            }
+
+            // 素材异常时保留无数值的可识别兜底，正式构建由冒烟测试保证纹理加载。
             var half = CellSize * 0.32f;
             DrawColoredPolygon(new[]
             {
@@ -788,8 +801,15 @@ public partial class NavalGridView : Node2D
                 center + new Vector2(-half * 0.55f, 0),
             }, new Color(0.55f, 0.62f, 0.72f, 0.9f));
             DrawTextAt(center + new Vector2(-8, -6), "雷", new Color(1f, 1f, 1f, 0.95f), 13);
-            DrawTextAt(center + new Vector2(8, 10), $"{mine.HitPoints}", new Color(0.95f, 0.30f, 0.25f, 0.9f), 11);
         }
+    }
+
+    public static Texture2D? CreateMineTexture()
+    {
+        var source = GD.Load<Texture2D>(MineTexturePath);
+        return source is null
+            ? null
+            : new AtlasTexture { Atlas = source, Region = MineTextureRegion };
     }
 
     // 接舷连线：两舰中心连线 + 中点「俘获 X% · 组合控制=防守方(被接舷舰)」。

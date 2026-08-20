@@ -116,6 +116,8 @@ func _init() -> void:
 		push_error("FAIL: deployment select ship error: %s" % select_err)
 		quit(1)
 		return
+	if DisplayServer.get_name() != "headless":
+		await create_timer(0.45).timeout
 	var expected_camera := Vector2(deploy.ShipStateCenterX(focus_ship_id), deploy.ShipStateCenterY(focus_ship_id))
 	if camera.position.is_equal_approx(camera_before) or not camera.position.is_equal_approx(expected_camera):
 		push_error("FAIL: deployment camera did not focus selected ship (before=%s actual=%s expected=%s)" % [camera_before, camera.position, expected_camera])
@@ -176,6 +178,36 @@ func _init() -> void:
 		return
 	if controller.CurrentFaction() != 0 or controller.Round() != 1:
 		push_error("FAIL: battle not started from deployment")
+		quit(1)
+		return
+	# 水雷使用正式透明素材；点选可见水雷复用左下舰况卡，仅显示名称、立绘与生命值。
+	if not controller.MineTextureLoaded():
+		push_error("FAIL: generated naval mine texture not loaded")
+		quit(1)
+		return
+	if not controller.PlaceRevealedMineForDemo(18, 8, 300):
+		push_error("FAIL: could not place revealed mine for UI smoke test")
+		quit(1)
+		return
+	controller.OnGridClicked(controller.CellToWorld(18, 8))
+	if controller.SelectedMineCell() != "18,8" or not controller.ShipStatusPanelVisible() \
+			or controller.ActionPanelVisible() or not controller.MineStatusOnly():
+		push_error("FAIL: clicking revealed mine must show HP-only status panel")
+		quit(1)
+		return
+	if controller.ShipStatusPanelText() != "水雷\n生命：300/300":
+		push_error("FAIL: mine status panel text wrong: %s" % controller.ShipStatusPanelText())
+		quit(1)
+		return
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		var mine_ui_capture_error := root.get_texture().get_image().save_png("res://.godot/naval_mine_ui_preview.png")
+		if mine_ui_capture_error != OK:
+			push_error("FAIL: could not capture naval mine status preview")
+			quit(1)
+			return
+	if not controller.OnRightClick() or controller.ShipStatusPanelVisible():
+		push_error("FAIL: right click must dismiss selected mine status")
 		quit(1)
 		return
 	if not is_equal_approx(camera.zoom.x, 3.0) or not camera.position.is_equal_approx(expected_flagship_camera):

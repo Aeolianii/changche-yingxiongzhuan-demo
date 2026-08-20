@@ -27,6 +27,7 @@ public partial class NavalHud : CanvasLayer
     private Panel? _actionPanel;
     private Panel? _shipStatusPanel;
     private TextureRect? _shipPortrait;
+    private Control? _shipAttributes;
     private Label? _shipName, _shipHpText, _shipLoadText;
     private ProgressBar? _shipHpBar, _shipLoadBar;
     private TextureRect? _armorIcon, _speedIcon, _movementIcon;
@@ -114,6 +115,7 @@ public partial class NavalHud : CanvasLayer
     private Panel ActionPanel => _actionPanel ??= GetNode<Panel>("ActionPanel");
     private Panel ShipStatusPanel => _shipStatusPanel ??= GetNode<Panel>("ShipStatusPanel");
     private TextureRect ShipPortrait => _shipPortrait ??= GetNode<TextureRect>("ShipStatusPanel/PortraitShip");
+    private Control ShipAttributes => _shipAttributes ??= GetNode<Control>("ShipStatusPanel/Attributes");
     private Label ShipName => _shipName ??= GetNode<Label>("ShipStatusPanel/ShipName");
     private ProgressBar ShipHpBar => _shipHpBar ??= GetNode<ProgressBar>("ShipStatusPanel/HpBar");
     private ProgressBar ShipLoadBar => _shipLoadBar ??= GetNode<ProgressBar>("ShipStatusPanel/LoadBar");
@@ -676,6 +678,12 @@ public partial class NavalHud : CanvasLayer
     public void ShowShipStatus(BattleState battle, ShipState ship)
     {
         ShipStatusPanel.Visible = true;
+        ShipPortrait.Visible = true;
+        ShipHpBar.Visible = true;
+        ShipHpText.Visible = true;
+        ShipLoadBar.Visible = true;
+        ShipLoadText.Visible = true;
+        ShipAttributes.Visible = true;
         var definition = ship.Definition;
         var currentLoad = CurrentLoad(battle, ship);
         ShipPortrait.Texture = NavalShipView.HudTextureFor(ship);
@@ -694,6 +702,27 @@ public partial class NavalHud : CanvasLayer
         MovementIcon.TooltipText = $"剩余移动：{ship.RemainingMovement} 点";
         _shipStatusPanelText = ShipStatusText(battle, ship);
     }
+
+    public void ShowMineStatus(Mine mine)
+    {
+        ShipStatusPanel.Visible = true;
+        ShipPortrait.Visible = true;
+        ShipPortrait.Texture = NavalGridView.CreateMineTexture();
+        ShipName.Text = "水雷";
+        ShipHpBar.Visible = true;
+        ShipHpBar.MaxValue = NavalCombat.Core.Mine.MaxHitPoints;
+        ShipHpBar.Value = Math.Max(0, mine.HitPoints);
+        ShipHpText.Visible = true;
+        ShipHpText.Text = $"生命值 {mine.HitPoints}/{NavalCombat.Core.Mine.MaxHitPoints}";
+        ShipLoadBar.Visible = false;
+        ShipLoadText.Visible = false;
+        ShipAttributes.Visible = false;
+        _shipStatusPanelText = $"水雷\n生命：{mine.HitPoints}/{NavalCombat.Core.Mine.MaxHitPoints}";
+    }
+
+    public bool MineStatusOnly()
+        => ShipStatusPanel.Visible && ShipPortrait.Visible && ShipHpBar.Visible && ShipHpText.Visible
+           && !ShipLoadBar.Visible && !ShipLoadText.Visible && !ShipAttributes.Visible;
 
     public void SetTurnEnabled(bool enabled)
     {

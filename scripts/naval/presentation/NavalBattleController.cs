@@ -24,6 +24,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
 
     private BattleState _battle = null!;
     private string? _selectedShip;
+    private GridPos? _selectedMineCell;
     private NavalGridView _grid = null!;
     private NavalHud _hud = null!;
     private Node2D _shipsRoot = null!;
@@ -112,7 +113,8 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     public bool OnRightClick()
     {
         if (_battle is null || PlayerInputLocked()) return false;
-        if (_selectedShip is null && _pendingTactic is null && _pendingSkill is null && _pendingWeapon is null) return false;
+        if (_selectedShip is null && _selectedMineCell is null
+            && _pendingTactic is null && _pendingSkill is null && _pendingWeapon is null) return false;
         DeselectForPlayer();
         return true;
     }
@@ -138,6 +140,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     public void StartBattle(BattleState battle)
     {
         _battle = battle;
+        _selectedMineCell = null;
         // CHG-20260819（F-1 讨伐饰品）：饰品装备状态（economy accessories.equipped 单一事实来源）→ BattleState 加成。
         // 军旗→全舰队射程 +1；海怪之角→旗舰撞角 Lv4；贯日神枪→旗舰砲击 Lv4。
         ApplyAccessoryBonuses();
@@ -252,6 +255,12 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             TryWeaponAttack(_pendingWeapon ?? "arrow_rain", cell); // UX-7：点哪个攻击方式发哪个命令
             return;
         }
+        // 可见水雷与舰船一样可点选；攻击模式中的有效目标仍由上方攻击分支优先执行。
+        if (_battle.Map.MineAt(cell) is { Revealed: true } mine)
+        {
+            SelectMine(mine);
+            return;
+        }
         // F-2：逃跑格是舰体触碰判定，并不一定是多格舰的船头目标，故它通常不在普通船头移动覆盖中。
         // 鼠标点脚印格时，把它换算成“移动后任一舰体格触碰该出口”的最近可达船头，再复用区域移动路径。
         if (_selectedShip is not null && _mode == InteractionMode.Move && _battle.Map.ExitCells.Contains(cell))
@@ -281,7 +290,8 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             return;
         }
         // UX-3（需求 C）：点击空白（无舰/无覆盖）→ 恢复待选状态，清空移动范围与红晕/目标覆盖。
-        if (_selectedShip is not null || _pendingTactic is not null || _pendingSkill is not null)
+        if (_selectedShip is not null || _selectedMineCell is not null
+            || _pendingTactic is not null || _pendingSkill is not null)
             DeselectForPlayer();
     }
 
@@ -396,6 +406,20 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     }
     // T13：当前地图存活水雷数（含未揭示；三雷连锁断言雷被清空）。
     public int MineCount() => _battle.Map.Mines.Count;
+    public bool PlaceRevealedMineForDemo(int x, int y, int hitPoints)
+    {
+        var cell = new GridPos(x, y);
+        if (_battle is null || !_battle.Map.InBounds(cell)) return false;
+        _battle.Map.PlaceMine(new Mine
+        {
+            Cell = cell,
+            OwnerFaction = FactionId.Enemy,
+            Revealed = true,
+            HitPoints = Math.Clamp(hitPoints, 1, Mine.MaxHitPoints),
+        });
+        _grid.QueueRedraw();
+        return true;
+    }
     // F-2：出口格只读（headless 冒烟断言"地图有出口边界"）。
     public int ExitCellCount() => _battle.Map.ExitCells.Count;
     public bool IsExitCell(int x, int y) => _battle.Map.ExitCells.Contains(new GridPos(x, y));
@@ -436,6 +460,9 @@ public partial class NavalBattleController : Node, IGridClickReceiver
     public bool ActionPanelVisible() => _hud.ActionPanelVisible();
     public bool ShipStatusPanelVisible() => _hud.ShipStatusPanelVisible();
     public string SelectedShip() => _selectedShip ?? "";
+    public string SelectedMineCell() => _selectedMineCell is { } cell ? $"{cell.X},{cell.Y}" : "";
+    public bool MineStatusOnly() => _hud.MineStatusOnly();
+    public bool MineTextureLoaded() => _grid.MineTextureLoaded();
     public bool ShipWaitingHighlighted(string shipId)
         => _shipViews.TryGetValue(shipId, out var view) && view.WaitingForOrders();
     public bool ShipActedDimmed(string shipId)
@@ -1719,6 +1746,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         foreach (var child in _shipsRoot.GetChildren()) { _shipsRoot.RemoveChild(child); child.QueueFree(); }
         _shipViews.Clear();
         _selectedShip = null;
+        _selectedMineCell = null;
         _pendingTactic = null;
         _pendingSkill = null;
         _pendingWeapon = null;
@@ -1941,6 +1969,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
 
     private void SetSelected(string? shipId)
     {
+        _selectedMineCell = null;
         if (_selectedShip is not null && _shipViews.TryGetValue(_selectedShip, out var old))
             old.SetSelected(false);
         _selectedShip = shipId;
@@ -1963,6 +1992,19 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             _hud.SetTurnEnabled(false);
         }
         RefreshStatusBars(); // UX-5：选中/退选切换顶栏（选中=单位详情，退选=全局）
+    }
+
+    private void SelectMine(Mine mine)
+    {
+        SetSelected(null);
+        _selectedMineCell = mine.Cell;
+        _mode = InteractionMode.None;
+        ClearPendingTargeting();
+        _grid.ClearOverlay();
+        _hud.HideActionPanel();
+        _hud.ShowMineStatus(mine);
+        _hud.SetMessage("查看水雷状态 · 右键退选");
+        RefreshStatusBars();
     }
 
     // UX-4：当前武器/行为高亮来源——待定技能 > 待定战术 > 当前展开攻击方式 > 其它无。
@@ -2078,6 +2120,16 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         // V-5：单结束令——待命舰 = 本阵营存活且未自沉（每单位结束已移除，不再有"已结束待命外"的舰）。
         var readyShips = _battle.Ships.Values.Count(s => s.Faction == _battle.CurrentFaction
             && s.HitPoints > 0 && !s.HasAttacked && s.SpentMovement == 0);
+        if (_selectedMineCell is { } selectedCell)
+        {
+            if (_battle.Map.MineAt(selectedCell) is { Revealed: true, HitPoints: > 0 } mine)
+                _hud.ShowMineStatus(mine);
+            else
+            {
+                _selectedMineCell = null;
+                _hud.HidePanel();
+            }
+        }
         var ship = _selectedShip is null ? null : _battle.ShipOrNull(_selectedShip);
         if (ship is null || ship.HitPoints <= 0)
             _hud.ShowContextStatus(_battle, null, null, readyShips);

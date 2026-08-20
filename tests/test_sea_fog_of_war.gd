@@ -87,10 +87,13 @@ func _run() -> void:
 		var world_mist_texture := world_fog_material.get_shader_parameter("mist_texture") as Texture2D
 		world_concealment_texture = world_fog_material.get_shader_parameter("concealment_texture") as Texture2D
 		_expect(world_mist_texture == fog_stamp_texture, "World exploration must sample the shared world-space naval fog-stamp texture.")
-		_expect(world_concealment_texture != null and world_concealment_texture.resource_path.ends_with("sea_ink_pixel_seamless_v2.png"), "Unexplored world terrain must be concealed by the shared ink-sea texture.")
+		_expect(world_concealment_texture != null and world_concealment_texture.resource_path.ends_with("sea_concealment_ink_pixel_v1.png"), "Unexplored world terrain must use the refined high-resolution ink-sea texture.")
+		_expect((world_fog_material.get_shader_parameter("concealment_tint") as Color).is_equal_approx(Color(0.05, 0.56, 0.68, 1.0)), "The concealment sea must retain the established overworld blue at the exploration boundary.")
+		_expect(float(world_fog_material.get_shader_parameter("fog_opacity")) < 0.9, "Naval mist must leave the refined replacement sea subtly readable beneath it.")
 		_expect("layered_mist" not in world_fog_material.shader.code and "fog_base_alpha" not in world_fog_material.shader.code, "World fog must preserve stamp holes instead of filling them with global layered mist.")
 		_expect("texture(mist_texture, UV)" in world_fog_material.shader.code, "World fog shader must sample each precomposed naval stamp at its stable world position.")
 		_expect("concealed_sea" in world_fog_material.shader.code and "COLOR = vec4(concealed_fog, softened_alpha)" in world_fog_material.shader.code, "World fog holes must reveal an opaque sea concealment layer instead of unknown islands beneath.")
+		_expect("texture(concealment_texture, UV)" in world_fog_material.shader.code and "fract(UV * concealment_uv_scale)" not in world_fog_material.shader.code, "The refined concealment sea must cover the world once without repeated tiles.")
 
 	var hud := root.get_node("ExplorationUI/HUD") as Control
 	var map_button := hud.get_node("SeaMapStatus/MapButton") as Button
@@ -107,6 +110,7 @@ func _run() -> void:
 	var map_concealment_texture := map_fog_material.get_shader_parameter("concealment_texture") as Texture2D
 	_expect(map_mist_texture == fog_stamp_texture, "Full sea map and world view must reuse the same stable naval fog-stamp field.")
 	_expect(map_concealment_texture == world_concealment_texture, "Full sea map and world view must reuse the same ink-sea concealment texture.")
+	_expect((map_fog_material.get_shader_parameter("concealment_tint") as Color).is_equal_approx(Color(0.05, 0.56, 0.68, 1.0)), "Full sea map must use the same established overworld-blue concealment base.")
 	_expect("layered_mist" not in map_fog_material.shader.code and "fog_base_alpha" not in map_fog_material.shader.code, "Full sea-map fog must not restore the uniform white base that erased texture depth.")
 	_expect("texture(mist_texture, UV)" in map_fog_material.shader.code, "Full sea-map shader must sample the precomposed coarse-grid naval stamps directly.")
 	_expect("concealed_sea" in map_fog_material.shader.code and "COLOR = vec4(concealed_fog, softened_alpha)" in map_fog_material.shader.code, "Full sea-map fog holes must reveal only the sea concealment layer until exploration clears the mask.")

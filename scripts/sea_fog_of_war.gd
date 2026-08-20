@@ -16,7 +16,7 @@ const REVEAL_CORNER_RADIUS_RATIO := 0.5
 const REVEAL_UPDATE_DISTANCE := 2.0
 const WORLD_FOG_SHADER := preload("res://shaders/sea_world_fog_edge.gdshader")
 const EXPLORATION_FOG_MIST_TEXTURE := preload("res://assets/naval/ui/fog/white_ink_mist_v1.png")
-const SEA_CONCEALMENT_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel_seamless_v2.png")
+const SEA_CONCEALMENT_TEXTURE := preload("res://assets/textures/water/sea_concealment_ink_pixel_v1.png")
 
 var _world_size := Vector2.ONE
 var _grid_size := Vector2i.ONE
@@ -333,12 +333,11 @@ func _build_world_overlay() -> void:
 	fog_material.set_shader_parameter("fog_tint", Color(0.93, 0.97, 0.95, 1.0))
 	fog_material.set_shader_parameter("concealment_texture", SEA_CONCEALMENT_TEXTURE)
 	fog_material.set_shader_parameter("concealment_tint", Color(0.05, 0.56, 0.68, 1.0))
-	fog_material.set_shader_parameter("concealment_uv_scale", _world_size * Vector2(0.00082, 0.00105))
 	fog_material.set_shader_parameter("feather_texels", 3.4)
 	fog_material.set_shader_parameter("edge_warp_texels", 0.8)
 	fog_material.set_shader_parameter("edge_irregularity", 0.34)
 	fog_material.set_shader_parameter("alpha_dither", 0.012)
-	fog_material.set_shader_parameter("fog_opacity", 1.0)
+	fog_material.set_shader_parameter("fog_opacity", 0.82)
 	_world_overlay.material = fog_material
 	add_child(_world_overlay)
 

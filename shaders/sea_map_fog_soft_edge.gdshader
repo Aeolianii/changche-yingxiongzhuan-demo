@@ -2,7 +2,12 @@ shader_type canvas_item;
 render_mode unshaded;
 
 const int SAMPLE_RADIUS = 4;
-uniform vec4 unknown_color : source_color = vec4(0.0, 0.0, 0.0, 1.0);
+uniform sampler2D mist_texture : source_color, filter_linear;
+uniform vec4 fog_tint : source_color = vec4(0.93, 0.97, 0.95, 1.0);
+uniform sampler2D concealment_texture : source_color, repeat_enable, filter_linear;
+uniform vec4 concealment_tint : source_color = vec4(0.05, 0.56, 0.68, 1.0);
+uniform vec2 concealment_uv_scale = vec2(4.0, 2.8);
+uniform float fog_opacity : hint_range(0.0, 1.0) = 0.72;
 uniform float edge_warp_texels : hint_range(0.0, 8.0) = 5.0;
 uniform float edge_irregularity : hint_range(0.0, 0.5) = 0.34;
 
@@ -45,5 +50,11 @@ void fragment() {
 	float edge_noise = mix(broad_noise, detail_noise, 0.32) - 0.5;
 	float edge_shift = edge_noise * edge_irregularity;
 	float softened_alpha = smoothstep(0.16 + edge_shift, 0.84 + edge_shift, alpha_sum / weight_sum);
-	COLOR = vec4(unknown_color.rgb, softened_alpha * unknown_color.a);
+	vec4 mist = texture(mist_texture, UV);
+	vec3 mist_color = mix(fog_tint.rgb, mist.rgb, 0.72);
+	vec3 concealment_sample = texture(concealment_texture, fract(UV * concealment_uv_scale)).rgb;
+	float concealment_luma = dot(concealment_sample, vec3(0.24, 0.67, 0.09));
+	vec3 concealed_sea = concealment_tint.rgb * mix(0.74, 1.22, concealment_luma);
+	vec3 concealed_fog = mix(concealed_sea, mist_color, clamp(mist.a * fog_opacity, 0.0, 1.0));
+	COLOR = vec4(concealed_fog, softened_alpha);
 }

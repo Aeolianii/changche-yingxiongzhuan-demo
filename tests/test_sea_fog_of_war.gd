@@ -110,13 +110,9 @@ func _run() -> void:
 	_expect(map_fog_material != null and map_fog_material.shader.resource_path.ends_with("sea_map_fog_soft_edge.gdshader"), "Full sea map alone must soften and round the shared fog edge.")
 	_expect(float(map_fog_material.get_shader_parameter("edge_warp_texels")) >= 4.0, "Full sea map fog must visibly warp straight exploration edges.")
 	_expect(float(map_fog_material.get_shader_parameter("edge_irregularity")) >= 0.3, "Full sea map fog must vary its edge threshold with stable ink noise.")
-	var map_mist_texture := map_fog_material.get_shader_parameter("mist_texture") as Texture2D
-	var map_concealment_texture := map_fog_material.get_shader_parameter("concealment_texture") as Texture2D
-	_expect(map_mist_texture == fog_stamp_texture, "Full sea map and world view must reuse the same stable naval fog-stamp field.")
-	_expect(map_concealment_texture == world_concealment_texture, "Full sea map and world view must reuse the same ink-sea concealment texture.")
-	_expect("layered_mist" not in map_fog_material.shader.code and "fog_base_alpha" not in map_fog_material.shader.code, "Full sea-map fog must not restore the uniform white base that erased texture depth.")
-	_expect("texture(mist_texture, UV)" in map_fog_material.shader.code, "Full sea-map shader must sample the precomposed coarse-grid naval stamps directly.")
-	_expect("concealed_sea" in map_fog_material.shader.code and "COLOR = vec4(concealed_fog, softened_alpha)" in map_fog_material.shader.code, "Full sea-map fog holes must reveal only the sea concealment layer until exploration clears the mask.")
+	_expect((map_fog_material.get_shader_parameter("unknown_color") as Color).is_equal_approx(Color.BLACK), "Full sea map must cover unexplored regions with solid black.")
+	_expect("mist_texture" not in map_fog_material.shader.code and "concealment_texture" not in map_fog_material.shader.code, "Full sea-map fog must not reuse the world's white mist or concealed-sea appearance.")
+	_expect("COLOR = vec4(unknown_color.rgb, softened_alpha * unknown_color.a)" in map_fog_material.shader.code, "Full sea-map fog must apply black only through the shared exploration alpha.")
 	var close_button := map_screen.get_node("MapPanel/CloseButton") as Button
 	var close_button_style := close_button.get_theme_stylebox("normal") as StyleBoxTexture
 	_expect(close_button.text == "返回", "Sea-map brush button must display the exact Return label.")

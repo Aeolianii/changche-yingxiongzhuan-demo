@@ -1,6 +1,7 @@
 #nullable enable
 using Godot;
 using NavalCombat.Core;
+using NavalCombat.Levels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -1048,7 +1049,7 @@ public partial class NavalGridView : Node2D
             var tint = new Color(0.96f, 0.98f, 0.94f, 1f);
             if (quarterTurns == 0)
             {
-                if (!stamp.Id.StartsWith("reef_shoal", StringComparison.Ordinal))
+                if (!HasEmbeddedShallowWater(stamp.Id))
                     DrawTerrainStampCoastTransition(texture, target);
                 DrawTextureRect(texture, target, false, tint);
                 continue;
@@ -1063,6 +1064,11 @@ public partial class NavalGridView : Node2D
             DrawSetTransform(Vector2.Zero, 0f, Vector2.One);
         }
     }
+
+    private static bool HasEmbeddedShallowWater(string stampId)
+        => stampId.StartsWith("reef_shoal", StringComparison.Ordinal)
+           || stampId == RandomMapGenerator.BrokenRockSkerryStampId
+           || stampId == RandomMapGenerator.ReedSandbarStampId;
 
     private void DrawTerrainStampCoastTransition(Texture2D texture, Rect2 target)
     {

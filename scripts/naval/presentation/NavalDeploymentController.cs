@@ -729,15 +729,16 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             [RandomMapGenerator.ForestIslandStampId] = (6, 6),
             [RandomMapGenerator.GrassSandbarStampId] = (6, 4),
             [RandomMapGenerator.ReefShoalStampId] = (5, 3),
-            [RandomMapGenerator.ReefShoalWideStampId] = (7, 5),
+            [RandomMapGenerator.BrokenRockSkerryStampId] = (7, 4),
+            [RandomMapGenerator.ReedSandbarStampId] = (6, 4),
             [RandomMapGenerator.RockyIslandStampId] = (5, 5),
             [RandomMapGenerator.HarborTownStampId] = (7, 6),
         };
         var expectedLayouts = new Dictionary<string, (string CompanionId, GridPos MainOrigin, GridPos CompanionOrigin)>(StringComparer.Ordinal)
         {
             [RandomMapGenerator.ForestIslandStampId] = (RandomMapGenerator.GrassSandbarStampId, new GridPos(8, 1), new GridPos(10, 10)),
-            [RandomMapGenerator.RockyIslandStampId] = (RandomMapGenerator.ReefShoalWideStampId, new GridPos(11, 6), new GridPos(8, 1)),
-            [RandomMapGenerator.HarborTownStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 6), new GridPos(11, 1)),
+            [RandomMapGenerator.RockyIslandStampId] = (RandomMapGenerator.BrokenRockSkerryStampId, new GridPos(11, 6), new GridPos(8, 1)),
+            [RandomMapGenerator.HarborTownStampId] = (RandomMapGenerator.ReedSandbarStampId, new GridPos(8, 6), new GridPos(10, 1)),
             [RandomMapGenerator.RiverMouthStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 5), new GridPos(10, 0)),
         };
         var seenMapIds = new HashSet<string>(StringComparer.Ordinal);
@@ -816,6 +817,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                     || companionStamp.Width < mainStamp.Width + 2
                     || !CentralRowIsDeepWater(result, 12)))
                 return false;
+            if (!CompanionStampIsImpassable(result.Spec, companionStamp)) return false;
             if (RandomMapGenerator.ToBattleMap(result.Spec).TerrainStamps.Count != result.Spec.TerrainStamps.Count
                 || !result.Connected)
                 return false;
@@ -826,6 +828,26 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     private static bool CentralRowIsDeepWater(RandomMapResult result, int y)
         => Enumerable.Range(result.PlayerZone.Right, result.EnemyZone.X - result.PlayerZone.Right)
             .All(x => result.Spec.TerrainAt(x, y) == TerrainType.DeepWater);
+
+    // 新生成/重做的三种障碍印章整块占格均为陆地；旧草洲允许透明角保持深水，但不得混入可驶入浅滩/礁石格。
+    private static bool CompanionStampIsImpassable(LevelMapSpec spec, TerrainVisualStamp stamp)
+    {
+        var requiresFullFootprint = stamp.Id is RandomMapGenerator.ReefShoalStampId
+            or RandomMapGenerator.BrokenRockSkerryStampId
+            or RandomMapGenerator.ReedSandbarStampId;
+        var hasLand = false;
+        for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
+        {
+            for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
+            {
+                var terrain = spec.TerrainAt(x, y);
+                if (terrain == TerrainType.DeepWater && !requiresFullFootprint) continue;
+                if (!TerrainRules.IsLand(terrain)) return false;
+                hasLand = true;
+            }
+        }
+        return hasLand;
+    }
 
     public bool RandomTerrainStampsAreCoherent(int sampleCount = 24)
         => FixedTerrainMapsAreCoherent(sampleCount);

@@ -28,8 +28,9 @@ public sealed class RandomMapGenerator
     public const string RiverMouthStampTexturePath = "res://assets/naval/battle/terrain_stamps/river_mouth_island_v2.png";
     public const string ForestIslandStampId = "forest_island_v1";
     public const string GrassSandbarStampId = "grass_sandbar_v1";
-    public const string ReefShoalStampId = "reef_shoal_v1";
-    public const string ReefShoalWideStampId = "reef_shoal_wide_v1";
+    public const string ReefShoalStampId = "reef_shoal_impassable_v2";
+    public const string BrokenRockSkerryStampId = "broken_rock_skerry_v1";
+    public const string ReedSandbarStampId = "reed_sandbar_v1";
     public const string RockyIslandStampId = "rocky_island_v1";
     public const string HarborTownStampId = "harbor_town_v1";
     private const string TerrainStampAssetRoot = "res://assets/naval/battle/terrain_stamps/";
@@ -83,13 +84,18 @@ public sealed class RandomMapGenerator
 
     private static readonly TerrainStampDefinition ReefShoalStamp = new(
         ReefShoalStampId,
-        TerrainStampAssetRoot + "reef_shoal_v1.png",
-        new[] { ".~~~.", "~###~", ".~~~." });
+        TerrainStampAssetRoot + "reef_shoal_impassable_v2.png",
+        new[] { "^^^^^", "^^^^^", "^^^^^" });
 
-    private static readonly TerrainStampDefinition ReefShoalWideStamp = new(
-        ReefShoalWideStampId,
-        TerrainStampAssetRoot + "reef_shoal_v1.png",
-        new[] { ".~~~~~.", "~#####~", "~#####~", "~#####~", "~~~~~~~" });
+    private static readonly TerrainStampDefinition BrokenRockSkerryStamp = new(
+        BrokenRockSkerryStampId,
+        TerrainStampAssetRoot + "broken_rock_skerry_v1.png",
+        new[] { "^^^^^^^", "^^^^^^^", "^^^^^^^", "^^^^^^^" });
+
+    private static readonly TerrainStampDefinition ReedSandbarStamp = new(
+        ReedSandbarStampId,
+        TerrainStampAssetRoot + "reed_sandbar_v1.png",
+        new[] { "BBBBBB", "BGGGGB", "BGGGGB", "BBBBBB" });
 
     private static readonly TerrainStampDefinition RockyIslandStamp = new(
         RockyIslandStampId,
@@ -120,7 +126,7 @@ public sealed class RandomMapGenerator
             "岩山岛",
             RockyIslandStamp,
             new GridPos(11, 6),
-            ReefShoalWideStamp,
+            BrokenRockSkerryStamp,
             new GridPos(8, 1),
             new[]
             {
@@ -132,8 +138,8 @@ public sealed class RandomMapGenerator
             "港口小镇",
             HarborTownStamp,
             new GridPos(8, 6),
-            ReefShoalStamp,
-            new GridPos(11, 1),
+            ReedSandbarStamp,
+            new GridPos(10, 1),
             new[]
             {
                 new TerrainDecoration(new GridPos(15, 16), '^'),
@@ -155,7 +161,8 @@ public sealed class RandomMapGenerator
             ForestIslandStampId,
             GrassSandbarStampId,
             ReefShoalStampId,
-            ReefShoalWideStampId,
+            BrokenRockSkerryStampId,
+            ReedSandbarStampId,
             RockyIslandStampId,
             HarborTownStampId,
         };

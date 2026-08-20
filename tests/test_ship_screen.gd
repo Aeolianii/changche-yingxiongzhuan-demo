@@ -4,6 +4,7 @@ const HUD := preload("res://scenes/ui/exploration_hud.tscn")
 const SCREENSHOT_PATH := "res://.godot/ship_screen_preview.png"
 const SCROLL_SCREENSHOT_PATH := "res://.godot/ship_screen_scroll_preview.png"
 const EQUIPMENT_SCREENSHOT_PATH := "res://.godot/ship_equipment_preview.png"
+const EQUIPMENT_DEFENSE_SCREENSHOT_PATH := "res://.godot/ship_equipment_defense_preview.png"
 
 var failures: Array[String] = []
 
@@ -98,24 +99,36 @@ func _run() -> void:
 	(screen.get_node("EquipmentTab") as Button).pressed.emit()
 	await process_frame
 	var equipment_page := screen.get_node("EquipmentPage") as Panel
+	var loadout_page := equipment_page.get_node("EquipmentLoadoutPage") as Control
+	var defense_page := equipment_page.get_node("EquipmentDefensePage") as Control
 	_expect(equipment_page.visible and not (screen.get_node("SelectedShipPreview") as TextureRect).visible, "Equipment tab must replace the hull detail page with its own interface.")
 	_expect(not (screen.get_node("UpgradeTitle") as Label).visible and not upgrade_grid.visible, "Hull upgrade controls must stay hidden on the equipment page.")
+	_expect(equipment_page.position.y >= equipment_tab.position.y + equipment_tab.size.y and equipment_page.position.y + equipment_page.size.y <= 800.0, "Equipment panel must sit below the main tabs and stay inside the background frame.")
 	_expect((equipment_page.get_node("EquipmentSlotsSummary") as Label).text.contains("武器位 1 / 2"), "Equipment page must show battle-style weapon, skill, and armor slot usage.")
-	_expect(equipment_page.get_node("WeaponGrid").get_child_count() == 3 and equipment_page.get_node("SkillGrid").get_child_count() == 4, "Equipment page must reuse every weapon and skill from naval battle configuration.")
-	var armor_content := equipment_page.get_node("ArmorRow/Armor_armor/Content") as Control
-	var armor_subtitle := armor_content.get_child(1) as Label
-	var armor_minus := armor_content.get_node("Minus") as Button
-	_expect(armor_subtitle.position.y + armor_subtitle.size.y < armor_minus.position.y, "Armor description and controls must occupy separate rows without overlapping.")
-	var ram_plus := equipment_page.get_node("WeaponGrid/Weapon_ram/Content/Plus") as Button
+	_expect(loadout_page.visible and not defense_page.visible, "Equipment page must open on the weapon and skill subpage.")
+	_expect(loadout_page.get_node("WeaponGrid").get_child_count() == 3 and loadout_page.get_node("SkillGrid").get_child_count() == 4, "Equipment page must reuse every weapon and skill from naval battle configuration.")
+	var ram_plus := loadout_page.get_node("WeaponGrid/Weapon_ram/Content/Plus") as Button
 	_expect(ram_plus.get_theme_stylebox("normal") is StyleBoxFlat, "Compact equipment controls must keep their fitted flat button style.")
 	ram_plus.pressed.emit()
 	await process_frame
-	_expect((equipment_page.get_node("WeaponGrid/Weapon_ram/Content/Count") as Label).text == "×1", "Equipment controls must update the selected ship loadout.")
+	_expect((loadout_page.get_node("WeaponGrid/Weapon_ram/Content/Count") as Label).text == "×1", "Equipment controls must update the selected ship loadout.")
 	_expect((game_state.call("get_economy_state") as Dictionary)["ships"][0]["equipment"]["weapons"]["ram"] == 1, "Equipment changes must persist in GameState.")
 	if DisplayServer.get_name() != "headless":
 		await process_frame
 		var equipment_screenshot_error := root.get_texture().get_image().save_png(EQUIPMENT_SCREENSHOT_PATH)
 		_expect(equipment_screenshot_error == OK, "Ship equipment preview screenshot could not be saved.")
+	(equipment_page.get_node("EquipmentDefenseTab") as Button).pressed.emit()
+	await process_frame
+	_expect(not loadout_page.visible and defense_page.visible, "Armor and accessories must be isolated on the second equipment subpage.")
+	var armor_content := defense_page.get_node("ArmorRow/Armor_armor/Content") as Control
+	var armor_subtitle := armor_content.get_child(1) as Label
+	var armor_minus := armor_content.get_node("Minus") as Button
+	_expect(armor_subtitle.position.y + armor_subtitle.size.y < armor_minus.position.y, "Armor description and controls must occupy separate rows without overlapping.")
+	_expect(defense_page.get_node("AccessoryRow").get_child_count() == 3, "Armor and accessories subpage must expose all three accessory cards.")
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		var defense_screenshot_error := root.get_texture().get_image().save_png(EQUIPMENT_DEFENSE_SCREENSHOT_PATH)
+		_expect(defense_screenshot_error == OK, "Ship armor and accessories preview screenshot could not be saved.")
 	(screen.get_node("HullTab") as Button).pressed.emit()
 	await process_frame
 

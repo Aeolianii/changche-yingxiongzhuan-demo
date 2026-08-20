@@ -36,9 +36,12 @@ func _run() -> void:
 	(screen.get_node("EquipmentTab") as Button).pressed.emit()
 	await process_frame
 	var equipment_page := screen.get_node("EquipmentPage") as Panel
-	_check(equipment_page.get_node_or_null("AccessoryRow") != null, "The equipment page must expose the accessory rig block.")
+	(equipment_page.get_node("EquipmentDefenseTab") as Button).pressed.emit()
+	await process_frame
+	var defense_page := equipment_page.get_node("EquipmentDefensePage") as Control
+	_check(defense_page.visible and defense_page.get_node_or_null("AccessoryRow") != null, "The armor and accessories subpage must expose the accessory rig block.")
 	for accessory_id in ["sea_monster_horn", "sun_piercing_spear", "wokou_banner"]:
-		var card := equipment_page.get_node_or_null("AccessoryRow/Accessory_%s" % accessory_id) as PanelContainer
+		var card := defense_page.get_node_or_null("AccessoryRow/Accessory_%s" % accessory_id) as PanelContainer
 		_check(card != null, "Every owned accessory must render a card.")
 		var state_label := (card.get_node("Content/State") as Label).text
 		_check(state_label == "未装备", "An owned un-equipped accessory must read 未装备 (got %s)." % state_label)
@@ -50,7 +53,7 @@ func _run() -> void:
 	await process_frame
 	_check(str(screen.call("selected_ship_id_for_test")) == "ship_002", "Selecting the second row must select ship_002.")
 	for accessory_id in ["sea_monster_horn", "sun_piercing_spear", "wokou_banner"]:
-		var card := equipment_page.get_node("AccessoryRow/Accessory_%s" % accessory_id) as PanelContainer
+		var card := defense_page.get_node("AccessoryRow/Accessory_%s" % accessory_id) as PanelContainer
 		(card.get_node("Content/Action") as Button).pressed.emit()
 		await process_frame
 		var state_label := (card.get_node("Content/State") as Label).text
@@ -59,7 +62,7 @@ func _run() -> void:
 	var equipped := (after.get("accessories", {}) as Dictionary).get("equipped", {}) as Dictionary
 	_check(str(equipped.get("sea_monster_horn", "")) == "ship_002" and str(equipped.get("wokou_banner", "")) == "ship_002", "Equipped accessories must persist their ship.")
 	# 卸下再装备，验证 toggle（装备到当前舰 → 卸下 → 未装备）。
-	var horn_card := equipment_page.get_node("AccessoryRow/Accessory_sea_monster_horn") as PanelContainer
+	var horn_card := defense_page.get_node("AccessoryRow/Accessory_sea_monster_horn") as PanelContainer
 	(horn_card.get_node("Content/Action") as Button).pressed.emit()
 	await process_frame
 	_check((horn_card.get_node("Content/State") as Label).text == "未装备", "Toggling an equipped accessory must unequip it.")

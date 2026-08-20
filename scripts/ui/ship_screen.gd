@@ -64,6 +64,11 @@ var _equipment_tab: Button
 var _repair_button: Button
 var _repair_status: Label
 var _equipment_page: Panel
+var _equipment_loadout_tab: Button
+var _equipment_defense_tab: Button
+var _equipment_loadout_page: Control
+var _equipment_defense_page: Control
+var _equipment_section := "loadout"
 var _equipment_name: Label
 var _equipment_summary: Label
 var _equipment_status: Label
@@ -557,9 +562,9 @@ func _build_equipment_page() -> void:
 	_load_equipment_definitions()
 	_equipment_page = Panel.new()
 	_equipment_page.name = "EquipmentPage"
-	# CHG-20260819（F-1 讨伐饰品）：加高装备页（与舰队配置页同尺寸）以容纳底部饰品整备区块。
-	_equipment_page.position = Vector2(520, 250)
-	_equipment_page.size = Vector2(752, 640)
+	# CHG-20260820：收入右侧 UI 边框；装备内容改为「武器技能 / 护甲饰品」两个子页，保留原卡片大小。
+	_equipment_page.position = Vector2(520, 272)
+	_equipment_page.size = Vector2(752, 526)
 	_equipment_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_equipment_page.add_theme_stylebox_override("panel", _flat_style(Color(0.018, 0.038, 0.034, 0.80), Color(GOLD.r, GOLD.g, GOLD.b, 0.42), 1))
 	add_child(_equipment_page)
@@ -573,44 +578,68 @@ func _build_equipment_page() -> void:
 	_equipment_summary = _make_label("", 15, TEXT_MUTED)
 	_equipment_summary.name = "EquipmentSlotsSummary"
 	_equipment_summary.position = Vector2(18, 46)
-	_equipment_summary.size = Vector2(710, 28)
+	_equipment_summary.size = Vector2(710, 24)
 	_equipment_page.add_child(_equipment_summary)
 
+	_equipment_loadout_tab = _make_action_button("武器技能", Vector2(18, 76), Vector2(160, 36), true)
+	_equipment_loadout_tab.name = "EquipmentLoadoutTab"
+	_equipment_loadout_tab.pressed.connect(_switch_equipment_section.bind("loadout"))
+	_equipment_page.add_child(_equipment_loadout_tab)
+
+	_equipment_defense_tab = _make_action_button("护甲饰品", Vector2(188, 76), Vector2(160, 36), true)
+	_equipment_defense_tab.name = "EquipmentDefenseTab"
+	_equipment_defense_tab.pressed.connect(_switch_equipment_section.bind("defense"))
+	_equipment_page.add_child(_equipment_defense_tab)
+
+	_equipment_loadout_page = Control.new()
+	_equipment_loadout_page.name = "EquipmentLoadoutPage"
+	_equipment_loadout_page.position = Vector2(0, 118)
+	_equipment_loadout_page.size = Vector2(752, 370)
+	_equipment_loadout_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_equipment_page.add_child(_equipment_loadout_page)
+
 	var weapon_title := _make_label("武器配置", 18, GOLD_BRIGHT)
-	weapon_title.position = Vector2(18, 80)
+	weapon_title.position = Vector2(18, 0)
 	weapon_title.size = Vector2(200, 28)
-	_equipment_page.add_child(weapon_title)
+	_equipment_loadout_page.add_child(weapon_title)
 	var weapon_grid := HBoxContainer.new()
 	weapon_grid.name = "WeaponGrid"
-	weapon_grid.position = Vector2(18, 112)
+	weapon_grid.position = Vector2(18, 32)
 	weapon_grid.size = Vector2(716, 104)
 	weapon_grid.add_theme_constant_override("separation", 10)
-	_equipment_page.add_child(weapon_grid)
+	_equipment_loadout_page.add_child(weapon_grid)
 	for definition in _weapon_definitions:
 		weapon_grid.add_child(_make_equipment_card("weapons", str(definition["Id"]), str(definition["DisplayName"]), "负载 %d" % int(definition.get("LoadCost", 0)), 232.0))
 
 	var skill_title := _make_label("战术技能", 18, GOLD_BRIGHT)
-	skill_title.position = Vector2(18, 226)
+	skill_title.position = Vector2(18, 150)
 	skill_title.size = Vector2(200, 28)
-	_equipment_page.add_child(skill_title)
+	_equipment_loadout_page.add_child(skill_title)
 	var skill_grid := HBoxContainer.new()
 	skill_grid.name = "SkillGrid"
-	skill_grid.position = Vector2(18, 258)
+	skill_grid.position = Vector2(18, 182)
 	skill_grid.size = Vector2(716, 104)
 	skill_grid.add_theme_constant_override("separation", 8)
-	_equipment_page.add_child(skill_grid)
+	_equipment_loadout_page.add_child(skill_grid)
 	for definition in _skill_definitions:
 		skill_grid.add_child(_make_equipment_card("skills", str(definition["Id"]), str(definition["DisplayName"]), "每槽 %d 次" % int(definition.get("UsesPerSlot", 0)), 173.0))
 
+	_equipment_defense_page = Control.new()
+	_equipment_defense_page.name = "EquipmentDefensePage"
+	_equipment_defense_page.position = Vector2(0, 118)
+	_equipment_defense_page.size = Vector2(752, 370)
+	_equipment_defense_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_equipment_page.add_child(_equipment_defense_page)
+
 	var armor_title := _make_label("护甲整备", 18, GOLD_BRIGHT)
-	armor_title.position = Vector2(18, 376)
+	armor_title.position = Vector2(18, 0)
 	armor_title.size = Vector2(200, 28)
-	_equipment_page.add_child(armor_title)
+	_equipment_defense_page.add_child(armor_title)
 	var armor_row := HBoxContainer.new()
 	armor_row.name = "ArmorRow"
-	armor_row.position = Vector2(18, 398)
+	armor_row.position = Vector2(18, 32)
 	armor_row.size = Vector2(716, 100)
-	_equipment_page.add_child(armor_row)
+	_equipment_defense_page.add_child(armor_row)
 	armor_row.add_child(_make_equipment_card("armor", "armor", "船体护甲", "每级强化减伤", 232.0, 100.0))
 	var armor_hint := _make_label("沿用战前配置规则：武器与技能受槽位限制，撞角最多一件。", 14, TEXT_MUTED)
 	armor_hint.custom_minimum_size = Vector2(470, 100)
@@ -619,32 +648,46 @@ func _build_equipment_page() -> void:
 
 	# CHG-20260819（F-1 讨伐饰品）：饰品整备区块——已获饰品三张卡（装备/卸下按钮 + 状态）。
 	var accessory_title := _make_label("饰品整备", 18, GOLD_BRIGHT)
-	accessory_title.position = Vector2(18, 506)
+	accessory_title.position = Vector2(18, 154)
 	accessory_title.size = Vector2(200, 28)
-	_equipment_page.add_child(accessory_title)
+	_equipment_defense_page.add_child(accessory_title)
 	var accessory_row := HBoxContainer.new()
 	accessory_row.name = "AccessoryRow"
-	accessory_row.position = Vector2(18, 538)
+	accessory_row.position = Vector2(18, 186)
 	accessory_row.size = Vector2(716, 74)
 	accessory_row.add_theme_constant_override("separation", 10)
-	_equipment_page.add_child(accessory_row)
+	_equipment_defense_page.add_child(accessory_row)
 	for accessory_id in ACCESSORY_DEFS:
 		var def := ACCESSORY_DEFS[accessory_id] as Dictionary
 		accessory_row.add_child(_make_accessory_card(accessory_id, str(def["name"]), str(def["effect"]), 232.0))
 
 	_accessory_status = _make_label("", 14, JADE)
 	_accessory_status.name = "AccessoryStatus"
-	_accessory_status.position = Vector2(18, 616)
+	_accessory_status.position = Vector2(18, 270)
 	_accessory_status.size = Vector2(710, 20)
 	_accessory_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_equipment_page.add_child(_accessory_status)
+	_equipment_defense_page.add_child(_accessory_status)
 
 	_equipment_status = _make_label("", 14, JADE)
 	_equipment_status.name = "EquipmentStatus"
-	_equipment_status.position = Vector2(18, 596)
+	_equipment_status.position = Vector2(18, 498)
 	_equipment_status.size = Vector2(710, 20)
 	_equipment_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_equipment_page.add_child(_equipment_status)
+	_switch_equipment_section("loadout")
+
+
+func _switch_equipment_section(section: String) -> void:
+	if _equipment_loadout_page == null or _equipment_defense_page == null:
+		return
+	_equipment_section = "defense" if section == "defense" else "loadout"
+	var loadout_selected := _equipment_section == "loadout"
+	_equipment_loadout_page.visible = loadout_selected
+	_equipment_defense_page.visible = not loadout_selected
+	_equipment_loadout_tab.add_theme_stylebox_override("normal", _detail_button_style(Color(1.0, 0.88, 0.55, 1.0) if loadout_selected else Color(0.78, 0.80, 0.74, 1.0)))
+	_equipment_defense_tab.add_theme_stylebox_override("normal", _detail_button_style(Color(1.0, 0.88, 0.55, 1.0) if not loadout_selected else Color(0.78, 0.80, 0.74, 1.0)))
+	_equipment_loadout_tab.add_theme_color_override("font_color", GOLD_BRIGHT if loadout_selected else TEXT_MUTED)
+	_equipment_defense_tab.add_theme_color_override("font_color", GOLD_BRIGHT if not loadout_selected else TEXT_MUTED)
 
 
 # CHG-20260819（F-1 讨伐饰品）：饰品卡——未获得置灰；已获得显示 装备/卸下 按钮，按下切换当前选中舰装备状态。

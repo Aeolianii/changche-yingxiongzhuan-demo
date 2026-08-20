@@ -7,21 +7,16 @@ const STATE_VERSION := 2
 const LEGACY_STATE_VERSION := 1
 const LEGACY_CELL_SIZE := 16.0
 const CELL_SIZE := 8.0
+const VISUAL_FOG_CELL_WORLD_SIZE := 224.0
 const NAVAL_FOG_CELL_SIZE := 26.0
-const VISUAL_FOG_CELL_WORLD_SIZE := NAVAL_FOG_CELL_SIZE
-const FOG_STAMP_TEXTURE_SCALE := 2
-const SEA_MAP_FOG_TEXTURE_SIZE := Vector2i(870, 510)
-const FOG_STAMP_SIZE_VARIANT_COUNT := 6
-const FOG_STAMP_ORIENTATION_COUNT := 4
 const NAVAL_FOG_STAMP_ALPHA := 0.38
-const NAVAL_FOG_STAMP_TINT := Color(0.96, 0.98, 0.96, 1.0)
 const WORLD_FOG_Z_INDEX := 40
 const VIEW_EDGE_FOG_INSET := 48.0
 const REVEAL_CORNER_RADIUS_RATIO := 0.5
 const REVEAL_UPDATE_DISTANCE := 2.0
 const WORLD_FOG_SHADER := preload("res://shaders/sea_world_fog_edge.gdshader")
 const EXPLORATION_FOG_MIST_TEXTURE := preload("res://assets/naval/ui/fog/white_ink_mist_v1.png")
-const SEA_CONCEALMENT_TEXTURE := preload("res://assets/textures/water/sea_concealment_ink_pixel_v1.png")
+const SEA_CONCEALMENT_TEXTURE := preload("res://assets/textures/water/sea_ink_pixel_seamless_v2.png")
 
 var _world_size := Vector2.ONE
 var _grid_size := Vector2i.ONE
@@ -33,12 +28,6 @@ var _fog_texture: ImageTexture
 var _fog_stamp_image: Image
 var _fog_stamp_texture: ImageTexture
 var _visual_fog_grid_size := Vector2i.ONE
-var _fog_stamp_variants: Array[Image] = []
-var _fog_edge_stamp_variants: Array[Image] = []
-var _map_fog_stamp_image: Image
-var _map_fog_stamp_texture: ImageTexture
-var _map_fog_stamp_variants: Array[Image] = []
-var _map_fog_edge_stamp_variants: Array[Image] = []
 var _world_overlay: Sprite2D
 var _last_reveal_position := Vector2(INF, INF)
 var _last_camera_center := Vector2(INF, INF)
@@ -203,28 +192,12 @@ func get_fog_stamp_texture() -> Texture2D:
 	return _fog_stamp_texture
 
 
-func get_map_fog_stamp_texture() -> Texture2D:
-	return _map_fog_stamp_texture
-
-
 func get_visual_fog_grid_size() -> Vector2i:
 	return _visual_fog_grid_size
 
 
 func get_visual_fog_cell_world_size() -> float:
 	return VISUAL_FOG_CELL_WORLD_SIZE
-
-
-func get_fog_stamp_orientation_count_for_test() -> int:
-	return FOG_STAMP_ORIENTATION_COUNT
-
-
-func get_map_fog_stamp_variant_count_for_test() -> int:
-	return _map_fog_stamp_variants.size()
-
-
-func is_fog_stamp_candidate_for_test(cell_x: int, cell_y: int) -> bool:
-	return _is_fog_stamp_candidate(cell_x, cell_y)
 
 
 func get_fog_stamp_stats_for_test() -> Dictionary:
@@ -285,147 +258,50 @@ func _build_fog_stamp_texture() -> void:
 		maxi(1, ceili(_world_size.x / VISUAL_FOG_CELL_WORLD_SIZE)),
 		maxi(1, ceili(_world_size.y / VISUAL_FOG_CELL_WORLD_SIZE))
 	)
-	var stamp_texture_size := _grid_size * FOG_STAMP_TEXTURE_SCALE
-	_fog_stamp_image = Image.create(stamp_texture_size.x, stamp_texture_size.y, false, Image.FORMAT_RGBA8)
+	_fog_stamp_image = Image.create(_grid_size.x, _grid_size.y, false, Image.FORMAT_RGBA8)
 	_fog_stamp_image.fill(Color(0.0, 0.0, 0.0, 0.0))
 	var source_image := EXPLORATION_FOG_MIST_TEXTURE.get_image()
 	if source_image == null or source_image.is_empty():
-		_update_fog_stamp_texture()
-		_build_map_fog_stamp_texture(source_image)
+		_fog_stamp_texture = ImageTexture.create_from_image(_fog_stamp_image)
 		return
 
-	var pixels_per_visual_cell := Vector2(stamp_texture_size) / Vector2(_visual_fog_grid_size)
-	_prepare_fog_stamp_variants(source_image, pixels_per_visual_cell)
-
-	for cell_x in range(_visual_fog_grid_size.x):
-		for cell_y in range(_visual_fog_grid_size.y):
-			var cell := Vector2i(cell_x, cell_y)
-			if not _is_visual_fog_cell_hidden(cell):
-				continue
-			var neighbors := _visual_fog_neighbor_count(cell)
-			var seed := _fog_pattern_seed(cell_x, cell_y)
-			if not _is_fog_stamp_candidate(cell_x, cell_y) or neighbors < 3:
-				continue
-			var variant_index := _fog_stamp_variant_index(seed)
-			var stamp := _fog_stamp_variants[variant_index] if neighbors >= 7 else _fog_edge_stamp_variants[variant_index]
-			var center := (Vector2(cell_x, cell_y) + Vector2(0.5, 0.5)) * pixels_per_visual_cell
-			var battle_offset := Vector2(float(seed % 17) - 8.0, float((seed / 19) % 13) - 6.0)
-			var scaled_offset := battle_offset * pixels_per_visual_cell / NAVAL_FOG_CELL_SIZE
-			var destination := Vector2i((center + scaled_offset - Vector2(stamp.get_size()) * 0.5).round())
-			_fog_stamp_image.blend_rect(stamp, Rect2i(Vector2i.ZERO, stamp.get_size()), destination)
-	_update_fog_stamp_texture()
-	_build_map_fog_stamp_texture(source_image)
-
-
-func _build_map_fog_stamp_texture(source_image: Image) -> void:
-	_map_fog_stamp_image = Image.create(SEA_MAP_FOG_TEXTURE_SIZE.x, SEA_MAP_FOG_TEXTURE_SIZE.y, false, Image.FORMAT_RGBA8)
-	_map_fog_stamp_image.fill(Color(0.0, 0.0, 0.0, 0.0))
-	if source_image == null or source_image.is_empty():
-		_update_map_fog_stamp_texture()
-		return
-	var map_grid_size := Vector2i(
-		ceili(float(SEA_MAP_FOG_TEXTURE_SIZE.x) / NAVAL_FOG_CELL_SIZE),
-		ceili(float(SEA_MAP_FOG_TEXTURE_SIZE.y) / NAVAL_FOG_CELL_SIZE)
-	)
-	_prepare_map_fog_stamp_variants(source_image)
-	for cell_x in range(map_grid_size.x):
-		for cell_y in range(map_grid_size.y):
-			var cell := Vector2i(cell_x, cell_y)
-			if not _is_map_fog_cell_hidden(cell):
-				continue
-			var neighbors := _map_fog_neighbor_count(cell, map_grid_size)
-			var seed := _fog_pattern_seed(cell_x, cell_y)
-			if not _is_fog_stamp_candidate(cell_x, cell_y) or neighbors < 3:
-				continue
-			var variant_index := _fog_stamp_variant_index(seed)
-			var stamp := _map_fog_stamp_variants[variant_index] if neighbors >= 7 else _map_fog_edge_stamp_variants[variant_index]
-			var center := (Vector2(cell_x, cell_y) + Vector2(0.5, 0.5)) * NAVAL_FOG_CELL_SIZE
-			var offset := Vector2(float(seed % 17) - 8.0, float((seed / 19) % 13) - 6.0)
-			var destination := Vector2i((center + offset - Vector2(stamp.get_size()) * 0.5).round())
-			_map_fog_stamp_image.blend_rect(stamp, Rect2i(Vector2i.ZERO, stamp.get_size()), destination)
-	_update_map_fog_stamp_texture()
-
-
-func _prepare_map_fog_stamp_variants(source_image: Image) -> void:
-	if not _map_fog_stamp_variants.is_empty():
-		return
-	for size_index in range(FOG_STAMP_SIZE_VARIANT_COUNT):
-		var stamp_width := NAVAL_FOG_CELL_SIZE * (4.4 + float(size_index) * 0.22)
-		var stamp_size := Vector2i(roundi(stamp_width), roundi(stamp_width * 0.6875))
-		for orientation_index in range(FOG_STAMP_ORIENTATION_COUNT):
-			_map_fog_stamp_variants.append(_make_fog_stamp_variant(source_image, stamp_size, NAVAL_FOG_STAMP_ALPHA, orientation_index))
-			_map_fog_edge_stamp_variants.append(_make_fog_stamp_variant(source_image, stamp_size, NAVAL_FOG_STAMP_ALPHA * 0.76, orientation_index))
-
-
-func _update_map_fog_stamp_texture() -> void:
-	if _map_fog_stamp_texture == null:
-		_map_fog_stamp_texture = ImageTexture.create_from_image(_map_fog_stamp_image)
-	else:
-		_map_fog_stamp_texture.update(_map_fog_stamp_image)
-
-
-func _prepare_fog_stamp_variants(source_image: Image, pixels_per_visual_cell: Vector2) -> void:
-	if not _fog_stamp_variants.is_empty():
-		return
-	for size_index in range(FOG_STAMP_SIZE_VARIANT_COUNT):
+	var pixels_per_visual_cell := Vector2(_grid_size) / Vector2(_visual_fog_grid_size)
+	var stamp_variants: Array[Image] = []
+	var edge_stamp_variants: Array[Image] = []
+	for size_index in range(6):
 		var stamp_width := pixels_per_visual_cell.x * (4.4 + float(size_index) * 0.22)
 		var stamp_size := Vector2i(
 			maxi(1, roundi(stamp_width)),
 			maxi(1, roundi(stamp_width * 0.6875))
 		)
-		for orientation_index in range(FOG_STAMP_ORIENTATION_COUNT):
-			_fog_stamp_variants.append(_make_fog_stamp_variant(source_image, stamp_size, NAVAL_FOG_STAMP_ALPHA, orientation_index))
-			_fog_edge_stamp_variants.append(_make_fog_stamp_variant(source_image, stamp_size, NAVAL_FOG_STAMP_ALPHA * 0.76, orientation_index))
+		stamp_variants.append(_make_fog_stamp_variant(source_image, stamp_size, NAVAL_FOG_STAMP_ALPHA))
+		edge_stamp_variants.append(_make_fog_stamp_variant(source_image, stamp_size, NAVAL_FOG_STAMP_ALPHA * 0.76))
+
+	for cell_x in range(_visual_fog_grid_size.x):
+		for cell_y in range(_visual_fog_grid_size.y):
+			var neighbors := _visual_fog_neighbor_count(Vector2i(cell_x, cell_y))
+			var seed := _fog_hash(cell_x, cell_y, 53)
+			if seed % 4 != 0 or neighbors < 3:
+				continue
+			var variant_index := seed % 6
+			var stamp := stamp_variants[variant_index] if neighbors >= 7 else edge_stamp_variants[variant_index]
+			var center := (Vector2(cell_x, cell_y) + Vector2(0.5, 0.5)) * pixels_per_visual_cell
+			var battle_offset := Vector2(float(seed % 17) - 8.0, float((seed / 19) % 13) - 6.0)
+			var scaled_offset := battle_offset * pixels_per_visual_cell / NAVAL_FOG_CELL_SIZE
+			var destination := Vector2i((center + scaled_offset - Vector2(stamp.get_size()) * 0.5).round())
+			_fog_stamp_image.blend_rect(stamp, Rect2i(Vector2i.ZERO, stamp.get_size()), destination)
+	_fog_stamp_texture = ImageTexture.create_from_image(_fog_stamp_image)
 
 
-func _update_fog_stamp_texture() -> void:
-	if _fog_stamp_texture == null:
-		_fog_stamp_texture = ImageTexture.create_from_image(_fog_stamp_image)
-	else:
-		_fog_stamp_texture.update(_fog_stamp_image)
-
-
-func _make_fog_stamp_variant(source_image: Image, stamp_size: Vector2i, alpha_multiplier: float, orientation_index: int) -> Image:
+func _make_fog_stamp_variant(source_image: Image, stamp_size: Vector2i, alpha_multiplier: float) -> Image:
 	var stamp := source_image.duplicate() as Image
 	stamp.resize(stamp_size.x, stamp_size.y, Image.INTERPOLATE_LANCZOS)
-	if orientation_index == 1 or orientation_index == 3:
-		stamp.flip_x()
-	if orientation_index == 2 or orientation_index == 3:
-		stamp.flip_y()
 	for pixel_y in range(stamp.get_height()):
 		for pixel_x in range(stamp.get_width()):
 			var color := stamp.get_pixel(pixel_x, pixel_y)
-			color.r *= NAVAL_FOG_STAMP_TINT.r
-			color.g *= NAVAL_FOG_STAMP_TINT.g
-			color.b *= NAVAL_FOG_STAMP_TINT.b
 			color.a *= alpha_multiplier
 			stamp.set_pixel(pixel_x, pixel_y, color)
 	return stamp
-
-
-func _fog_stamp_variant_index(seed: int) -> int:
-	var size_index := seed % FOG_STAMP_SIZE_VARIANT_COUNT
-	var orientation_index := int(seed / 7) % FOG_STAMP_ORIENTATION_COUNT
-	return size_index * FOG_STAMP_ORIENTATION_COUNT + orientation_index
-
-
-func _fog_pattern_seed(cell_x: int, cell_y: int) -> int:
-	return _mix_fog_seed(_fog_hash(cell_x, cell_y, 53))
-
-
-func _is_fog_stamp_candidate(cell_x: int, cell_y: int) -> bool:
-	var block_x := cell_x / 2
-	var block_y := cell_y / 2
-	var block_choice := _mix_fog_seed(_fog_hash(block_x, block_y, 71)) % 4
-	var local_index := (cell_x & 1) | ((cell_y & 1) << 1)
-	return local_index == block_choice
-
-
-func _mix_fog_seed(source_seed: int) -> int:
-	var seed := source_seed
-	seed = ((seed ^ (seed >> 16)) * 0x45D9F3B) & 0x7FFFFFFF
-	seed = ((seed ^ (seed >> 16)) * 0x45D9F3B) & 0x7FFFFFFF
-	return (seed ^ (seed >> 16)) & 0x7FFFFFFF
 
 
 func _visual_fog_neighbor_count(center: Vector2i) -> int:
@@ -433,34 +309,9 @@ func _visual_fog_neighbor_count(center: Vector2i) -> int:
 	for offset_x in range(-1, 2):
 		for offset_y in range(-1, 2):
 			var neighbor := center + Vector2i(offset_x, offset_y)
-			if neighbor.x >= 0 and neighbor.y >= 0 and neighbor.x < _visual_fog_grid_size.x and neighbor.y < _visual_fog_grid_size.y and _is_visual_fog_cell_hidden(neighbor):
+			if neighbor.x >= 0 and neighbor.y >= 0 and neighbor.x < _visual_fog_grid_size.x and neighbor.y < _visual_fog_grid_size.y:
 				count += 1
 	return count
-
-
-func _is_visual_fog_cell_hidden(cell: Vector2i) -> bool:
-	var world_center := (Vector2(cell) + Vector2(0.5, 0.5)) * VISUAL_FOG_CELL_WORLD_SIZE
-	if world_center.x >= _world_size.x or world_center.y >= _world_size.y:
-		return false
-	return not is_world_position_revealed(world_center)
-
-
-func _map_fog_neighbor_count(center: Vector2i, map_grid_size: Vector2i) -> int:
-	var count := 0
-	for offset_x in range(-1, 2):
-		for offset_y in range(-1, 2):
-			var neighbor := center + Vector2i(offset_x, offset_y)
-			if neighbor.x >= 0 and neighbor.y >= 0 and neighbor.x < map_grid_size.x and neighbor.y < map_grid_size.y and _is_map_fog_cell_hidden(neighbor):
-				count += 1
-	return count
-
-
-func _is_map_fog_cell_hidden(cell: Vector2i) -> bool:
-	var map_center := (Vector2(cell) + Vector2(0.5, 0.5)) * NAVAL_FOG_CELL_SIZE
-	if map_center.x >= SEA_MAP_FOG_TEXTURE_SIZE.x or map_center.y >= SEA_MAP_FOG_TEXTURE_SIZE.y:
-		return false
-	var world_center := map_center / Vector2(SEA_MAP_FOG_TEXTURE_SIZE) * _world_size
-	return not is_world_position_revealed(world_center)
 
 
 func _fog_hash(cell_x: int, cell_y: int, salt: int) -> int:
@@ -479,12 +330,15 @@ func _build_world_overlay() -> void:
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = WORLD_FOG_SHADER
 	fog_material.set_shader_parameter("mist_texture", _fog_stamp_texture)
+	fog_material.set_shader_parameter("fog_tint", Color(0.93, 0.97, 0.95, 1.0))
 	fog_material.set_shader_parameter("concealment_texture", SEA_CONCEALMENT_TEXTURE)
 	fog_material.set_shader_parameter("concealment_tint", Color(0.05, 0.56, 0.68, 1.0))
+	fog_material.set_shader_parameter("concealment_uv_scale", _world_size * Vector2(0.00082, 0.00105))
 	fog_material.set_shader_parameter("feather_texels", 3.4)
 	fog_material.set_shader_parameter("edge_warp_texels", 0.8)
 	fog_material.set_shader_parameter("edge_irregularity", 0.34)
 	fog_material.set_shader_parameter("alpha_dither", 0.012)
+	fog_material.set_shader_parameter("fog_opacity", 1.0)
 	_world_overlay.material = fog_material
 	add_child(_world_overlay)
 
@@ -578,5 +432,4 @@ func _commit_reveal(changed: bool, _immediate := false) -> void:
 	if not changed:
 		return
 	_fog_texture.update(_fog_image)
-	_build_fog_stamp_texture()
 	state_changed.emit()

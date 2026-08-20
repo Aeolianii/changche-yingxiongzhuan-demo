@@ -708,8 +708,8 @@ public partial class NavalGridView : Node2D
                 var cell = new GridPos(x, y);
                 if (_fogVisible.Contains(cell)) continue;
                 var neighbors = HiddenFogNeighborCount(map, cell);
-                var seed = FogPatternSeed(x, y);
-                if (!IsFogStampCandidate(x, y) || neighbors < 3) continue;
+                var seed = Hash01(x, y, 53);
+                if (seed % 4 != 0 || neighbors < 3) continue;
                 var width = CellSize * (4.4f + (seed % 6) * 0.22f);
                 var size = new Vector2(width, width * 0.6875f);
                 var offset = new Vector2((seed % 17) - 8, ((seed / 19) % 13) - 6);
@@ -922,26 +922,6 @@ public partial class NavalGridView : Node2D
     // 确定性格哈希：取非负小整数，供格面明暗和地形素材稳定选型。
     private static int Hash01(int x, int y, int salt)
         => ((x * 73856093) ^ (y * 19349663) ^ (salt * 83492791)) & 0x7fffffff;
-
-    // Hash01 的低两位会按四格周期形成斜线；雾层保留同一基础哈希，
-    // 再用确定性雪崩混合与 2×2 抖动落点维持四分之一密度而不产生平行线。
-    private static int FogPatternSeed(int x, int y)
-        => MixFogSeed(Hash01(x, y, 53));
-
-    private static bool IsFogStampCandidate(int x, int y)
-    {
-        var blockChoice = MixFogSeed(Hash01(x / 2, y / 2, 71)) % 4;
-        var localIndex = (x & 1) | ((y & 1) << 1);
-        return localIndex == blockChoice;
-    }
-
-    private static int MixFogSeed(int sourceSeed)
-    {
-        long seed = sourceSeed;
-        seed = ((seed ^ (seed >> 16)) * 0x45D9F3BL) & 0x7FFFFFFF;
-        seed = ((seed ^ (seed >> 16)) * 0x45D9F3BL) & 0x7FFFFFFF;
-        return (int)((seed ^ (seed >> 16)) & 0x7FFFFFFF);
-    }
 
     private void DrawTerrainObstacles(BattleMap map, int width, int height)
     {

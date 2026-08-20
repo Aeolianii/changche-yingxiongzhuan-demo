@@ -1,12 +1,10 @@
 extends SceneTree
 
-const STAMP_IDS: Array[String] = [
-	"river_mouth_island_v2",
+const FIXED_MAP_MAIN_STAMP_IDS: Array[String] = [
 	"forest_island_v1",
-	"grass_sandbar_v1",
-	"reef_shoal_v1",
 	"rocky_island_v1",
 	"harbor_town_v1",
+	"river_mouth_island_v2",
 ]
 func _fail(message: String) -> void:
 	push_error("FAIL: " + message)
@@ -27,13 +25,16 @@ func _init() -> void:
 	if deploy == null or grid == null:
 		_fail("deployment terrain preview nodes missing")
 		return
-	if not deploy.RandomTerrainStampsAreCoherent(96):
-		_fail("sampled random maps must cover the complete non-overlapping terrain-stamp library outside deployment and exit cells")
+	if not deploy.FixedTerrainMapsAreCoherent(32):
+		_fail("fixed naval map selector must cover four stable, non-overlapping and connected templates")
+		return
+	if not deploy.RandomEncountersUseFixedTerrainMaps(32):
+		_fail("random encounter entry must select only the four fixed naval maps and expose their names")
 		return
 
-	for stamp_id: String in STAMP_IDS:
-		if not deploy.ShowRandomTerrainStampKindPreviewForTest(stamp_id):
-			_fail("could not build deterministic preview containing %s" % stamp_id)
+	for stamp_id: String in FIXED_MAP_MAIN_STAMP_IDS:
+		if not deploy.ShowFixedTerrainMapPreviewForTest(stamp_id):
+			_fail("could not build fixed-map preview containing %s" % stamp_id)
 			return
 		await process_frame
 		await process_frame
@@ -45,10 +46,10 @@ func _init() -> void:
 			_fail("terrain stamp textures were not imported and loaded for %s" % stamp_id)
 			return
 		if DisplayServer.get_name() != "headless":
-			var preview_path := "res://.godot/naval_terrain_stamp_%s_preview.png" % stamp_id
+			var preview_path := "res://.godot/naval_fixed_map_%s_preview.png" % stamp_id
 			var screenshot_error := root.get_texture().get_image().save_png(preview_path)
 			if screenshot_error != OK:
 				_fail("could not save terrain stamp preview for %s" % stamp_id)
 				return
-	print("PASS: complete naval terrain stamp library generation, metadata, texture, and whole-image rendering")
+	print("PASS: four fixed naval maps, deterministic layouts, textures, and whole-image rendering")
 	quit(0)

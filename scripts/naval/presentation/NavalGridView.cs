@@ -303,6 +303,17 @@ public partial class NavalGridView : Node2D
         return true;
     }
 
+    public bool FocusCameraOnWholeMap()
+    {
+        if (_camera is null || _battle is null) return false;
+        _cameraTween?.Kill();
+        _cameraTween = null;
+        _camera.Zoom = Vector2.One * _minimumCameraZoom;
+        var mapCenter = Origin + new Vector2(_battle.Map.Width * CellSize, _battle.Map.Height * CellSize) * 0.5f;
+        _camera.Position = ClampCameraPosition(mapCenter);
+        return true;
+    }
+
     public void FocusCameraOnShip(ShipState ship)
     {
         if (_camera is null) return;

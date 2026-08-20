@@ -720,7 +720,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         return true;
     }
 
-    public bool RandomTerrainStampsAreCoherent(int sampleCount = 24)
+    public bool FixedTerrainMapsAreCoherent(int sampleCount = 24)
     {
         var generator = new RandomMapGenerator();
         var expectedSizes = new Dictionary<string, (int Width, int Height)>(StringComparer.Ordinal)
@@ -732,16 +732,39 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             [RandomMapGenerator.RockyIslandStampId] = (5, 5),
             [RandomMapGenerator.HarborTownStampId] = (7, 6),
         };
-        var seenIds = new HashSet<string>(StringComparer.Ordinal);
+        var expectedLayouts = new Dictionary<string, (string CompanionId, GridPos MainOrigin, GridPos CompanionOrigin)>(StringComparer.Ordinal)
+        {
+            [RandomMapGenerator.ForestIslandStampId] = (RandomMapGenerator.GrassSandbarStampId, new GridPos(9, 1), new GridPos(9, 11)),
+            [RandomMapGenerator.RockyIslandStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(10, 10), new GridPos(9, 2)),
+            [RandomMapGenerator.HarborTownStampId] = (RandomMapGenerator.ReefShoalStampId, new GridPos(8, 8), new GridPos(10, 1)),
+            [RandomMapGenerator.RiverMouthStampId] = (RandomMapGenerator.GrassSandbarStampId, new GridPos(9, 8), new GridPos(9, 1)),
+        };
+        var seenMapIds = new HashSet<string>(StringComparer.Ordinal);
         for (var seed = 0; seed < Math.Max(1, sampleCount); seed++)
         {
             var result = generator.Generate(new RandomMapOptions(24, 18, seed % 3 + 1, seed));
-            var repeat = generator.Generate(new RandomMapOptions(24, 18, seed % 3 + 1, seed));
+            var repeat = generator.Generate(new RandomMapOptions(24, 18, (seed + 1) % 3 + 1, seed));
+            var sameTemplate = generator.Generate(new RandomMapOptions(24, 18, (seed + 2) % 3 + 1, seed + 4));
             if (result.Spec.TerrainStamps.Count != 2
                 || repeat.Spec.TerrainStamps.Count != result.Spec.TerrainStamps.Count)
                 return false;
             if (!result.Spec.TerrainRows.SequenceEqual(repeat.Spec.TerrainRows)
-                || !result.Spec.TerrainStamps.SequenceEqual(repeat.Spec.TerrainStamps))
+                || !result.Spec.TerrainStamps.SequenceEqual(repeat.Spec.TerrainStamps)
+                || !result.Spec.TerrainRows.SequenceEqual(sameTemplate.Spec.TerrainRows)
+                || !result.Spec.TerrainStamps.SequenceEqual(sameTemplate.Spec.TerrainStamps))
+                return false;
+
+            var mapId = RandomMapGenerator.FixedMapId(result.Spec);
+            if (!RandomMapGenerator.FixedMapIds.Contains(mapId)
+                || RandomMapGenerator.FixedMapDisplayName(result.Spec) == "开阔海域")
+                return false;
+            seenMapIds.Add(mapId);
+            var mainStamp = result.Spec.TerrainStamps[0];
+            var companionStamp = result.Spec.TerrainStamps[1];
+            if (!expectedLayouts.TryGetValue(mainStamp.Id, out var expectedLayout)
+                || companionStamp.Id != expectedLayout.CompanionId
+                || mainStamp.Origin != expectedLayout.MainOrigin
+                || companionStamp.Origin != expectedLayout.CompanionOrigin)
                 return false;
 
             for (var index = 0; index < result.Spec.TerrainStamps.Count; index++)
@@ -752,7 +775,6 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                     || stamp.QuarterTurns != 0
                     || !ResourceLoader.Exists(stamp.TexturePath))
                     return false;
-                seenIds.Add(stamp.Id);
                 for (var y = stamp.Origin.Y; y < stamp.Origin.Y + stamp.Height; y++)
                 {
                     for (var x = stamp.Origin.X; x < stamp.Origin.X + stamp.Width; x++)
@@ -779,7 +801,29 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
                 || !result.Connected)
                 return false;
         }
-        return RandomMapGenerator.TerrainStampIds.All(seenIds.Contains);
+        return RandomMapGenerator.FixedMapIds.All(seenMapIds.Contains);
+    }
+
+    public bool RandomTerrainStampsAreCoherent(int sampleCount = 24)
+        => FixedTerrainMapsAreCoherent(sampleCount);
+
+    public bool RandomEncountersUseFixedTerrainMaps(int sampleCount = 24)
+    {
+        if (_config is null) return false;
+        var seenMapIds = new HashSet<string>(StringComparer.Ordinal);
+        for (var seed = 0; seed < Math.Max(1, sampleCount); seed++)
+        {
+            var encounter = RandomEncounterGenerator.Generate(
+                _config,
+                new RandomEncounterOptions(seed % 3 + 1, seed));
+            var mapId = RandomMapGenerator.FixedMapId(encounter.Map);
+            if (!RandomMapGenerator.FixedMapIds.Contains(mapId)
+                || encounter.MapSourceLabel != RandomMapGenerator.FixedMapDisplayName(encounter.Map)
+                || encounter.Map.TerrainStamps.Count != 2)
+                return false;
+            seenMapIds.Add(mapId);
+        }
+        return RandomMapGenerator.FixedMapIds.All(seenMapIds.Contains);
     }
 
     private static bool StampRectanglesTouch(TerrainVisualStamp first, TerrainVisualStamp second)
@@ -836,7 +880,24 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         return false;
     }
 
-    private bool ShowRandomTerrainStampPreviewForTest(RandomMapResult result, int seed, string? focusStampId)
+    public bool ShowFixedTerrainMapPreviewForTest(string mainStampId)
+    {
+        if (!RandomMapGenerator.MainTerrainStampIds.Contains(mainStampId)) return false;
+        var generator = new RandomMapGenerator();
+        for (var seed = 0; seed < RandomMapGenerator.FixedMapIds.Count; seed++)
+        {
+            var result = generator.Generate(new RandomMapOptions(24, 18, 2, seed));
+            if (result.Spec.TerrainStamps.FirstOrDefault()?.Id == mainStampId)
+                return ShowRandomTerrainStampPreviewForTest(result, seed, mainStampId, overview: true);
+        }
+        return false;
+    }
+
+    private bool ShowRandomTerrainStampPreviewForTest(
+        RandomMapResult result,
+        int seed,
+        string? focusStampId,
+        bool overview = false)
     {
         if (_config is null || result.Spec.TerrainStamps.Count == 0) return false;
         foreach (var child in _shipsRoot.GetChildren())
@@ -856,7 +917,8 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         _grid.ShowDeploymentCells(Array.Empty<GridPos>(), Colors.Transparent);
         _grid.ClearPersistentHighlights();
         _grid.ClearOverlay();
-        if (focusStampId is null) _grid.FocusCameraOnFirstTerrainStamp();
+        if (overview) _grid.FocusCameraOnWholeMap();
+        else if (focusStampId is null) _grid.FocusCameraOnFirstTerrainStamp();
         else _grid.FocusCameraOnTerrainStamp(focusStampId);
         if (_deployHud is not null) _deployHud.Visible = false;
         _grid.QueueRedraw();

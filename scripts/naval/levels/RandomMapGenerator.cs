@@ -6,15 +6,14 @@ using NavalCombat.Core;
 
 namespace NavalCombat.Levels;
 
-// R-1 随机地图生成器（纯 C#，无 Godot 依赖）：以深水为主生成可玩的随机战斗地图。
-// 按难度放置少量山地/岛屿簇（不可通行）、几处浅滩与几处礁石（可通行但减速/损血）；
-// 左右各留一个布阵区（恒为深水 → 舰队恒可放置）；每张地图左右各生成一组相邻双格逃跑区。
+// R-1 固定地图选择器（纯 C#，无 Godot 依赖）：维护四张经过构图验证的海战地图模板。
+// Seed 只负责选择森林岛、岩山岛、港口小镇或河口岛；模板内部的印章、散点装饰与出口均固定。
+// 左右各留一个布阵区（恒为深水 → 舰队恒可放置）；每张地图左右各生成一组安全逃跑区。
 //
 // 可玩性保障（连通性）：地形放完后做 BFS 连通性检查（玩家区中心 → 敌区中心，可通行格=非山地）。
-// 不连通则整图重生成重试（同一种子随机序列推进，可复现）；至多 MaxAttempts 次后兜底纯深水图
-// （必然连通），保证生成的地图玩家区与敌区之间始终有可达路径，不会被岛屿切成死区。
+// 固定模板若因非标准尺寸无法放置或未通过连通性检查，则兜底纯深水图，保证旧尺寸接口仍可用。
 //
-// 种子化可复现：同 seed → 同 TerrainRows / 出口（LevelMapSpec.FromAscii 确定性解析）。
+// 种子化可复现：同 seed → 同模板 / TerrainRows / 出口（LevelMapSpec.FromAscii 确定性解析）。
 // 输出 LevelMapSpec 与现有关卡地图同构，可喂 NavalDeploymentController 构建 BattleMap（另提供 ToBattleMap）。
 public sealed class RandomMapGenerator
 {
@@ -23,8 +22,8 @@ public sealed class RandomMapGenerator
     public const int MinDifficulty = 1;
     public const int MaxDifficulty = 3;
 
-    // 连通性重试上限；概率极低（特征小、布阵区清空），最终兜底仍保证可玩。
-    private const int MaxAttempts = 2000;
+    public const int FixedMapWidth = 24;
+    public const int FixedMapHeight = 18;
     public const string RiverMouthStampId = "river_mouth_island_v2";
     public const string RiverMouthStampTexturePath = "res://assets/naval/battle/terrain_stamps/river_mouth_island_v2.png";
     public const string ForestIslandStampId = "forest_island_v1";
@@ -37,12 +36,22 @@ public sealed class RandomMapGenerator
     private sealed record TerrainStampDefinition(
         string Id,
         string TexturePath,
-        string[] Mask,
-        int[] QuarterTurns)
+        string[] Mask)
     {
         public int Width => Mask[0].Length;
         public int Height => Mask.Length;
     }
+
+    private sealed record TerrainDecoration(GridPos Position, char Terrain);
+
+    private sealed record FixedMapTemplate(
+        string Id,
+        string DisplayName,
+        TerrainStampDefinition MainStamp,
+        GridPos MainOrigin,
+        TerrainStampDefinition CompanionStamp,
+        GridPos CompanionOrigin,
+        TerrainDecoration[] Decorations);
 
     private static readonly TerrainStampDefinition RiverMouthStamp = new(
         RiverMouthStampId,
@@ -57,73 +66,131 @@ public sealed class RandomMapGenerator
             "BGRRGB",
             "BGRRGB",
             "BBRRBB",
-        },
-        new[] { 0 });
+        });
 
     private static readonly TerrainStampDefinition ForestIslandStamp = new(
         ForestIslandStampId,
         TerrainStampAssetRoot + "forest_island_v1.png",
-        new[] { "..BB..", ".BFFB.", "BFFFFB", "BFFFFB", ".BFFB.", "..BB.." },
-        new[] { 0 });
+        new[] { "..BB..", ".BFFB.", "BFFFFB", "BFFFFB", ".BFFB.", "..BB.." });
 
     private static readonly TerrainStampDefinition GrassSandbarStamp = new(
         GrassSandbarStampId,
         TerrainStampAssetRoot + "grass_sandbar_v1.png",
-        new[] { ".BBBB.", "BGGGGB", "BGGGGB", ".BBBB." },
-        new[] { 0 });
+        new[] { ".BBBB.", "BGGGGB", "BGGGGB", ".BBBB." });
 
     private static readonly TerrainStampDefinition ReefShoalStamp = new(
         ReefShoalStampId,
         TerrainStampAssetRoot + "reef_shoal_v1.png",
-        new[] { ".~~~.", "~###~", ".~~~." },
-        new[] { 0 });
+        new[] { ".~~~.", "~###~", ".~~~." });
 
     private static readonly TerrainStampDefinition RockyIslandStamp = new(
         RockyIslandStampId,
         TerrainStampAssetRoot + "rocky_island_v1.png",
-        new[] { "..B..", ".B^B.", "B^^^B", ".B^B.", "..B.." },
-        new[] { 0 });
+        new[] { "..B..", ".B^B.", "B^^^B", ".B^B.", "..B.." });
 
     private static readonly TerrainStampDefinition HarborTownStamp = new(
         HarborTownStampId,
         TerrainStampAssetRoot + "harbor_town_v1.png",
-        new[] { "..BBB..", ".BTTTB.", "BTTTTTB", "BPP.PPB", "BPP.PPB", ".BB.BB." },
-        new[] { 0 });
+        new[] { "..BBB..", ".BTTTB.", "BTTTTTB", "BPP.PPB", "BPP.PPB", ".BB.BB." });
 
-    private static readonly TerrainStampDefinition[] MainTerrainStampPool =
+    private static readonly FixedMapTemplate[] FixedMapTemplates =
     {
-        RiverMouthStamp,
-        ForestIslandStamp,
-        RockyIslandStamp,
-        HarborTownStamp,
-    };
-
-    private static readonly TerrainStampDefinition[] CompanionTerrainStampPool =
-    {
-        GrassSandbarStamp,
-        ReefShoalStamp,
+        new(
+            "forest_island",
+            "森林岛",
+            ForestIslandStamp,
+            new GridPos(9, 1),
+            GrassSandbarStamp,
+            new GridPos(9, 11),
+            new[]
+            {
+                new TerrainDecoration(new GridPos(8, 8), '^'),
+                new TerrainDecoration(new GridPos(15, 9), '~'),
+                new TerrainDecoration(new GridPos(8, 16), '#'),
+            }),
+        new(
+            "rocky_island",
+            "岩山岛",
+            RockyIslandStamp,
+            new GridPos(10, 10),
+            ReefShoalStamp,
+            new GridPos(9, 2),
+            new[]
+            {
+                new TerrainDecoration(new GridPos(15, 5), '#'),
+                new TerrainDecoration(new GridPos(8, 8), '~'),
+                new TerrainDecoration(new GridPos(8, 16), '^'),
+            }),
+        new(
+            "harbor_town",
+            "港口小镇",
+            HarborTownStamp,
+            new GridPos(8, 8),
+            ReefShoalStamp,
+            new GridPos(10, 1),
+            new[]
+            {
+                new TerrainDecoration(new GridPos(8, 5), '~'),
+                new TerrainDecoration(new GridPos(15, 6), '#'),
+                new TerrainDecoration(new GridPos(15, 16), '^'),
+            }),
+        new(
+            "river_mouth",
+            "河口岛",
+            RiverMouthStamp,
+            new GridPos(9, 8),
+            GrassSandbarStamp,
+            new GridPos(9, 1),
+            new[]
+            {
+                new TerrainDecoration(new GridPos(8, 5), '#'),
+                new TerrainDecoration(new GridPos(15, 6), '~'),
+                new TerrainDecoration(new GridPos(8, 16), '^'),
+            }),
     };
 
     public static IReadOnlyList<string> TerrainStampIds { get; } =
-        MainTerrainStampPool.Concat(CompanionTerrainStampPool).Select(stamp => stamp.Id).ToArray();
+        new[]
+        {
+            RiverMouthStampId,
+            ForestIslandStampId,
+            GrassSandbarStampId,
+            ReefShoalStampId,
+            RockyIslandStampId,
+            HarborTownStampId,
+        };
 
-    // 生成随机地图：返回地图规格 + 双方布阵区。非法尺寸/难度抛 ArgumentOutOfRangeException。
+    public static IReadOnlyList<string> FixedMapIds { get; } = FixedMapTemplates.Select(template => template.Id).ToArray();
+    public static IReadOnlyList<string> MainTerrainStampIds { get; } = FixedMapTemplates.Select(template => template.MainStamp.Id).ToArray();
+
+    // 从四张固定地图中选择一张：返回地图规格 + 双方布阵区。非法尺寸/难度抛 ArgumentOutOfRangeException。
     public RandomMapResult Generate(RandomMapOptions options)
     {
         if (options is null) throw new ArgumentNullException(nameof(options));
         ValidateOptions(options);
-        var rng = new SeedRandomSource(options.Seed);
         var playerZone = ComputePlayerZone(options.Width, options.Height);
         var enemyZone = ComputeEnemyZone(options.Width, options.Height);
-        for (var attempt = 0; attempt < MaxAttempts; attempt++)
-        {
-            var spec = BuildOnce(options, rng, playerZone, enemyZone);
-            if (HasPath(spec, ZoneCenter(spec, playerZone), ZoneCenter(spec, enemyZone)))
-                return new RandomMapResult(spec, playerZone, enemyZone);
-        }
+        var template = FixedMapTemplates[PositiveModulo(options.Seed, FixedMapTemplates.Length)];
+        var spec = BuildFixedMap(options, playerZone, enemyZone, template);
+        if (spec.TerrainStamps.Count == 2
+            && HasPath(spec, ZoneCenter(spec, playerZone), ZoneCenter(spec, enemyZone)))
+            return new RandomMapResult(spec, playerZone, enemyZone);
+
         // 兜底：纯深水 + 出口（必然连通）。深水图保底可玩；浅滩/礁石可通行不阻塞，故不加入。
         var fallback = LevelMapSpec.FromAscii(AllDeepRows(options));
         return new RandomMapResult(fallback, playerZone, enemyZone);
+    }
+
+    public static string FixedMapId(LevelMapSpec spec)
+    {
+        var mainStampId = spec.TerrainStamps.FirstOrDefault()?.Id;
+        return FixedMapTemplates.FirstOrDefault(template => template.MainStamp.Id == mainStampId)?.Id ?? "open_sea";
+    }
+
+    public static string FixedMapDisplayName(LevelMapSpec spec)
+    {
+        var mainStampId = spec.TerrainStamps.FirstOrDefault()?.Id;
+        return FixedMapTemplates.FirstOrDefault(template => template.MainStamp.Id == mainStampId)?.DisplayName ?? "开阔海域";
     }
 
     // 便捷助手：把地图规格转换为核心 BattleMap（与 NavalDeploymentController.BuildMapFromSpec 同款构建）。
@@ -187,6 +254,12 @@ public sealed class RandomMapGenerator
             throw new ArgumentOutOfRangeException(nameof(o), $"难度须在 {MinDifficulty}-{MaxDifficulty}（实际 {o.Difficulty}）");
     }
 
+    private static int PositiveModulo(int value, int modulus)
+    {
+        var remainder = value % modulus;
+        return remainder < 0 ? remainder + modulus : remainder;
+    }
+
     // 玩家布阵区：左 1 列起、约 1/3 宽、顶/底留 1 行；恒为深水（供舰队放置）。
     private static GridRect ComputePlayerZone(int w, int h)
         => new(1, 1, Math.Max(2, (w - 2) / 3), Math.Max(2, h - 2));
@@ -198,8 +271,12 @@ public sealed class RandomMapGenerator
         return new GridRect(w - 1 - pzWidth, 1, pzWidth, Math.Max(2, h - 2));
     }
 
-    // 单次布局：深水底 → 山地簇/浅滩/礁石（避开布阵区与出口列）→ 出口列 → ASCII 解析。
-    private static LevelMapSpec BuildOnce(RandomMapOptions o, IRandomSource rng, GridRect playerZone, GridRect enemyZone)
+    // 固定模板布局：深水底 → 两枚固定印章 → 固定散点装饰 → 安全出口 → ASCII 解析。
+    private static LevelMapSpec BuildFixedMap(
+        RandomMapOptions o,
+        GridRect playerZone,
+        GridRect enemyZone,
+        FixedMapTemplate template)
     {
         var grid = new char[o.Width, o.Height];
         for (var y = 0; y < o.Height; y++)
@@ -216,66 +293,39 @@ public sealed class RandomMapGenerator
                || x == o.Width - 1 && y >= rightExitY && y < rightExitY + rightExitCount;
 
         var terrainStamps = new List<TerrainVisualStamp>();
-
-        // 特征可放格：界内、深水、不在布阵区、出口或地形印章的完整矩形内。
-        bool AllowFeature(int x, int y)
-            => x >= 0 && x < o.Width && y >= 0 && y < o.Height
-               && grid[x, y] == '.'
-               && !playerZone.Contains(x, y) && !enemyZone.Contains(x, y)
-               && !IsReservedExit(x, y)
-               && !terrainStamps.Any(stamp => stamp.Contains(new GridPos(x, y)));
-
-        // 印章库：一枚主题主地貌 + 一枚小型伴生地貌。每枚都以完整矩形原子放置并保留一格间距，
-        // 放不下就跳过，绝不拆成失去上下文的河流、港镇或树林散点。
-        var mainStamp = MainTerrainStampPool[rng.NextInt(0, MainTerrainStampPool.Length)];
-        TryPlaceTerrainStamp(
+        var mapOffset = new GridPos((o.Width - FixedMapWidth) / 2, (o.Height - FixedMapHeight) / 2);
+        PlaceFixedTerrainStamp(
             o,
-            rng,
             grid,
             playerZone,
             enemyZone,
             IsReservedExit,
             terrainStamps,
-            mainStamp);
-        var companionStamp = CompanionTerrainStampPool[rng.NextInt(0, CompanionTerrainStampPool.Length)];
-        TryPlaceTerrainStamp(
+            template.MainStamp,
+            template.MainOrigin + mapOffset);
+        PlaceFixedTerrainStamp(
             o,
-            rng,
             grid,
             playerZone,
             enemyZone,
             IsReservedExit,
             terrainStamps,
-            companionStamp);
+            template.CompanionStamp,
+            template.CompanionOrigin + mapOffset);
 
-        // 山地/岛屿簇：diff1 1-2 簇、diff2 2-3 簇、diff3 3-4 簇；每簇中心 + 0-2 随机邻居（1-3 格）。
-        var clusterCount = o.Difficulty switch
+        foreach (var decoration in template.Decorations)
         {
-            1 => rng.NextInt(1, 3),
-            2 => rng.NextInt(2, 4),
-            _ => rng.NextInt(3, 5),
-        };
-        for (var c = 0; c < clusterCount; c++)
-        {
-            var center = FindFreeCell(o, rng, grid, AllowFeature);
-            if (center is not { } cx) break;
-            grid[cx.X, cx.Y] = '^';
-            // 随机邻居（去重、可放才放）；邻居顺序随机 → 每次簇形不同。
-            var neighbors = new[] { CardinalDirection.North, CardinalDirection.East, CardinalDirection.South, CardinalDirection.West }
-                .OrderBy(_ => rng.NextDouble()).ToArray();
-            var blob = rng.NextInt(0, 3); // 0-2 个邻居
-            for (var i = 0; i <= blob && i < neighbors.Length; i++)
-            {
-                var n = cx + neighbors[i].Vector();
-                if (AllowFeature(n.X, n.Y)) grid[n.X, n.Y] = '^';
-            }
+            var cell = decoration.Position + mapOffset;
+            if (cell.X < 0 || cell.X >= o.Width || cell.Y < 0 || cell.Y >= o.Height
+                || grid[cell.X, cell.Y] != '.'
+                || playerZone.Contains(cell) || enemyZone.Contains(cell)
+                || IsReservedExit(cell.X, cell.Y)
+                || terrainStamps.Any(stamp => stamp.Contains(cell)))
+                continue;
+            grid[cell.X, cell.Y] = decoration.Terrain;
         }
 
-        // 浅滩 2-4 格、礁石 1-3 格（可通行地形，不参与连通性阻断）。
-        PlaceScattered(o, rng, grid, AllowFeature, '~', rng.NextInt(2, 5));
-        PlaceScattered(o, rng, grid, AllowFeature, '#', rng.NextInt(1, 4));
-
-        // 每张随机地图按规模生成 4-6 个出口，并在左右边缘平衡分布。
+        // 每张固定地图仍按尺寸生成安全出口，并在左右边缘平衡分布。
         for (var y = leftExitY; y < leftExitY + leftExitCount; y++) grid[0, y] = 'E';
         for (var y = rightExitY; y < rightExitY + rightExitCount; y++) grid[o.Width - 1, y] = 'E';
 
@@ -289,68 +339,48 @@ public sealed class RandomMapGenerator
         return LevelMapSpec.FromAscii(rows).WithTerrainStamps(terrainStamps);
     }
 
-    private static bool TryPlaceTerrainStamp(
+    private static bool PlaceFixedTerrainStamp(
         RandomMapOptions options,
-        IRandomSource rng,
         char[,] grid,
         GridRect playerZone,
         GridRect enemyZone,
         Func<int, int, bool> isReservedExit,
         List<TerrainVisualStamp> terrainStamps,
-        TerrainStampDefinition definition)
+        TerrainStampDefinition definition,
+        GridPos origin)
     {
-        var minX = playerZone.Right;
-        var maxX = enemyZone.X - definition.Width;
-        // 上下各留至少一行深水，让深水专用舰也能绕行；小地图中央带不足时不强塞。
-        var minY = 1;
-        var maxY = options.Height - definition.Height - 1;
-        if (maxX < minX || maxY < minY) return false;
+        if (origin.X < 0 || origin.Y < 0
+            || origin.X + definition.Width > options.Width
+            || origin.Y + definition.Height > options.Height
+            || terrainStamps.Any(stamp => RectanglesTouch(origin, definition.Width, definition.Height, stamp)))
+            return false;
 
-        var candidates = new List<GridPos>();
-        for (var originY = minY; originY <= maxY; originY++)
+        for (var y = 0; y < definition.Height; y++)
         {
-            for (var originX = minX; originX <= maxX; originX++)
+            for (var x = 0; x < definition.Width; x++)
             {
-                var origin = new GridPos(originX, originY);
-                if (terrainStamps.Any(stamp => RectanglesTouch(origin, definition.Width, definition.Height, stamp)))
-                    continue;
-                var available = true;
-                for (var y = 0; y < definition.Height && available; y++)
-                {
-                    for (var x = 0; x < definition.Width; x++)
-                    {
-                        var mapX = origin.X + x;
-                        var mapY = origin.Y + y;
-                        if (grid[mapX, mapY] != '.'
-                            || playerZone.Contains(mapX, mapY)
-                            || enemyZone.Contains(mapX, mapY)
-                            || isReservedExit(mapX, mapY))
-                        {
-                            available = false;
-                            break;
-                        }
-                    }
-                }
-                if (available) candidates.Add(origin);
+                var mapX = origin.X + x;
+                var mapY = origin.Y + y;
+                if (grid[mapX, mapY] != '.'
+                    || playerZone.Contains(mapX, mapY)
+                    || enemyZone.Contains(mapX, mapY)
+                    || isReservedExit(mapX, mapY))
+                    return false;
             }
         }
-        if (candidates.Count == 0) return false;
-
-        var selectedOrigin = candidates[rng.NextInt(0, candidates.Count)];
-        var quarterTurns = definition.QuarterTurns[rng.NextInt(0, definition.QuarterTurns.Length)];
 
         for (var y = 0; y < definition.Height; y++)
             for (var x = 0; x < definition.Width; x++)
                 if (definition.Mask[y][x] != '.')
-                    grid[selectedOrigin.X + x, selectedOrigin.Y + y] = definition.Mask[y][x];
+                    grid[origin.X + x, origin.Y + y] = definition.Mask[y][x];
 
         terrainStamps.Add(new TerrainVisualStamp(
             definition.Id,
             definition.TexturePath,
-            selectedOrigin,
+            origin,
             definition.Width,
             definition.Height,
-            quarterTurns));
+            QuarterTurns: 0));
         return true;
     }
 
@@ -363,27 +393,6 @@ public sealed class RandomMapGenerator
            && origin.X + width + 1 > existing.Origin.X
            && origin.Y - 1 < existing.Origin.Y + existing.Height
            && origin.Y + height + 1 > existing.Origin.Y;
-
-    // 在可放格内随机找一个空格（至多 128 次尝试；地图填满时返回 null）。
-    private static GridPos? FindFreeCell(RandomMapOptions o, IRandomSource rng, char[,] grid, Func<int, int, bool> allow)
-    {
-        for (var attempt = 0; attempt < 128; attempt++)
-        {
-            var x = rng.NextInt(0, o.Width);
-            var y = rng.NextInt(0, o.Height);
-            if (allow(x, y)) return new GridPos(x, y);
-        }
-        return null;
-    }
-
-    // 散点放置 count 格同类型地形（各自独立随机尝试，不保证全数成功 → 数量在"合理范围"）。
-    private static void PlaceScattered(RandomMapOptions o, IRandomSource rng, char[,] grid, Func<int, int, bool> allow, char terrainChar, int count)
-    {
-        for (var i = 0; i < count; i++)
-        {
-            if (FindFreeCell(o, rng, grid, allow) is { } p) grid[p.X, p.Y] = terrainChar;
-        }
-    }
 
     private static string[] AllDeepRows(RandomMapOptions o)
     {
@@ -403,7 +412,8 @@ public sealed class RandomMapGenerator
     }
 }
 
-// R-1 随机地图参数。Width/Height 尺寸（默认 24×18）；Difficulty 1-3（地形密度）；Seed 种子（可复现）；
+// R-1 固定地图选择参数。Width/Height 默认 24×18；Difficulty 1-3 保留给遭遇强度但不改变地图；
+// Seed 只选择四张模板之一（可复现）；
 // IncludeExits 为旧接口兼容字段；当前规则要求所有地图始终生成逃跑格，因此 false 也不会关闭出口。
 public sealed record RandomMapOptions(
     int Width = 24,
@@ -412,7 +422,7 @@ public sealed record RandomMapOptions(
     int Seed = 1337,
     bool IncludeExits = true);
 
-// R-1 随机地图结果：地图规格（可喂 LevelMapSpec/BattleMap）+ 双方布阵区（供随机敌舰/布阵使用）。
+// R-1 固定地图选择结果：地图规格（可喂 LevelMapSpec/BattleMap）+ 双方布阵区（供随机敌舰/布阵使用）。
 public sealed record RandomMapResult(LevelMapSpec Spec, GridRect PlayerZone, GridRect EnemyZone)
 {
     // 连通性（玩家区 → 敌区 可达路径）；生成器保证恒为 true。

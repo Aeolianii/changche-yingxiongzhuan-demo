@@ -8,14 +8,10 @@ using NavalCombat.Core;
 namespace NavalCombat.Levels;
 
 // U-2c（CHG-20260812-random-encounter-flow）随机遭遇战生成器（纯 C#，无 Godot 依赖）：
-// 「随机遭遇战」= 伪随机拼装的一场合法可玩战斗，供关卡选择「随机遭遇战」入口直接开始。
+// 「随机遭遇战」= 从四张固定海战地图中抽取一张，再随机组装敌方舰队的合法可玩战斗。
 //
-// 地图三来源混合（掷 0-99）：
-//   <40  固定方案  → MapSchemeRegistry.All（9 张含变体）任选，用其 Map/PlayerZone/EnemyZone；
-//   <75  伪随机变体 → PseudoRandomVariant(baseScheme, seed, budget)：从基址两布阵区之间的深水格
-//                     按地形预算撒新地形（浅滩/礁石/陆河可通行为主 80%，海滩/林地/草地/港口/小镇/山地陆地 20%），
-//                     用 R-1 HasPath 连通性校验，重试 40 次失败则回退基址（布阵区/出口列绝不动）；
-//   75+  R-1 随机地图 → RandomMapGenerator.Generate（难度/随机种子/含出口），用其 Spec/区。
+// 地图来源：RandomMapGenerator 按子种子从森林岛、岩山岛、港口小镇、河口岛四套模板中选择；
+// 模板内部地形不随难度或种子变化，保留人工设计的主航道、绕行方向与伴生障碍关系。
 //
 // 敌人两来源（掷 0-99）：
 //   <50  固定配置   → 按难度池选 EnemyFleetConfig + PlaceInEnemyZone 确定性放置；奖励 = 配置 Rewards；
@@ -189,34 +185,14 @@ public static class RandomEncounterGenerator
         ValidateOptions(options);
         var rng = new SeedRandomSource(options.Seed);
 
-        // —— 地图三来源 ——
-        var mapRoll = rng.NextInt(0, 100);
-        LevelMapSpec map;
-        GridRect playerZone;
-        GridRect enemyZone;
-        string mapLabel;
-        if (mapRoll < 40)
-        {
-            var scheme = PickScheme(rng);
-            map = scheme.Map; playerZone = scheme.PlayerZone; enemyZone = scheme.EnemyZone;
-            mapLabel = scheme.DisplayName;
-        }
-        else if (mapRoll < 75)
-        {
-            var baseScheme = PickScheme(rng);
-            var budget = 3 + options.Difficulty + rng.NextInt(0, 3);
-            var variant = PseudoRandomVariant(baseScheme, NextSubSeed(rng), budget);
-            map = variant ?? baseScheme.Map;
-            playerZone = baseScheme.PlayerZone; enemyZone = baseScheme.EnemyZone;
-            mapLabel = variant is null ? baseScheme.DisplayName : $"{baseScheme.DisplayName}·变体";
-        }
-        else
-        {
-            var rr = new RandomMapGenerator().Generate(new RandomMapOptions(
-                Difficulty: options.Difficulty, Seed: NextSubSeed(rng), IncludeExits: options.IncludeExits));
-            map = rr.Spec; playerZone = rr.PlayerZone; enemyZone = rr.EnemyZone;
-            mapLabel = "随机海域";
-        }
+        // —— 固定地图四选一 ——
+        // 随机性只决定选中哪张模板；模板内部的主印章、伴生印章、散点装饰和航道均不再变化。
+        var rr = new RandomMapGenerator().Generate(new RandomMapOptions(
+            Difficulty: options.Difficulty, Seed: NextSubSeed(rng), IncludeExits: options.IncludeExits));
+        var map = rr.Spec;
+        var playerZone = rr.PlayerZone;
+        var enemyZone = rr.EnemyZone;
+        var mapLabel = RandomMapGenerator.FixedMapDisplayName(map);
 
         // —— 玩家舰队（默认 4 舰，玩家区深水内，供布阵） ——
         var playerFleet = PlacePlayerFleet(config, playerZone);
@@ -311,12 +287,6 @@ public static class RandomEncounterGenerator
     {
         if (o.Difficulty < MinDifficulty || o.Difficulty > MaxDifficulty)
             throw new ArgumentOutOfRangeException(nameof(o), $"难度须在 {MinDifficulty}-{MaxDifficulty}（实际 {o.Difficulty}）");
-    }
-
-    private static MapScheme PickScheme(IRandomSource rng)
-    {
-        var all = MapSchemeRegistry.All;
-        return all[rng.NextInt(0, all.Count)];
     }
 
     private static EnemyFleetConfig PickConfigByDifficulty(IRandomSource rng, int difficulty)

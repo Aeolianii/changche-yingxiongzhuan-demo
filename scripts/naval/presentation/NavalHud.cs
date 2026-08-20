@@ -612,7 +612,7 @@ public partial class NavalHud : CanvasLayer
         var chainShotUses = ship.SkillUsesLeft.GetValueOrDefault("chain_shot", 0);
         var mineUses = ship.SkillUsesLeft.GetValueOrDefault("mine", 0);
         SetAttackCommandAvailable(DamageControl, damageControlUses > 0);
-        DamageControl.Text = $"损\n管\n×{damageControlUses}";
+        DamageControl.Text = $"修\n复\n×{damageControlUses}";
         DamageControl.Disabled = !flags.CanDamageControl;
         SetAttackCommandAvailable(FireOil, fireOilUses > 0);
         FireOil.Text = $"火\n油\n×{fireOilUses}";

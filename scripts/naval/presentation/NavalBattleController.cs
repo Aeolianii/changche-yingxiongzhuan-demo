@@ -985,7 +985,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         if (ship is null) return;
         var damageControlCommand = new DamageControlCommand(ship.Id);
         var result = ActionResolver.TryExecute(_battle, damageControlCommand);
-        DispatchSimpleResult(result, ship, damageControlCommand, $"{ship.Definition.DisplayName} 损管：回血并启动持续恢复");
+        DispatchSimpleResult(result, ship, damageControlCommand, $"{ship.Definition.DisplayName} 修复：回血并启动持续恢复");
     }
 
     // F-7b：战斗内浅滩主动自沉（设计 15）——SelfSinkCommand（DeploymentPhase=false，扣 15% 最大生命）。
@@ -1552,7 +1552,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
                     RedrawShip(h.ShipId);
                     break;
                 case RepairsInterruptedEvent i:
-                    _hud.SetMessage($"{NameOf(i.ShipId)} 损管被打断");
+                    _hud.SetMessage($"{NameOf(i.ShipId)} 修复被打断");
                     RedrawShip(i.ShipId);
                     break;
                 case MinePlacedEvent m:

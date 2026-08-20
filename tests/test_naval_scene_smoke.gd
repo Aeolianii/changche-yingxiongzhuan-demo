@@ -341,6 +341,10 @@ func _init() -> void:
 			push_error("FAIL: token def covers unexpected action id: %s" % id)
 			quit(1)
 			return
+	if not controller.AttackTokenText("damage_control").begins_with("修\n复\n×"):
+		push_error("FAIL: battle damage-control command must be displayed as 修复")
+		quit(1)
+		return
 	for id: String in expected_ids:
 		if not controller.AllAttackTokenActionIds().has(id):
 			push_error("FAIL: token def missing action id: %s" % id)

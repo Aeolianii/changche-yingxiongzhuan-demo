@@ -149,10 +149,8 @@ func _build_interface() -> void:
 	_fog_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fog_material := ShaderMaterial.new()
 	fog_material.shader = MAP_FOG_SOFT_EDGE_SHADER
-	fog_material.set_shader_parameter("fog_tint", Color(0.93, 0.97, 0.95, 1.0))
 	fog_material.set_shader_parameter("concealment_texture", SEA_CONCEALMENT_TEXTURE)
 	fog_material.set_shader_parameter("concealment_tint", Color(0.05, 0.56, 0.68, 1.0))
-	fog_material.set_shader_parameter("fog_opacity", 0.82)
 	fog_material.set_shader_parameter("edge_warp_texels", 7.0)
 	fog_material.set_shader_parameter("edge_irregularity", 0.46)
 	_fog_layer.material = fog_material
@@ -217,9 +215,7 @@ func _map_position(world_position: Vector2) -> Vector2:
 
 
 func _refresh_map_content_rect() -> void:
-	var content_scale := minf(MAP_VIEW_SIZE.x / _world_size.x, MAP_VIEW_SIZE.y / _world_size.y)
-	var content_size := _world_size * content_scale
-	_map_content_rect = Rect2((MAP_VIEW_SIZE - content_size) * 0.5, content_size)
+	_map_content_rect = Rect2(Vector2.ZERO, MAP_VIEW_SIZE)
 
 
 func _configure_fog_layer() -> void:
@@ -229,9 +225,9 @@ func _configure_fog_layer() -> void:
 		_fog_layer.hide()
 		return
 	_fog_layer.texture = _fog_of_war.call("get_fog_texture") as Texture2D
-	if _fog_of_war.has_method("get_fog_stamp_texture"):
+	if _fog_of_war.has_method("get_map_fog_stamp_texture"):
 		var fog_material := _fog_layer.material as ShaderMaterial
-		fog_material.set_shader_parameter("mist_texture", _fog_of_war.call("get_fog_stamp_texture") as Texture2D)
+		fog_material.set_shader_parameter("mist_texture", _fog_of_war.call("get_map_fog_stamp_texture") as Texture2D)
 	_fog_layer.position = _map_content_rect.position
 	_fog_layer.size = _map_content_rect.size
 	_fog_layer.show()
@@ -241,7 +237,7 @@ func _rebuild_map_chunks(map_chunks: Array) -> void:
 	for child in _map_texture_layer.get_children():
 		child.free()
 	var chunks := map_chunks
-	var content_scale := _map_content_rect.size.x / _world_size.x
+	var content_scale := _map_content_rect.size / _world_size
 	var distortion_noise := _create_water_noise_texture(0.025, 3, 0.5)
 	for index in range(chunks.size()):
 		var chunk_data: Dictionary = chunks[index]

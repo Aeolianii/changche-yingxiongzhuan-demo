@@ -7,6 +7,7 @@ const FOG_CELL_SIZE := 8.0
 const WORLD_SCREENSHOT_PATH := "res://.godot/sea_fog_world_preview.png"
 const MAP_SCREENSHOT_PATH := "res://.godot/sea_fog_map_preview.png"
 const ROUTE_SCREENSHOT_PATH := "res://.godot/sea_fog_route_preview.png"
+const STAMP_SCREENSHOT_PATH := "res://.godot/sea_fog_stamp_preview.png"
 
 var failures: Array[String] = []
 
@@ -66,14 +67,19 @@ func _run() -> void:
 	var player := scene.get_node("World/Player") as CanvasItem
 	_expect(world_overlay != null and world_overlay.texture != null, "FogOfWar must render a world-space exploration mask.")
 	var fog_stamp_texture := fog.call("get_fog_stamp_texture") as Texture2D
+	var map_fog_stamp_texture := fog.call("get_map_fog_stamp_texture") as Texture2D
 	var visual_fog_grid_size := fog.call("get_visual_fog_grid_size") as Vector2i
 	var fog_stamp_stats := fog.call("get_fog_stamp_stats_for_test") as Dictionary
 	_expect(fog_stamp_texture != null, "Sea exploration must precompose the naval white-ink stamps into a stable world-space texture.")
-	_expect(is_equal_approx(float(fog.call("get_visual_fog_cell_world_size")), 224.0), "Sea fog presentation must use a coarse visual grid without changing the 8-pixel reveal grid.")
-	_expect(visual_fog_grid_size.x > 1 and visual_fog_grid_size.y > 1 and visual_fog_grid_size.x < 40 and visual_fog_grid_size.y < 30, "The visual fog grid must stay coarse enough for broad naval-style brush stamps.")
+	_expect(map_fog_stamp_texture != null and map_fog_stamp_texture.get_size() == Vector2(870, 510), "Full sea map must precompose naval fog at its native 870x510 canvas size.")
+	_expect(is_equal_approx(float(fog.call("get_visual_fog_cell_world_size")), 26.0), "Sea fog presentation must use the exact naval-battle 26-pixel cell size without changing the 8-pixel reveal grid.")
+	_expect(visual_fog_grid_size.x > 150 and visual_fog_grid_size.y > 90, "The naval fog grid must provide many battle-scale placements instead of a few oversized cloud blocks.")
 	_expect(int(fog_stamp_stats.get("transparent_count", 0)) > 0, "Precomposed fog must retain small transparent holes that reveal the sea beneath.")
 	_expect(int(fog_stamp_stats.get("light_count", 0)) > 0 and int(fog_stamp_stats.get("dense_count", 0)) > 0, "Precomposed fog must contain both light and dense overlap regions.")
 	_expect(float(fog_stamp_stats.get("maximum_alpha", 0.0)) > 0.45, "Overlapping naval fog stamps must form visibly denser regions.")
+	if DisplayServer.get_name() != "headless":
+		var stamp_screenshot_error := map_fog_stamp_texture.get_image().save_png(STAMP_SCREENSHOT_PATH)
+		_expect(stamp_screenshot_error == OK, "The shared naval fog-stamp field preview could not be saved.")
 	var world_concealment_texture: Texture2D
 	if world_overlay != null:
 		_expect(world_overlay.z_index < player.z_index, "World fog must render below the player ship.")
@@ -89,9 +95,9 @@ func _run() -> void:
 		_expect(world_mist_texture == fog_stamp_texture, "World exploration must sample the shared world-space naval fog-stamp texture.")
 		_expect(world_concealment_texture != null and world_concealment_texture.resource_path.ends_with("sea_concealment_ink_pixel_v1.png"), "Unexplored world terrain must use the refined high-resolution ink-sea texture.")
 		_expect((world_fog_material.get_shader_parameter("concealment_tint") as Color).is_equal_approx(Color(0.05, 0.56, 0.68, 1.0)), "The concealment sea must retain the established overworld blue at the exploration boundary.")
-		_expect(float(world_fog_material.get_shader_parameter("fog_opacity")) < 0.9, "Naval mist must leave the refined replacement sea subtly readable beneath it.")
 		_expect("layered_mist" not in world_fog_material.shader.code and "fog_base_alpha" not in world_fog_material.shader.code, "World fog must preserve stamp holes instead of filling them with global layered mist.")
 		_expect("texture(mist_texture, UV)" in world_fog_material.shader.code, "World fog shader must sample each precomposed naval stamp at its stable world position.")
+		_expect("mix(concealed_sea, mist.rgb, mist.a)" in world_fog_material.shader.code and "fog_opacity" not in world_fog_material.shader.code, "World fog must use the naval stamp's baked battle tint and alpha without another global fog multiplier.")
 		_expect("concealed_sea" in world_fog_material.shader.code and "COLOR = vec4(concealed_fog, softened_alpha)" in world_fog_material.shader.code, "World fog holes must reveal an opaque sea concealment layer instead of unknown islands beneath.")
 		_expect("texture(concealment_texture, UV)" in world_fog_material.shader.code and "fract(UV * concealment_uv_scale)" not in world_fog_material.shader.code, "The refined concealment sea must cover the world once without repeated tiles.")
 
@@ -102,13 +108,14 @@ func _run() -> void:
 	var map_screen := hud.get_node("SeaMapScreen") as Control
 	var map_fog := map_screen.get_node_or_null("MapPanel/MapViewport/FogLayer") as TextureRect
 	_expect(map_fog != null and map_fog.texture != null, "Full sea map must display the shared fog texture.")
+	_expect(map_fog.position.is_equal_approx(Vector2.ZERO) and map_fog.size.is_equal_approx(Vector2(870, 510)), "Full sea-map content and fog must fill the entire inner frame without top or bottom letterboxing.")
 	var map_fog_material := map_fog.material as ShaderMaterial
 	_expect(map_fog_material != null and map_fog_material.shader.resource_path.ends_with("sea_map_fog_soft_edge.gdshader"), "Full sea map alone must soften and round the shared fog edge.")
 	_expect(float(map_fog_material.get_shader_parameter("edge_warp_texels")) >= 4.0, "Full sea map fog must visibly warp straight exploration edges.")
 	_expect(float(map_fog_material.get_shader_parameter("edge_irregularity")) >= 0.3, "Full sea map fog must vary its edge threshold with stable ink noise.")
 	var map_mist_texture := map_fog_material.get_shader_parameter("mist_texture") as Texture2D
 	var map_concealment_texture := map_fog_material.get_shader_parameter("concealment_texture") as Texture2D
-	_expect(map_mist_texture == fog_stamp_texture, "Full sea map and world view must reuse the same stable naval fog-stamp field.")
+	_expect(map_mist_texture == map_fog_stamp_texture and map_mist_texture != fog_stamp_texture, "Full sea map must use its native-pixel naval fog field instead of shrinking the world field into a solid mass.")
 	_expect(map_concealment_texture == world_concealment_texture, "Full sea map and world view must reuse the same ink-sea concealment texture.")
 	_expect((map_fog_material.get_shader_parameter("concealment_tint") as Color).is_equal_approx(Color(0.05, 0.56, 0.68, 1.0)), "Full sea map must use the same established overworld-blue concealment base.")
 	_expect("layered_mist" not in map_fog_material.shader.code and "fog_base_alpha" not in map_fog_material.shader.code, "Full sea-map fog must not restore the uniform white base that erased texture depth.")

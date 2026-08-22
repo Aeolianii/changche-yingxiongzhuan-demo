@@ -9,7 +9,7 @@ const WAKE_ATLAS := preload("res://assets/sprites/sea_overworld/ship_wake_fx_atl
 
 const DIRECTION_VECTORS := [Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2.UP]
 const DIRECTION_ROTATIONS := [0.0, PI * 0.5, -PI * 0.5, PI]
-const HERO_OFFSETS := [Vector2(0, -16), Vector2(-3, -15), Vector2(3, -15), Vector2(0, -17)]
+const HERO_OFFSETS := [Vector2(3, -16), Vector2(-3, -15), Vector2(3, -15), Vector2(-9, -17)]
 const SHIP_FRAME_Y_OFFSETS := [-98.0, 0.0]
 const WAKE_OFFSET := 62.0
 const SIDE_SPLASH_OFFSET := 3.0

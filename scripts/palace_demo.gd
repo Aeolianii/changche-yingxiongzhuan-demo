@@ -22,7 +22,8 @@ const AUDIENCE_LINES := [
 	"臣领旨！定当筑水师、固海防、清海寇、复海岛、安万民、通贡路！海疆不平，臣绝不北归！",
 ]
 
-const SOLDIER_PORTRAIT := preload("res://assets/characters/soldier/picture.png")
+const ATTENDANT_PORTRAIT := preload("res://assets/characters/attendant/picture.png")
+const EMPEROR_PORTRAIT := preload("res://assets/characters/emperor/picture.png")
 const GENERAL_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
 const ATTENDANT_OUTSIDE_TARGET := Vector2(710.0, 832.0)
 const ATTENDANT_INSIDE_TARGET := Vector2(690.0, 350.0)
@@ -219,7 +220,7 @@ func _on_interaction_pressed() -> void:
 	match story_state:
 		StoryState.WAIT_TALK:
 			story_state = StoryState.SUMMON_DIALOGUE
-			_show_character_dialogue("伏波大将军，陛下有旨，宣您即刻入殿觐见。", "内侍", SOLDIER_PORTRAIT, false)
+			_show_character_dialogue("伏波大将军，陛下有旨，宣您即刻入殿觐见。", "内侍", ATTENDANT_PORTRAIT, false)
 		StoryState.GO_TO_EMPEROR:
 			story_state = StoryState.AUDIENCE_DIALOGUE
 			audience_index = 0
@@ -229,7 +230,7 @@ func _on_interaction_pressed() -> void:
 
 func _show_audience_dialogue() -> void:
 	if audience_index == 0:
-		_show_character_dialogue(AUDIENCE_LINES[audience_index], "皇帝", null, false, "帝")
+		_show_character_dialogue(AUDIENCE_LINES[audience_index], "皇帝", EMPEROR_PORTRAIT, false)
 	else:
 		_show_character_dialogue(AUDIENCE_LINES[audience_index], "水师主帅", GENERAL_PORTRAIT, true)
 

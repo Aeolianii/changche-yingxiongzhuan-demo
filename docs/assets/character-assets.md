@@ -29,27 +29,25 @@
 - `magistrate`：县令角色资源，不再用于第一幕皇帝世界小人。
 - `soldier`：太监占位；正式太监素材到位后只替换角色资源，不改剧情流程。
 
-## 年轻水师主角正式世界素材
+## 水师主角正式世界素材
 
-- 正式路径：`assets/characters/protagonist/standard/{idle,walk}/{down,left,right,up}/1.png..4.png`。
-- 生成与追溯包保留在 `assets/characters/protagonist_candidate/`。
-- 单帧固定为 64×64 RGBA，人物可见高度约 48–50 像素，脚底统一位于 y=61–63，不新增运行时缩放例外。
-- 待机和行走均为 down、left、right、up 四方向，每方向 4 帧。
-- 角色为年轻无须的中国水师将领：黑色束发、蓝灰轻甲、朱红短披肩和中式佩刀；不采用欧洲板甲、日本武士甲或老年灰须形象。
-- 最终 32 帧脚底统一位于 y=63；透明动作表、原始生图、处理元数据与 QC 记录保存在候选包的 `generation/`。
-- 正式目录每方向只保留 4 帧；旧 LPC 待机/行走帧由 Git 历史恢复，不在项目内额外复制备份。
+- 正式路径仍为 `assets/characters/protagonist/standard/{idle,walk}/{down,left,right,up}/`，运行时单帧继续固定为 64×64 RGBA，人物脚底统一位于 y=63，不新增运行时缩放例外。
+- 2026-08-22 起使用 `assets/8.22素材更新/主角/` 的黑金甲、朱红披风年轻主帅：面朝下待机使用 16 帧；四方向移动分别使用源目录提供的完整帧序列。由于未提供侧向/背向独立待机，停止移动后四个朝向统一复用正式面朝下待机序列。
+- 256/512 像素源帧只作为交付源图；接入时按透明内容等比缩放到现有约 50 像素可见高度并统一脚底，不拉伸、不改变动作顺序。
+- 海上大地图 `protagonist_chibi_4dir_v1.png` 同步取用新主角四方向首帧，保持既有四格图集、甲板站位和显示尺度。
 
-## 场景一对话立绘
+## 对话立绘
 
-- `assets/characters/protagonist/picture.png`：600×600 水师主帅半身立绘。
-- `assets/characters/soldier/picture.png`：600×600 士兵半身立绘，场景一暂用于内侍对白。
-- 皇帝暂不使用人物图片，以暗红金边“帝”字卡作为对话占位符。
-- 立绘使用透明背景、保持宽高比缩放；不得拉伸到改变人物比例。
+- `assets/characters/protagonist/picture.png`：水师主帅新立绘。
+- `assets/characters/soldier/picture.png`：水师士兵新立绘。
+- `assets/characters/attendant/picture.png`：传令太监新立绘；世界小人动画继续复用现有角色，不再与士兵共用对话立绘。
+- `assets/characters/emperor/picture.png`：皇帝新立绘，替代“帝”字占位卡。
+- `assets/characters/magistrate/picture.png`：广州县令新立绘。
+- `assets/sea_overworld/portraits/` 保存海霸天、海盗小兵、茶商与私盐商人的新对话立绘。
+- 所有对话立绘使用透明背景、保持宽高比缩放；以既有 `440×520` 人物区域为基准校准头肩和人物占比，不得拉伸、过度放大或缩得难以辨认。
 
 ## 皇帝世界角色素材
 
-- 路径：`assets/characters/emperor/standard/{idle,walk}/{up,left,down,right}/1.png..4.png`。
-- 每帧为 128×128 RGBA PNG，透明背景、共享脚底锚点；待机与行走分别成组。
-- 素材由 `agent-sprite-forge` 的 `generate2dsprite` 流程生成和后处理，是虚构朝廷人物，不声称复原真实历史皇帝。
-- 原始试产包通过确定性检查确认 32 张交付帧完整，输出边缘触碰和粘贴裁切均为零；集成时保留生成提示与比例/QC 元数据用于追溯。
-- 由于源画布大于 LPC 标准帧，Godot 只在皇帝实例上使用约 `0.55` 的最近邻缩放与既有脚底偏移，不重采样源文件。
+- 路径：`assets/characters/emperor/standard/{idle,walk}/{up,left,down,right}/`。
+- 第一幕实际使用的 `idle/down` 自 2026-08-22 起替换为 16 帧新皇帝待机序列；256×256 源帧确定性适配为 128×128 RGBA，人物脚底和可见高度继续匹配皇帝实例约 `0.55` 的既有缩放。
+- 未交付的新方向待机和行走动作继续保留旧帧；第一幕皇帝没有剧情移动，因此不混用两套动作。

@@ -13,6 +13,7 @@ const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/pictu
 const TEA_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图茶叶商人.png")
 const SALT_MERCHANT_PORTRAIT := preload("res://assets/sea_overworld/portraits/大地图私盐商人.png")
 const HAIBATIAN_PORTRAIT := preload("res://assets/sea_overworld/portraits/倭寇头目海霸天.png")
+const PIRATE_SOLDIER_PORTRAIT := preload("res://assets/sea_overworld/portraits/海盗小兵.png")
 const SEA_MONSTER_PORTRAITS: Array[Texture2D] = [
 	preload("res://assets/sea_overworld/portraits/海怪1.png"),
 	preload("res://assets/sea_overworld/portraits/海怪2.png"),
@@ -786,18 +787,12 @@ func _on_pirate_battle_requested(pirate: SeaOverworldPirate) -> void:
 	player.controls_enabled = false
 	interaction_prompt.hide()
 	_set_pirates_navigation_enabled(false)
-	# CHG-20260817：海盗接触 → 锁定海图并弹 4 个难度选项；公式难度按玩家舰队强度计算。
+	# CHG-20260822：先由水师士兵报告遇敌，再切到海盗小兵叫阵并显示原四档难度。
 	_event_dialogue.present(
 		"水师士兵",
-		"前方海盗船已逼近我军，双方即将接战！",
+		"将军，前方遇敌！海盗船正朝我军逼近！",
 		SOLDIER_PORTRAIT,
-		[
-			{"id": &"battle_difficulty_1", "text": "迎战（难度一）"},
-			{"id": &"battle_difficulty_2", "text": "迎战（难度二）"},
-			{"id": &"battle_difficulty_3", "text": "迎战（难度三）"},
-			{"id": &"battle_formula", "text": "迎战（按我舰强度）"},
-		],
-		"选择战斗难度"
+		[{"id": &"hear_pirate_taunt", "text": "传令全军戒备"}]
 	)
 
 
@@ -1507,6 +1502,19 @@ func _open_sea_monster_event(area: Area2D) -> void:
 
 func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 	match option_id:
+		&"hear_pirate_taunt":
+			_event_dialogue.present(
+				"海盗小兵",
+				"兄弟们，抄家伙！狠狠干他们一票，把船和货全抢过来！",
+				PIRATE_SOLDIER_PORTRAIT,
+				[
+					{"id": &"battle_difficulty_1", "text": "迎战（难度一）"},
+					{"id": &"battle_difficulty_2", "text": "迎战（难度二）"},
+					{"id": &"battle_difficulty_3", "text": "迎战（难度三）"},
+					{"id": &"battle_formula", "text": "迎战（按我舰强度）"},
+				],
+				"选择战斗难度"
+			)
 		&"finish_pirate_placeholder":
 			_finish_pirate_placeholder()
 		# CHG-20260817：海盗战 4 个难度入口——选择后生成对应难度随机遭遇并进入正式海战。

@@ -582,9 +582,12 @@ func _build_sprite_frames(asset_dir: String) -> SpriteFrames:
 	for default_animation in frames.get_animation_names():
 		frames.remove_animation(default_animation)
 
+	var is_protagonist := asset_dir.get_file() == "protagonist"
+	var frame_limit := 24 if is_protagonist else 4
+	var idle_fps := 6.0 if is_protagonist else 2.5
 	for direction in ["down", "left", "right", "up"]:
-		_add_animation_frames(frames, "idle_%s" % direction, "%s/standard/idle/%s" % [asset_dir, direction], 4, 2.5)
-		_add_animation_frames(frames, "walk_%s" % direction, "%s/standard/walk/%s" % [asset_dir, direction], 4, 10.0)
+		_add_animation_frames(frames, "idle_%s" % direction, "%s/standard/idle/%s" % [asset_dir, direction], frame_limit, idle_fps)
+		_add_animation_frames(frames, "walk_%s" % direction, "%s/standard/walk/%s" % [asset_dir, direction], frame_limit, 10.0)
 	return frames
 
 

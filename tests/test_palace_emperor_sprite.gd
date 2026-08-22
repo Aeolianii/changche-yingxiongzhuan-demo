@@ -30,7 +30,8 @@ func _run() -> void:
 			var animation_name := "%s_%s" % [state, direction]
 			_expect(sprite.sprite_frames.has_animation(animation_name), "Missing %s." % animation_name)
 			if sprite.sprite_frames.has_animation(animation_name):
-				_expect(sprite.sprite_frames.get_frame_count(animation_name) == 4, "%s must have four frames." % animation_name)
+				var expected_count := 16 if animation_name == "idle_down" else 4
+				_expect(sprite.sprite_frames.get_frame_count(animation_name) == expected_count, "%s must have %d frames." % [animation_name, expected_count])
 
 	if DisplayServer.get_name() != "headless":
 		await create_timer(1.0).timeout

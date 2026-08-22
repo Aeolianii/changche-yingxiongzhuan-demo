@@ -1,12 +1,13 @@
 extends SceneTree
 
-# CHG-20260817：海盗战入口冒烟——海盗接触弹 4 个难度选项、公式难度按舰队映射、
+# CHG-20260822：海盗战入口冒烟——水师报告后海盗小兵叫阵，再弹 4 个难度选项；公式难度按舰队映射、
 # 选择难度后写入海盗战请求 meta（供 C# NavalDeploymentController 消费生成随机遭遇）。
 # headless 运行：godot --headless --script res://tests/test_sea_overworld_pirate_battle.gd
 
 const SEA_SCENE := preload("res://scenes/sea_overworld/sea_overworld.tscn")
 const REQUEST_META := "sea_pirate_battle_request"
 const RETURN_META := "sea_pirate_battle_return_context"
+const PIRATE_SOLDIER_PORTRAIT := "res://assets/sea_overworld/portraits/海盗小兵.png"
 
 var failures: Array[String] = []
 
@@ -52,10 +53,18 @@ func _run() -> void:
 	for _frame in range(3):
 		await process_frame
 
-	# 4 个难度选项对话框
+	# 水师先报告前方遇敌。
 	var dialogue := scene.get("_event_dialogue") as FieldEventDialogue
-	_expect(dialogue.visible and "即将接战" in dialogue.dialogue_label.text, "Touching a pirate must open the battle difficulty dialogue.")
+	_expect(dialogue.visible and "前方遇敌" in dialogue.dialogue_label.text, "Touching a pirate must first show the naval soldier warning.")
 	var option_box := dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/OptionBox") as VBoxContainer
+	_expect(option_box.get_child_count() == 1, "The naval soldier warning must expose one continue option.")
+	scene.call("_on_event_dialogue_option_selected", &"hear_pirate_taunt")
+	await process_frame
+	_expect(dialogue.speaker_label.text == "海盗小兵", "The second pirate encounter line must be spoken by the pirate soldier.")
+	_expect("抄家伙" in dialogue.dialogue_label.text and "干他们一票" in dialogue.dialogue_label.text, "The pirate soldier must call the crew to arms.")
+	_expect(dialogue.portrait_image.texture != null and dialogue.portrait_image.texture.resource_path == PIRATE_SOLDIER_PORTRAIT, "The pirate soldier line must use the supplied portrait.")
+
+	# 海盗叫阵后显示 4 个难度选项。
 	_expect(option_box.get_child_count() == 4, "The battle dialogue must expose exactly four difficulty options.")
 	var option_texts: Array[String] = []
 	for child in option_box.get_children():

@@ -1,7 +1,8 @@
 extends SceneTree
 
 const SCENE_ONE_PATH := "res://scenes/palace/palace_demo.tscn"
-const SOLDIER_PORTRAIT_PATH := "res://assets/characters/soldier/picture.png"
+const ATTENDANT_PORTRAIT_PATH := "res://assets/characters/attendant/picture.png"
+const EMPEROR_PORTRAIT_PATH := "res://assets/characters/emperor/picture.png"
 const GENERAL_PORTRAIT_PATH := "res://assets/characters/protagonist/picture.png"
 const DIALOGUE_BACKDROP_PATH := "res://assets/ui/dialogue/ink_dialogue_backdrop.png"
 const NAMEPLATE_PATH := "res://assets/ui/dialogue/ink_speaker_nameplate.png"
@@ -28,19 +29,18 @@ func _run_tests() -> void:
 	var portrait_display := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay") as Control
 	var portrait_image := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay/PortraitImage") as TextureRect
 	var placeholder_frame := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay/PlaceholderFrame") as ColorRect
-	var placeholder_text := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay/PlaceholderFrame/PlaceholderInner/PlaceholderText") as Label
 	var name_text := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay/NamePlate/NameText") as Label
 	var name_plate := scene_one.get_node_or_null("UI/Overlay/PortraitDisplay/NamePlate") as TextureRect
 	var dialogue_panel := scene_one.get_node_or_null("UI/Overlay/DialoguePanel") as TextureRect
 	var dialogue_text := scene_one.get_node_or_null("UI/Overlay/DialoguePanel/DialogueText") as Label
 
-	if portrait_display == null or portrait_image == null or placeholder_frame == null or placeholder_text == null or name_text == null or name_plate == null or dialogue_panel == null or dialogue_text == null:
+	if portrait_display == null or portrait_image == null or placeholder_frame == null or name_text == null or name_plate == null or dialogue_panel == null or dialogue_text == null:
 		failures.append("Scene1 portrait UI nodes are incomplete.")
 	elif not scene_one.has_method("_show_character_dialogue"):
 		failures.append("Scene1 does not expose the character dialogue portrait behavior.")
 	else:
-		_verify_image_portrait(scene_one, portrait_display, portrait_image, placeholder_frame, name_text, SOLDIER_PORTRAIT_PATH, "内侍", false)
-		_verify_placeholder(scene_one, portrait_display, portrait_image, placeholder_frame, placeholder_text, name_text)
+		_verify_image_portrait(scene_one, portrait_display, portrait_image, placeholder_frame, name_text, ATTENDANT_PORTRAIT_PATH, "内侍", false)
+		_verify_image_portrait(scene_one, portrait_display, portrait_image, placeholder_frame, name_text, EMPEROR_PORTRAIT_PATH, "皇帝", false)
 		_verify_image_portrait(scene_one, portrait_display, portrait_image, placeholder_frame, name_text, GENERAL_PORTRAIT_PATH, "水师主帅", true)
 		_expect(dialogue_panel.texture.resource_path == DIALOGUE_BACKDROP_PATH, "Scene1 must use the generated ink dialogue backdrop.")
 		_expect(name_plate.texture.resource_path == NAMEPLATE_PATH, "Scene1 must use the generated ink speaker nameplate.")
@@ -80,16 +80,6 @@ func _verify_image_portrait(scene_one: Node, portrait_display: Control, portrait
 	_expect(portrait_image.texture == portrait, "%s should use the documented picture.png." % speaker)
 	_expect(name_text.text == speaker, "%s name plate is incorrect." % speaker)
 	_expect(is_equal_approx(portrait_display.anchor_left, 0.0 if portrait_on_left else 1.0), "%s portrait is on the wrong side." % speaker)
-
-
-func _verify_placeholder(scene_one: Node, portrait_display: Control, portrait_image: TextureRect, placeholder_frame: ColorRect, placeholder_text: Label, name_text: Label) -> void:
-	scene_one.call("_show_character_dialogue", "皇帝占位测试", "皇帝", null, false, "帝")
-	_expect(portrait_display.visible, "Emperor placeholder should be visible.")
-	_expect(not portrait_image.visible, "Emperor placeholder should not show an image portrait.")
-	_expect(placeholder_frame.visible, "Emperor placeholder card should be visible.")
-	_expect(placeholder_text.text == "帝", "Emperor placeholder glyph should be 帝.")
-	_expect(name_text.text == "皇帝", "Emperor name plate is incorrect.")
-	_expect(is_equal_approx(portrait_display.anchor_left, 1.0), "Emperor placeholder should be on the right.")
 
 
 func _verify_narration_hides_portrait(scene_one: Node, portrait_display: Control) -> void:

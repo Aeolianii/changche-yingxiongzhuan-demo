@@ -26,12 +26,17 @@ func _run() -> void:
 	_expect(sprite.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Player must use nearest filtering.")
 	_expect(sprite.scale.is_equal_approx(Vector2.ONE), "Player must keep native 1.0 scale.")
 	_expect(sprite.position.is_equal_approx(Vector2(0.0, -25.0)), "Player foot offset changed.")
+	var expected_counts := {
+		"idle_down": 16, "idle_left": 16, "idle_right": 16, "idle_up": 16,
+		"walk_down": 11, "walk_left": 20, "walk_right": 20, "walk_up": 8,
+	}
 	for state in ["idle", "walk"]:
 		for direction in ["up", "left", "down", "right"]:
 			var animation_name := "%s_%s" % [state, direction]
 			_expect(sprite.sprite_frames.has_animation(animation_name), "Missing %s." % animation_name)
 			if sprite.sprite_frames.has_animation(animation_name):
-				_expect(sprite.sprite_frames.get_frame_count(animation_name) == 4, "%s must have four frames." % animation_name)
+				var expected_count := int(expected_counts[animation_name])
+				_expect(sprite.sprite_frames.get_frame_count(animation_name) == expected_count, "%s must have %d frames." % [animation_name, expected_count])
 				var texture := sprite.sprite_frames.get_frame_texture(animation_name, 0)
 				_expect(texture != null and texture.get_size().is_equal_approx(Vector2(64.0, 64.0)), "%s must use 64x64 frames." % animation_name)
 

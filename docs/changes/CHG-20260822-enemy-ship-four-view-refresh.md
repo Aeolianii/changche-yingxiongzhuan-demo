@@ -34,11 +34,12 @@
 - Godot 4.7.1 .NET 重新导入 12 张 PNG：通过，退出码 `0`。
 - `dotnet build ChangcheHeroes.csproj --no-restore --nologo`：通过，`0` 警告、`0` 错误。
 - Godot headless `tests/test_naval_scene_smoke.gd`：通过，确认海战场景、敌舰队生成与运行时资源加载未回归。
+- Godot headless/windowed `tests/test_enemy_ship_directional_assets.gd`：直接加载并渲染三船型四方向资源，检查透明边距、有效像素和方向长宽比。
 - PNG 合同检查：12 张贴图均有有效 Alpha；东/西贴图宽大于高，南/北贴图高大于宽；透明边距完整。
 - 四方向总览检查：三种船型的旗帜、船帆和船体均完整，未出现中间木质甲板俯视图或相邻行残片。
 - 窗口 smoke 在既有“点击逃跑格触发逃跑”断言处连续两次失败；该断言发生在敌舰素材加载之后，headless 同脚本通过，本次未修改逃跑、输入或移动代码。
 
 ## 最终核对
 
-- Files changed: `assets/naval/battle/ships/enemy_{transport|frigate|flagship}_{e|s|w|n}.png`、`docs/design/art-direction.md`、本变更记录。
+- Files changed: `assets/naval/battle/ships/enemy_{transport|frigate|flagship}_{e|s|w|n}.png`、`tests/test_enemy_ship_directional_assets.gd`、`docs/design/art-direction.md`、`docs/qa/playtest.md`、本变更记录。
 - Limitations/follow-ups: 源图第三行大型白帆商船没有对应当前运行时敌舰类型，按范围保留未接入；窗口 smoke 的逃跑格时序失败作为既有测试问题单独处理。

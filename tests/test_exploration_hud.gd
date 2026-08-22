@@ -101,8 +101,14 @@ func _verify_component_contract() -> void:
 	var player_status := hud.get_node("PlayerStatus") as Control
 	_expect(player_status.size == Vector2(495, 192), "Player status must be enlarged by 50 percent.")
 	var portrait_frame := hud.get_node("PlayerStatus/PortraitFrame") as Control
-	_expect(portrait_frame.get_node_or_null("ProtagonistPortrait") != null, "Player portrait is missing.")
+	var protagonist_portrait := portrait_frame.get_node_or_null("ProtagonistPortrait") as Polygon2D
+	_expect(protagonist_portrait != null, "Player portrait is missing.")
 	_expect(portrait_frame.position.x >= 33.0, "Player portrait must move right into the generated diamond center.")
+	if protagonist_portrait != null:
+		var uv_rect := _points_rect(protagonist_portrait.uv)
+		_expect(uv_rect.position.is_equal_approx(Vector2(120.0, 20.0)), "Player HUD portrait must start at the documented upper-body crop.")
+		_expect(uv_rect.size.is_equal_approx(Vector2(360.0, 360.0)), "Player HUD portrait must magnify the upper body instead of fitting the full 600px figure.")
+		_expect(uv_rect.end.y <= 380.0, "Player HUD portrait must exclude the protagonist's lower body.")
 	_expect(hud.get_node_or_null("PlayerStatus/StatusSeal") == null, "Player status must not display the lower-right status seal.")
 	var name_plate := hud.get_node("PlayerStatus/NamePlate") as Control
 	_expect(name_plate.position.y >= 60.0, "Player title block must sit inside the generated paper frame.")
@@ -569,6 +575,17 @@ func _verify_scene_two_visibility() -> void:
 
 	scene_two.queue_free()
 	await process_frame
+
+
+func _points_rect(points: PackedVector2Array) -> Rect2:
+	if points.is_empty():
+		return Rect2()
+	var minimum := points[0]
+	var maximum := points[0]
+	for point in points:
+		minimum = minimum.min(point)
+		maximum = maximum.max(point)
+	return Rect2(minimum, maximum - minimum)
 
 
 func _expect(condition: bool, message: String) -> void:

@@ -3,6 +3,7 @@ extends Control
 const FUBO_QUEST_PROJECTION := preload("res://scripts/fubo_guling/fubo_quest_projection.gd")
 
 const PROTAGONIST_PORTRAIT := preload("res://assets/characters/protagonist/picture.png")
+const PROTAGONIST_HUD_CROP := Rect2(120, 20, 360, 360)
 const EXPLORATION_STATUS_FRAME := preload("res://assets/ui/exploration_hud/player_status_frame.png")
 const EXPLORATION_QUEST_FRAME := preload("res://assets/ui/exploration_hud/quest_tracker_frame.png")
 const EXPLORATION_FUNCTION_BUTTON := preload("res://assets/ui/exploration_hud/function_button.png")
@@ -290,12 +291,12 @@ func _build_status_panel() -> void:
 	portrait.polygon = PackedVector2Array([
 		Vector2(70.5, 1.5), Vector2(139.5, 70.5), Vector2(70.5, 139.5), Vector2(1.5, 70.5)
 	])
-	var portrait_size := PROTAGONIST_PORTRAIT.get_size()
+	var portrait_crop := PROTAGONIST_HUD_CROP
 	portrait.uv = PackedVector2Array([
-		Vector2(portrait_size.x * 0.5, 0),
-		Vector2(portrait_size.x, portrait_size.y * 0.5),
-		Vector2(portrait_size.x * 0.5, portrait_size.y),
-		Vector2(0, portrait_size.y * 0.5),
+		portrait_crop.position + Vector2(portrait_crop.size.x * 0.5, 0),
+		portrait_crop.position + Vector2(portrait_crop.size.x, portrait_crop.size.y * 0.5),
+		portrait_crop.position + Vector2(portrait_crop.size.x * 0.5, portrait_crop.size.y),
+		portrait_crop.position + Vector2(0, portrait_crop.size.y * 0.5),
 	])
 	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	portrait_frame.add_child(portrait)

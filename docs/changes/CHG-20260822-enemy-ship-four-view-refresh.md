@@ -39,6 +39,12 @@
 - 四方向总览检查：三种船型的旗帜、船帆和船体均完整，未出现中间木质甲板俯视图或相邻行残片。
 - 窗口 smoke 在既有“点击逃跑格触发逃跑”断言处连续两次失败；该断言发生在敌舰素材加载之后，headless 同脚本通过，本次未修改逃跑、输入或移动代码。
 
+## 方向修正（2026-08-22）
+
+- 用户实机确认敌军三格旗舰的舰艏、舰尾与逻辑朝向相反。
+- 已对调 `enemy_flagship_e/w` 与 `enemy_flagship_n/s` 的贴图内容；仅修正旗舰四方向标签，不改占格、位置、数值或其他船型素材。
+- 重新运行方向素材专项测试与海战场景 smoke，确认四张资源可加载且战斗场景无回归。
+
 ## 最终核对
 
 - Files changed: `assets/naval/battle/ships/enemy_{transport|frigate|flagship}_{e|s|w|n}.png`、`tests/test_enemy_ship_directional_assets.gd`、`docs/design/art-direction.md`、`docs/qa/playtest.md`、本变更记录。

@@ -247,6 +247,7 @@
 | 2026-08-20 / naval terrain stamp render 1 | Codex | 随机海战图可把林地源头、连续河道、草岸和海滩河口作为一枚 6×8 地貌整张绘制，覆盖区域不再堆叠单格占位图 | 48 种子连通/避让断言、Godot headless 与 Vulkan 专项测试、1344×896 实战预览 | 交付用户试玩并决定下一批印章类型 |
 | 2026-08-20 / naval terrain stamp render 2 | Codex | 河口印章改为与战场一致的低饱和灰青宣纸像素水墨：树冠归并成墨团、河水改为蓝灰、河口用透明横向墨纹接入海面 | PNG Alpha/色域抽查、Godot headless 专项回归、1344×896 Vulkan 实战预览 | 交付用户确认风格后扩展港口、小镇等印章 |
 | 2026-08-22 / enemy ship four-view refresh 1 | Codex | 敌方运输船、护卫舰、旗舰替换为用户四视图素材的东南西北 12 张方向贴图；两张源图的中间甲板俯视列未接入 | 12 张 PNG Alpha/方向比例检查、Godot 资源导入、C# 构建、headless 海战 smoke、四方向总览 | 交付用户试玩 |
+| 2026-08-22 / enemy flagship bow correction 1 | Codex | 对调敌军三格旗舰的东/西与南/北贴图，使画面舰艏和逻辑朝向一致 | 旗舰四方向总览、Godot 方向素材专项测试、headless 海战 smoke | 交付用户复核 |
 | 2026-08-22 / player ship four-view refresh 1 | Codex | 我方运输船、护卫舰、商船、旗舰替换为用户四视图素材；禁用第一/第三行俯视图，占格固定为 1/2/2/3 | 16 张 PNG Alpha/方向比例、四方向总览、舰型长度配置、C# 构建、海战 smoke | 交付用户试玩 |
 | 2026-08-22 / exploration HUD upper-body portrait 1 | Codex | 左上主角头像从缩小全身立绘改为放大的冠饰、头部、胸甲至腰部裁切，菱形框和右侧文字位置不变 | UV 裁切断言、Godot headless 与 1344×896 OpenGL 探索 HUD 截图 | 交付用户试玩 |
 

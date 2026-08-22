@@ -8,6 +8,7 @@ const MENU_SCREENSHOT_PATH := "res://.godot/system_menu_preview.png"
 const SETTINGS_SCREENSHOT_PATH := "res://.godot/settings_screen_preview.png"
 const QUEST_SCREENSHOT_PATH := "res://.godot/quest_screen_preview.png"
 const COMPLETED_QUEST_SCREENSHOT_PATH := "res://.godot/quest_screen_completed_preview.png"
+const INTERACTION_HIGHLIGHT_SCREENSHOT_PATH := "res://.godot/interaction_highlight_preview.png"
 
 var failures: Array[String] = []
 
@@ -440,6 +441,13 @@ func _verify_palace_visibility() -> void:
 	_expect(attendant_sprite.scale.is_equal_approx(attendant_normal_scale), "Scene one interaction highlight must not resize the NPC.")
 	_expect(attendant_sprite.modulate.is_equal_approx(attendant_normal_modulate), "Scene one interaction highlight must preserve the NPC colors.")
 	_expect(attendant_sprite.material is ShaderMaterial, "Scene one must highlight the nearby NPC with a silhouette outline.")
+	var highlight_material := attendant_sprite.material as ShaderMaterial
+	var highlight_shader_code := highlight_material.shader.code
+	_expect(highlight_shader_code.contains("vec4 base_color = COLOR;"), "Interaction outline must reuse Godot's already-textured COLOR so highlighted characters keep their original RGB.")
+	_expect(not highlight_shader_code.contains("texture(TEXTURE, UV) * COLOR"), "Interaction outline must not multiply the character texture twice.")
+	if DisplayServer.get_name() != "headless":
+		var highlight_screenshot_error := root.get_texture().get_image().save_png(INTERACTION_HIGHLIGHT_SCREENSHOT_PATH)
+		_expect(highlight_screenshot_error == OK, "Interaction highlight preview screenshot could not be saved.")
 	hud.call("set_main_task", "听取内侍传召")
 	await process_frame
 	var quest_button := hud.find_child("QuestButton", true, false) as Button

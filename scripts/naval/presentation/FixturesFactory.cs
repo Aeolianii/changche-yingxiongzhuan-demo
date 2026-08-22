@@ -75,6 +75,6 @@ public static class FixturesFactory
 
     public static ShipDefinition Merchant() => new(
         Id: "merchant", DisplayName: "商船", Cost: new ShipCost(5, 8, 5, 2000), MaxHp: 1000,
-        BaseArmor: 3, SpeedCap: SpeedTier.V4, LoadCapacity: 35, Length: 1, Passability: Passability.FreeAll,
+        BaseArmor: 3, SpeedCap: SpeedTier.V4, LoadCapacity: 35, Length: 2, Passability: Passability.FreeAll,
         WeaponSlots: 2, SkillSlots: 2, ArmorSlots: 2, BoardingDamage: 100, ArrowRainDamage: 70);
 }

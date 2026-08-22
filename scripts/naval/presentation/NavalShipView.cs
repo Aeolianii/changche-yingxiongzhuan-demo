@@ -279,7 +279,7 @@ public partial class NavalShipView : Node2D
         {
             "flagship" => "flagship",
             "frigate" => "frigate",
-            "merchant" => "transport",
+            "merchant" => "merchant",
             "transport" => "transport",
             "sea_monster" => "sea_monster",
             "sea_fish" => "sea_fish",

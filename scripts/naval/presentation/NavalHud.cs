@@ -349,7 +349,7 @@ public partial class NavalHud : CanvasLayer
         foreach (var node in DeliveryPanel.FindChildren("*", "Button", true, false))
             if (node is Button b) StylePanelButton(b);
         StyleSurrenderButton(RerollButton);
-        StyleSurrenderButton(ReturnToSeaButton);
+        StyleResultReturnButton(ReturnToSeaButton);
     }
 
     // UX-10：按钮统一样式 + 禁用焦点——按钮点击后不夺键盘焦点，方向键才能落到控制器 _UnhandledKeyInput
@@ -428,6 +428,25 @@ public partial class NavalHud : CanvasLayer
         style.Set("content_margin_top", 7.0f);
         style.Set("content_margin_bottom", 7.0f);
         return style;
+    }
+
+    private void StyleResultReturnButton(Button button)
+    {
+        button.CustomMinimumSize = new Vector2(250.0f, 60.0f);
+        button.FocusMode = Control.FocusModeEnum.None;
+        button.TextureFilter = CanvasItem.TextureFilterEnum.Nearest;
+        button.MouseDefaultCursorShape = Control.CursorShape.PointingHand;
+        button.AddThemeStyleboxOverride("normal", CategoryBrushStyle(Colors.White));
+        button.AddThemeStyleboxOverride("hover", CategoryBrushStyle(new Color(1.0f, 0.94f, 0.78f, 1.0f)));
+        button.AddThemeStyleboxOverride("pressed", CategoryBrushStyle(new Color(0.72f, 0.76f, 0.72f, 1.0f)));
+        button.AddThemeStyleboxOverride("focus", CategoryBrushStyle(Colors.White));
+        button.AddThemeFontOverride("font", InkWashTheme.Font());
+        button.AddThemeFontSizeOverride("font_size", 24);
+        button.AddThemeColorOverride("font_color", InkWashTheme.PaperLight);
+        button.AddThemeColorOverride("font_hover_color", new Color("f0c865"));
+        button.AddThemeColorOverride("font_pressed_color", Colors.White);
+        button.AddThemeColorOverride("font_outline_color", InkWashTheme.InkDeep);
+        button.AddThemeConstantOverride("outline_size", 4);
     }
 
     private void OnAttackTabPressed()
@@ -904,8 +923,8 @@ public partial class NavalHud : CanvasLayer
 
     private void LayoutResultButtons(bool rerollVisible)
     {
-        ReturnToSeaButton.OffsetLeft = rerollVisible ? 20.0f : -110.0f;
-        ReturnToSeaButton.OffsetRight = rerollVisible ? 230.0f : 110.0f;
+        ReturnToSeaButton.OffsetLeft = rerollVisible ? 20.0f : -125.0f;
+        ReturnToSeaButton.OffsetRight = rerollVisible ? 270.0f : 125.0f;
     }
 
     // 只读访问（headless 冒烟断言）：结算面板全文 / 重掷按钮 / 海盗战返回按钮可见。

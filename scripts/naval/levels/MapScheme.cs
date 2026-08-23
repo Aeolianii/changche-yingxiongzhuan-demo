@@ -446,6 +446,16 @@ public static class MapSchemeRegistry
                 "G......................E",
                 ".......................E",
                 ".......................E",
+            }).WithTerrainStamps(new[]
+            {
+                // 最终讨伐战左侧边界：以一张连续 1×14 岸带替代逐格草地贴图；
+                // 下层 TerrainType 仍保留为 Grass，碰撞、布阵与寻路规则不变。
+                new TerrainVisualStamp(
+                    Id: "hunt_stage3_left_coast_v1",
+                    TexturePath: "res://assets/naval/battle/terrain_stamps/hunt_stage3_left_coast_v1.png",
+                    Origin: new GridPos(0, 2),
+                    Width: 1,
+                    Height: 14),
             }),
             PlayerZone: new GridRect(1, 2, 5, 14),
             EnemyZone: new GridRect(21, 2, 2, 13),

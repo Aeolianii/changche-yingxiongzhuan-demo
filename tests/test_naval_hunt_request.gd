@@ -31,12 +31,20 @@ func _run() -> void:
 	await physics_frame
 
 	var deploy := demo.get_node("Deployment")
+	var grid := demo.get_node("Deployment/DeployGrid")
 	var controller := demo.get_node("Battle/BattleController")
 	_check(bool(controller.call("HuntBattleActive")), "The hunt request meta must activate the hunt battle session.")
 	_check(str(controller.call("HuntBattleStageId")) == "hunt_stage3", "The hunt session must carry the stage id (expected hunt_stage3).")
 	_check(bool(deploy.call("RandomEncounterActive")), "The hunt battle must build a random encounter.")
 	_check(str(deploy.call("RandomEncounterEnemyLabel")) == "倭寇大本营", "The encounter must resolve the wokou stronghold enemy config.")
 	_check(deploy.call("RandomEncounterPlayerFleetCount") > 0, "The encounter must carry a player fleet.")
+	_check(grid.call("TerrainStampCount") == 1, "The final hunt map must render one continuous left-coast terrain stamp.")
+	_check(grid.call("TerrainStampCoveredCellCount") == 14, "The final hunt left-coast stamp must cover exactly 1x14 cells.")
+	_check(bool(grid.call("TerrainStampTexturesReady")), "The final hunt left-coast terrain texture must be imported and loadable.")
+	if DisplayServer.get_name() != "headless":
+		var preview_path := "res://.godot/hunt_stage3_left_coast_preview.png"
+		var preview_error := root.get_texture().get_image().save_png(preview_path)
+		_check(preview_error == OK, "The final hunt terrain preview screenshot must be writable.")
 
 	# 返回上下文：保留发起方字段（玩家位置/农历日/阶段 id）并补结算结果（未结算默认平局 outcome=2）。
 	var context: Dictionary = controller.call("BuildHuntReturnContext")

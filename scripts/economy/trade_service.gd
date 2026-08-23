@@ -5,15 +5,18 @@ const CATALOG := preload("res://scripts/economy/item_catalog.gd")
 const ECONOMY := preload("res://scripts/economy/economy_state.gd")
 
 
-static func buy_item(state: Dictionary, item_id: String, quantity: int) -> Dictionary:
+static func buy_item(state: Dictionary, item_id: String, quantity: int, unit_price_override: int = -1) -> Dictionary:
 	if quantity <= 0:
 		return _fail("invalid_quantity")
 	var definition := CATALOG.item(item_id)
 	if definition.is_empty():
 		return _fail("unknown_item")
-	var price := int(definition.get("buy_price", 0))
-	if price <= 0:
+	var catalog_price := int(definition.get("buy_price", 0))
+	if catalog_price <= 0:
 		return _fail("not_for_sale")
+	var price := unit_price_override if unit_price_override >= 0 else catalog_price
+	if price <= 0:
+		return _fail("invalid_price")
 	var total := price * quantity
 	if int(state.get("pay", 0)) < total:
 		return _fail("insufficient_pay")
@@ -22,15 +25,21 @@ static func buy_item(state: Dictionary, item_id: String, quantity: int) -> Dicti
 	return {"ok": true, "cost": total}
 
 
-static func sell_item(state: Dictionary, item_id: String, quantity: int) -> Dictionary:
+static func sell_item(state: Dictionary, item_id: String, quantity: int, unit_price_override: int = -1) -> Dictionary:
 	if quantity <= 0:
 		return _fail("invalid_quantity")
 	var definition := CATALOG.item(item_id)
 	if definition.is_empty():
 		return _fail("unknown_item")
+	var catalog_price := int(definition.get("sell_price", 0))
+	if catalog_price <= 0:
+		return _fail("not_for_sale")
 	if int((state.get("items", {}) as Dictionary).get(item_id, 0)) < quantity:
 		return _fail("insufficient_stock")
-	var total := int(definition["sell_price"]) * quantity
+	var price := unit_price_override if unit_price_override >= 0 else catalog_price
+	if price <= 0:
+		return _fail("invalid_price")
+	var total := price * quantity
 	ECONOMY.remove_item(state, item_id, quantity)
 	state["pay"] = int(state.get("pay", 0)) + total
 	return {"ok": true, "income": total}

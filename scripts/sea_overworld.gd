@@ -20,6 +20,8 @@ const SEA_MONSTER_PORTRAITS: Array[Texture2D] = [
 	preload("res://assets/sea_overworld/portraits/海怪3.png"),
 ]
 const FIELD_EVENT_DIALOGUE_SCENE := preload("res://scenes/ui/field_event_dialogue.tscn")
+const MERCHANT_SHOP_OVERLAY_SCENE := preload("res://scenes/yuehuan_merchant_harbor/merchant_shop_overlay.tscn")
+const LINGNAN_MERCHANT_PORTRAIT := preload("res://assets/ui/merchant_shop/merchants/liang_trader.png")
 const LOADING_TRANSITION_SCENE := preload("res://scenes/ui/scene_loading_transition.tscn")
 const WOKOU_VICTORY_CUTSCENE_SCENE := preload("res://scenes/sea_overworld/wokou_victory_cutscene.tscn")
 const PIRATE_SCENE := preload("res://scenes/sea_overworld/sea_overworld_pirate.tscn")
@@ -125,6 +127,10 @@ var _active_tea_merchant_ship: Area2D
 var _tea_merchant_event_resolved := false
 var _active_salt_merchant_ship: Area2D
 var _salt_merchant_event_resolved := false
+var _active_lingnan_merchant_ship: Area2D
+var _lingnan_merchant_event_resolved := false
+var _lingnan_shop_overlay: Control
+var _lingnan_shop_open := false
 var _active_sea_monster_event: Area2D
 var _sea_monster_event_resolved := false
 var _active_sea_monster_variant := 0
@@ -176,6 +182,10 @@ func _ready() -> void:
 	$UI.add_child(_event_dialogue)
 	_event_dialogue.option_selected.connect(_on_event_dialogue_option_selected)
 	_event_dialogue.visibility_changed.connect(_on_event_dialogue_visibility_changed)
+	_lingnan_shop_overlay = MERCHANT_SHOP_OVERLAY_SCENE.instantiate() as Control
+	_lingnan_shop_overlay.name = "LingnanMerchantShopOverlay"
+	$UI.add_child(_lingnan_shop_overlay)
+	_lingnan_shop_overlay.connect("closed", _on_lingnan_shop_closed)
 	player.connect("sailed", _on_player_sailed)
 	enter_button.pressed.connect(_enter_active_location)
 	_connect_global_hud_signals()
@@ -272,6 +282,11 @@ func _on_player_sailed(delta: float) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if _transitioning:
+		return
+	if _lingnan_shop_open:
+		if event.is_action_pressed("ui_cancel"):
+			_lingnan_shop_overlay.call("close_shop")
+			get_viewport().set_input_as_handled()
 		return
 	if _event_dialogue != null and _event_dialogue.visible:
 		return
@@ -405,7 +420,9 @@ func _build_locations() -> void:
 
 
 func _build_auto_triggers() -> void:
-	_build_ship_trigger("岭南商船", Vector2(2600, 760), 1)
+	_lingnan_merchant_event_resolved = _is_lingnan_merchant_event_completed()
+	if not _lingnan_merchant_event_resolved:
+		_active_lingnan_merchant_ship = _build_ship_trigger("岭南商船", Vector2(2600, 760), 1, "LingnanMerchantShip")
 	var fubo_quest_trigger := _make_auto_trigger(
 		"FuboQuestTrigger",
 		FUBO_QUEST_TRIGGER_POSITION,
@@ -709,6 +726,11 @@ func _start_salt_merchant_rest() -> void:
 func _is_tea_merchant_event_completed() -> bool:
 	var game_state := _game_state()
 	return game_state != null and game_state.has_method("is_tea_merchant_event_completed") and bool(game_state.call("is_tea_merchant_event_completed"))
+
+
+func _is_lingnan_merchant_event_completed() -> bool:
+	var game_state := _game_state()
+	return game_state != null and game_state.has_method("is_lingnan_merchant_event_completed") and bool(game_state.call("is_lingnan_merchant_event_completed"))
 
 
 func _spawn_pirates_deferred() -> void:
@@ -1413,6 +1435,9 @@ func _on_auto_trigger_body_entered(body: Node2D, area: Area2D) -> void:
 	if trigger_kind == "ship" and display_name == "茶叶商船":
 		_open_tea_merchant_event(area)
 		return
+	if trigger_kind == "ship" and display_name == "岭南商船":
+		_open_lingnan_merchant_event(area)
+		return
 	if trigger_kind == "event" and display_name == "漂流木箱":
 		_open_drifting_crate_event(area)
 		return
@@ -1479,6 +1504,59 @@ func _open_salt_merchant_event(area: Area2D) -> void:
 			{"id": &"release_salt_ship", "text": "放行商船"},
 		]
 	)
+
+
+func _open_lingnan_merchant_event(area: Area2D) -> void:
+	if _lingnan_merchant_event_resolved or _lingnan_shop_open or (_event_dialogue != null and _event_dialogue.visible):
+		return
+	_active_lingnan_merchant_ship = area
+	area.set_deferred("monitoring", false)
+	player.controls_enabled = false
+	interaction_prompt.hide()
+	_event_dialogue.present(
+		"水师士兵",
+		"禀将军，前方发现一艘岭南商船。看船上货箱齐备，似有不少沿海货物，是否靠近查看？",
+		SOLDIER_PORTRAIT,
+		[
+			{"id": &"inspect_lingnan_goods", "text": "查看货物"},
+			{"id": &"ignore_lingnan_merchant", "text": "无视"},
+		]
+	)
+
+
+func _open_lingnan_shop() -> void:
+	_lingnan_shop_open = true
+	_event_dialogue.hide_dialogue()
+	player.controls_enabled = false
+	_set_pirates_navigation_enabled(false)
+	interaction_prompt.hide()
+	exploration_hud.call("set_exploration_visible", false)
+	_lingnan_shop_overlay.call("open_shop", "goods", "岭南商船 · 海上货栈", &"lingnan_ship")
+
+
+func _on_lingnan_shop_closed() -> void:
+	if not _lingnan_shop_open:
+		return
+	_lingnan_shop_open = false
+	exploration_hud.call("set_exploration_visible", true)
+	player.controls_enabled = false
+	_set_pirates_navigation_enabled(false)
+	_event_dialogue.present(
+		"岭南商人",
+		"多谢将军惠顾！愿将军此行顺风顺水，旗开得胜。",
+		LINGNAN_MERCHANT_PORTRAIT,
+		[{"id": &"finish_lingnan_trade", "text": "继续"}]
+	)
+
+
+func _ignore_lingnan_merchant() -> void:
+	_event_dialogue.hide_dialogue()
+	if is_instance_valid(_active_lingnan_merchant_ship):
+		_active_lingnan_merchant_ship.set_deferred("monitoring", true)
+	_active_lingnan_merchant_ship = null
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	_set_pirates_navigation_enabled(player.controls_enabled)
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
 
 
 func _open_sea_monster_event(area: Area2D) -> void:
@@ -1629,6 +1707,12 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 			)
 		&"finish_salt_event":
 			_finish_salt_merchant_event()
+		&"inspect_lingnan_goods":
+			_open_lingnan_shop()
+		&"ignore_lingnan_merchant":
+			_ignore_lingnan_merchant()
+		&"finish_lingnan_trade":
+			_finish_lingnan_merchant_event()
 
 
 func _open_fubo_quest_dialogue() -> void:
@@ -1835,6 +1919,30 @@ func _remove_salt_merchant_ship() -> void:
 	_active_salt_merchant_ship = null
 
 
+func _finish_lingnan_merchant_event() -> void:
+	_resolve_lingnan_merchant_event()
+	_event_dialogue.hide_dialogue()
+	player.controls_enabled = not bool(exploration_hud.call("is_menu_open"))
+	_set_pirates_navigation_enabled(player.controls_enabled)
+	interaction_prompt.visible = player.controls_enabled and not _active_location_name.is_empty()
+
+
+func _resolve_lingnan_merchant_event() -> void:
+	if _lingnan_merchant_event_resolved:
+		return
+	_lingnan_merchant_event_resolved = true
+	var merchant_ship := _active_lingnan_merchant_ship
+	if not is_instance_valid(merchant_ship):
+		merchant_ship = world_markers.get_node_or_null("LingnanMerchantShip") as Area2D
+	if is_instance_valid(merchant_ship):
+		merchant_ship.queue_free()
+	_active_lingnan_merchant_ship = null
+	var game_state := _game_state()
+	if game_state != null and game_state.has_method("set_lingnan_merchant_event_completed"):
+		game_state.call("set_lingnan_merchant_event_completed", true)
+	_advance_exploration_stage(4)
+
+
 func _resolve_sea_monster_event() -> void:
 	if _sea_monster_event_resolved:
 		return
@@ -1880,9 +1988,10 @@ func _close_crate_dialogue() -> void:
 func _on_event_dialogue_visibility_changed() -> void:
 	if _event_dialogue == null:
 		return
-	exploration_hud.call("set_sea_map_button_visible", not _event_dialogue.visible)
+	var modal_open := _event_dialogue.visible or _lingnan_shop_open
+	exploration_hud.call("set_sea_map_button_visible", not modal_open)
 	_set_pirates_navigation_enabled(
-		not _event_dialogue.visible
+		not modal_open
 		and not _transitioning
 		and not bool(exploration_hud.call("is_menu_open"))
 	)
@@ -2004,6 +2113,7 @@ func _restore_fubo_return(context: Dictionary) -> void:
 func _current_event_state() -> Dictionary:
 	return {
 		"tea_merchant_event_resolved": _tea_merchant_event_resolved,
+		"lingnan_merchant_event_resolved": _lingnan_merchant_event_resolved,
 		"wokou_warning_acknowledged": _wokou_warning_acknowledged,
 		"wokou_battle_completed": _wokou_battle_completed,
 	}
@@ -2012,9 +2122,16 @@ func _current_event_state() -> Dictionary:
 func _restore_event_state(value: Variant) -> void:
 	var state := value as Dictionary if value is Dictionary else {}
 	var saved_tea_completion := bool(state.get("tea_merchant_event_resolved", false))
+	var saved_lingnan_completion := bool(state.get("lingnan_merchant_event_resolved", false))
 	var game_state := _game_state()
 	if saved_tea_completion and game_state != null and game_state.has_method("set_tea_merchant_event_completed"):
 		game_state.call("set_tea_merchant_event_completed", true)
+	if saved_lingnan_completion and game_state != null and game_state.has_method("set_lingnan_merchant_event_completed"):
+		game_state.call("set_lingnan_merchant_event_completed", true)
+	_lingnan_merchant_event_resolved = saved_lingnan_completion or _is_lingnan_merchant_event_completed()
+	if _lingnan_merchant_event_resolved and is_instance_valid(_active_lingnan_merchant_ship):
+		_active_lingnan_merchant_ship.queue_free()
+		_active_lingnan_merchant_ship = null
 	_wokou_warning_acknowledged = bool(state.get("wokou_warning_acknowledged", false))
 	_wokou_battle_completed = bool(state.get("wokou_battle_completed", false))
 	if _wokou_battle_completed:
@@ -2126,16 +2243,16 @@ func _on_side_quest_tracked(quest_id: StringName) -> void:
 func _on_hud_menu_visibility_changed(is_open: bool) -> void:
 	if _exploration_ui.call("current_owner") != self:
 		return
-	var dialogue_open := _event_dialogue != null and _event_dialogue.visible
-	player.controls_enabled = not is_open and not dialogue_open
-	_set_pirates_navigation_enabled(not is_open and not dialogue_open and not _transitioning)
-	interaction_prompt.visible = not is_open and not dialogue_open and not _active_location_name.is_empty()
+	var modal_open := (_event_dialogue != null and _event_dialogue.visible) or _lingnan_shop_open
+	player.controls_enabled = not is_open and not modal_open
+	_set_pirates_navigation_enabled(not is_open and not modal_open and not _transitioning)
+	interaction_prompt.visible = not is_open and not modal_open and not _active_location_name.is_empty()
 
 
 func _on_save_requested() -> void:
 	if _exploration_ui.call("current_owner") != self:
 		return
-	if _transitioning or (_event_dialogue != null and _event_dialogue.visible):
+	if _transitioning or _lingnan_shop_open or (_event_dialogue != null and _event_dialogue.visible):
 		_show_save_message(false, "unstable_scene")
 		return
 	var game_state := _game_state()
@@ -2149,6 +2266,7 @@ func _on_save_requested() -> void:
 		"exploration_stage": _exploration_stage,
 		"lunar_day": _lunar_day,
 		"tea_merchant_event_resolved": _tea_merchant_event_resolved,
+		"lingnan_merchant_event_resolved": _lingnan_merchant_event_resolved,
 		"wokou_warning_acknowledged": _wokou_warning_acknowledged,
 		"wokou_battle_completed": _wokou_battle_completed,
 	}

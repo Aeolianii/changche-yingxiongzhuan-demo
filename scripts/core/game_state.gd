@@ -109,6 +109,17 @@ func is_tea_merchant_event_completed() -> bool:
 	return bool(_world_state.get("tea_merchant_event_completed", false))
 
 
+func set_lingnan_merchant_event_completed(completed: bool) -> void:
+	if completed:
+		_world_state["lingnan_merchant_event_completed"] = true
+	else:
+		_world_state.erase("lingnan_merchant_event_completed")
+
+
+func is_lingnan_merchant_event_completed() -> bool:
+	return bool(_world_state.get("lingnan_merchant_event_completed", false))
+
+
 func set_sea_main_quest_state(exploration_stage: int, wokou_warning_acknowledged: bool, wokou_battle_completed: bool) -> void:
 	var completed := wokou_battle_completed
 	_world_state["sea_main_quest"] = {
@@ -210,14 +221,14 @@ func spend_military_pay(amount: int) -> bool:
 	return true
 
 
-func buy_economy_item(item_id: String, quantity: int) -> Dictionary:
+func buy_economy_item(item_id: String, quantity: int, unit_price_override: int = -1) -> Dictionary:
 	_ensure_economy()
-	return TRADE.buy_item(_world_state["economy"], item_id, quantity)
+	return TRADE.buy_item(_world_state["economy"], item_id, quantity, unit_price_override)
 
 
-func sell_economy_item(item_id: String, quantity: int) -> Dictionary:
+func sell_economy_item(item_id: String, quantity: int, unit_price_override: int = -1) -> Dictionary:
 	_ensure_economy()
-	return TRADE.sell_item(_world_state["economy"], item_id, quantity)
+	return TRADE.sell_item(_world_state["economy"], item_id, quantity, unit_price_override)
 
 
 func buy_economy_blueprint(ship_type_id: String) -> Dictionary:

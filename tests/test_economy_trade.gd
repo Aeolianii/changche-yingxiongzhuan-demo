@@ -16,6 +16,7 @@ func _run() -> void:
 	_test_default_state()
 	_test_ship_upgrades()
 	_test_material_buy_and_sell()
+	_test_custom_merchant_prices()
 	_test_sell_only_goods()
 	_test_atomic_failures()
 	_test_blueprints_and_shipbuilding()
@@ -86,6 +87,15 @@ func _test_material_buy_and_sell() -> void:
 	var sell: Dictionary = TRADE.sell_item(state, "wood", 3)
 	_expect(sell.get("ok", false), "Wood sale must succeed with enough stock.")
 	_expect(state["pay"] == 758 and state["items"]["wood"] == 32, "Wood sale must pay the fixed sell price.")
+
+
+func _test_custom_merchant_prices() -> void:
+	var state := ECONOMY.make_default()
+	var buy := TRADE.buy_item(state, "wood", 2, 9)
+	_expect(buy.get("ok", false) and buy.get("cost") == 18, "Merchant-specific buying must use the supplied unit price.")
+	var sell := TRADE.sell_item(state, "wood", 2, 8)
+	_expect(sell.get("ok", false) and sell.get("income") == 16, "Merchant-specific selling must use the supplied unit price.")
+	_expect(state["pay"] == 798 and state["items"]["wood"] == 30, "A merchant buy/sell round trip must remain a net loss.")
 
 
 func _test_sell_only_goods() -> void:

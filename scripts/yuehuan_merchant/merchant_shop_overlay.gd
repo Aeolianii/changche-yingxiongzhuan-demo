@@ -24,10 +24,15 @@ const MUTED := Color("#716958")
 const OLD_WHITE := Color("#d8cfb8")
 const GOLD := Color("#bd8b38")
 const DEEP := Color("#111b1a")
+const STANDARD_PRICE_PROFILE := &"standard"
+const LINGNAN_SHIP_PRICE_PROFILE := &"lingnan_ship"
+const LINGNAN_BUY_RATE := 0.75
+const LINGNAN_SELL_RATE := 1.25
 
 var _role := ""
 var _mode := "goods"
 var _selected_id := "wood"
+var _price_profile: StringName = STANDARD_PRICE_PROFILE
 var _title_label: Label
 var _header_portrait: TextureRect
 var _tabs: HBoxContainer
@@ -53,8 +58,9 @@ func _ready() -> void:
 	hide()
 
 
-func open_shop(role: String, title: String) -> void:
+func open_shop(role: String, title: String, price_profile: StringName = STANDARD_PRICE_PROFILE) -> void:
 	_role = role
+	_price_profile = price_profile
 	_mode = "goods" if role == "goods" else "blueprints"
 	_selected_id = "wood" if role == "goods" else "patrol_boat"
 	_title_label.text = title
@@ -72,6 +78,14 @@ func close_shop() -> void:
 
 func active_role() -> String:
 	return _role if visible else ""
+
+
+func active_price_profile_for_test() -> StringName:
+	return _price_profile if visible else &""
+
+
+func unit_price_for_test(item_id: String, mode: String) -> int:
+	return _item_unit_price(CATALOG.item(item_id), mode)
 
 
 func icon_path_for_test(item_id: String) -> String:
@@ -411,7 +425,7 @@ func _make_product_row(id: String, state: Dictionary) -> Button:
 
 func _product_price_text(id: String, data: Dictionary, state: Dictionary) -> String:
 	if _role == "goods":
-		return "%d 银钱" % (data["buy_price"] if _mode == "goods" else data["sell_price"])
+		return "%d 银钱" % _item_unit_price(data, _mode)
 	if _mode == "blueprints":
 		return "已拥有" if id in state["blueprints"] else "%d 银钱" % data["blueprint_price"]
 	return "%d银钱 · %d木材 · %d铁石" % [data["pay"], data["wood"], data["ironstone"]]
@@ -452,7 +466,7 @@ func _select(id: String) -> void:
 	_preview.texture = _icon(id)
 	_holding_label.text = "当前持有　%d" % int(state["items"].get(id, 0)) if not item.is_empty() else "现役舰船　%d 艘" % (state["ships"] as Array).size()
 	if not item.is_empty():
-		var price := int(item["buy_price"] if _mode == "goods" else item["sell_price"])
+		var price := _item_unit_price(item, _mode)
 		_detail_name.text = str(item["name"])
 		_detail_text.text = "[color=#716958]持有[/color]　[color=#8a5a18][font_size=20]%d[/font_size][/color]　　 [color=#716958]单价[/color]　[color=#8a5a18][font_size=20]%d 银钱[/font_size][/color]" % [state["items"].get(id, 0), price]
 	else:
@@ -486,7 +500,7 @@ func _maximum_quantity(id: String) -> int:
 		return 1
 	var state := _state()
 	if _mode == "goods":
-		return int(state["pay"]) / maxi(1, int(item["buy_price"]))
+		return int(state["pay"]) / maxi(1, _item_unit_price(item, _mode))
 	return int(state["items"].get(id, 0))
 
 
@@ -496,7 +510,7 @@ func _transaction_preview(id: String, quantity: int) -> Dictionary:
 	var held := int(state["items"].get(id, 0))
 	if item.is_empty():
 		return {"pay_after": int(state["pay"]), "held_after": held, "valid": true}
-	var price := int(item["buy_price"] if _mode == "goods" else item["sell_price"])
+	var price := _item_unit_price(item, _mode)
 	var pay_after := int(state["pay"]) + (-price * quantity if _mode == "goods" else price * quantity)
 	var held_after := held + (quantity if _mode == "goods" else -quantity)
 	return {"pay_after": pay_after, "held_after": held_after, "valid": quantity > 0 and pay_after >= 0 and held_after >= 0}
@@ -507,7 +521,7 @@ func _update_total() -> void:
 	var state := _state()
 	if not item.is_empty() and _role == "goods":
 		var quantity := int(_quantity.value)
-		var price := int(item["buy_price"] if _mode == "goods" else item["sell_price"])
+		var price := _item_unit_price(item, _mode)
 		var preview := _transaction_preview(_selected_id, quantity)
 		_total_label.text = "购入合计　%d 银钱" % (price * quantity) if _mode == "goods" else "出售可得　%d 银钱" % (price * quantity)
 		_after_trade_label.text = "交易后银钱　%d　　 交易后持有　%d" % [preview["pay_after"], preview["held_after"]]
@@ -532,7 +546,7 @@ func _can_use_ship_action(id: String, state: Dictionary) -> bool:
 func _buy_action() -> void:
 	var result: Dictionary
 	if _mode == "goods":
-		result = _game_state().call("buy_economy_item", _selected_id, int(_quantity.value))
+		result = _game_state().call("buy_economy_item", _selected_id, int(_quantity.value), _item_unit_price(CATALOG.item(_selected_id), _mode))
 	elif _mode == "blueprints":
 		result = _game_state().call("buy_economy_blueprint", _selected_id)
 	else:
@@ -542,7 +556,7 @@ func _buy_action() -> void:
 
 
 func _sell_action() -> void:
-	var result := _game_state().call("sell_economy_item", _selected_id, int(_quantity.value)) as Dictionary
+	var result := _game_state().call("sell_economy_item", _selected_id, int(_quantity.value), _item_unit_price(CATALOG.item(_selected_id), _mode)) as Dictionary
 	_status.text = "出售完成" if result.get("ok", false) else _reason(str(result.get("reason", "failed")))
 	_refresh()
 
@@ -583,6 +597,20 @@ func _refresh_resources(state: Dictionary) -> void:
 
 func _refresh_header_portrait() -> void:
 	_header_portrait.texture = load("res://assets/ui/merchant_shop/merchants/liang_trader.png") if _role == "goods" else load("res://assets/ui/merchant_shop/merchants/shen_shipwright.png")
+
+
+func _item_unit_price(item: Dictionary, mode: String) -> int:
+	var base_price := int(item.get("buy_price" if mode == "goods" else "sell_price", 0))
+	if _price_profile != LINGNAN_SHIP_PRICE_PROFILE or item.is_empty():
+		return base_price
+	if mode == "goods":
+		return maxi(1, int(floor(base_price * LINGNAN_BUY_RATE)))
+	var premium_price := maxi(base_price + 1, int(ceil(base_price * LINGNAN_SELL_RATE)))
+	var merchant_buy_price := int(item.get("buy_price", 0))
+	if merchant_buy_price <= 0:
+		return premium_price
+	var discounted_buy_price := maxi(1, int(floor(merchant_buy_price * LINGNAN_BUY_RATE)))
+	return mini(premium_price, maxi(1, discounted_buy_price - 1))
 
 
 func _icon(id: String) -> Texture2D:

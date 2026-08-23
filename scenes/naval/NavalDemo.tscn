@@ -661,37 +661,22 @@ offset_bottom = 150.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="BackdropUpper" type="TextureRect" parent="Battle/Hud/ResultPanel"]
+[node name="ResultBrushBackdrop" type="TextureRect" parent="Battle/Hud/ResultPanel"]
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = -8.0
-offset_bottom = 174.0
-grow_horizontal = 2
-mouse_filter = 2
-texture_filter = 1
-texture = ExtResource("14_tutorial_brush")
-expand_mode = 1
-stretch_mode = 0
-
-[node name="BackdropLower" type="TextureRect" parent="Battle/Hud/ResultPanel"]
-modulate = Color(0.92, 0.94, 0.92, 0.96)
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -180.0
-offset_bottom = 8.0
+offset_left = -34.0
+offset_top = -28.0
+offset_right = 34.0
+offset_bottom = 28.0
 grow_horizontal = 2
-grow_vertical = 0
+grow_vertical = 2
 mouse_filter = 2
 texture_filter = 1
 texture = ExtResource("14_tutorial_brush")
 expand_mode = 1
 stretch_mode = 0
-flip_h = true
-flip_v = true
 
 [node name="ResultTitle" type="Label" parent="Battle/Hud/ResultPanel"]
 anchors_preset = 10

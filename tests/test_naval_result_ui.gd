@@ -33,10 +33,17 @@ func _run() -> void:
 			_fail("Loot summary missing full reward name: %s" % reward_name)
 			return
 	var panel := demo.get_node_or_null("Battle/Hud/ResultPanel") as Panel
+	var brush := demo.get_node_or_null("Battle/Hud/ResultPanel/ResultBrushBackdrop") as TextureRect
 	var title := demo.get_node_or_null("Battle/Hud/ResultPanel/ResultTitle") as Label
 	var return_button := demo.get_node_or_null("Battle/Hud/ResultPanel/ReturnToSeaButton") as Button
 	if panel == null or title == null or return_button == null or not panel.visible:
 		_fail("Result panel did not open with its title and return button.")
+		return
+	if brush == null or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropUpper") != null or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropLower") != null:
+		_fail("Result details must use one unified wide brush backing instead of two stacked strokes.")
+		return
+	if brush.offset_left > -30.0 or brush.offset_right < 30.0 or brush.offset_top > -24.0 or brush.offset_bottom < 24.0:
+		_fail("The unified result brush must extend beyond the whole detail panel on every side.")
 		return
 	if title.horizontal_alignment != HORIZONTAL_ALIGNMENT_CENTER or return_button.text != "返回":
 		_fail("Result title alignment or return-button copy is incorrect.")

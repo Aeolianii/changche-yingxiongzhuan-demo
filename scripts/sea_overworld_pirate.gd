@@ -8,7 +8,7 @@ enum Behavior { WANDER, REST, CHASE, RETURN }
 const PIRATE_SHIP_ATLAS := preload("res://assets/sprites/sea_overworld/pirate_ship_4dir_states_v1.png")
 const WAKE_ATLAS := preload("res://assets/sprites/sea_overworld/ship_wake_fx_atlas_v1.png")
 const DIRECTION_VECTORS := [Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2.UP]
-const DIRECTION_ROTATIONS := [PI, -PI * 0.5, PI * 0.5, 0.0]
+const DIRECTION_ROTATIONS := [0.0, PI * 0.5, -PI * 0.5, PI]
 const WAKE_OFFSET := 52.0
 const SIDE_SPLASH_OFFSET := 3.0
 const WAKE_FRAME_TIME := 0.11

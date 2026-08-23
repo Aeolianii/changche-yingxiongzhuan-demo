@@ -36,6 +36,8 @@ func _run() -> void:
 	var brush := demo.get_node_or_null("Battle/Hud/ResultPanel/ResultBrushBackdrop") as TextureRect
 	var title := demo.get_node_or_null("Battle/Hud/ResultPanel/ResultTitle") as Label
 	var victory_title := demo.get_node_or_null("Battle/Hud/ResultPanel/VictoryTitleImage") as TextureRect
+	var loss_summary := demo.get_node_or_null("Battle/Hud/ResultPanel/ResultLabel") as Label
+	var loot_summary := demo.get_node_or_null("Battle/Hud/ResultPanel/ResultLootLabel") as Label
 	var return_button := demo.get_node_or_null("Battle/Hud/ResultPanel/ReturnToSeaButton") as Button
 	if panel == null or title == null or return_button == null or not panel.visible:
 		_fail("Result panel did not open with its title and return button.")
@@ -43,8 +45,11 @@ func _run() -> void:
 	if brush == null or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropUpper") != null or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropLower") != null:
 		_fail("Result details must use one unified wide brush backing instead of two stacked strokes.")
 		return
-	if brush.offset_left > -30.0 or brush.offset_right < 30.0 or brush.size.y < 200.0:
+	if brush.offset_left > -45.0 or brush.offset_right < 45.0 or brush.size.y < 230.0:
 		_fail("The unified result brush must remain wide and tall enough to contain both detail sections.")
+		return
+	if loss_summary == null or loot_summary == null or brush.position.y > loss_summary.position.y or brush.position.y + brush.size.y < loot_summary.position.y + loot_summary.size.y:
+		_fail("The widened result brush must fully contain the loss and loot summaries.")
 		return
 	if title.horizontal_alignment != HORIZONTAL_ALIGNMENT_CENTER or return_button.text != "返回":
 		_fail("Result title alignment or return-button copy is incorrect.")

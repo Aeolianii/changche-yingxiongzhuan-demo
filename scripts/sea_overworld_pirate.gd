@@ -11,6 +11,7 @@ const DIRECTION_VECTORS := [Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT, Vector2.U
 const DIRECTION_ROTATIONS := [0.0, PI * 0.5, -PI * 0.5, PI]
 const WAKE_OFFSET := 52.0
 const SIDE_SPLASH_OFFSET := 3.0
+const HORIZONTAL_WAKE_WATERLINE_OFFSET := 17.0
 const WAKE_FRAME_TIME := 0.11
 
 @export var move_speed := 168.0
@@ -205,10 +206,13 @@ func _update_motion_visuals(delta: float, is_moving: bool) -> void:
 		side_splash_sprite.texture = _atlas_region(WAKE_ATLAS, 4, 2, (_wake_frame + 2) % 4, 1)
 	var facing_vector: Vector2 = DIRECTION_VECTORS[_facing_index]
 	var facing_rotation: float = DIRECTION_ROTATIONS[_facing_index]
+	# Pirate horizontal frames sit about 17 rendered pixels lower than the player's sailing frames.
+	# Keep the player's wake direction logic, but align both effects to the pirate hull waterline.
+	var waterline_offset := Vector2.DOWN * HORIZONTAL_WAKE_WATERLINE_OFFSET if _facing_index in [1, 2] else Vector2.ZERO
 	wake_sprite.rotation = facing_rotation
 	side_splash_sprite.rotation = facing_rotation
-	wake_sprite.position = -facing_vector * WAKE_OFFSET
-	side_splash_sprite.position = facing_vector * SIDE_SPLASH_OFFSET
+	wake_sprite.position = -facing_vector * WAKE_OFFSET + waterline_offset
+	side_splash_sprite.position = facing_vector * SIDE_SPLASH_OFFSET + waterline_offset
 
 
 func _on_contact_body_entered(body: Node) -> void:

@@ -45,7 +45,7 @@ func _run() -> void:
 	if brush == null or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropUpper") != null or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropLower") != null:
 		_fail("Result details must use one unified wide brush backing instead of two stacked strokes.")
 		return
-	if brush.size.x < 965.0 or brush.size.y < 230.0:
+	if brush.size.x < 965.0 or brush.size.y < 282.0:
 		_fail("The unified result brush must remain wide and tall enough to contain both detail sections.")
 		return
 	if loss_summary == null or loot_summary == null or brush.position.y > loss_summary.position.y or brush.position.y + brush.size.y < loot_summary.position.y + loot_summary.size.y:

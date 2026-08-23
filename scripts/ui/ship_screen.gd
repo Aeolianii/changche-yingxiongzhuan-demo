@@ -895,7 +895,7 @@ func _equipment_error(reason: String) -> String:
 
 
 func _upgrade_error(reason: String) -> String:
-	return {"max_level": "该项目已强化至上限", "insufficient_pay": "军饷不足", "insufficient_material": "强化材料不足", "unknown_ship": "未找到舰船"}.get(reason, "无法进行强化")
+	return {"max_level": "该项目已强化至上限", "insufficient_pay": "银钱不足", "insufficient_material": "强化材料不足", "unknown_ship": "未找到舰船"}.get(reason, "无法进行强化")
 
 
 func _upgrade_name(project: String) -> String:
@@ -946,7 +946,7 @@ func _refresh_detail() -> void:
 	var economy_state := get_node("/root/GameState").call("get_economy_state") as Dictionary
 	var items := economy_state.get("items", {}) as Dictionary
 	var upgrade_materials := economy_state.get("ship_upgrade_materials", {}) as Dictionary
-	_construction_label.text = "军饷 %d　木材 %d　铁石 %d　帆布 %d" % [int(economy_state.get("pay", 0)), int(items.get("wood", 0)), int(items.get("ironstone", 0)), int(upgrade_materials.get("canvas", 0))]
+	_construction_label.text = "银钱 %d　木材 %d　铁石 %d　帆布 %d" % [int(economy_state.get("pay", 0)), int(items.get("wood", 0)), int(items.get("ironstone", 0)), int(upgrade_materials.get("canvas", 0))]
 	_repair_button.disabled = current_hp >= max_hp
 	_repair_button.text = "船体完好" if _repair_button.disabled else "修复船体"
 	_refresh_equipment_page()
@@ -1053,7 +1053,7 @@ func _refresh_upgrades(ship: Dictionary, definition: Dictionary) -> void:
 		if at_cap:
 			(controls["cost"] as Label).text = "已强化至上限"
 		else:
-			(controls["cost"] as Label).text = "饷%d · %s%d" % [int(cost.get("pay", 0)), str(resource_names.get(resource_id, "材料")), int(cost.get("material", 0))]
+			(controls["cost"] as Label).text = "银钱%d · %s%d" % [int(cost.get("pay", 0)), str(resource_names.get(resource_id, "材料")), int(cost.get("material", 0))]
 		var available_material := int(upgrade_materials.get("canvas", 0)) if resource_id == "canvas" else int(items.get(resource_id, 0))
 		(controls["plus"] as Button).disabled = at_cap or int(economy_state.get("pay", 0)) < int(cost.get("pay", 0)) or available_material < int(cost.get("material", 0))
 

@@ -51,10 +51,9 @@ public partial class NavalHud : CanvasLayer
     private Button? _btnEndTurn;
     private Button? _btnSelfSink; // F-7b/V-6：战斗内浅滩自沉按钮（V-6 起选中我方舰时始终显示，不满足资格置灰+原因）
     private Panel? _resultPanel;
-    private Label? _resultLabel;
-    private Button? _btnNewGame;
+    private Label? _resultTitle, _resultLabel, _resultLootLabel;
     private Button? _btnReroll; // U-2c：随机遭遇「重掷换一场」按钮（仅结算面板出现）
-    private Button? _btnReturnToSea; // CHG-20260817：海盗战「返回海上大地图」按钮（仅结算面板出现）
+    private Button? _btnReturnToSea;
     // F-3：投降交涉面板（顶栏下方独立面板）——接受/拒绝敌方劝降 + 我方发起劝降。
     private Panel? _surrenderPanel;
     private Texture2D? _surrenderBrushTexture;
@@ -140,10 +139,11 @@ public partial class NavalHud : CanvasLayer
     private Label SpeedValue => _speedValue ??= GetNode<Label>("ShipStatusPanel/Attributes/Speed/Value");
     private Label MovementValue => _movementValue ??= GetNode<Label>("ShipStatusPanel/Attributes/Movement/Value");
     private Panel ResultPanel => _resultPanel ??= GetNode<Panel>("ResultPanel");
+    private Label ResultTitle => _resultTitle ??= GetNode<Label>("ResultPanel/ResultTitle");
     private Label ResultLabel => _resultLabel ??= GetNode<Label>("ResultPanel/ResultLabel");
-    private Button NewGameButton => _btnNewGame ??= GetNode<Button>("ResultPanel/NewGameButton");
+    private Label ResultLootLabel => _resultLootLabel ??= GetNode<Label>("ResultPanel/ResultLootLabel");
     private Button RerollButton => _btnReroll ??= GetNode<Button>("ResultPanel/RerollButton"); // U-2c：重掷换一场
-    private Button ReturnToSeaButton => _btnReturnToSea ??= GetNode<Button>("ResultPanel/ReturnToSeaButton"); // CHG-20260817：海盗战返回海上大地图
+    private Button ReturnToSeaButton => _btnReturnToSea ??= GetNode<Button>("ResultPanel/ReturnToSeaButton");
     private Label StatusLabel => _statusLabel ??= GetNode<Label>("StatusLabel");
     private Label MessageLabel => _messageLabel ??= GetNode<Label>("MessageLabel");
     private Panel TurnBanner => _turnBanner ??= GetNode<Panel>("TurnBanner");
@@ -223,9 +223,8 @@ public partial class NavalHud : CanvasLayer
         DamageControl.Pressed += () => controller.OnAction("damage_control");
         Mine.Pressed += () => controller.OnAction("mine");
         EndTurnButton.Pressed += () => controller.OnAction("end_turn"); // V-5：整体结束回合 = 主要结束方式
-        NewGameButton.Pressed += () => controller.OnAction("new_game");
         RerollButton.Pressed += () => controller.OnAction("reroll_encounter"); // U-2c：随机遭遇重掷
-        ReturnToSeaButton.Pressed += () => controller.OnAction("return_to_sea"); // CHG-20260817：海盗战返回海上大地图
+        ReturnToSeaButton.Pressed += () => controller.OnAction("return_to_sea");
         SelfSinkButton.Pressed += () => controller.OnAction("self_sink"); // F-7b：战斗内浅滩自沉
         // F-3：投降交涉面板三按钮 → 控制器分发（接受/拒绝敌方劝降、我方发起劝降）。
         AcceptSurrenderButton.Pressed += () => controller.OnAction("accept_surrender");
@@ -281,7 +280,7 @@ public partial class NavalHud : CanvasLayer
     {
         ActionPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
         ShipStatusPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
-        ResultPanel.AddThemeStyleboxOverride("panel", InkWashTheme.PanelCard());
+        ResultPanel.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
         // F-3：劝降交涉复用教程干笔墨条，标题、正文与操作文字直接叠加在墨迹上。
         SurrenderPanel.AddThemeStyleboxOverride("panel", SurrenderBrushStyle());
         StyleText(SurrenderTitle, 24, new Color("f0c865"));
@@ -314,7 +313,12 @@ public partial class NavalHud : CanvasLayer
         StyleFloatingText(ShipName, 4);
         StyleFloatingText(ShipHpText, 3);
         StyleFloatingText(ShipLoadText, 3);
-        StyleText(ResultLabel, 20, InkWashTheme.TextInk);
+        StyleText(ResultTitle, 30, new Color("f0c865"));
+        StyleFloatingText(ResultTitle, 5);
+        StyleText(ResultLabel, 20, InkWashTheme.PaperLight);
+        StyleFloatingText(ResultLabel, 4);
+        StyleText(ResultLootLabel, 20, InkWashTheme.PaperLight);
+        StyleFloatingText(ResultLootLabel, 4);
         StyleText(TopLeftCaption, 20, Colors.White);
         StyleText(TopLeftContent, 18, Colors.White);
         StyleFloatingText(TopLeftCaption, 5);
@@ -342,8 +346,8 @@ public partial class NavalHud : CanvasLayer
         StyleSurrenderButton(OfferSurrenderButton);
         foreach (var node in DeliveryPanel.FindChildren("*", "Button", true, false))
             if (node is Button b) StylePanelButton(b);
-        StylePanelButton(NewGameButton);
-        StylePanelButton(ReturnToSeaButton);
+        StyleSurrenderButton(RerollButton);
+        StyleSurrenderButton(ReturnToSeaButton);
     }
 
     // UX-10：按钮统一样式 + 禁用焦点——按钮点击后不夺键盘焦点，方向键才能落到控制器 _UnhandledKeyInput
@@ -843,12 +847,21 @@ public partial class NavalHud : CanvasLayer
     public int DeliveryRowCount() => DeliveryList.GetChildCount();
     public int DeliveryRequired() => _deliveryRequired;
 
-    // T16 结算面板：胜负/金币结余 + 各结局分类计数摘要 + 「再来一局」返回 Demo 入口。
-    // U-2c：extraText 非空时追加一行（随机遭遇奖励行，由 BattleController.EncounterResultText 提供）。
+    // 结算面板：胜负标题居中，战利品与损失概览分行显示；内部金币只参与规则，不在结算 UI 展示。
+    // extraText 为完整的四项战利品明细，由 BattleController.EncounterResultText 提供。
     public void ShowResult(BattleResult result, string? extraText = null)
     {
         ActionPanel.Visible = false;
         ShipStatusPanel.Visible = false;
+        if (GetNodeOrNull<Control>("DebugActions") is { } debugActions)
+            debugActions.Visible = false;
+        if (GetNodeOrNull<Button>("../../BackToLevelSelect/BackButton") is { } levelBackButton)
+            levelBackButton.Visible = false;
+        if (GetNodeOrNull<Panel>("TopBarLeft") is { } topBarLeft)
+            topBarLeft.Visible = false;
+        StatusLabel.Visible = false;
+        MessageLabel.Visible = false;
+        HideTurnBanner();
         ResultPanel.Visible = true;
         var outcome = result.Outcome switch
         {
@@ -856,29 +869,42 @@ public partial class NavalHud : CanvasLayer
             BattleOutcome.EnemyVictory => "敌方胜利",
             _ => "平局",
         };
-        var counts = string.Join(" · ", new[]
+        var counts = string.Join("　　", new[]
         {
-            $"{Count(result, ShipLossKind.Survived)} 存活",
-            $"{Count(result, ShipLossKind.Sunk)} 沉没",
-            $"{Count(result, ShipLossKind.Escaped)} 逃脱",
-            $"{Count(result, ShipLossKind.Captured)} 被俘",
-            $"{Count(result, ShipLossKind.Surrendered)} 移交",
-            $"{Count(result, ShipLossKind.Permanent)} 永久固定",
+            $"存活 {Count(result, ShipLossKind.Survived)}",
+            $"沉没 {Count(result, ShipLossKind.Sunk)}",
+            $"逃脱 {Count(result, ShipLossKind.Escaped)}",
+            $"被俘 {Count(result, ShipLossKind.Captured)}",
         });
-        ResultLabel.Text = $"{outcome}   金币结余 {result.PlayerGoldRemaining}\n损失概览：{counts}"
-            + (string.IsNullOrEmpty(extraText) ? "" : $"\n{extraText}");
+        ResultTitle.Text = outcome;
+        ResultLabel.Text = $"损失概览\n{counts}";
+        ResultLootLabel.Text = $"战利品\n{(string.IsNullOrEmpty(extraText) ? "银钱 0　　木材 0　　铁石 0　　织布 0" : extraText)}";
     }
 
     public void HideResult() => ResultPanel.Visible = false;
 
     // U-2c：结算面板「重掷换一场」按钮显隐（非随机遭遇模式隐藏）。
-    public void SetRerollVisible(bool visible) => RerollButton.Visible = visible;
+    public void SetRerollVisible(bool visible)
+    {
+        RerollButton.Visible = visible;
+        LayoutResultButtons(visible);
+    }
 
-    // CHG-20260817：海盗战结算面板「返回海上大地图」按钮显隐（非海盗战模式隐藏）。
-    public void SetPirateReturnVisible(bool visible) => ReturnToSeaButton.Visible = visible;
+    // 结算统一只留简洁的「返回」出口；海盗战、讨伐战与自由战均返回海上大地图。
+    public void SetPirateReturnVisible(bool visible)
+    {
+        ReturnToSeaButton.Visible = true;
+        LayoutResultButtons(RerollButton.Visible);
+    }
+
+    private void LayoutResultButtons(bool rerollVisible)
+    {
+        ReturnToSeaButton.OffsetLeft = rerollVisible ? 20.0f : -110.0f;
+        ReturnToSeaButton.OffsetRight = rerollVisible ? 230.0f : 110.0f;
+    }
 
     // 只读访问（headless 冒烟断言）：结算面板全文 / 重掷按钮 / 海盗战返回按钮可见。
-    public string ResultText() => ResultLabel.Text;
+    public string ResultText() => $"{ResultTitle.Text}\n{ResultLabel.Text}\n{ResultLootLabel.Text}";
     public bool RerollButtonVisible() => RerollButton.Visible;
     public bool PirateReturnButtonVisible() => ReturnToSeaButton.Visible;
 

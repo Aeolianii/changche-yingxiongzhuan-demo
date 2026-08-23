@@ -401,5 +401,44 @@ func _init() -> void:
 		push_error("FAIL: arrow rain button not disabled after rule cleared availability")
 		quit(1)
 		return
+	# 战斗结算：双层干笔墨迹打底；标题居中，战利品与损失概览使用完整名称和留白分隔。
+	controller.ForceBattleEndForDemo()
+	await process_frame
+	var result_text: String = controller.ResultText()
+	if not result_text.begins_with("我方胜利\n") or "金币结余" in result_text:
+		push_error("FAIL: result title must be centered content without a gold-balance suffix: %s" % result_text)
+		quit(1)
+		return
+	if "移交" in result_text or "永久固定" in result_text or " · " in result_text:
+		push_error("FAIL: result loss summary must omit transfer/permanent and dot separators: %s" % result_text)
+		quit(1)
+		return
+	for reward_name: String in ["银钱", "木材", "铁石", "织布"]:
+		if reward_name not in result_text:
+			push_error("FAIL: result loot summary missing full reward name: %s" % reward_name)
+			quit(1)
+			return
+	var result_panel := demo.get_node_or_null("Battle/Hud/ResultPanel") as Panel
+	var result_title := demo.get_node_or_null("Battle/Hud/ResultPanel/ResultTitle") as Label
+	var return_button := demo.get_node_or_null("Battle/Hud/ResultPanel/ReturnToSeaButton") as Button
+	if result_panel == null or result_title == null or return_button == null \
+			or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropUpper") == null \
+			or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropLower") == null:
+		push_error("FAIL: ink-brush result panel hierarchy is incomplete")
+		quit(1)
+		return
+	if result_title.horizontal_alignment != HORIZONTAL_ALIGNMENT_CENTER \
+			or return_button.text != "返回" or not return_button.visible \
+			or demo.get_node_or_null("Battle/Hud/ResultPanel/NewGameButton") != null:
+		push_error("FAIL: result title/button layout does not match the approved single-return design")
+		quit(1)
+		return
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		var result_capture_error := root.get_texture().get_image().save_png("res://.godot/naval_result_preview.png")
+		if result_capture_error != OK:
+			push_error("FAIL: could not capture naval result preview")
+			quit(1)
+			return
 	print("PASS: naval demo scene smoke")
 	quit(0)

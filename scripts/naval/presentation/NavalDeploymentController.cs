@@ -1347,7 +1347,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
             var e = _encounter;
             if (_statusLabel is not null)
                 _statusLabel.Text = $"{e.DisplayName} · 地图 {e.MapSourceLabel} · 敌方 {e.EnemyLabel}";
-            SetMessage($"{e.Description}｜战利品 金{e.Rewards.Gold} · 铁{e.Rewards.Iron} · 木{e.Rewards.Wood} · 麻{e.Rewards.Hemp}");
+            SetMessage($"{e.Description}｜战利品　银钱 {e.Rewards.Gold}　　木材 {e.Rewards.Wood}　　铁石 {e.Rewards.Iron}　　织布 {e.Rewards.Hemp}");
             return;
         }
         if (_level is not null)

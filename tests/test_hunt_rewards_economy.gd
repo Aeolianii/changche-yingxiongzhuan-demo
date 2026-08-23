@@ -1,7 +1,7 @@
 extends SceneTree
 
 # CHG-20260819（F-1 讨伐战利品进背包）：讨伐战（海怪/营寨）胜利后，金/铁/木/麻 + 专属饰品
-# 写入玩家 economy_state（金→军饷、铁/木/麻→物品、饰品→accessories.owned）。headless 运行：
+# 写入玩家 economy_state（金→银钱、铁/木/麻→物品、饰品→accessories.owned）。headless 运行：
 # godot --headless --script res://tests/test_hunt_rewards_economy.gd
 
 const NAVAL_SCENE := preload("res://scenes/naval/NavalDemo.tscn")

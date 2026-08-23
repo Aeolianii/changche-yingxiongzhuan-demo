@@ -75,7 +75,7 @@ func _verify_purchase_branch(scene: Node) -> void:
 	var result_line := dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DialogueLabel") as Label
 	var detail_label := dialogue.get_node("FullWidthPaperDialogueBox/DialogueMargin/DialogueStack/DetailLabel") as RichTextLabel
 	_expect(result_line.text == "多谢将军相助！", "Tea purchase dialogue and transaction details must use separate lines.")
-	_expect("军饷 -100" in detail_label.get_parsed_text(), "Tea purchase detail must display the 100-pay deduction.")
+	_expect("银钱 -100" in detail_label.get_parsed_text(), "Tea purchase detail must display the 100-pay deduction.")
 	_expect("获得商品：龙井茶" in detail_label.get_parsed_text(), "Tea purchase detail must display the Longjing tea reward.")
 	_expect("[color=#f2c45c]龙井茶[/color]" in detail_label.text, "Longjing tea must use yellow item highlighting.")
 	_expect(detail_label.get_theme_font_size("normal_font_size") < result_line.get_theme_font_size("font_size"), "Transaction details must use smaller text than merchant dialogue.")

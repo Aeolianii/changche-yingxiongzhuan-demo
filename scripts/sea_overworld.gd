@@ -1453,7 +1453,7 @@ func _open_tea_merchant_event(area: Area2D) -> void:
 	interaction_prompt.hide()
 	_event_dialogue.present(
 		"茶叶商人",
-		"将军，这是姑苏新产的龙井茶。我们沿途遭遇风暴，船只受损，急需军饷修缮。还望将军购买一些茶叶，助我们渡过难关。",
+		"将军，这是姑苏新产的龙井茶。我们沿途遭遇风暴，船只受损，急需银钱修缮。还望将军购买一些茶叶，助我们渡过难关。",
 		TEA_MERCHANT_PORTRAIT,
 		[
 			{"id": &"buy_longjing_tea", "text": "购买龙井茶"},
@@ -1566,7 +1566,7 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 			_resolve_drifting_crate_event()
 			_event_dialogue.present(
 				"水师士兵",
-				"禀将军，木箱已经打捞完毕，所得物资如下：\n铁石 +100　　木材 +100　　军饷 +1000",
+				"禀将军，木箱已经打捞完毕，所得物资如下：\n铁石 +100　　木材 +100　　银钱 +1000",
 				SOLDIER_PORTRAIT,
 				[{"id": &"continue", "text": "收下物资，继续航行"}]
 			)
@@ -1582,10 +1582,10 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 			else:
 				_event_dialogue.present(
 					"茶叶商人",
-					"将军军饷不足，小商不敢强求。",
+					"将军银钱不足，小商不敢强求。",
 					TEA_MERCHANT_PORTRAIT,
 					[{"id": &"finish_tea_trade", "text": "继续航行"}],
-					"需要军饷 100"
+					"需要银钱 100"
 				)
 				return
 			_event_dialogue.present(
@@ -1593,7 +1593,7 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 				"多谢将军相助！",
 				TEA_MERCHANT_PORTRAIT,
 				[{"id": &"finish_tea_trade", "text": "收下龙井茶，继续航行"}],
-				"军饷 -100　　获得商品：[color=#f2c45c]龙井茶[/color]"
+				"银钱 -100　　获得商品：[color=#f2c45c]龙井茶[/color]"
 			)
 		&"decline_longjing_tea", &"finish_tea_trade":
 			_finish_tea_merchant_event()
@@ -1616,8 +1616,8 @@ func _on_event_dialogue_option_selected(option_id: StringName) -> void:
 				"私盐商人",
 				"多谢将军高抬贵手，这点薄礼还请笑纳。",
 				SALT_MERCHANT_PORTRAIT,
-				[{"id": &"finish_salt_event", "text": "收下军饷，继续航行"}],
-				"军饷 +800"
+				[{"id": &"finish_salt_event", "text": "收下银钱，继续航行"}],
+				"银钱 +800"
 			)
 		&"release_salt_ship":
 			_event_dialogue.present(

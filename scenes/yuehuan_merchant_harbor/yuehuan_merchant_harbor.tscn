@@ -107,7 +107,7 @@ script = ExtResource("4_merchant")
 merchant_id = "shen"
 display_name = "沈船师"
 shop_role = "shipyard"
-dialogue_text = "先买下船型图纸，往后图纸永久有效。备齐军饷、木材和铁石，我便能照图再造。"
+dialogue_text = "先买下船型图纸，往后图纸永久有效。备齐银钱、木材和铁石，我便能照图再造。"
 portrait = ExtResource("6_shen")
 bark_lines = PackedStringArray("新到船图，诸位请看！", "有图有料，即可开工！", "好船要看骨架与工料！")
 

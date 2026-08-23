@@ -654,50 +654,97 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = -140.0
-offset_right = 320.0
-offset_bottom = 140.0
+offset_left = -355.0
+offset_top = -150.0
+offset_right = 355.0
+offset_bottom = 150.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ResultLabel" type="Label" parent="Battle/Hud/ResultPanel"]
-anchors_preset = 15
+[node name="BackdropUpper" type="TextureRect" parent="Battle/Hud/ResultPanel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = -8.0
+offset_bottom = 174.0
+grow_horizontal = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("14_tutorial_brush")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="BackdropLower" type="TextureRect" parent="Battle/Hud/ResultPanel"]
+modulate = Color(0.92, 0.94, 0.92, 0.96)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -72.0
-theme_override_colors/font_color = Color(0.12, 0.16, 0.12, 1)
-theme_override_font_sizes/font_size = 20
-
-[node name="NewGameButton" type="Button" parent="Battle/Hud/ResultPanel"]
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -120.0
-offset_top = -58.0
-offset_right = 120.0
-offset_bottom = -14.0
+offset_top = -180.0
+offset_bottom = 8.0
 grow_horizontal = 2
 grow_vertical = 0
-custom_minimum_size = Vector2(240, 44)
-text = "再来一局"
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("14_tutorial_brush")
+expand_mode = 1
+stretch_mode = 0
+flip_h = true
+flip_v = true
+
+[node name="ResultTitle" type="Label" parent="Battle/Hud/ResultPanel"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 48.0
+offset_top = 30.0
+offset_right = -48.0
+offset_bottom = 72.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 30
+text = "我方胜利"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ResultLabel" type="Label" parent="Battle/Hud/ResultPanel"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 55.0
+offset_top = 88.0
+offset_right = -55.0
+offset_bottom = 142.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "损失概览\n存活 0　　沉没 0　　逃脱 0　　被俘 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ResultLootLabel" type="Label" parent="Battle/Hud/ResultPanel"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 55.0
+offset_top = 150.0
+offset_right = -55.0
+offset_bottom = 204.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "战利品\n银钱 0　　木材 0　　铁石 0　　织布 0"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="RerollButton" type="Button" parent="Battle/Hud/ResultPanel"]
+visible = false
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -280.0
-offset_top = -58.0
-offset_right = -140.0
-offset_bottom = -14.0
+offset_left = -230.0
+offset_top = -66.0
+offset_right = -20.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
-custom_minimum_size = Vector2(140, 44)
+custom_minimum_size = Vector2(210, 46)
 text = "重掷换一场"
 
 [node name="ReturnToSeaButton" type="Button" parent="Battle/Hud/ResultPanel"]
@@ -705,15 +752,14 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 140.0
-offset_top = -58.0
-offset_right = 280.0
-offset_bottom = -14.0
+offset_left = -110.0
+offset_top = -66.0
+offset_right = 110.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
-custom_minimum_size = Vector2(140, 44)
-text = "返回海上大地图"
-visible = false
+custom_minimum_size = Vector2(220, 46)
+text = "返回"
 
 [node name="LevelPlay" type="CanvasLayer" parent="."]
 visible = false

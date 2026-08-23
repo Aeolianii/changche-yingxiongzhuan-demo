@@ -52,7 +52,7 @@ const ITEM_DETAILS := {
 	"wood": ["晾晒整齐的造船木料。", "建造各类舰船，也可在月环货栈交易。"],
 	"ironstone": ["用于铸造船钉与武备的铁料。", "建造各类舰船，也可在月环货栈交易。"],
 	"yellow_croaker": ["近海常见的鲜活黄花鱼。", "岭南渔获，可在月环货栈出售。"],
-	"grouper": ["肉质肥厚的大型石斑鱼。", "稀有渔获，可在月环货栈换取军饷。"],
+	"grouper": ["肉质肥厚的大型石斑鱼。", "稀有渔获，可在月环货栈换取银钱。"],
 	"green_crab": ["青壳有力的岭南海蟹。", "岭南渔获，可在月环货栈出售。"],
 	"old_boot": ["被海水泡旧的靴子，仍有人愿意收。", "海上杂物，可在月环货栈折价出售。"],
 	"longjing_tea": ["封装完好的江南茶货。", "贸易货物，可在月环货栈出售。"],
@@ -372,7 +372,7 @@ func _resource_block(node_name: String, icon_texture: Texture2D, minimum_width: 
 func _refresh() -> void:
 	_clear_grid()
 	var state: Dictionary = get_node("/root/GameState").call("get_economy_state")
-	_pay.text = "军饷  %d" % int(state["pay"])
+	_pay.text = "银钱  %d" % int(state["pay"])
 	_fleet.text = "舰队  %d 艘" % (state["ships"] as Array).size()
 	var entries := _visible_entries(state)
 	_sort_entries(entries)
@@ -508,8 +508,8 @@ func _select_entry(entry: Dictionary) -> void:
 	if str(entry["kind"]) == "blueprint":
 		var ship := entry["data"] as Dictionary
 		_detail_description.text = "已永久收录于水师船册。"
-		_detail_use.text = "用途  前往月环船行，备齐军饷、木材与铁石后可重复建造。"
-		_detail_source.text = "建造需求  军饷 %d · 木材 %d · 铁石 %d" % [int(ship["pay"]), int(ship["wood"]), int(ship["ironstone"])]
+		_detail_use.text = "用途  前往月环船行，备齐银钱、木材与铁石后可重复建造。"
+		_detail_source.text = "建造需求  银钱 %d · 木材 %d · 铁石 %d" % [int(ship["pay"]), int(ship["wood"]), int(ship["ironstone"])]
 	else:
 		var item := entry["data"] as Dictionary
 		var details: Array = ITEM_DETAILS.get(_selected_entry, ["岭南水师收存的物资。", "可在对应玩法中使用或交易。"] ) as Array

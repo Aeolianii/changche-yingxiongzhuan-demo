@@ -57,7 +57,7 @@ func _run() -> void:
 	_expect((screen.get_node("SelectedShipPreview") as TextureRect).texture.resource_path.ends_with("patrol_boat.png"), "Selected patrol boat must use its existing ship artwork.")
 	_expect(screen.get_node("ShipStats").get_child_count() == 4, "Detailed information must include firepower, speed, armor and cargo.")
 	_expect((screen.get_node("CrewLabel") as Label).text.contains("26"), "Detailed information must include crew complement.")
-	_expect((screen.get_node("ConstructionLabel") as Label).text.contains("军饷") and (screen.get_node("ConstructionLabel") as Label).text.contains("木材"), "Hull upgrade area must show the currently available resources.")
+	_expect((screen.get_node("ConstructionLabel") as Label).text.contains("银钱") and (screen.get_node("ConstructionLabel") as Label).text.contains("木材"), "Hull upgrade area must show the currently available resources.")
 	_expect((screen.get_node("DurabilityLabel") as Label).text == "42 / 60", "The first starting ship must expose its initial hull damage.")
 	_expect((screen.get_node("DetailSeparator") as ColorRect).position.y == 492.0 and (screen.get_node("DurabilityBar") as ProgressBar).position.y == 549.0, "Hull separator and the content below it must move upward to reserve more room for upgrades.")
 	var repair_button := screen.get_node("RepairButton") as Button

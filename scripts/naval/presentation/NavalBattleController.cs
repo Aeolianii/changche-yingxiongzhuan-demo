@@ -1601,7 +1601,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
                 case PlayerSurrenderedEvent ps:
                     // 我方接受劝降：支付 500 金保全（PaidGold）或交付舰船（已移出战场）。
                     _hud.SetMessage(ps.PaidGold
-                        ? $"接受劝降：支付 {ps.GoldPaid} 金币保全舰队"
+                        ? $"接受劝降：支付 {ps.GoldPaid} 银钱保全舰队"
                         : $"接受劝降：交付 {ps.DeliveredShipIds.Length} 艘舰船");
                     RefreshSurrenderPanel();
                     break;
@@ -1661,7 +1661,7 @@ public partial class NavalBattleController : Node, IGridClickReceiver
             // U-2c：随机遭遇结算——HUD 结果 + 奖励行 + 重掷入口（目标=歼灭敌人，默认）。
             // V-4：固定测试关卡不提供重掷（每项 = 指定地图×敌人组合，重掷会破坏测试意义）。
             // CHG-20260817：海盗战不重掷，改为显示「返回海上大地图」。
-            // CHG-20260819（F-1 讨伐战利品进背包）：玩家胜利 → 讨伐奖励写入经济（金→军饷、铁/木/麻→物品、饰品→背包）。
+            // CHG-20260819（F-1 讨伐战利品进背包）：玩家胜利 → 讨伐奖励写入经济（金→银钱、铁/木/麻→物品、饰品→背包）。
             // 饰品 Collect 对所有遭遇通用（既有行为）；经济奖励仅讨伐战授予（海盗/随机遭遇保持既有行为）。
             GrantHuntRewards(encounter);
             _hud.ShowResult(result, EncounterResultText(encounter));
@@ -1795,12 +1795,12 @@ public partial class NavalBattleController : Node, IGridClickReceiver
         GetTree().ReloadCurrentScene();
     }
 
-    // U-2c：随机遭遇结算奖励行文本（金/铁/木/麻），由 HandleBattleEnded 追加到 HUD 结果。
+    // 随机遭遇结算奖励行文本；完整名称与宽空格由此统一，HUD 只负责分区显示。
     // 入参为结算时实时遭遇（海盗战来自 RandomEncounterSession，无法依赖 _Ready 时的缓存）。
     private string EncounterResultText(RandomEncounter encounter)
     {
         var r = encounter.Rewards;
-        return r is null ? "" : $"战利品 金{r.Gold} · 铁{r.Iron} · 木{r.Wood} · 麻{r.Hemp}";
+        return r is null ? "" : $"银钱 {r.Gold}　　木材 {r.Wood}　　铁石 {r.Iron}　　织布 {r.Hemp}";
     }
 
     // CHG-20260819（F-1 讨伐饰品）：饰品装备状态 → BattleState 加成。economy accessories.equipped 为装备单一事实来源。

@@ -411,10 +411,10 @@ func _make_product_row(id: String, state: Dictionary) -> Button:
 
 func _product_price_text(id: String, data: Dictionary, state: Dictionary) -> String:
 	if _role == "goods":
-		return "%d 军饷" % (data["buy_price"] if _mode == "goods" else data["sell_price"])
+		return "%d 银钱" % (data["buy_price"] if _mode == "goods" else data["sell_price"])
 	if _mode == "blueprints":
-		return "已拥有" if id in state["blueprints"] else "%d 军饷" % data["blueprint_price"]
-	return "%d饷 · %d木 · %d铁" % [data["pay"], data["wood"], data["ironstone"]]
+		return "已拥有" if id in state["blueprints"] else "%d 银钱" % data["blueprint_price"]
+	return "%d银钱 · %d木材 · %d铁石" % [data["pay"], data["wood"], data["ironstone"]]
 
 
 func _add_tab(text_value: String, mode_value: String) -> void:
@@ -454,10 +454,10 @@ func _select(id: String) -> void:
 	if not item.is_empty():
 		var price := int(item["buy_price"] if _mode == "goods" else item["sell_price"])
 		_detail_name.text = str(item["name"])
-		_detail_text.text = "[color=#716958]持有[/color]　[color=#8a5a18][font_size=20]%d[/font_size][/color]　　 [color=#716958]单价[/color]　[color=#8a5a18][font_size=20]%d 军饷[/font_size][/color]" % [state["items"].get(id, 0), price]
+		_detail_text.text = "[color=#716958]持有[/color]　[color=#8a5a18][font_size=20]%d[/font_size][/color]　　 [color=#716958]单价[/color]　[color=#8a5a18][font_size=20]%d 银钱[/font_size][/color]" % [state["items"].get(id, 0), price]
 	else:
 		_detail_name.text = str(ship.get("name", ""))
-		_detail_text.text = "[color=#716958]%s[/color]\n[color=#8a5a18][font_size=20]%d 军饷　·　%d 木材　·　%d 铁石[/font_size][/color]" % ["永久解锁图纸" if _mode == "blueprints" else "建造所需", ship.get("pay", 0), ship.get("wood", 0), ship.get("ironstone", 0)]
+		_detail_text.text = "[color=#716958]%s[/color]\n[color=#8a5a18][font_size=20]%d 银钱　·　%d 木材　·　%d 铁石[/font_size][/color]" % ["永久解锁图纸" if _mode == "blueprints" else "建造所需", ship.get("pay", 0), ship.get("wood", 0), ship.get("ironstone", 0)]
 	_buy_button.visible = _role == "shipyard" or (_mode == "goods" and id in ["wood", "ironstone"])
 	_sell_button.visible = _role == "goods" and _mode == "sell" and not item.is_empty()
 	_sell_all_button.visible = _sell_button.visible
@@ -509,8 +509,8 @@ func _update_total() -> void:
 		var quantity := int(_quantity.value)
 		var price := int(item["buy_price"] if _mode == "goods" else item["sell_price"])
 		var preview := _transaction_preview(_selected_id, quantity)
-		_total_label.text = "购入合计　%d 军饷" % (price * quantity) if _mode == "goods" else "出售可得　%d 军饷" % (price * quantity)
-		_after_trade_label.text = "交易后军饷　%d　　 交易后持有　%d" % [preview["pay_after"], preview["held_after"]]
+		_total_label.text = "购入合计　%d 银钱" % (price * quantity) if _mode == "goods" else "出售可得　%d 银钱" % (price * quantity)
+		_after_trade_label.text = "交易后银钱　%d　　 交易后持有　%d" % [preview["pay_after"], preview["held_after"]]
 		_buy_button.disabled = _buy_button.visible and not bool(preview["valid"])
 		_sell_button.disabled = _sell_button.visible and not bool(preview["valid"])
 		_sell_all_button.disabled = int(state["items"].get(_selected_id, 0)) <= 0
@@ -555,7 +555,7 @@ func _sell_all_action() -> void:
 func _refresh_resources(state: Dictionary) -> void:
 	_clear(_resource_blocks)
 	var resources := [
-		[COIN_ICON, "军饷", int(state["pay"])],
+		[COIN_ICON, "银钱", int(state["pay"])],
 		[ICON_PATHS["wood"], "木材", int(state["items"].get("wood", 0))],
 		[ICON_PATHS["ironstone"], "铁石", int(state["items"].get("ironstone", 0))],
 		[ICON_PATHS["patrol_boat"], "舰队", "%d 艘" % (state["ships"] as Array).size()],
@@ -720,4 +720,4 @@ func _left_mark(bg: Color, line: Color, width: int, margin: float) -> StyleBoxFl
 
 
 func _reason(reason: String) -> String:
-	return {"insufficient_pay": "军饷不足", "insufficient_stock": "库存不足", "already_owned": "图纸已购", "blueprint_required": "尚无图纸", "insufficient_wood": "木材不足", "insufficient_ironstone": "铁石不足", "not_for_sale": "该货物只可出售"}.get(reason, "无法完成")
+	return {"insufficient_pay": "银钱不足", "insufficient_stock": "库存不足", "already_owned": "图纸已购", "blueprint_required": "尚无图纸", "insufficient_wood": "木材不足", "insufficient_ironstone": "铁石不足", "not_for_sale": "该货物只可出售"}.get(reason, "无法完成")

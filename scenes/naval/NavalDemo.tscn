@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" path="res://assets/naval/ui/ship_status/ship_name_brush_v2.png" id="12_name_brush"]
 [ext_resource type="Texture2D" path="res://assets/naval/ui/action_tokens/command_connector_brush.png" id="13_command_connector"]
 [ext_resource type="Texture2D" path="res://assets/naval/ui/tutorial/tutorial_dry_brush_strip_v1.png" id="14_tutorial_brush"]
+[ext_resource type="Texture2D" path="res://assets/naval/ui/battle_result_victory_calligraphy_v1.png" id="15_victory_calligraphy"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bar_fill"]
 atlas = ExtResource("9_status_bars")
@@ -690,6 +691,22 @@ theme_override_font_sizes/font_size = 30
 text = "我方胜利"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="VictoryTitleImage" type="TextureRect" parent="Battle/Hud/ResultPanel"]
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 155.0
+offset_top = 8.0
+offset_right = -155.0
+offset_bottom = 84.0
+grow_horizontal = 2
+mouse_filter = 2
+texture_filter = 1
+texture = ExtResource("15_victory_calligraphy")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ResultLabel" type="Label" parent="Battle/Hud/ResultPanel"]
 anchors_preset = 10

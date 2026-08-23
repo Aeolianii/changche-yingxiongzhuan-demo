@@ -52,6 +52,7 @@ public partial class NavalHud : CanvasLayer
     private Button? _btnSelfSink; // F-7b/V-6：战斗内浅滩自沉按钮（V-6 起选中我方舰时始终显示，不满足资格置灰+原因）
     private Panel? _resultPanel;
     private Label? _resultTitle, _resultLabel, _resultLootLabel;
+    private TextureRect? _victoryTitleImage;
     private Button? _btnReroll; // U-2c：随机遭遇「重掷换一场」按钮（仅结算面板出现）
     private Button? _btnReturnToSea;
     // F-3：投降交涉面板（顶栏下方独立面板）——接受/拒绝敌方劝降 + 我方发起劝降。
@@ -140,6 +141,7 @@ public partial class NavalHud : CanvasLayer
     private Label MovementValue => _movementValue ??= GetNode<Label>("ShipStatusPanel/Attributes/Movement/Value");
     private Panel ResultPanel => _resultPanel ??= GetNode<Panel>("ResultPanel");
     private Label ResultTitle => _resultTitle ??= GetNode<Label>("ResultPanel/ResultTitle");
+    private TextureRect VictoryTitleImage => _victoryTitleImage ??= GetNode<TextureRect>("ResultPanel/VictoryTitleImage");
     private Label ResultLabel => _resultLabel ??= GetNode<Label>("ResultPanel/ResultLabel");
     private Label ResultLootLabel => _resultLootLabel ??= GetNode<Label>("ResultPanel/ResultLootLabel");
     private Button RerollButton => _btnReroll ??= GetNode<Button>("ResultPanel/RerollButton"); // U-2c：重掷换一场
@@ -877,6 +879,9 @@ public partial class NavalHud : CanvasLayer
             $"被俘 {Count(result, ShipLossKind.Captured)}",
         });
         ResultTitle.Text = outcome;
+        var showVictoryCalligraphy = result.Outcome == BattleOutcome.PlayerVictory;
+        ResultTitle.Visible = !showVictoryCalligraphy;
+        VictoryTitleImage.Visible = showVictoryCalligraphy;
         ResultLabel.Text = $"损失概览\n{counts}";
         ResultLootLabel.Text = $"战利品\n{(string.IsNullOrEmpty(extraText) ? "银钱 0　　木材 0　　铁石 0　　织布 0" : extraText)}";
     }

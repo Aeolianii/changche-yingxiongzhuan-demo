@@ -35,6 +35,7 @@ func _run() -> void:
 	var panel := demo.get_node_or_null("Battle/Hud/ResultPanel") as Panel
 	var brush := demo.get_node_or_null("Battle/Hud/ResultPanel/ResultBrushBackdrop") as TextureRect
 	var title := demo.get_node_or_null("Battle/Hud/ResultPanel/ResultTitle") as Label
+	var victory_title := demo.get_node_or_null("Battle/Hud/ResultPanel/VictoryTitleImage") as TextureRect
 	var return_button := demo.get_node_or_null("Battle/Hud/ResultPanel/ReturnToSeaButton") as Button
 	if panel == null or title == null or return_button == null or not panel.visible:
 		_fail("Result panel did not open with its title and return button.")
@@ -47,6 +48,12 @@ func _run() -> void:
 		return
 	if title.horizontal_alignment != HORIZONTAL_ALIGNMENT_CENTER or return_button.text != "返回":
 		_fail("Result title alignment or return-button copy is incorrect.")
+		return
+	if victory_title == null or not victory_title.visible or title.visible:
+		_fail("Player victory must replace the ordinary title label with the generated calligraphy image.")
+		return
+	if victory_title.texture == null or not victory_title.texture.resource_path.ends_with("battle_result_victory_calligraphy_v1.png"):
+		_fail("Victory calligraphy must use the generated transparent title asset.")
 		return
 	if demo.get_node_or_null("Battle/Hud/ResultPanel/NewGameButton") != null:
 		_fail("Result panel must not contain a replay button.")

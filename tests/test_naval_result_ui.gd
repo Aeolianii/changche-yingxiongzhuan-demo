@@ -45,7 +45,7 @@ func _run() -> void:
 	if brush == null or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropUpper") != null or demo.get_node_or_null("Battle/Hud/ResultPanel/BackdropLower") != null:
 		_fail("Result details must use one unified wide brush backing instead of two stacked strokes.")
 		return
-	if brush.offset_left > -45.0 or brush.offset_right < 45.0 or brush.size.y < 230.0:
+	if brush.size.x < 965.0 or brush.size.y < 230.0:
 		_fail("The unified result brush must remain wide and tall enough to contain both detail sections.")
 		return
 	if loss_summary == null or loot_summary == null or brush.position.y > loss_summary.position.y or brush.position.y + brush.size.y < loot_summary.position.y + loot_summary.size.y:
@@ -60,8 +60,8 @@ func _run() -> void:
 	if victory_title.texture == null or not victory_title.texture.resource_path.ends_with("battle_result_victory_calligraphy_v1.png"):
 		_fail("Victory calligraphy must use the generated transparent title asset.")
 		return
-	if victory_title.size.x < 475.0 or victory_title.size.y < 90.0 or victory_title.offset_bottom >= brush.offset_top:
-		_fail("Victory calligraphy must be enlarged by about twenty percent and sit fully above the detail brush.")
+	if victory_title.size.x < 570.0 or victory_title.size.y < 108.0 or victory_title.offset_bottom >= brush.offset_top:
+		_fail("Victory calligraphy must retain the additional twenty-percent enlargement and sit fully above the detail brush.")
 		return
 	var return_style := return_button.get_theme_stylebox("normal") as StyleBoxTexture
 	if return_button.get_theme_font_size("font_size") < 24 or return_style == null or return_style.texture == null or not return_style.texture.resource_path.ends_with("level_select_return_brush.png"):

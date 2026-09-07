@@ -64,3 +64,4 @@
 - Godot 4.7.1 focused tests passed: `test_protagonist_sprite_visual.gd`, `test_protagonist_scene_two_frames.gd`, `test_click_to_move.gd`, and `test_scene_two_dialogue_patrol.gd`.
 - Vulkan runtime preview saved to `.godot/protagonist_sprite_preview.png`; the new protagonist is visible at native 1.0 scale in the palace, aligned to the existing foot anchor with sharp nearest-neighbor pixels.
 - Integration files changed: replaced `assets/characters/protagonist/standard/{idle,walk}` with the 32 approved frames, removed obsolete walk frames 5–9 and their import metadata, regenerated import metadata for active frames, updated the two Scene 2 frame limits, and added focused tests.
+- Delivery cleanup on 2026-09-07: `assets/characters/protagonist_candidate/` was removed after confirming that runtime code loads only the approved `assets/characters/protagonist/standard/` frames. Candidate sheets, previews and metadata remain recoverable from Git history.

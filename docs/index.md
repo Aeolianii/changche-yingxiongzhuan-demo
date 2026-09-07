@@ -34,13 +34,12 @@
 - [Character assets](assets/character-assets.md)
 - [Generated backgrounds](assets/generated-backgrounds.md)
 - [Sea overworld generated assets](assets/sea-overworld-generated-assets.md)
-- [Sea overworld stage-one layout graybox](assets/sea-overworld-stage1-layout.md)
 - [伏波古岭生成素材清单](assets/fubo-guling-generated-assets.md)
 - [Architecture](tech/architecture.md)
 - [月环商港与全局仓库设计规格](specs/2026-08-12-yuehuan-merchant-harbor-design.md)
 - [Backlog](production/backlog.md)
 - [Playtest](qa/playtest.md)
 - [Changes](changes/)
-- [Archived implementation documents](archive/README.md)
+- [Archived implementation and reference documents](archive/README.md)
 
 Add links here when new canonical documents are introduced.

@@ -41,5 +41,6 @@
 - [Backlog](production/backlog.md)
 - [Playtest](qa/playtest.md)
 - [Changes](changes/)
+- [Archived implementation documents](archive/README.md)
 
 Add links here when new canonical documents are introduced.

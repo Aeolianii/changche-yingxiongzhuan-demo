@@ -108,7 +108,7 @@
 - `docs/design/economy-merchant-harbor.md`
 - `docs/qa/playtest.md`
 - `docs/changes/CHG-20260815-inventory-ui-overhaul.md`
-- `docs/superpowers/plans/2026-08-15-inventory-ui-v2.md`
+- `docs/archive/superpowers/plans/2026-08-15-inventory-ui-v2.md`
 
 ## Final behavior
 

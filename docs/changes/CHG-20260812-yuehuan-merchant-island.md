@@ -52,7 +52,7 @@
 
 - Canonical documents: `docs/design/economy-merchant-harbor.md`, `docs/design/art-direction.md`, `docs/tech/architecture.md`, `docs/qa/playtest.md`, `docs/production/backlog.md`, `docs/index.md`.
 - Feature spec: `docs/specs/2026-08-12-yuehuan-merchant-island-design.md`.
-- Implementation plan: `docs/plans/2026-08-12-yuehuan-merchant-island.md`.
+- Archived implementation plan: `docs/archive/plans/2026-08-12-yuehuan-merchant-island.md`.
 - ADR: none;沿用现有单图探索场景与全局经济服务架构。
 
 ## Likely files

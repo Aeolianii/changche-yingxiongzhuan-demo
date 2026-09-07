@@ -34,7 +34,7 @@
 
 - Canonical design: `docs/design/fubo-guling-slice.md`
 - QA: `docs/qa/playtest.md`
-- Design specification: `docs/superpowers/specs/2026-08-11-fubo-dock-boundary-spawn-design.md`
+- Archived design specification: `docs/archive/superpowers/specs/2026-08-11-fubo-dock-boundary-spawn-design.md`
 - ADR: none;沿用现有闭合 `CollisionPolygon2D` 架构。
 
 ## Likely files

@@ -47,7 +47,7 @@
 ## 预计文件
 
 - `docs/changes/CHG-20260818-unify-fleet-source-presets.md`（本记录）
-- `docs/本地修改记录.md`
+- `docs/archive/本地修改记录-截至2026-08-20.md`
 - `.superpowers/sdd/i3-report.md`
 - `scripts/naval/levels/FleetPreset.cs`（`ActivePreset` 持久化）
 - `scripts/naval/levels/EconomyFleetSource.cs`（新增：economy→海战映射 + 拥有数量校验）

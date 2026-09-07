@@ -39,7 +39,7 @@
 
 ## 预计文件
 
-- `assets/naval/battle/terrain_stamps/river_mouth_island_v1.png`
+- `assets/naval/battle/terrain_stamps/river_mouth_island_v1.png`（首版，已于 2026-09-07 从工作树清理，可从 Git 历史恢复）
 - `scripts/naval/core/BattleMap.cs`
 - `scripts/naval/levels/LevelMapSpec.cs`
 - `scripts/naval/levels/RandomMapGenerator.cs`
@@ -58,5 +58,5 @@
 
 - 根据首版实机预览，将素材升级为 `river_mouth_island_v2.png`：保留同一 `6×8` 逻辑掩码和源头—河口构图，只降低饱和度与写实微细节，并对齐 `sea_ink_pixel.png` 的灰青宣纸像素水墨语言。
 - 第二版树冠使用成组墨团与阶梯像素轮廓，河水改为低饱和蓝灰，河口删除亮青色海水块并以稀疏横向墨纹透明渐隐。
-- 首版 `v1` 保留作为对照与可回退素材；运行时切换到 `v2`，地图逻辑和测试契约不变。
+- 首版 `v1` 曾作为对照与回退素材保留；运行时切换到 `v2` 后，已于 2026-09-07 从工作树清理，仍可从 Git 历史恢复。地图逻辑和测试契约不变。
 - `v2` 通过 PNG 四角 Alpha 0 抽查、Godot 纹理导入、headless 专项测试和 Vulkan `1344×896` 实战预览；运行时未再出现棋盘格、矩形底色或亮青河口贴片。

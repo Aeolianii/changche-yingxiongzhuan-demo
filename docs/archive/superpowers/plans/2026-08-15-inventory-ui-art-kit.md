@@ -84,7 +84,7 @@ Expected: PASS。
 
 **Files:**
 - Modify: `docs/changes/CHG-20260815-inventory-ui-art-kit.md`
-- Modify: `docs/superpowers/plans/2026-08-15-inventory-ui-art-kit.md`
+- Modify: `docs/archive/superpowers/plans/2026-08-15-inventory-ui-art-kit.md`
 
 - [x] **Step 1: 生成 1344×896 运行截图并迭代**
 

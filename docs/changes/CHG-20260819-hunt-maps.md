@@ -79,7 +79,7 @@
 
 ## Final reconciliation
 
-- Files changed: `scripts/naval/levels/MapScheme.cs`、`scripts/naval/levels/EnemyFleetConfig.cs`、本记录、`.superpowers/sdd/f2-report.md`、`docs/本地修改记录.md`。
+- Files changed: `scripts/naval/levels/MapScheme.cs`、`scripts/naval/levels/EnemyFleetConfig.cs`、本记录、`.superpowers/sdd/f2-report.md`、`docs/archive/本地修改记录-截至2026-08-20.md`。
 - Documented limitations/follow-ups:
   - `pirate_stronghold` 图保留（不再被 hunt 引用，作数据历史）。
   - 讨伐三阶段地图为手作精品；后续如需变体可按 `VariantGroup` 归族扩展。

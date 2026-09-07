@@ -45,7 +45,7 @@
 
 - Canonical documents: `docs/design/sea-overworld-design.md`
 - Supporting documents: `docs/assets/sea-overworld-stage1-layout.md`, `docs/assets/sea-overworld-generated-assets.md`, `docs/qa/playtest.md`
-- Implementation plan: `docs/superpowers/plans/2026-08-09-sea-overworld-production-map.md`
+- Archived implementation plan: `docs/archive/superpowers/plans/2026-08-09-sea-overworld-production-map.md`
 - Decisions/ADRs: none
 
 ## Likely files and modules

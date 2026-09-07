@@ -47,7 +47,7 @@
 ## 预计文件
 
 - `docs/changes/CHG-20260818-fleet-config-formation.md`（本记录）
-- `docs/本地修改记录.md`
+- `docs/archive/本地修改记录-截至2026-08-20.md`
 - `.superpowers/sdd/i7-report.md`
 - `scripts/naval/levels/FleetPreset.cs`（Formation 持久化）
 - `scripts/naval/presentation/NavalDeploymentController.cs`（布阵按阵型摆位）

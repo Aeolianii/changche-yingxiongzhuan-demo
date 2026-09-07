@@ -74,7 +74,7 @@
 - Modify: `docs/qa/playtest.md`
 
 **Interfaces:**
-- Consumes: 已批准规格 `docs/superpowers/specs/2026-08-10-fubo-guling-map-minigames-design.md`。
+- Consumes: 已批准规格 `docs/archive/superpowers/specs/2026-08-10-fubo-guling-map-minigames-design.md`。
 - Produces: 后续任务共同依赖的世界尺寸、地点锚点、小游戏边界和验收清单。
 
 - [ ] **Step 1: 建立变更记录**

@@ -53,7 +53,7 @@
 - `docs/design/economy-merchant-harbor.md`
 - `docs/qa/playtest.md`
 - `docs/changes/CHG-20260815-inventory-ui-art-kit.md`
-- `docs/superpowers/plans/2026-08-15-inventory-ui-art-kit.md`
+- `docs/archive/superpowers/plans/2026-08-15-inventory-ui-art-kit.md`
 
 ## Verification evidence
 
@@ -77,7 +77,7 @@
 - `docs/design/economy-merchant-harbor.md`
 - `docs/qa/playtest.md`
 - `docs/changes/CHG-20260815-inventory-ui-art-kit.md`
-- `docs/superpowers/plans/2026-08-15-inventory-ui-art-kit.md`
+- `docs/archive/superpowers/plans/2026-08-15-inventory-ui-art-kit.md`
 
 ## Final behavior
 

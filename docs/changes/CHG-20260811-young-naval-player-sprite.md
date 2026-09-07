@@ -39,7 +39,7 @@
 ## Documentation impact
 
 - 更新 `docs/assets/character-assets.md` 记录候选素材合同。
-- 设计细节见 `docs/superpowers/specs/2026-08-11-young-naval-player-sprite-design.md`。
+- 设计细节见归档文件 `docs/archive/superpowers/specs/2026-08-11-young-naval-player-sprite-design.md`。
 
 ## Likely files
 
@@ -50,7 +50,7 @@
 - `tests/test_protagonist_scene_two_frames.gd`
 - `scripts/scene_2.gd`
 - `docs/assets/character-assets.md`
-- `docs/superpowers/specs/2026-08-11-young-naval-player-sprite-design.md`
+- `docs/archive/superpowers/specs/2026-08-11-young-naval-player-sprite-design.md`
 - 本变更记录
 
 ## Verification evidence

@@ -44,7 +44,7 @@
 - `tests/test_click_to_move.gd`
 - `docs/design/sea-overworld-design.md`
 - `docs/qa/playtest.md`
-- `docs/superpowers/plans/2026-08-16-sea-overworld-click-move.md`
+- `docs/archive/superpowers/plans/2026-08-16-sea-overworld-click-move.md`
 
 ## Verification evidence
 
@@ -62,4 +62,4 @@
 - `docs/design/sea-overworld-design.md`
 - `docs/qa/playtest.md`
 - `docs/changes/CHG-20260816-sea-overworld-click-move.md`
-- `docs/superpowers/plans/2026-08-16-sea-overworld-click-move.md`
+- `docs/archive/superpowers/plans/2026-08-16-sea-overworld-click-move.md`

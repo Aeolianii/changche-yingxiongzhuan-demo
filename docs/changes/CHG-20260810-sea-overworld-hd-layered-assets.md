@@ -53,7 +53,7 @@
 - Visual inspection: the left-facing C-shaped harbor mouth and long leftward pier remain readable; roof ridges, eaves, quay edges, stairs, timber piers and rock planes are materially clearer than the baked v3 map artwork; no sea background, text, UI or watermark is present.
 - Chroma-key source is retained only under `.godot/imagegen/` and is not a production asset.
 - Pending: user visual acceptance, remaining locations, ocean background tiles, and eventual in-engine scale/composition verification.
-- User correction on 2026-08-10: not every island may use a rock base. `chuanshan_fishing_village_hd_v1.png` and `shanwan_fishing_chain_hd_v1.png` remain as draft history and will receive non-destructive sand-beach `v2` revisions.
+- User correction on 2026-08-10: not every island may use a rock base. `chuanshan_fishing_village_hd_v1.png` and `shanwan_fishing_chain_hd_v1.png` were draft history and received non-destructive sand-beach `v2` revisions. The superseded v1 files were removed from the working tree on 2026-09-07 and remain recoverable from Git history.
 
 ## Generation prompt: Yuehuan Merchant Harbor v1
 

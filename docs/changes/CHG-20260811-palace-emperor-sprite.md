@@ -37,7 +37,7 @@
 ## Documentation impact
 
 - Canonical documents to update before implementation: `docs/design/palace-scene.md`, `docs/assets/character-assets.md`, `docs/design/art-direction.md`, `docs/tech/architecture.md`, `docs/qa/playtest.md`
-- Approved design: `docs/superpowers/specs/2026-08-11-palace-emperor-sprite-design.md`
+- Archived approved design: `docs/archive/superpowers/specs/2026-08-11-palace-emperor-sprite-design.md`
 - Decisions/ADRs: none; reuse the existing character-frame directory and shared `CharacterActor` loader.
 
 ## Implementation notes

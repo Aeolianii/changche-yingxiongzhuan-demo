@@ -62,7 +62,7 @@ Expected: 输出 `Click-to-move runtime verification passed.`。
 
 **Files:**
 - Modify: `docs/changes/CHG-20260816-sea-overworld-click-move.md`
-- Modify: `docs/superpowers/plans/2026-08-16-sea-overworld-click-move.md`
+- Modify: `docs/archive/superpowers/plans/2026-08-16-sea-overworld-click-move.md`
 
 **Interfaces:**
 - Consumes: 完成后的船只移动契约。

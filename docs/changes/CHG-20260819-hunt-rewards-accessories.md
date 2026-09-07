@@ -73,7 +73,7 @@
 
 - 本记录。
 - `.superpowers/sdd/f1-report.md`（最终报告）。
-- `docs/本地修改记录.md`（项目本地修改记录）。
+- `docs/archive/本地修改记录-截至2026-08-20.md`（项目本地修改记录归档）。
 
 ## Implementation notes
 

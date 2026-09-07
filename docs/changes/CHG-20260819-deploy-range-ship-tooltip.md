@@ -43,7 +43,7 @@
 
 - 更新 `scripts/ui/ship_screen.gd` 顶部常量注释（原引用 x[1,23) y[2,34)）。
 - 更新 `NavalDeploymentController.cs` 顶部与 `BuildDefaultLineups` 注释。
-- 更新 `docs/本地修改记录.md`（F-3 小节）。
+- 更新现已归档的 `docs/archive/本地修改记录-截至2026-08-20.md`（F-3 小节）。
 
 ## Implementation notes
 

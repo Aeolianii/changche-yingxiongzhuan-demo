@@ -69,7 +69,7 @@ Godot 4.7 stable verification completed on 2026-08-11:
 - `tests/test_fubo_sea_round_trip.gd`
 - `docs/index.md`
 - `docs/specs/2026-08-11-fubo-sea-overworld-integration-design.md`
-- `docs/plans/2026-08-11-fubo-sea-overworld-integration.md`
+- `docs/archive/plans/2026-08-11-fubo-sea-overworld-integration.md`
 - `docs/design/sea-overworld-design.md`
 - `docs/design/fubo-guling-slice.md`
 - `docs/design/scene-flow.md`

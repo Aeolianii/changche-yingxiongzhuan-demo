@@ -1,6 +1,6 @@
 extends SceneTree
 
-const SHIP_TYPES: Array[String] = ["transport", "frigate", "flagship"]
+const SHIP_TYPES: Array[String] = ["transport", "frigate", "merchant", "flagship"]
 const DIRECTIONS: Array[String] = ["n", "e", "s", "w"]
 const PREVIEW_PATH := "res://.godot/enemy_ship_directional_assets_preview.png"
 
@@ -60,7 +60,7 @@ func _build_asset_cell(ship_type: String, direction: String) -> Control:
 	_expect(texture != null, "Missing runtime texture: %s" % path)
 
 	var cell := ColorRect.new()
-	cell.custom_minimum_size = Vector2(314, 270)
+	cell.custom_minimum_size = Vector2(314, 220)
 	cell.color = Color("303d49")
 
 	var label := Label.new()
@@ -91,7 +91,7 @@ func _build_asset_cell(ship_type: String, direction: String) -> Control:
 	ship.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	ship.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	ship.position = Vector2(8, 30)
-	ship.size = Vector2(298, 232)
+	ship.size = Vector2(298, 182)
 	cell.add_child(ship)
 	return cell
 

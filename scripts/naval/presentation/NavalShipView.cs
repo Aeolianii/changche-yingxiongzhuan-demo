@@ -62,7 +62,7 @@ public partial class NavalShipView : Node2D
         _slowParticles = NavalStatusAssets.SlowParticles();
         _repairParticle = NavalStatusAssets.RepairParticle();
         _bobPhase = WavePhaseFor(ship.Id);
-        Position = grid.ShipCenterToWorld(ship.Bow, ship.Length, ship.Facing);
+        Position = VisualCenter(grid, ship);
         Rotation = _spriteTexture is null ? FacingAngle(ship.Facing) : 0f;
         QueueRedraw();
     }
@@ -70,7 +70,7 @@ public partial class NavalShipView : Node2D
     public void SyncToShip(NavalGridView grid)
     {
         if (_ship is null) return;
-        Position = grid.ShipCenterToWorld(_ship.Bow, _ship.Length, _ship.Facing);
+        Position = VisualCenter(grid, _ship);
         UpdateDirectionalSprite();
         QueueRedraw();
     }
@@ -82,7 +82,7 @@ public partial class NavalShipView : Node2D
     public float AnimSecondsFor(NavalGridView grid, float moveSecondsPerCell, float turnSeconds)
     {
         if (_ship is null) return 0f;
-        var targetPos = grid.ShipCenterToWorld(_ship.Bow, _ship.Length, _ship.Facing);
+        var targetPos = VisualCenter(grid, _ship);
         var distCells = Position.DistanceTo(targetPos) / NavalGridView.CellSize;
         if (_spriteTexture is not null)
         {
@@ -101,7 +101,7 @@ public partial class NavalShipView : Node2D
     public Tween? AnimateToShip(NavalGridView grid, float moveSecondsPerCell, float turnSeconds)
     {
         if (_ship is null) return null;
-        var targetPos = grid.ShipCenterToWorld(_ship.Bow, _ship.Length, _ship.Facing);
+        var targetPos = VisualCenter(grid, _ship);
         var duration = AnimSecondsFor(grid, moveSecondsPerCell, turnSeconds);
         UpdateDirectionalSprite();
         var targetRot = _spriteTexture is null ? FacingAngle(_ship.Facing) : 0f;
@@ -233,8 +233,9 @@ public partial class NavalShipView : Node2D
         if (_spriteTexture is null) return new Rect2(-halfLen, -cell * 0.5f, halfLen * 2f, cell);
         var horizontal = _ship?.Facing is CardinalDirection.East or CardinalDirection.West;
         var logicalLength = (_ship?.Length ?? 1) * cell;
-        var maxWidth = horizontal ? logicalLength * 0.96f : cell * 1.72f;
-        var maxHeight = horizontal ? cell * 1.72f : logicalLength * 0.96f;
+        var beam = _ship?.Definition.Id == "wokou_citadel" ? _ship.Width * cell * 0.96f : cell * 1.72f;
+        var maxWidth = horizontal ? logicalLength * 0.96f : beam;
+        var maxHeight = horizontal ? beam : logicalLength * 0.96f;
         var textureWidth = Mathf.Max(1f, _spriteTexture.GetWidth());
         var textureHeight = Mathf.Max(1f, _spriteTexture.GetHeight());
         var scale = Mathf.Min(maxWidth / textureWidth, maxHeight / textureHeight);
@@ -250,9 +251,18 @@ public partial class NavalShipView : Node2D
         if (_ship is null) return new Rect2(-cell * 0.5f, -cell * 0.5f, cell, cell);
         var length = _ship.Length * cell;
         var horizontal = _ship.Facing is CardinalDirection.East or CardinalDirection.West;
+        var width = _ship.Definition.Id == "wokou_citadel" ? _ship.Width * cell : cell;
         return horizontal
-            ? new Rect2(-length * 0.5f, -cell * 0.5f, length, cell)
-            : new Rect2(-cell * 0.5f, -length * 0.5f, cell, length);
+            ? new Rect2(-length * 0.5f, -width * 0.5f, length, width)
+            : new Rect2(-width * 0.5f, -length * 0.5f, width, length);
+    }
+
+    private static Vector2 VisualCenter(NavalGridView grid, ShipState ship)
+    {
+        var lengthCenter = grid.ShipCenterToWorld(ship.Bow, ship.Length, ship.Facing);
+        if (ship.Definition.Id != "wokou_citadel") return lengthCenter;
+        var right = ship.Facing.Turn(TurnDirection.Right).Vector();
+        return lengthCenter + new Vector2(right.X, right.Y) * ((ship.Width - 1) * NavalGridView.CellSize * 0.5f);
     }
 
     private void UpdateDirectionalSprite()
@@ -283,12 +293,12 @@ public partial class NavalShipView : Node2D
             "transport" => "transport",
             "sea_monster" => "sea_monster",
             "sea_fish" => "sea_fish",
-            "wokou_citadel" => "citadel",
+            "wokou_citadel" => "citadel_vertical_v1",
             "fort_turret" => "turret",
             _ => "frigate",
         };
         // 海怪与固定设施只提供单张贴图，不拼接朝向后缀。
-        var directionless = shipType is "sea_monster" or "sea_fish" or "citadel" or "turret";
+        var directionless = shipType is "sea_monster" or "sea_fish" or "citadel_vertical_v1" or "turret";
         if (directionless)
             return $"res://assets/naval/battle/ships/{faction}_{shipType}.png";
         var direction = ship.Facing switch

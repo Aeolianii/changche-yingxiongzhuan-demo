@@ -1059,6 +1059,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     public string SelfSinkButtonTooltip() => _selfSinkButton?.TooltipText ?? "";
     public bool IsSelfSunk(string shipId) => _battle.ShipOrNull(shipId)?.SelfSunk ?? false;
     public int ShipHitPoints(string shipId) => _battle.ShipOrNull(shipId)?.HitPoints ?? -1;
+    public int ShipOccupiedCellCount(string shipId) => _battle.ShipOrNull(shipId)?.OccupiedCells().Count ?? -1;
 
     // CHG-20260818：玩家舰装备只读状态（headless 冒烟断言经济舰队装备映射闭环）——武器数/技能槽位数/护甲/槽位/负载/减伤。
     public int ShipWeaponCount(string shipId, string weaponId) => _battle.ShipOrNull(shipId)?.WeaponCounts.GetValueOrDefault(weaponId, 0) ?? -1;

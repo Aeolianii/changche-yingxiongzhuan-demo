@@ -420,8 +420,8 @@ public static class MapSchemeRegistry
 
         // CHG-20260819（F-2 讨伐战地图）：大本营——倭寇营寨。
         // 左港区（玩家布阵）→ 中央营地岛（山地寨墙 + 营帐小镇 + 栅栏林地，东前暗礁防线）→ 右岸防带（敌区贴右缘 2 列窄区）。
-        // 城寨为 2×4 矩形、横放（East/West 占 4 列）必然越出 2 列窄区 → 只能竖放贴右缘最右；炮台 ×4 与守军护卫沿其前排布
-        // （PlaceInEnemyZone 行优先自动放置，Deterministic）。敌出生在城寨附近；右下出口列。
+        // 城寨为 2×4 矩形、横放（East/West 占 4 列）必然越出 2 列窄区 → 只能竖放贴右缘最右；
+        // 固定阵形使炮台在城寨上、下各两座，护卫舰位于外侧水域；右下为出口列。
         new MapScheme(
             Id: "hunt_stronghold",
             DisplayName: "讨伐·倭寇大本营",
@@ -456,6 +456,12 @@ public static class MapSchemeRegistry
                     Origin: new GridPos(0, 2),
                     Width: 1,
                     Height: 14),
+                new TerrainVisualStamp(
+                    Id: "hunt_stage3_central_camp_v1",
+                    TexturePath: "res://assets/naval/battle/terrain_stamps/hunt_stage3_central_camp_v1.png",
+                    Origin: new GridPos(9, 4),
+                    Width: 9,
+                    Height: 9),
             }),
             PlayerZone: new GridRect(1, 2, 5, 14),
             EnemyZone: new GridRect(21, 2, 2, 13),

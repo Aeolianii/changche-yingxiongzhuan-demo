@@ -38,13 +38,31 @@ func _run() -> void:
 	_check(bool(deploy.call("RandomEncounterActive")), "The hunt battle must build a random encounter.")
 	_check(str(deploy.call("RandomEncounterEnemyLabel")) == "倭寇大本营", "The encounter must resolve the wokou stronghold enemy config.")
 	_check(deploy.call("RandomEncounterPlayerFleetCount") > 0, "The encounter must carry a player fleet.")
-	_check(grid.call("TerrainStampCount") == 1, "The final hunt map must render one continuous left-coast terrain stamp.")
-	_check(grid.call("TerrainStampCoveredCellCount") == 14, "The final hunt left-coast stamp must cover exactly 1x14 cells.")
-	_check(bool(grid.call("TerrainStampTexturesReady")), "The final hunt left-coast terrain texture must be imported and loadable.")
+	_check(grid.call("TerrainStampCount") == 2, "The final hunt map must render continuous left-coast and central-camp terrain stamps.")
+	_check(grid.call("TerrainStampCoveredCellCount") == 95, "The final hunt stamps must cover 1x14 plus 9x9 cells.")
+	_check(bool(grid.call("TerrainStampTexturesReady")), "Both final hunt terrain textures must be imported and loadable.")
+	_check(deploy.call("ShipOccupiedCellCount", "e1") == 8, "The citadel must occupy 2x4 logical cells.")
+	_check(deploy.call("BowX", "e1") == 21 and deploy.call("BowY", "e1") == 7, "The citadel must occupy the centered vertical enemy-zone slot.")
+	for i in range(4):
+		var turret_id := "e%d" % (i + 2)
+		var expected_x := 21 + i % 2
+		var expected_y := 6 if i < 2 else 11
+		_check(deploy.call("BowX", turret_id) == expected_x and deploy.call("BowY", turret_id) == expected_y, "The four turrets must be paired symmetrically above and below the citadel.")
+	var citadel_sprite := load("res://assets/naval/battle/ships/enemy_citadel_vertical_v1.png") as Texture2D
+	_check(citadel_sprite != null and citadel_sprite.get_height() > citadel_sprite.get_width() * 1.8, "The citadel sprite must have a vertical 2x4 silhouette.")
+	var expected_center: Vector2 = deploy.call("CellToWorld", 21, 8) + Vector2(13, 13)
+	_check((Vector2(deploy.call("ShipViewPosX", "e1"), deploy.call("ShipViewPosY", "e1")) - expected_center).length() < 0.5, "The citadel sprite must be centered on its 2x4 footprint.")
 	if DisplayServer.get_name() != "headless":
-		var preview_path := "res://.godot/hunt_stage3_left_coast_preview.png"
+		grid.call("FocusCameraOnTerrainStamp", "hunt_stage3_central_camp_v1")
+		await process_frame
+		await RenderingServer.frame_post_draw
+		var preview_path := "res://.godot/hunt_stage3_central_camp_preview.png"
 		var preview_error := root.get_texture().get_image().save_png(preview_path)
 		_check(preview_error == OK, "The final hunt terrain preview screenshot must be writable.")
+		demo.get_node("Camera2D").position = deploy.call("CellToWorld", 21, 8)
+		await RenderingServer.frame_post_draw
+		var defense_preview_error := root.get_texture().get_image().save_png("res://.godot/hunt_stage3_defense_preview.png")
+		_check(defense_preview_error == OK, "The final hunt defense preview screenshot must be writable.")
 
 	# 返回上下文：保留发起方字段（玩家位置/农历日/阶段 id）并补结算结果（未结算默认平局 outcome=2）。
 	var context: Dictionary = controller.call("BuildHuntReturnContext")

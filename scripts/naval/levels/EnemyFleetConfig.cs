@@ -39,6 +39,8 @@ public sealed record EnemyFleetConfig(
         if (map is null) throw new ArgumentNullException(nameof(map));
         if (enemyZone.Width <= 0 || enemyZone.Height <= 0)
             throw new ArgumentOutOfRangeException(nameof(enemyZone), $"敌布阵区无效 {enemyZone}");
+        if (config.Id == "wokou_stronghold")
+            return PlaceWokouStronghold(config, rules, map, enemyZone);
 
         var result = new List<LevelShipSpec>();
         var occupied = new HashSet<GridPos>();
@@ -118,6 +120,39 @@ public sealed record EnemyFleetConfig(
             if (occupied.Contains(c)) return false;
         }
         return true;
+    }
+
+    // 终战岸防阵形：城寨占中间 2×4 格，四炮台在其上、下各成一横排。
+    // 护卫停在更外侧水域；仍逐舰执行与通用布阵相同的地形/区域/重叠校验。
+    private static IReadOnlyList<LevelShipSpec> PlaceWokouStronghold(
+        EnemyFleetConfig config, NavalRulesConfig rules, LevelMapSpec map, GridRect enemyZone)
+    {
+        var result = new List<LevelShipSpec>();
+        var occupied = new HashSet<GridPos>();
+        var positions = new (string Id, GridPos Bow, CardinalDirection Facing)[]
+        {
+            ("wokou_citadel", new GridPos(21, 7), CardinalDirection.North),
+            ("fort_turret", new GridPos(21, 6), CardinalDirection.North),
+            ("fort_turret", new GridPos(22, 6), CardinalDirection.North),
+            ("fort_turret", new GridPos(21, 11), CardinalDirection.North),
+            ("fort_turret", new GridPos(22, 11), CardinalDirection.North),
+            ("frigate", new GridPos(21, 2), CardinalDirection.West),
+            ("frigate", new GridPos(21, 14), CardinalDirection.West),
+        };
+        if (config.Fleet.Sum(item => item.Count) != positions.Length)
+            throw new InvalidDataException($"敌舰队 {config.Id} 固定阵形与舰队数量不一致");
+        foreach (var (id, bow, facing) in positions)
+        {
+            var template = config.Fleet.FirstOrDefault(item => item.ShipTypeId == id)
+                ?? throw new InvalidDataException($"敌舰队 {config.Id} 缺少 {id}");
+            var def = rules.Ships.FirstOrDefault(item => item.Id == id)
+                ?? throw new InvalidDataException($"ships.json 缺少舰型 {id}（配置 {config.Id}）");
+            if (!LegalPlacement(map, def, bow, facing, enemyZone, occupied))
+                throw new InvalidDataException($"敌舰队 {config.Id} 固定阵位非法：{id}@{bow}");
+            occupied.UnionWith(Footprint(def, bow, facing));
+            result.Add(new LevelShipSpec(id, bow, facing, template.Equipment));
+        }
+        return result;
     }
 
     // 舰船占格：委托 ShipGeometry（Width>1 矩形占格；Width=1 与旧线性一致，索引0=船头）。

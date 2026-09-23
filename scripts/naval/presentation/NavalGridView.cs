@@ -638,8 +638,8 @@ public partial class NavalGridView : Node2D
             {
                 var cell = new GridPos(x, y);
                 var rect = CellFaceRect(cell);
-                // 终战岛屿印章下方按深水绘格面；透明海岸仍保留战术格，岛体随后盖住格线。
-                var terrain = map.TerrainStamps.Any(stamp => stamp.Id == "hunt_stage3_central_camp_v1" && stamp.Contains(cell))
+                // 讨伐地图的大地貌下方按深水绘格面；透明航道保留战术格，地貌随后盖住格线。
+                var terrain = map.TerrainStamps.Any(stamp => stamp.Id.StartsWith("hunt_stage", StringComparison.Ordinal) && stamp.Contains(cell))
                     ? TerrainType.DeepWater : map.TerrainAt(cell);
                 DrawCellFace(rect, terrain, Hash01(x, y, 19));
                 switch (map.TerrainAt(cell))
@@ -1069,7 +1069,7 @@ public partial class NavalGridView : Node2D
     }
 
     private static bool HasEmbeddedShallowWater(string stampId)
-        => stampId == "hunt_stage3_central_camp_v1"
+        => stampId.StartsWith("hunt_stage", StringComparison.Ordinal)
            || RandomMapGenerator.MainTerrainStampIds.Contains(stampId);
 
     private void DrawTerrainStampCoastTransition(Texture2D texture, Rect2 target)

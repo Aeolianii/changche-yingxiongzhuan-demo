@@ -381,6 +381,12 @@ public static class MapSchemeRegistry
                 "......BBBB.............E",
                 ".......................E",
                 ".......................E",
+            }).WithTerrainStamps(new[]
+            {
+                new TerrainVisualStamp(
+                    Id: "hunt_stage1_archipelago_v1",
+                    TexturePath: "res://assets/naval/battle/terrain_stamps/hunt_stage1_archipelago_v1.png",
+                    Origin: new GridPos(0, 0), Width: 24, Height: 18),
             }),
             PlayerZone: new GridRect(1, 2, 5, 14),
             EnemyZone: new GridRect(21, 2, 2, 14),
@@ -413,6 +419,12 @@ public static class MapSchemeRegistry
                 "G.....GGGTTTTTTGGGGG^^^E",
                 "GGGGGGGGGTTTTTTGGPPPP^^E",
                 "GGGGGGGGGGGGGGGGGPPPP^^E",
+            }).WithTerrainStamps(new[]
+            {
+                new TerrainVisualStamp(
+                    Id: "hunt_stage2_lagoon_v1",
+                    TexturePath: "res://assets/naval/battle/terrain_stamps/hunt_stage2_lagoon_v1.png",
+                    Origin: new GridPos(0, 0), Width: 24, Height: 18),
             }),
             PlayerZone: new GridRect(1, 2, 5, 14),
             EnemyZone: new GridRect(21, 5, 2, 8),

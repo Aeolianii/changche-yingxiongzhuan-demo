@@ -60,8 +60,8 @@ func _run() -> void:
 	if victory_title.texture == null or not victory_title.texture.resource_path.ends_with("battle_result_victory_calligraphy_v1.png"):
 		_fail("Victory calligraphy must use the generated transparent title asset.")
 		return
-	if victory_title.size.x < 570.0 or victory_title.size.y < 108.0 or victory_title.offset_bottom >= brush.offset_top:
-		_fail("Victory calligraphy must retain the additional twenty-percent enlargement and sit fully above the detail brush.")
+	if victory_title.size.x < 740.0 or victory_title.size.y < 140.0 or victory_title.offset_bottom >= brush.offset_top:
+		_fail("Victory calligraphy must be thirty percent larger and sit fully above the detail brush.")
 		return
 	var return_style := return_button.get_theme_stylebox("normal") as StyleBoxTexture
 	if return_button.get_theme_font_size("font_size") < 24 or return_style == null or return_style.texture == null or not return_style.texture.resource_path.ends_with("level_select_return_brush.png"):

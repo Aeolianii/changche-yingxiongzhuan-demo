@@ -980,6 +980,34 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
         return false;
     }
 
+    public bool ShowHuntTerrainMapPreviewForTest(string schemeId)
+    {
+        if (schemeId is not ("hunt_archipelago" or "hunt_lagoon")) return false;
+        var scheme = MapSchemeRegistry.GetById(schemeId);
+        if (_config is null || scheme is null || scheme.Map.TerrainStamps.Count != 1) return false;
+        foreach (var child in _shipsRoot.GetChildren())
+        {
+            _shipsRoot.RemoveChild(child);
+            child.QueueFree();
+        }
+        _shipViews.Clear();
+        _battle = new BattleState
+        {
+            Map = RandomMapGenerator.ToBattleMap(scheme.Map),
+            Config = _config,
+            Random = new SeedRandomSource(7),
+        };
+        _grid.Attach(_battle);
+        _grid.ShowDeploymentZones(Array.Empty<(Rect2I Rect, Color Color)>());
+        _grid.ShowDeploymentCells(Array.Empty<GridPos>(), Colors.Transparent);
+        _grid.ClearPersistentHighlights();
+        _grid.ClearOverlay();
+        _grid.FocusCameraOnWholeMap();
+        if (_deployHud is not null) _deployHud.Visible = false;
+        _grid.QueueRedraw();
+        return true;
+    }
+
     public bool ShowArchipelagoPassabilityPreviewForTest()
     {
         var generator = new RandomMapGenerator();

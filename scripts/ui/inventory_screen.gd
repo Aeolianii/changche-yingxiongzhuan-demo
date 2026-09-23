@@ -6,6 +6,7 @@ signal close_requested
 const CATALOG := preload("res://scripts/economy/item_catalog.gd")
 const INK_BUTTON_NORMAL := preload("res://assets/ui/sea_overworld/interaction_button_ink_v1.png")
 const INK_BUTTON_ACTIVE := preload("res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png")
+const QUEST_BACKGROUND := preload("res://assets/ui/quest_screen/quest_screen_background.png")
 const COIN_ICON := preload("res://assets/ui/paper/PNGs/Icons/GameIcons/IconCoin.png")
 const FLEET_ICON := preload("res://assets/ui/icons/hud_ship.png")
 const ITEM_ICON_DIR := "res://assets/ui/merchant_shop/items/icons/"
@@ -112,9 +113,19 @@ func _build() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
+	var background := TextureRect.new()
+	background.name = "GeneratedInventoryBackground"
+	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	background.texture = QUEST_BACKGROUND
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(background)
+
 	var dim := ColorRect.new()
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.008, 0.016, 0.014, 0.90)
+	dim.color = Color(0.008, 0.016, 0.014, 0.23)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
 
@@ -122,7 +133,7 @@ func _build() -> void:
 	frame.name = "InventoryFrame"
 	frame.position = Vector2(8, 8)
 	frame.size = Vector2(1328, 880)
-	frame.add_theme_stylebox_override("panel", _flat(Color("#0a1513f8"), Color("#a77a34"), 3, 7, 0))
+	frame.add_theme_stylebox_override("panel", _flat(Color("#0a151348"), Color("#a77a3466"), 1, 4, 0))
 	add_child(frame)
 
 	_canvas = Control.new()
@@ -130,16 +141,16 @@ func _build() -> void:
 	_canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	frame.add_child(_canvas)
 
-	_add_panel("HeaderPanel", Vector2(16, 16), Vector2(1296, 88), Color("#13231fff"), Color("#73562f"), 1)
-	_add_panel("InventoryPanel", Vector2(16, 162), Vector2(856, 632), Color("#0d1917f4"), Color("#72562f"), 1)
-	_add_panel("DetailPanel", Vector2(888, 116), Vector2(424, 678), Color("#c7b586ff"), Color("#a37531"), 2)
+	_add_panel("InventoryPanel", Vector2(16, 162), Vector2(856, 632), Color("#0b1715ee"), Color("#8f713f"), 1)
+	_add_panel("DetailPanel", Vector2(888, 116), Vector2(424, 678), Color("#101c19f2"), Color("#a18550"), 1)
 
 	var title := Label.new()
-	title.position = Vector2(48, 29)
+	title.position = Vector2(180, 39)
 	title.size = Vector2(430, 54)
-	title.text = "水 师 大 仓"
+	title.text = "物品"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_font_size_override("font_size", 36)
 	title.add_theme_color_override("font_color", Color("#ead7a6"))
 	title.add_theme_color_override("font_shadow_color", Color("#000000aa"))
 	title.add_theme_constant_override("shadow_offset_x", 2)
@@ -258,7 +269,7 @@ func _build_detail_area() -> void:
 	_detail_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_detail_name.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_detail_name.add_theme_font_size_override("font_size", 28)
-	_detail_name.add_theme_color_override("font_color", Color("#29231a"))
+	_detail_name.add_theme_color_override("font_color", Color("#f0e8d2"))
 	_canvas.add_child(_detail_name)
 
 	_detail_type = Label.new()
@@ -268,8 +279,8 @@ func _build_detail_area() -> void:
 	_detail_type.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_detail_type.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_detail_type.add_theme_font_size_override("font_size", 16)
-	_detail_type.add_theme_color_override("font_color", Color("#3a3022"))
-	_detail_type.add_theme_stylebox_override("normal", _flat(Color("#b5a16eff"), Color("#86652f"), 1, 3, 6))
+	_detail_type.add_theme_color_override("font_color", Color("#e4d5ab"))
+	_detail_type.add_theme_stylebox_override("normal", _flat(Color("#26342eff"), Color("#866b3d"), 1, 3, 6))
 	_canvas.add_child(_detail_type)
 
 	var rule := ColorRect.new()
@@ -287,7 +298,7 @@ func _build_detail_area() -> void:
 	_detail_description.fit_content = false
 	_detail_description.scroll_active = false
 	_detail_description.add_theme_font_size_override("normal_font_size", 18)
-	_detail_description.add_theme_color_override("default_color", Color("#2e281f"))
+	_detail_description.add_theme_color_override("default_color", Color("#e6dfcb"))
 	_canvas.add_child(_detail_description)
 
 	_detail_use = Label.new()
@@ -298,7 +309,7 @@ func _build_detail_area() -> void:
 	_detail_use.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_detail_use.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_detail_use.add_theme_font_size_override("font_size", 17)
-	_detail_use.add_theme_color_override("font_color", Color("#342d22"))
+	_detail_use.add_theme_color_override("font_color", Color("#d5d0bb"))
 	_canvas.add_child(_detail_use)
 
 	_detail_source = Label.new()
@@ -309,7 +320,7 @@ func _build_detail_area() -> void:
 	_detail_source.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_detail_source.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_detail_source.add_theme_font_size_override("font_size", 15)
-	_detail_source.add_theme_color_override("font_color", Color("#42382a"))
+	_detail_source.add_theme_color_override("font_color", Color("#b9b9a7"))
 	_canvas.add_child(_detail_source)
 
 

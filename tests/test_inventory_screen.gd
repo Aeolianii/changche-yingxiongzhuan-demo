@@ -13,6 +13,8 @@ func _run() -> void:
 	_expect(screen != null and screen.visible, "Inventory button must open the real inventory screen.")
 	_expect(screen.find_child("InventoryFrame", true, false) is PanelContainer, "Inventory V2 must use one code-native macro frame.")
 	_expect(screen.find_child("InventoryBackdrop", true, false) == null, "Inventory V2 must not depend on the V1 backdrop with baked tabs, detail bands, and footer cells.")
+	var shared_background := screen.find_child("GeneratedInventoryBackground", true, false) as TextureRect
+	_expect(shared_background != null and shared_background.texture == preload("res://assets/ui/quest_screen/quest_screen_background.png"), "Inventory must reuse the quest and ship screen background.")
 	var filter_tabs := screen.find_child("FilterTabs", true, false) as HBoxContainer
 	_expect(filter_tabs != null and filter_tabs.get_child_count() == 5, "Inventory must expose five clear category tabs across the top.")
 	var grid := screen.find_child("ItemGrid", true, false) as GridContainer

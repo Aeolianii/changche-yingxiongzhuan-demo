@@ -199,10 +199,12 @@ func _ready() -> void:
 		_fubo_return_context.clear()
 	elif _returning_from_pirate_battle:
 		# CHG-20260817：海盗战结算返回——胜利移除对应海盗，失败保留海盗并在月环商港附近复活。
+		_restore_sea_main_quest_state()
 		_restore_pirate_battle_return(_pirate_battle_return_context)
 		_pirate_battle_return_context.clear()
 	elif _returning_from_hunt_battle:
 		# CHG-20260819（S-2 海面接入）：讨伐战结算返回——胜利领奖/败退回港，营寨胜战补播胜利过场。
+		_restore_sea_main_quest_state()
 		_restore_hunt_battle_return(_hunt_battle_return_context)
 		_hunt_battle_return_context.clear()
 	else:

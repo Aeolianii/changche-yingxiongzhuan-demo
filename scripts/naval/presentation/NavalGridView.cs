@@ -638,9 +638,10 @@ public partial class NavalGridView : Node2D
             {
                 var cell = new GridPos(x, y);
                 var rect = CellFaceRect(cell);
-                // 中央营地印章的透明海岸外缘直接透出海面，不能露出旧草地/森林方块。
-                if (!map.TerrainStamps.Any(stamp => stamp.Id == "hunt_stage3_central_camp_v1" && stamp.Contains(cell)))
-                    DrawCellFace(rect, map.TerrainAt(cell), Hash01(x, y, 19));
+                // 终战岛屿印章下方按深水绘格面；透明海岸仍保留战术格，岛体随后盖住格线。
+                var terrain = map.TerrainStamps.Any(stamp => stamp.Id == "hunt_stage3_central_camp_v1" && stamp.Contains(cell))
+                    ? TerrainType.DeepWater : map.TerrainAt(cell);
+                DrawCellFace(rect, terrain, Hash01(x, y, 19));
                 switch (map.TerrainAt(cell))
                 {
                     case TerrainType.DeepWater:
@@ -1084,6 +1085,21 @@ public partial class NavalGridView : Node2D
     public int TerrainStampCount() => _battle?.Map.TerrainStamps.Count ?? 0;
     public int TerrainStampCoveredCellCount()
         => _battle?.Map.TerrainStamps.Sum(stamp => stamp.Width * stamp.Height) ?? 0;
+    public int UnstampedNonWaterCellCount()
+    {
+        if (_battle is null) return 0;
+        var map = _battle.Map;
+        var count = 0;
+        for (var x = 0; x < map.Width; x++)
+            for (var y = 0; y < map.Height; y++)
+            {
+                var cell = new GridPos(x, y);
+                if (map.TerrainAt(cell) != TerrainType.DeepWater
+                    && !map.TerrainStamps.Any(stamp => stamp.Contains(cell)))
+                    count++;
+            }
+        return count;
+    }
     public bool TerrainStampTexturesReady()
         => _battle is not null
            && _battle.Map.TerrainStamps.All(stamp => _terrainStampTextures.ContainsKey(stamp.TexturePath));

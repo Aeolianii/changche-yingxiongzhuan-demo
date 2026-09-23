@@ -419,43 +419,35 @@ public static class MapSchemeRegistry
             VariantGroup: "lagoon"),
 
         // CHG-20260819（F-2 讨伐战地图）：大本营——倭寇营寨。
-        // 左港区（玩家布阵）→ 中央营地岛（山地寨墙 + 营帐小镇 + 栅栏林地，东前暗礁防线）→ 右岸防带（敌区贴右缘 2 列窄区）。
+        // 左港区（玩家布阵）→ 唯一中央营地岛（山地寨墙 + 营帐小镇 + 栅栏林地）→ 右岸防带（敌区贴右缘 2 列窄区）。
         // 城寨为 2×4 矩形、横放（East/West 占 4 列）必然越出 2 列窄区 → 只能竖放贴右缘最右；
         // 固定阵形使炮台在城寨上、下各两座，护卫舰位于外侧水域；右下为出口列。
         new MapScheme(
             Id: "hunt_stronghold",
             DisplayName: "讨伐·倭寇大本营",
-            Description: "倭寇营寨：城寨竖镇右缘、炮台沿岸防位列阵，守军停泊护航；中央营地岛与暗礁防线层层设防。",
+            Description: "倭寇营寨：城寨竖镇右缘、炮台沿岸防位列阵，守军停泊护航；中央营地岛为唯一地形。",
             Map: LevelMapSpec.FromAscii(new[]
             {
                 ".......................E",
                 ".......................E",
-                "G......................E",
-                "G......................E",
-                "G........^GGGGGGG^.....E",
-                "G........GTTT^TTTG.....E",
-                "G........GTFFFFFTG.....E",
-                "G........GTFFFFFTG##...E",
-                "G......~.GTFFFFFTG##...E",
-                "G......~.GTFFFFFTG##...E",
-                "G........GTFFFFFTG.....E",
-                "G........GTTT^TTTG.....E",
-                "G........^GGGGGGG^.....E",
-                "G......~~~.............E",
-                "G......................E",
-                "G......................E",
+                ".......................E",
+                ".......................E",
+                ".........^GGGGGGG^.....E",
+                ".........GTTT^TTTG.....E",
+                ".........GTFFFFFTG.....E",
+                ".........GTFFFFFTG.....E",
+                ".........GTFFFFFTG.....E",
+                ".........GTFFFFFTG.....E",
+                ".........GTFFFFFTG.....E",
+                ".........GTTT^TTTG.....E",
+                ".........^GGGGGGG^.....E",
+                ".......................E",
+                ".......................E",
+                ".......................E",
                 ".......................E",
                 ".......................E",
             }).WithTerrainStamps(new[]
             {
-                // 最终讨伐战左侧边界：以一张连续 1×14 岸带替代逐格草地贴图；
-                // 下层 TerrainType 仍保留为 Grass，碰撞、布阵与寻路规则不变。
-                new TerrainVisualStamp(
-                    Id: "hunt_stage3_left_coast_v1",
-                    TexturePath: "res://assets/naval/battle/terrain_stamps/hunt_stage3_left_coast_v1.png",
-                    Origin: new GridPos(0, 2),
-                    Width: 1,
-                    Height: 14),
                 new TerrainVisualStamp(
                     Id: "hunt_stage3_central_camp_v1",
                     TexturePath: "res://assets/naval/battle/terrain_stamps/hunt_stage3_central_camp_v1.png",

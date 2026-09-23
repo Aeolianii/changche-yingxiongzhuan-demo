@@ -38,9 +38,10 @@ func _run() -> void:
 	_check(bool(deploy.call("RandomEncounterActive")), "The hunt battle must build a random encounter.")
 	_check(str(deploy.call("RandomEncounterEnemyLabel")) == "倭寇大本营", "The encounter must resolve the wokou stronghold enemy config.")
 	_check(deploy.call("RandomEncounterPlayerFleetCount") > 0, "The encounter must carry a player fleet.")
-	_check(grid.call("TerrainStampCount") == 2, "The final hunt map must render continuous left-coast and central-camp terrain stamps.")
-	_check(grid.call("TerrainStampCoveredCellCount") == 95, "The final hunt stamps must cover 1x14 plus 9x9 cells.")
-	_check(bool(grid.call("TerrainStampTexturesReady")), "Both final hunt terrain textures must be imported and loadable.")
+	_check(grid.call("TerrainStampCount") == 1, "The final hunt map must render only the central-camp terrain stamp.")
+	_check(grid.call("TerrainStampCoveredCellCount") == 81, "The central-camp terrain stamp must cover 9x9 cells.")
+	_check(grid.call("UnstampedNonWaterCellCount") == 0, "All cells outside the central camp must remain open water.")
+	_check(bool(grid.call("TerrainStampTexturesReady")), "The central-camp terrain texture must be imported and loadable.")
 	_check(deploy.call("ShipOccupiedCellCount", "e1") == 8, "The citadel must occupy 2x4 logical cells.")
 	_check(deploy.call("BowX", "e1") == 21 and deploy.call("BowY", "e1") == 7, "The citadel must occupy the centered vertical enemy-zone slot.")
 	for i in range(4):

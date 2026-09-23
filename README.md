@@ -16,6 +16,12 @@
 
 ## 下载与运行
 
+### Windows 试玩版（推荐玩家）
+
+下载完整的 Windows 试玩包 ZIP，解压全部内容，再双击其中的 `厂车英雄传DEMO.exe`。exe 旁的文件和文件夹是运行所需内容，请一起保留；无需安装 Godot 或 .NET SDK。
+
+### 从源码运行（开发者）
+
 1. 克隆仓库，或在 GitHub 点击 **Code → Download ZIP** 并完整解压。
 2. 用 Godot 4.7.1 .NET 导入根目录的 `project.godot`。
 3. 等待首次资源导入和 C# 构建完成。

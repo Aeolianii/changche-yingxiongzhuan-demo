@@ -2,7 +2,9 @@ extends SceneTree
 const HUD := preload("res://scenes/ui/exploration_hud.tscn")
 func _initialize() -> void: run.call_deferred()
 func run() -> void:
-	var hud := HUD.instantiate(); root.add_child(hud); hud.call("set_exploration_visible", true)
+	var hud := HUD.instantiate(); root.add_child(hud)
+	hud.call("reset_context", &"sea_overworld")
+	hud.call("set_exploration_visible", true)
 	await process_frame
 	(hud.find_child("InventoryButton", true, false) as Button).pressed.emit()
 	await process_frame; await process_frame; await RenderingServer.frame_post_draw

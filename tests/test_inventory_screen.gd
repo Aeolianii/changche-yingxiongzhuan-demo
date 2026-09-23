@@ -4,13 +4,18 @@ const HUD := preload("res://scenes/ui/exploration_hud.tscn")
 var failures: Array[String] = []
 func _initialize() -> void: _run.call_deferred()
 func _run() -> void:
-	var hud := HUD.instantiate(); root.add_child(hud); await process_frame; hud.call("set_exploration_visible", true)
+	var hud := HUD.instantiate(); root.add_child(hud); await process_frame
+	hud.call("reset_context", &"sea_overworld")
+	hud.call("set_exploration_visible", true)
+	var sea_map_status := hud.find_child("SeaMapStatus", true, false) as Control
+	_expect(sea_map_status != null and sea_map_status.visible, "Sea map button must be available before inventory opens.")
 	var locks: Array[bool] = []; hud.menu_visibility_changed.connect(func(value: bool): locks.append(value))
 	var inventory_button := hud.find_child("InventoryButton", true, false) as Button
 	_expect(inventory_button != null, "Inventory function button must exist.")
 	inventory_button.pressed.emit(); await process_frame
 	var screen := hud.find_child("InventoryScreen", true, false) as Control
 	_expect(screen != null and screen.visible, "Inventory button must open the real inventory screen.")
+	_expect(sea_map_status != null and not sea_map_status.visible, "Opening inventory must hide the lower-right sea map button.")
 	_expect(screen.find_child("InventoryFrame", true, false) is PanelContainer, "Inventory V2 must use one code-native macro frame.")
 	_expect(screen.find_child("InventoryBackdrop", true, false) == null, "Inventory V2 must not depend on the V1 backdrop with baked tabs, detail bands, and footer cells.")
 	var shared_background := screen.find_child("GeneratedInventoryBackground", true, false) as TextureRect
@@ -21,7 +26,11 @@ func _run() -> void:
 	_expect(grid != null and grid.columns == 6, "Inventory must use a six-column item grid.")
 	_expect(grid != null and grid.get_child_count() == 12, "Inventory V2 must show exactly twelve first-screen slots instead of twenty-four permanent boxes.")
 	var item_scroll := screen.find_child("ItemScroll", true, false) as ScrollContainer
-	_expect(item_scroll != null and item_scroll.size.x >= 824.0, "Inventory scroll viewport must reserve enough width for six cards after a vertical scrollbar appears.")
+	_expect(item_scroll != null and item_scroll.size.x >= 824.0 and item_scroll.size.y >= 460.0, "Inventory scroll viewport must fit all six cards across and two rows down.")
+	var title := screen.find_child("ScreenTitle", true, false) as Label
+	var inventory_panel := screen.find_child("InventoryPanel", true, false) as PanelContainer
+	_expect(title != null and title.position.y < filter_tabs.position.y and title.position.x + title.size.x <= filter_tabs.position.x + filter_tabs.size.x, "Inventory title must occupy the upper-left brush before the filters begin.")
+	_expect(inventory_panel != null and inventory_panel.position.y >= filter_tabs.position.y + filter_tabs.size.y, "Inventory panel must sit below the top-left brush and filter tabs.")
 	if grid != null and grid.get_child_count() > 0:
 		var first_card := grid.get_child(0) as Button
 		_expect(first_card.find_child("ItemIcon", true, false) is TextureRect, "Every inventory card must show a pixel-art item icon.")
@@ -68,7 +77,7 @@ func _run() -> void:
 		_expect(sort_button.text != original_sort, "Sort control must cycle to another ordering mode.")
 	var close_button := screen.find_child("CloseButton", true, false) as Button
 	var close_normal := close_button.get_theme_stylebox("normal")
-	_expect(close_normal is StyleBoxTexture and (close_normal as StyleBoxTexture).texture.resource_path.ends_with("interaction_button_ink_v1.png"), "Inventory close button must reuse the system black-gold UI texture.")
+	_expect(close_normal is StyleBoxTexture and (close_normal as StyleBoxTexture).texture.resource_path.ends_with("sea_map_return_brush_v1.png"), "Inventory close text must sit over the shared ink-brush texture.")
 	_expect((screen.find_child("PayLabel", true, false) as Label).text.contains("800"), "Inventory must display military pay.")
 	_expect((screen.find_child("FleetLabel", true, false) as Label).text.contains("5 艘"), "Inventory must display the five-ship starting fleet count without a capacity limit.")
 	var pay_label := screen.find_child("PayLabel", true, false) as Label
@@ -90,12 +99,15 @@ func _run() -> void:
 	_expect(locks == [true], "Opening inventory must emit the shared movement lock.")
 	close_button.pressed.emit(); await process_frame
 	_expect(not screen.visible and locks == [true, false], "Closing inventory must restore movement.")
+	_expect(sea_map_status.visible, "Closing inventory must restore the sea map button when the scene allows it.")
+	hud.call("set_sea_map_button_visible", false)
 	inventory_button.pressed.emit(); await process_frame
 	_expect(screen.has_method("_unhandled_key_input"), "Inventory must expose Escape keyboard handling.")
 	if screen.has_method("_unhandled_key_input"):
 		var escape := InputEventKey.new(); escape.keycode = KEY_ESCAPE; escape.pressed = true
 		screen.call("_unhandled_key_input", escape); await process_frame
 		_expect(not screen.visible and locks == [true, false, true, false], "Escape must close inventory and restore movement.")
+		_expect(not sea_map_status.visible, "Closing inventory must preserve a scene-imposed hidden map-button state.")
 	else:
 		(screen.find_child("CloseButton", true, false) as Button).pressed.emit(); await process_frame
 	hud.queue_free(); await process_frame

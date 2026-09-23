@@ -208,8 +208,12 @@ func configure_sea_map(player_node: Node2D, world_size: Vector2, locations: Arra
 
 func set_sea_map_button_visible(value: bool) -> void:
 	_sea_map_button_visible = value
+	_refresh_sea_map_status_visibility()
+
+
+func _refresh_sea_map_status_visibility() -> void:
 	if is_instance_valid(_sea_map_status):
-		_sea_map_status.visible = value
+		_sea_map_status.visible = _sea_map_button_visible and not is_inventory_screen_open()
 
 
 func set_lunar_day(total_days: float) -> void:
@@ -406,7 +410,7 @@ func _build_sea_map_button() -> void:
 	_sea_map_status.offset_right = -20.0
 	_sea_map_status.offset_bottom = -20.0
 	_sea_map_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_sea_map_status.visible = _sea_map_button_visible
+	_sea_map_status.visible = _sea_map_button_visible and not is_inventory_screen_open()
 	add_child(_sea_map_status)
 
 	var map_frame := TextureRect.new()
@@ -1190,6 +1194,7 @@ func _open_inventory_screen() -> void:
 	_toast_panel.hide()
 	_set_function_buttons_visible(false)
 	_inventory_screen.call("show_screen")
+	_refresh_sea_map_status_visibility()
 	menu_visibility_changed.emit(true)
 
 
@@ -1197,6 +1202,7 @@ func _close_inventory_screen() -> void:
 	if not is_inventory_screen_open():
 		return
 	_inventory_screen.hide()
+	_refresh_sea_map_status_visibility()
 	_set_function_buttons_visible(true)
 	menu_visibility_changed.emit(false)
 

@@ -4,8 +4,7 @@ extends Control
 signal close_requested
 
 const CATALOG := preload("res://scripts/economy/item_catalog.gd")
-const INK_BUTTON_NORMAL := preload("res://assets/ui/sea_overworld/interaction_button_ink_v1.png")
-const INK_BUTTON_ACTIVE := preload("res://assets/ui/sea_overworld/interaction_button_ink_active_v1.png")
+const RETURN_BRUSH := preload("res://assets/ui/sea_overworld/sea_map_return_brush_v1.png")
 const QUEST_BACKGROUND := preload("res://assets/ui/quest_screen/quest_screen_background.png")
 const COIN_ICON := preload("res://assets/ui/paper/PNGs/Icons/GameIcons/IconCoin.png")
 const FLEET_ICON := preload("res://assets/ui/icons/hud_ship.png")
@@ -141,12 +140,13 @@ func _build() -> void:
 	_canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	frame.add_child(_canvas)
 
-	_add_panel("InventoryPanel", Vector2(16, 162), Vector2(856, 632), Color("#0b1715ee"), Color("#8f713f"), 1)
-	_add_panel("DetailPanel", Vector2(888, 116), Vector2(424, 678), Color("#101c19f2"), Color("#a18550"), 1)
+	_add_panel("InventoryPanel", Vector2(16, 224), Vector2(856, 570), Color("#0b1715ee"), Color("#8f713f"), 1)
+	_add_panel("DetailPanel", Vector2(888, 174), Vector2(424, 620), Color("#101c19f2"), Color("#a18550"), 1)
 
 	var title := Label.new()
-	title.position = Vector2(180, 39)
-	title.size = Vector2(430, 54)
+	title.name = "ScreenTitle"
+	title.position = Vector2(180, 58)
+	title.size = Vector2(300, 58)
 	title.text = "物品"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -159,10 +159,10 @@ func _build() -> void:
 
 	var close := Button.new()
 	close.name = "CloseButton"
-	close.position = Vector2(1138, 35)
-	close.size = Vector2(146, 48)
+	close.position = Vector2(1114, 30)
+	close.size = Vector2(184, 68)
 	close.text = "关闭仓库  Esc"
-	_style_ink_button(close, 16, 18.0, 8.0)
+	_style_brush_button(close)
 	close.pressed.connect(close_requested.emit)
 	_canvas.add_child(close)
 
@@ -184,7 +184,7 @@ func _add_panel(node_name: String, panel_position: Vector2, panel_size: Vector2,
 func _build_filter_tabs() -> void:
 	_filter_tabs = HBoxContainer.new()
 	_filter_tabs.name = "FilterTabs"
-	_filter_tabs.position = Vector2(28, 112)
+	_filter_tabs.position = Vector2(28, 172)
 	_filter_tabs.size = Vector2(832, 44)
 	_filter_tabs.add_theme_constant_override("separation", 4)
 	_canvas.add_child(_filter_tabs)
@@ -206,7 +206,7 @@ func _build_filter_tabs() -> void:
 func _build_grid_area() -> void:
 	var grid_title := Label.new()
 	grid_title.name = "GridTitle"
-	grid_title.position = Vector2(45, 181)
+	grid_title.position = Vector2(45, 238)
 	grid_title.size = Vector2(260, 46)
 	grid_title.text = "库藏"
 	grid_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -216,7 +216,7 @@ func _build_grid_area() -> void:
 
 	_sort_button = OptionButton.new()
 	_sort_button.name = "SortButton"
-	_sort_button.position = Vector2(654, 184)
+	_sort_button.position = Vector2(654, 241)
 	_sort_button.size = Vector2(190, 40)
 	for label in SORT_MODES:
 		_sort_button.add_item(label)
@@ -228,7 +228,7 @@ func _build_grid_area() -> void:
 	_canvas.add_child(_sort_button)
 
 	var divider := ColorRect.new()
-	divider.position = Vector2(44, 230)
+	divider.position = Vector2(44, 288)
 	divider.size = Vector2(800, 1)
 	divider.color = Color("#81643888")
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -236,8 +236,8 @@ func _build_grid_area() -> void:
 
 	var scroll := ScrollContainer.new()
 	scroll.name = "ItemScroll"
-	scroll.position = Vector2(42, 247)
-	scroll.size = Vector2(824, 525)
+	scroll.position = Vector2(42, 303)
+	scroll.size = Vector2(824, 472)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.add_theme_stylebox_override("panel", _flat(Color("#00000000"), Color("#00000000"), 0, 0, 0))
 	_canvas.add_child(scroll)
@@ -254,8 +254,8 @@ func _build_grid_area() -> void:
 func _build_detail_area() -> void:
 	_detail_preview = TextureRect.new()
 	_detail_preview.name = "ItemPreview"
-	_detail_preview.position = Vector2(982, 142)
-	_detail_preview.size = Vector2(232, 216)
+	_detail_preview.position = Vector2(982, 188)
+	_detail_preview.size = Vector2(232, 188)
 	_detail_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_detail_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_detail_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -264,7 +264,7 @@ func _build_detail_area() -> void:
 
 	_detail_name = Label.new()
 	_detail_name.name = "DetailName"
-	_detail_name.position = Vector2(920, 365)
+	_detail_name.position = Vector2(920, 382)
 	_detail_name.size = Vector2(356, 44)
 	_detail_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_detail_name.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -274,7 +274,7 @@ func _build_detail_area() -> void:
 
 	_detail_type = Label.new()
 	_detail_type.name = "DetailType"
-	_detail_type.position = Vector2(1012, 414)
+	_detail_type.position = Vector2(1012, 430)
 	_detail_type.size = Vector2(172, 34)
 	_detail_type.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_detail_type.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -284,7 +284,7 @@ func _build_detail_area() -> void:
 	_canvas.add_child(_detail_type)
 
 	var rule := ColorRect.new()
-	rule.position = Vector2(920, 462)
+	rule.position = Vector2(920, 474)
 	rule.size = Vector2(356, 1)
 	rule.color = Color("#80653299")
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -292,7 +292,7 @@ func _build_detail_area() -> void:
 
 	_detail_description = RichTextLabel.new()
 	_detail_description.name = "DetailDescription"
-	_detail_description.position = Vector2(920, 482)
+	_detail_description.position = Vector2(920, 495)
 	_detail_description.size = Vector2(356, 58)
 	_detail_description.bbcode_enabled = true
 	_detail_description.fit_content = false
@@ -303,7 +303,7 @@ func _build_detail_area() -> void:
 
 	_detail_use = Label.new()
 	_detail_use.name = "DetailUse"
-	_detail_use.position = Vector2(920, 558)
+	_detail_use.position = Vector2(920, 566)
 	_detail_use.size = Vector2(356, 92)
 	_detail_use.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail_use.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -314,7 +314,7 @@ func _build_detail_area() -> void:
 
 	_detail_source = Label.new()
 	_detail_source.name = "DetailSource"
-	_detail_source.position = Vector2(920, 670)
+	_detail_source.position = Vector2(920, 674)
 	_detail_source.size = Vector2(356, 96)
 	_detail_source.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail_source.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -577,25 +577,25 @@ func _clear_grid() -> void:
 		child.queue_free()
 
 
-func _style_ink_button(button: Button, font_size: int, horizontal_margin: float, vertical_margin: float) -> void:
-	button.add_theme_font_size_override("font_size", font_size)
+func _style_brush_button(button: Button) -> void:
+	button.add_theme_font_size_override("font_size", 18)
 	button.add_theme_color_override("font_color", Color("#d8cfb8"))
 	button.add_theme_color_override("font_hover_color", Color("#ffe4a1"))
 	button.add_theme_color_override("font_pressed_color", Color("#fff0bc"))
-	button.add_theme_stylebox_override("normal", _ink_style(INK_BUTTON_NORMAL, Color.WHITE, horizontal_margin, vertical_margin))
-	button.add_theme_stylebox_override("hover", _ink_style(INK_BUTTON_ACTIVE, Color.WHITE, horizontal_margin, vertical_margin))
-	button.add_theme_stylebox_override("focus", _ink_style(INK_BUTTON_ACTIVE, Color.WHITE, horizontal_margin, vertical_margin))
-	button.add_theme_stylebox_override("pressed", _ink_style(INK_BUTTON_ACTIVE, Color("#e9d39d"), horizontal_margin, vertical_margin))
+	button.add_theme_stylebox_override("normal", _brush_style(Color.WHITE))
+	button.add_theme_stylebox_override("hover", _brush_style(Color("#f4dcaa")))
+	button.add_theme_stylebox_override("focus", _brush_style(Color("#f4dcaa")))
+	button.add_theme_stylebox_override("pressed", _brush_style(Color("#c9b994")))
 
 
-func _ink_style(texture: Texture2D, tint: Color, horizontal_margin: float, vertical_margin: float) -> StyleBoxTexture:
+func _brush_style(tint: Color) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
-	style.texture = texture
+	style.texture = RETURN_BRUSH
 	style.modulate_color = tint
-	style.content_margin_left = horizontal_margin
-	style.content_margin_right = horizontal_margin
-	style.content_margin_top = vertical_margin
-	style.content_margin_bottom = vertical_margin
+	style.content_margin_left = 14.0
+	style.content_margin_right = 14.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
 	return style
 
 

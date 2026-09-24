@@ -449,8 +449,7 @@ public partial class LevelSelectController : Control
     {
         try
         {
-            var dir = System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "data", "naval");
-            return NavalConfigLoader.LoadFromDirectory(dir);
+            return NavalConfigLoader.LoadFromGodotResources();
         }
         catch (Exception ex)
         {

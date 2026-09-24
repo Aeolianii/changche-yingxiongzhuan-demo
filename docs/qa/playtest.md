@@ -2,6 +2,8 @@
 
 ## Build smoke checks
 
+- [x] Windows 发布版从独立目录运行海战布阵检查：四份配置可读、海面多边形已生成、双方舰船已创建，图形截图包含完整战场（2026-09-24，详见 `CHG-20260924-exported-naval-battle.md`）。
+
 - [x] Project opens without blocking import errors.
 - [x] Main playable path starts.
 - [x] Player cannot become permanently stuck on the expected path.

@@ -40,6 +40,14 @@ public static class NavalConfigLoader
             ReadRequired(Path.Combine(directory, "weather.json")));
     }
 
+    // res:// remains readable through Godot's virtual filesystem after it is packed into an exe.
+    public static NavalRulesConfig LoadFromGodotResources(string directory = "res://data/naval")
+        => LoadFromJson(
+            ReadGodotResource($"{directory}/ships.json"),
+            ReadGodotResource($"{directory}/weapons.json"),
+            ReadGodotResource($"{directory}/skills.json"),
+            ReadGodotResource($"{directory}/weather.json"));
+
     public static NavalRulesConfig LoadDefault()
         => NavalRulesConfig.Default();
 
@@ -128,6 +136,15 @@ public static class NavalConfigLoader
         if (!File.Exists(path))
             throw new InvalidDataException($"naval config file not found: {path}");
         return File.ReadAllText(path);
+    }
+
+
+    private static string ReadGodotResource(string path)
+    {
+        using var file = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read);
+        if (file is null)
+            throw new InvalidDataException($"naval config file not found in resources: {path}");
+        return file.GetAsText();
     }
 
     private sealed record ShipDto(

@@ -9,6 +9,8 @@
 
 Windows 正式发行使用 Godot 4.7.1 .NET 的 `Windows Desktop` x86_64 导出预设和相同版本的 Mono 导出模板。Godot 的 C# 导出还要求工程根目录存在与项目同名的 `ChangcheHeroes.sln`；只检查导出命令的退出码不足以证明成功，必须检查日志中的 `ERROR`。试玩包输出到源码仓库之外；完整目录及其 ZIP 是交付单位。玩家解压 ZIP 后运行目录中的 exe，不需要 Godot 编辑器或 .NET SDK。导出 exe 所依赖的 PCK、.NET 运行文件与其他相邻内容必须保持原有目录结构；发布前从独立目录启动验证。
 
+海战四份 `data/naval/*.json` 是运行时配置，导出预设须显式包含。`NavalConfigLoader` 在 Godot 运行时通过 `res://` 与 `Godot.FileAccess` 读取它们；Windows 文件系统路径只用于独立数据测试和 `user://` 存档。发布验收必须启动导出 exe 的海战布阵检查，确认地图海面与双方舰队已创建，不能仅验证标题画面启动。
+
 ## Project classification and excluded workflow
 
 本仓库是 Godot 4.7.1 .NET 游戏工程，不是离线 H5 或互动空间工程。`project.godot` 是工程入口，场景使用 `.tscn`，运行时代码使用 GDScript 与 C#；开发和验收以 Godot .NET 构建、资源导入、场景加载及项目内测试为准。

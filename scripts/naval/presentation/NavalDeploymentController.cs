@@ -242,8 +242,7 @@ public partial class NavalDeploymentController : Node2D, IGridClickReceiver
     {
         try
         {
-            var dir = System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "data", "naval");
-            return NavalConfigLoader.LoadFromDirectory(dir);
+            return NavalConfigLoader.LoadFromGodotResources();
         }
         catch (Exception ex)
         {

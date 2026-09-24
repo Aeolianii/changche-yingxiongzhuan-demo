@@ -18,6 +18,7 @@ config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 
 GameState="*res://scripts/core/game_state.gd"
 ExplorationUI="*res://scripts/ui/exploration_ui.gd"
+ReleaseSmoke="*res://scripts/core/release_smoke.gd"
 
 [display]
 

@@ -28,16 +28,18 @@ theme_override_constants/separation = 8
 
 [node name="DialogueLabel" type="Label" parent="FullWidthPaperDialogueBox/DialogueMargin/DialogueStack"]
 custom_minimum_size = Vector2(650, 62)
+custom_maximum_size = Vector2(650, -1)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.93, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.98)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 24
-autowrap_mode = 2
+autowrap_mode = 1
 
 [node name="DetailLabel" type="RichTextLabel" parent="FullWidthPaperDialogueBox/DialogueMargin/DialogueStack"]
 visible = false
 custom_minimum_size = Vector2(650, 28)
+custom_maximum_size = Vector2(650, -1)
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/default_color = Color(0.86, 0.81, 0.7, 1)
@@ -45,6 +47,7 @@ theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.98)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/normal_font_size = 18
 bbcode_enabled = true
+autowrap_mode = 3
 fit_content = true
 scroll_active = false
 

@@ -444,12 +444,13 @@ theme_override_constants/separation = 8
 
 [node name="DialogueLabel" type="Label" parent="UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack" unique_id=393364232]
 custom_minimum_size = Vector2(650, 62)
+custom_maximum_size = Vector2(650, -1)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.93, 0.84, 1)
 theme_override_colors/font_outline_color = Color(0.015, 0.02, 0.018, 0.98)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 24
-autowrap_mode = 2
+autowrap_mode = 1
 
 [node name="OptionBox" type="VBoxContainer" parent="UI/DialoguePanel/FullWidthPaperDialogueBox/DialogueMargin/DialogueStack" unique_id=762019756]
 custom_minimum_size = Vector2(650, 50)

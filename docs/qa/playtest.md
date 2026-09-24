@@ -2,6 +2,8 @@
 
 ## Build smoke checks
 
+- [x] Windows 发布版第一章皇帝及后续对白与工程版 1344×896 截图对照：全文在水墨底板内换行，未进入立绘或越过屏幕；第二章对话、海图遇敌、随机事件、伏波守岭人与倭寇最终战对白及胜利字幕也无越界。工程与 exe 的 47 条布局记录一致，解压版对话与海战 smoke 均通过（2026-09-24，详见 `CHG-20260924-exported-dialogue-wrap.md`）。
+
 - [x] Windows 发布版从独立目录运行海战布阵检查：四份配置可读、海面多边形已生成、双方舰船已创建，图形截图包含完整战场（2026-09-24，详见 `CHG-20260924-exported-naval-battle.md`）。
 
 - [x] Project opens without blocking import errors.

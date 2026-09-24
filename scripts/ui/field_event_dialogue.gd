@@ -41,6 +41,10 @@ func present(
 	portrait_keep_full: bool = false
 ) -> void:
 	_apply_dialogue_side(portrait_on_left, portrait_scale, portrait_keep_full)
+	if options.size() >= 4:
+		# Four difficulty choices and the detail line must remain inside the 300px panel.
+		dialogue_margin.add_theme_constant_override("margin_top", 35)
+		dialogue_margin.add_theme_constant_override("margin_bottom", 10)
 	speaker_label.text = speaker
 	dialogue_label.text = line
 	dialogue_label.custom_minimum_size.y = COMPACT_DIALOGUE_MIN_HEIGHT if not detail_bbcode.is_empty() else DEFAULT_DIALOGUE_MIN_HEIGHT
@@ -96,14 +100,18 @@ func _apply_dialogue_side(portrait_on_left: bool, portrait_scale: float, portrai
 		name_plate.position = Vector2(24, 830)
 		_set_dialogue_margins(426, 240, 76, 18)
 		dialogue_label.custom_minimum_size.x = 630
+		dialogue_label.custom_maximum_size.x = 630
 		detail_label.custom_minimum_size.x = 630
+		detail_label.custom_maximum_size.x = 630
 		option_box.custom_minimum_size.x = 630
 	else:
 		portrait_image.position.x = PORTRAIT_RIGHT_EDGE - portrait_size.x
 		name_plate.position = Vector2(1060, 830)
 		_set_dialogue_margins(206, 440, 76, 18)
 		dialogue_label.custom_minimum_size.x = 650
+		dialogue_label.custom_maximum_size.x = 650
 		detail_label.custom_minimum_size.x = 650
+		detail_label.custom_maximum_size.x = 650
 		option_box.custom_minimum_size.x = 650
 
 

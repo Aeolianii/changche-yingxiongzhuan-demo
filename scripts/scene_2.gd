@@ -935,12 +935,14 @@ func _apply_dialogue_side(portrait_on_left: bool) -> void:
 		_name_plate.position = Vector2(24, 830)
 		_set_dialogue_margins(426, 240, 76, 18)
 		_dialogue_label.custom_minimum_size = Vector2(630, 62)
+		_dialogue_label.custom_maximum_size = Vector2(630, -1)
 		_option_box.custom_minimum_size = Vector2(630, 50)
 	else:
 		_portrait_image.position = Vector2(884, 410)
 		_name_plate.position = Vector2(1060, 830)
 		_set_dialogue_margins(206, 440, 76, 18)
 		_dialogue_label.custom_minimum_size = Vector2(650, 62)
+		_dialogue_label.custom_maximum_size = Vector2(650, -1)
 		_option_box.custom_minimum_size = Vector2(650, 50)
 
 

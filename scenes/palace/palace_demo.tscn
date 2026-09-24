@@ -211,7 +211,7 @@ text = "县令：少侠，宫门已闭。若要追查海上的异象，先去问
 
 按 E 或空格继续"
 vertical_alignment = 1
-autowrap_mode = 2
+autowrap_mode = 1
 
 [node name="ContinueButton" type="TextureButton" parent="UI/Overlay/DialoguePanel" unique_id=2086916933]
 layout_mode = 0

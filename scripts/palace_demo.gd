@@ -296,6 +296,9 @@ func _set_dialogue_text_layout(speaker_side: int) -> void:
 		_:
 			dialogue_text.offset_left = 272.0
 			dialogue_text.offset_right = -344.0
+	dialogue_text.custom_maximum_size = Vector2(
+		dialogue_panel.size.x - dialogue_text.offset_left + dialogue_text.offset_right, -1.0
+	)
 
 
 func _hide_portrait() -> void:

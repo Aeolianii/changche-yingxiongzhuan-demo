@@ -1,6 +1,8 @@
 class_name CharacterActor
 extends CharacterBody2D
 
+const CHARACTER_FRAMES := preload("res://scripts/character_frame_catalog.gd")
+
 @export_enum("protagonist", "soldier", "magistrate", "emperor") var character_key := "protagonist"
 @export var facing := "down"
 @export var move_speed := 170.0
@@ -44,19 +46,10 @@ func _build_sprite_frames() -> SpriteFrames:
 			frames.add_animation(animation_name)
 			frames.set_animation_loop(animation_name, true)
 			frames.set_animation_speed(animation_name, 4.0 if state == "idle" else 8.0)
-			var folder := "res://assets/characters/%s/standard/%s/%s" % [character_key, state, direction]
-			var files := _sorted_png_files(folder)
-			for file_name in files:
-				var texture := load("%s/%s" % [folder, file_name]) as Texture2D
+			for path in CHARACTER_FRAMES.paths_for(character_key, state, direction):
+				var texture := ResourceLoader.load(path) as Texture2D
 				if texture != null:
 					frames.add_frame(animation_name, texture)
+				else:
+					push_error("Character texture missing: %s" % path)
 	return frames
-
-
-func _sorted_png_files(folder: String) -> Array[String]:
-	var files: Array[String] = []
-	for file_name in DirAccess.get_files_at(folder):
-		if file_name.get_extension().to_lower() == "png":
-			files.append(file_name)
-	files.sort_custom(func(a: String, b: String) -> bool: return a.get_basename().to_int() < b.get_basename().to_int())
-	return files

@@ -15,6 +15,7 @@ const CLICK_PROGRESS_EPSILON := 0.2
 const SCENE_PATH := "res://scenes/Scene2.tscn"
 const TITLE_SCENE_PATH := "res://scenes/ui/title_screen.tscn"
 const ASSET_ROOT := "res://assets/characters"
+const CHARACTER_FRAMES := preload("res://scripts/character_frame_catalog.gd")
 const DIALOGUE_BACKGROUND_PATH := "res://assets/ui/dialogue/ink_dialogue_backdrop.png"
 const DIALOGUE_NAMEPLATE_PATH := "res://assets/ui/dialogue/ink_speaker_nameplate.png"
 const CHAPTER_ENTRY_META := "chapter_transition_from_scene_one"
@@ -583,65 +584,38 @@ func _build_sprite_frames(asset_dir: String) -> SpriteFrames:
 		frames.remove_animation(default_animation)
 
 	var is_protagonist := asset_dir.get_file() == "protagonist"
-	var frame_limit := 24 if is_protagonist else 4
 	var idle_fps := 6.0 if is_protagonist else 2.5
 	for direction in ["down", "left", "right", "up"]:
-		_add_animation_frames(frames, "idle_%s" % direction, "%s/standard/idle/%s" % [asset_dir, direction], frame_limit, idle_fps)
-		_add_animation_frames(frames, "walk_%s" % direction, "%s/standard/walk/%s" % [asset_dir, direction], frame_limit, 10.0)
+		_add_animation_frames(frames, "idle_%s" % direction, asset_dir, "idle", direction, idle_fps)
+		_add_animation_frames(frames, "walk_%s" % direction, asset_dir, "walk", direction, 10.0)
 	return frames
 
 
 func _add_animation_frames(
 	sprite_frames: SpriteFrames,
 	animation: StringName,
-	folder: String,
-	max_frames: int,
+	asset_dir: String,
+	state: String,
+	direction: String,
 	fps: float
 ) -> void:
 	sprite_frames.add_animation(animation)
 	sprite_frames.set_animation_loop(animation, true)
 	sprite_frames.set_animation_speed(animation, fps)
-	for frame_index in range(1, max_frames + 1):
-		var path := "%s/%d.png" % [folder, frame_index]
-		if FileAccess.file_exists(path):
-			sprite_frames.add_frame(animation, _load_texture_from_file(path))
-
-
-func _load_texture_from_file(resource_path: String) -> Texture2D:
-	var image := Image.new()
-	var error := image.load(ProjectSettings.globalize_path(resource_path))
-	if error != OK:
-		push_error("Failed to load image '%s': %s" % [resource_path, error_string(error)])
-		var placeholder := PlaceholderTexture2D.new()
-		placeholder.size = Vector2(32, 32)
-		return placeholder
-	return ImageTexture.create_from_image(image)
+	for path in CHARACTER_FRAMES.paths_for(asset_dir.get_file(), state, direction):
+		var texture := ResourceLoader.load(path) as Texture2D
+		if texture != null:
+			sprite_frames.add_frame(animation, texture)
+		else:
+			push_error("Character texture missing: %s" % path)
 
 
 func _find_asset_directory(normalized_needle: String) -> String:
-	var directory := DirAccess.open(ASSET_ROOT)
-	if directory != null:
-		for child in directory.get_directories():
-			var normalized := _normalize_directory_name(child)
-			if normalized.to_lower().contains(normalized_needle.to_lower()):
-				return "%s/%s" % [ASSET_ROOT, child]
-	push_warning("Could not find asset directory containing '%s', falling back to protagonist." % normalized_needle)
-	return "%s/protagonist" % ASSET_ROOT
+	return "%s/%s" % [ASSET_ROOT, normalized_needle]
 
 
 func _find_image_in_asset_directory(asset_dir: String, normalized_file_name: String) -> String:
-	var directory := DirAccess.open(asset_dir)
-	if directory == null:
-		return "%s/%s" % [asset_dir, normalized_file_name]
-	var normalized_target := _normalize_directory_name(normalized_file_name)
-	for file_name in directory.get_files():
-		if _normalize_directory_name(file_name) == normalized_target:
-			return "%s/%s" % [asset_dir, file_name]
 	return "%s/%s" % [asset_dir, normalized_file_name]
-
-
-func _normalize_directory_name(value: String) -> String:
-	return value.replace(String.chr(0x200C), "").replace(String.chr(0x200D), "").replace(String.chr(0xFEFF), "").strip_edges()
 
 
 func _update_player_animation(input_vector: Vector2) -> void:
@@ -936,8 +910,11 @@ func _clear_option_buttons() -> void:
 
 func _set_portrait(portrait_path: String, fallback_text: String, show_on_left: bool) -> void:
 	_apply_dialogue_side(show_on_left)
-	if not portrait_path.is_empty() and FileAccess.file_exists(portrait_path):
-		_portrait_image.texture = _load_texture_from_file(portrait_path)
+	var portrait_texture: Texture2D
+	if not portrait_path.is_empty():
+		portrait_texture = ResourceLoader.load(portrait_path) as Texture2D
+	if portrait_texture != null:
+		_portrait_image.texture = portrait_texture
 		_portrait_image.show()
 		_portrait_box.hide()
 		_portrait_label.hide()

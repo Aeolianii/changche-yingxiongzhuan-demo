@@ -17,6 +17,8 @@ Windows 正式发行使用 Godot 4.7.1 .NET 的 `Windows Desktop` x86_64 导出�
 
 ## Runtime map
 
+人物动画帧由共享角色帧清单给出确定的 `res://` 纹理路径，场景一和场景二统一使用 Godot 资源加载器读取导入纹理。对话立绘也按确定路径作为 `Texture2D` 加载。正式导出不得依赖原始 PNG 的磁盘路径、`DirAccess` 枚举结果或 `FileAccess.file_exists()` 判断导入纹理是否存在。
+
 项目入口 `TitleScreen`、`PalaceDemo` 与第二场景 `Scene2` 使用 GDScript；水师操演模块使用 C#。项目自 2026-08-13 起是 Godot 4.7.1 .NET 混合工程，必须使用 .NET 版编辑器或运行时构建和启动。
 
 `TitleScreen` 位于 `scenes/ui/title_screen.tscn`。它只负责启动主视觉、主菜单、基础音频设置和进入游戏的场景路由：继续游戏委托 `GameState` 校验并建立一次性恢复快照；新游戏只清理内存快照并进入皇宫，不删除正式单槽文件。标题背景、准确中文标题和按钮保持分层，背景纹理不承担交互语义。
